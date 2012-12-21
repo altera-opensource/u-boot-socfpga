@@ -66,6 +66,82 @@ end:
 	}
 }
 
+static void mmc_load_image_mbr(struct mmc *mmc)
+{
+#define MBR_SIGNATURE				(0xAA55)
+#define MBR_SIGNATURE_OFFSET			(0x1FE)
+#define MBR_NUM_OF_PARTITIONS			(4)
+#define MBR_PARTITION_OFFSET			(0x1BE)
+#define MBR_PARTITION_TYPE_OFFSET		(4)
+#define MBR_PARTITION_START_SECTOR_OFFSET	(8)
+#define MBR_PARTITION_ENTRY_SIZE		(16)
+
+	u32 i;
+	u32 part_type;
+	u32 offset;
+	u16 sign;
+	u8 *p_entry;
+	u32 image_size_sectors, err;
+	const struct image_header *header;
+
+	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE -
+						sizeof(struct image_header));
+
+	/* search the MBR to get the parition offset */
+	/* Read MBR */
+	err = mmc->block_dev.block_read(0, 0, 1, (void *)header);
+	if (err <= 0)
+		goto end;
+	memcpy(&sign, (u8 *)header + MBR_SIGNATURE_OFFSET, sizeof(sign));
+	if (sign != MBR_SIGNATURE) {
+		puts("spl: No MBR signature is found\n");
+		hang();
+	}
+
+	/* Lookup each partition entry for partition ID. */
+	p_entry = (u8 *)header + MBR_PARTITION_OFFSET;
+	for (i = 0; i < MBR_NUM_OF_PARTITIONS; i++) {
+		part_type = p_entry[MBR_PARTITION_TYPE_OFFSET];
+
+		if (part_type ==
+			CONFIG_SYS_MMCSD_MBR_MODE_U_BOOT_PARTITION_ID){
+			/* Partition found */
+			memcpy(&offset,
+				p_entry + MBR_PARTITION_START_SECTOR_OFFSET,
+				sizeof(offset));
+			debug("spl: Partition offset 0x%x sectors\n", offset);
+			break;
+		}
+		p_entry += MBR_PARTITION_ENTRY_SIZE;
+	}
+
+
+	/* read image header to find the image size & load address */
+	err = mmc->block_dev.block_read(0,
+			(offset + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR), 1,
+			(void *)header);
+
+	if (err <= 0)
+		goto end;
+
+	spl_parse_image_header(header);
+
+	/* convert size to sectors - round up */
+	image_size_sectors = (spl_image.size + mmc->read_bl_len - 1) /
+				mmc->read_bl_len;
+
+	/* Read the header too to avoid extra memcpy */
+	err = mmc->block_dev.block_read(0,
+			(offset + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR),
+			image_size_sectors, (void *)spl_image.load_addr);
+
+end:
+	if (err <= 0) {
+		printf("spl: mmc blk read err - %d\n", err);
+		hang();
+	}
+}
+
 #ifdef CONFIG_SPL_FAT_SUPPORT
 static void mmc_load_image_fat(struct mmc *mmc)
 {
@@ -124,6 +200,9 @@ void spl_mmc_load_image(void)
 	if (boot_mode == MMCSD_MODE_RAW) {
 		debug("boot mode - RAW\n");
 		mmc_load_image_raw(mmc);
+	} else if (boot_mode == MMCSD_MODE_MBR) {
+		debug("boot mode - MBR\n");
+		mmc_load_image_mbr(mmc);
 #ifdef CONFIG_SPL_FAT_SUPPORT
 	} else if (boot_mode == MMCSD_MODE_FAT) {
 		debug("boot mode - FAT\n");

@@ -399,14 +399,24 @@ void puts(const char *s)
 #endif
 
 	if (!gd->have_console)
+#ifdef CONFIG_SPL_SEMIHOSTING_SUPPORT
+		;	/* printf can be done with semihosting */
+#else
 		return pre_console_puts(s);
+#endif
 
 	if (gd->flags & GD_FLG_DEVINIT) {
 		/* Send to the standard output */
 		fputs(stdout, s);
 	} else {
 		/* Send directly to the handler */
-		serial_puts(s);
+#ifdef CONFIG_SPL_SEMIHOSTING_SUPPORT
+		if (gd->have_console)
+#endif
+			serial_puts(s);
+#ifdef CONFIG_SPL_SEMIHOSTING_SUPPORT
+		semihosting_write(s);
+#endif
 	}
 }
 
@@ -418,8 +428,12 @@ int printf(const char *fmt, ...)
 
 #ifndef CONFIG_PRE_CONSOLE_BUFFER
 	if (!gd->have_console)
+#ifdef CONFIG_SPL_SEMIHOSTING_SUPPORT
+		;	/* printf can be done with semihosting */
+#else
 		return 0;
-#endif
+#endif	/* CONFIG_SPL_SEMIHOSTING_SUPPORT */
+#endif	/* CONFIG_PRE_CONSOLE_BUFFER */
 
 	va_start(args, fmt);
 

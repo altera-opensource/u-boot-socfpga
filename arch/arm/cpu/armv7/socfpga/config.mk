@@ -14,3 +14,9 @@
 ifndef CONFIG_SPL_BUILD
 ALL-y	+= $(obj)u-boot.img
 endif
+
+# Added for handoff support
+PLATFORM_RELFLAGS += -I$(TOPDIR)/board/$(BOARDDIR) \
+-I$(TOPDIR)/board/$(BOARDDIR)/sdram
+
+

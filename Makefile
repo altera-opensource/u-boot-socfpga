@@ -301,6 +301,7 @@ LIBS-y += drivers/usb/host/libusb_host.o
 LIBS-y += drivers/usb/musb/libusb_musb.o
 LIBS-y += drivers/usb/phy/libusb_phy.o
 LIBS-y += drivers/usb/ulpi/libusb_ulpi.o
+LIBS += drivers/usb/dwc_otg/libusb_dwc.o
 LIBS-y += drivers/video/libvideo.o
 LIBS-y += drivers/watchdog/libwatchdog.o
 LIBS-y += common/libcommon.o
@@ -325,6 +326,9 @@ LIBS-y += $(CPUDIR)/s5p-common/libs5p-common.o
 endif
 ifeq ($(SOC),tegra20)
 LIBS-y += arch/$(ARCH)/cpu/$(SOC)-common/lib$(SOC)-common.o
+endif
+ifeq ($(SOC),socfpga)
+LIBS-y += board/$(BOARDDIR)/sdram/lib$(SOC)-sdram.o
 endif
 
 LIBS := $(addprefix $(obj),$(sort $(LIBS-y)))

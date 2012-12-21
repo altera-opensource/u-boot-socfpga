@@ -15,12 +15,17 @@
 
 #include "spi_flash_internal.h"
 
-static void spi_flash_addr(u32 addr, u8 *cmd)
+/* 4-byte addressing if the device exceeds 16MiB. */
+#define ADDR_WIDTH(size)  (size > 0x1000000 ? 4 : 3)
+
+static void spi_flash_addr(struct spi_flash *flash, u32 addr, u8 *cmd)
 {
+	u32 addr_width = ADDR_WIDTH(flash->size);
 	/* cmd[0] is actual command */
-	cmd[1] = addr >> 16;
-	cmd[2] = addr >> 8;
-	cmd[3] = addr >> 0;
+	cmd[1] = addr >> (addr_width * 8 -  8);
+	cmd[2] = addr >> (addr_width * 8 - 16);
+	cmd[3] = addr >> (addr_width * 8 - 24);
+	cmd[4] = addr >> (addr_width * 8 - 32);
 }
 
 static int spi_flash_read_write(struct spi_slave *spi,
@@ -138,13 +143,15 @@ int spi_flash_read_common(struct spi_flash *flash, const u8 *cmd,
 int spi_flash_cmd_read_fast(struct spi_flash *flash, u32 offset,
 		size_t len, void *data)
 {
-	u8 cmd[5];
+	u8 cmd[6];
 
-	cmd[0] = CMD_READ_ARRAY_FAST;
-	spi_flash_addr(offset, cmd);
-	cmd[4] = 0x00;
+	cmd[0] = CMD_READ_ARRAY;
+	cmd[4] = 0;
+	cmd[5] = 0;
+	spi_flash_addr(flash, offset, cmd);
 
-	return spi_flash_read_common(flash, cmd, sizeof(cmd), data, len);
+	return spi_flash_read_common(flash, cmd, ADDR_WIDTH(flash->size) + 2,
+		data, len);
 }
 
 int spi_flash_cmd_poll_bit(struct spi_flash *flash, unsigned long timeout,
@@ -194,7 +201,7 @@ int spi_flash_cmd_erase(struct spi_flash *flash, u32 offset, size_t len)
 {
 	u32 start, end, erase_size;
 	int ret;
-	u8 cmd[4];
+	u8 cmd[5];
 
 	erase_size = flash->sector_size;
 	if (offset % erase_size || len % erase_size) {
@@ -216,7 +223,7 @@ int spi_flash_cmd_erase(struct spi_flash *flash, u32 offset, size_t len)
 	end = start + len;
 
 	while (offset < end) {
-		spi_flash_addr(offset, cmd);
+		spi_flash_addr(flash, offset, cmd);
 		offset += erase_size;
 
 		debug("SF: erase %2x %2x %2x %2x (%x)\n", cmd[0], cmd[1],
@@ -362,7 +369,9 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 
 #ifdef DEBUG
 	printf("SF: Got idcodes\n");
+#ifndef CONFIG_SPL_SPI_FLASH_SUPPORT
 	print_buffer(0, idcode, 1, sizeof(idcode), 0);
+#endif
 #endif
 
 	/* count the number of continuation bytes */
@@ -386,9 +395,12 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 	}
 
 	printf("SF: Detected %s with page size ", flash->name);
+#ifndef CONFIG_SPL_SPI_FLASH_SUPPORT
 	print_size(flash->sector_size, ", total ");
 	print_size(flash->size, "\n");
-
+#else
+	printf("%d, total: %d\n", flash->sector_size, flash->size);
+#endif
 	spi_release_bus(spi);
 
 	return flash;

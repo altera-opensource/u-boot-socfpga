@@ -26,7 +26,7 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(BOARD).o
 
-COBJS	:= socfpga_cyclone5.o
+COBJS	:= socfpga_cyclone5.o pinmux_config.o iocsr_config.o
 
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))

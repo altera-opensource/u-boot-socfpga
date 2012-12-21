@@ -1,0 +1,137 @@
+
+SOCFPGA Documentation for U-Boot and SPL
+--------------------------------------------
+
+This README is about U-Boot and SPL support for Altera's ARM Cortex-A9MPCore
+based SoC FPGAs. This README will explain the steps on how to build and run the
+U-Boot and SPL under Virtual Target environment. To know more about the
+hardware itself, please refer to www.altera.com.
+
+
+
+Building U-Boot and SPL
+-----------------------
+
+1. cd <U-Boot directory>
+2. export CROSS_COMPILE=arm-none-linux-gnueabi-
+3. make mrproper
+4. make socfpga_vtdev5xs1_config
+5. make
+
+Output File:
+
+a. U-Boot output binary file is located at <U-Boot directory>/u-boot.img
+(binary files with mkimage signature)
+
+b. Preloader (SPL) output binary file is located at <U-Boot directory>/
+spl/u-boot-spl.bin
+
+
+
+Running at Virtual Platform
+---------------------------
+
+To boot from Preloader (SPL) -> U-Boot -> Kernel, below is the script
+for NativeApps.script. Do note below script is using ram boot option where all
+boot image will be preloaded to SDRAM.
+
+[DEV5XS1.Board.DDR_DRAM]l @0x7fc0 -bin uImage
+[DEV5XS1.Board.DDR_DRAM]l @0x100 -bin socfpga5xs1-vt.dtb
+[DEV5XS1.Board.DDR_DRAM]l @0x08000000 -bin <u-boot path>/u-boot.img
+[DEV5XS1.Board.HPS.OnChipRAM]l @0x0 -bin <u-boot path>/spl/u-boot-spl.bin
+[DEV5XS1.Board.HPS.CortexA9_MPCore.cortex_a9_axi_0]r pc=0xFFFF0000
+g
+
+
+For other boot option, below are the scripts to load them into flashes. Do
+ensure you configure the Preloader and U-Boot accordingly. Do refer
+to later section for more details.
+
+
+1. QSPI boot
+
+a. To load u-boot.img into QSPI flash, please use below line:
+"[DEV5XS1.Board.HPS.L4_APB_Periphs.N25Q128_0]l @0x60000 s-bin u-boot.img"
+(Do note address 0x60000 is defined by CONFIG_PRELOADER_QSPI_NEXT_BOOT_IMAGE at
+board/altera/socfpga/build.h)
+
+b. To load uImage into QSPI flash, please use below line:
+"[DEV5XS1.Board.HPS.L4_APB_Periphs.N25Q128_0]l @0xA0000 -bin uImage"
+(Do note offset 0xA0000 is defined by qspibootimageaddr environment variable at
+include/configs/socfpga.h)
+
+c. To load Device Tree Blob (DTB) into QSPI flash, please use below line:
+"[DEV5XS1.Board.HPS.L4_APB_Periphs.N25Q128_0]l @0x50000 -bin socfpga5xs1-vt.dtb"
+(Do note offset 0x50000 is defined by qspifdtaddr environment variable at
+include/configs/socfpga.h)
+
+
+2. SDMMC boot
+
+a. To load u-boot.img into SDMMC, there is 2 options available:
+
+i. Custom partition A2
+A custom partition with ID "A2" is created. Then, the image is store inside the
+partition. It will be located at offset of 0x40000 from the start of partition.
+Do note the SDMMC driver will try to search for this custom partition first.
+If cannot find a valid image, it will then try with second option which is the
+raw image.
+(Do note offset 0x40000 is defined by CONFIG_PRELOADER_SDMMC_NEXT_BOOT_IMAGE at
+board/altera/socfpga/build.h)
+
+ii. Raw image
+This option is treating whole SDMMC image as raw image. With that, please use
+below line:
+"[DEV5XS1.Board.HPS.L4_APB_Periphs.MMCorSDFlashCard0]l -bin 0x40000 u-boot.img".
+(Do note address 0x40000 is defined by CONFIG_PRELOADER_SDMMC_NEXT_BOOT_IMAGE at
+board/altera/socfpga/build.h)
+
+b. To load uImage into SDMMC card, you need to create a FAT partition where the
+uImage will be included inside the FAT partition.
+
+c. To load Device Tree Blob (DTB) into SDMMC card, you need to include the
+DTB file inside the FAT partition.
+
+
+
+Boot option configuration
+-------------------------
+
+This section will explain how you can configure Preloader and U-Boot
+to use other boot option instead of default ram boot option.
+
+
+QSPI boot
+
+For Preloader to load U-Boot image from QSPI flash, you need to configure
+as below at the configuration file board/altera/socfpga/build.h.
+#define CONFIG_PRELOADER_BOOT_FROM_QSPI		(1)
+#define CONFIG_PRELOADER_BOOT_FROM_SDMMC	(0)
+#define CONFIG_PRELOADER_BOOT_FROM_RAM		(0)
+
+For U-Boot to load uImage from QSPI flash, you can invoke U-Boot command
+console and type "run qspiload" at the console. To make it as default, please
+#define CONFIG_BOOTCOMMAND "run qspiload; run ramboot"
+
+Besides that, there is option for kernel to use file system which is located
+inside the qspi flash. To do that, you need to call "run qspiboot" instead
+"run ramboot".
+
+
+SDMMC boot
+
+For Preloader to load U-Boot image from SDMMC card, you need to configure
+as below at the configuration file board/altera/socfpga/build.h.
+#define CONFIG_PRELOADER_BOOT_FROM_QSPI		(0)
+#define CONFIG_PRELOADER_BOOT_FROM_SDMMC	(1)
+#define CONFIG_PRELOADER_BOOT_FROM_RAM		(0)
+
+For U-Boot to load uImage from SDMMC card, you can invoke U-Boot command
+console and type "run mmcload" at the console. To make it as default, please
+#define CONFIG_BOOTCOMMAND "run mmcload; run ramboot"
+
+Besides that, there is option for kernel to use file system which is located
+inside the SDMMC card. To do that, you need to call "run mmcboot" instead
+"run ramboot".
+
+

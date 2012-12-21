@@ -17,38 +17,24 @@
 
 #include <common.h>
 #include <asm/io.h>
-#include <asm/arch/reset_manager.h>
-
-DECLARE_GLOBAL_DATA_PTR;
-
-static const struct socfpga_reset_manager *reset_manager_base =
-		(void *)SOCFPGA_RSTMGR_ADDRESS;
+#include <asm/arch/nic301.h>
 
 /*
- * Write the reset manager register to cause reset
+ * Convert all slave from secure to non secure
  */
-void reset_cpu(ulong addr)
+void nic301_slave_ns(void)
 {
-	/* request a warm reset */
-	writel(RSTMGR_CTRL_SWWARMRSTREQ_LSB, &reset_manager_base->ctrl);
-	/*
-	 * infinite loop here as watchdog will trigger and reset
-	 * the processor
-	 */
-	while (1)
-		;
-}
-
-/*
- * Release peripherals from reset based on handoff
- */
-void reset_deassert_peripherals_handoff(void)
-{
-	writel(0, &reset_manager_base->per_mod_reset);
-}
-
-int dram_init(void)
-{
-	gd->ram_size = get_ram_size((long *)PHYS_SDRAM_1, PHYS_SDRAM_1_SIZE);
-	return 0;
+	writel(0x1,(SOCFPGA_L3REGS_ADDRESS +
+		L3REGS_SECGRP_LWHPS2FPGAREGS_ADDRESS));
+	writel(0x1,(SOCFPGA_L3REGS_ADDRESS +
+		L3REGS_SECGRP_HPS2FPGAREGS_ADDRESS));
+	writel(0x1,(SOCFPGA_L3REGS_ADDRESS +
+		L3REGS_SECGRP_ACP_ADDRESS));
+	writel(0x1,(SOCFPGA_L3REGS_ADDRESS +
+		L3REGS_SECGRP_ROM_ADDRESS));
+	writel(0x1,(SOCFPGA_L3REGS_ADDRESS +
+		L3REGS_SECGRP_OCRAM_ADDRESS));
+	writel(0x1,(SOCFPGA_L3REGS_ADDRESS +
+		L3REGS_SECGRP_SDRDATA_ADDRESS));
+	return;
 }

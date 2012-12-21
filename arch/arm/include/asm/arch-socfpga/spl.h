@@ -20,7 +20,20 @@
 
 /* Symbols from linker script */
 extern char __malloc_start, __malloc_end, __stack_start;
+extern char __ecc_padding_start, __ecc_padding_end;
+
+#ifdef CONFIG_USE_IRQ
+extern char __irq_stack_start;
+#endif /* CONFIG_USE_IRQ */
+
+#if (CONFIG_PRELOADER_WARMRST_SKIP_CFGIO == 1)
+extern u32 rst_mgr_status __attribute__ ((section(".data")));
+#endif
 
 #define BOOT_DEVICE_RAM 1
+#define BOOT_DEVICE_SPI 2
+#define BOOT_DEVICE_MMC1 3
+#define BOOT_DEVICE_MMC2 4
+#define BOOT_DEVICE_MMC2_2 5
 
 #endif

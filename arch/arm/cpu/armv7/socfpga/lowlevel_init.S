@@ -17,61 +17,48 @@
 
 #include <config.h>
 #include <version.h>
+#include <build.h>
+#include <asm/arch/system_manager.h>
+
+#define PRELOADER_DEBUG_MEMMORY_MAGIC		0x444d
+#define PRELOADER_DEBUG_MEMMORY_VERSION		0x1
+#define PRELOADER_DEBUG_MEMMORY_HEADER	( \
+	PRELOADER_DEBUG_MEMMORY_MAGIC | \
+	(PRELOADER_DEBUG_MEMMORY_VERSION << 16 ))
 
 /* Save the parameter pass in by previous boot loader */
 .global save_boot_params
 save_boot_params:
-	/* save the parameter here */
 
+#ifdef CONFIG_SPL_BUILD
+#if (CONFIG_PRELOADER_DEBUG_MEMORY_WRITE == 1)
 	/*
-	 * Setup stack for exception, which is located
-	 * at the end of on-chip RAM. We don't expect exception prior to
-	 * relocation and if that happens, we won't worry -- it will overide
-	 * global data region as the code will goto reset. After relocation,
-	 * this region won't be used by other part of program.
-	 * Hence it is safe.
+	 * write the debug memory header and value of R0 - R3 (which passed
+	 * by BootROM) into debug memory region (which is on ocram)
 	 */
-	ldr	r0, =(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_RAM_SIZE)
-	ldr	r1, =IRQ_STACK_START_IN
-	str	r0, [r1]
+	ldr	r5, =CONFIG_PRELOADER_DEBUG_MEMORY_ADDR
+	ldr	r4, =PRELOADER_DEBUG_MEMMORY_HEADER
+	stmia	r5!, {r4}
+	stmia	r5, {r0 -r3}
+	/* get the reset manager status register passed by BootROM */
+	add	r5, r0,#0x34
+	ldr	r4, =rst_mgr_status
+	ldr	r5, [r5]
+	str	r5, [r4]
+#endif	/* CONFIG_PRELOADER_DEBUG_MEMORY_WRITE */
 
+#if (CONFIG_PRELOADER_EXE_ON_FPGA == 1)
+	/* relocate the .data section to supprt preloader execute on FPGA */
+	ldr	r0, =__data_start
+	ldr	r1, =CONFIG_FPGA_DATA_BASE
+	ldr	r2, =__image_copy_end
+relocate_loop:
+	ldmia	r0!, {r3}		/* copy from source address [r0] */
+	stmia	r1!, {r3}		/* copy to   target address [r1] */
+	cmp	r1, r2			/* until source end addreee [r2] */
+	ble	relocate_loop
+#endif	/* CONFIG_PRELOADER_EXE_ON_FPGA */
+#endif	/* CONFIG_SPL_BUILD */
 	bx	lr
 
 
-/* Set up the platform, once the cpu has been initialized */
-.globl lowlevel_init
-lowlevel_init:
-
-	/* Remap */
-#ifdef CONFIG_SPL_BUILD
-	/*
-	 * SPL : configure the remap (L3 NIC-301 GPV)
-	 * so the on-chip RAM at lower memory instead ROM.
-	 */
-	ldr	r0, =SOCFPGA_L3REGS_ADDRESS
-	mov	r1, #0x19
-	str	r1, [r0]
-#else
-	/*
-	 * U-Boot : configure the remap (L3 NIC-301 GPV)
-	 * so the SDRAM at lower memory instead on-chip RAM.
-	 */
-	ldr	r0, =SOCFPGA_L3REGS_ADDRESS
-	mov	r1, #0x2
-	str	r1, [r0]
-
-	/* Private components security */
-
-	/*
-	 * U-Boot : configure private timer, global timer and cpu
-	 * component access as non secure for kernel stage (as required
-	 * by kernel)
-	 */
-	mrc	p15,4,r0,c15,c0,0
-	add	r1, r0, #0x54
-	ldr	r2, [r1]
-	orr	r2, r2, #0xff
-	orr	r2, r2, #0xf00
-	str	r2, [r1]
-#endif	/* #ifdef CONFIG_SPL_BUILD */
-	mov	pc, lr

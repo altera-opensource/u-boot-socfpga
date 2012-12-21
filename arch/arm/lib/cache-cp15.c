@@ -28,6 +28,8 @@
 
 #if defined(CONFIG_SYS_ARM_CACHE_WRITETHROUGH)
 #define CACHE_SETUP	0x1a
+#elif defined(CONFIG_SYS_ARM_CACHE_WRITEBACK_WRITEALLOCATE)
+#define CACHE_SETUP	0x16
 #else
 #define CACHE_SETUP	0x1e
 #endif

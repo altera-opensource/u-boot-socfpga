@@ -1,0 +1,22 @@
+WARNING: externs should be avoided in .c files
+#501: FILE: arch/arm/cpu/armv7/socfpga/spl.c:266:
++		DEBUG_MEMORY
+
+WARNING: externs should be avoided in .c files
+#528: FILE: arch/arm/cpu/armv7/socfpga/spl.c:293:
++		DEBUG_MEMORY
+
+WARNING: externs should be avoided in .c files
+#645: FILE: arch/arm/cpu/armv7/socfpga/spl.c:410:
++	DEBUG_MEMORY
+
+ERROR: Missing Signed-off-by: line(s)
+
+total: 1 errors, 3 warnings, 2221 lines checked
+
+NOTE: Ignored message types: COMPLEX_MACRO CONSIDER_KSTRTO MINMAX MULTISTATEMENT_MACRO_USE_DO_WHILE
+
+patch has style problems, please review.
+
+If any of these errors are false positives, please report
+them to the maintainer, see CHECKPATCH in MAINTAINERS.

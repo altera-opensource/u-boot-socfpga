@@ -20,8 +20,31 @@
 #include <asm/io.h>
 
 #include <netdev.h>
+#include <mmc.h>
+#include <linux/dw_mmc.h>
+#include <asm/arch/interrupts.h>
+#include <asm/arch/sdram.h>
+#include <asm/arch/sdmmc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+/*
+ * Declaration for DW MMC structure
+ */
+#ifdef CONFIG_DW_MMC
+struct dw_host socfpga_dw_mmc_host = {
+	.need_init_cmd = 1,
+	.clock_in = CONFIG_HPS_CLK_SDMMC_HZ / 4,
+	.reg = (struct dw_registers *)CONFIG_SDMMC_BASE,
+#ifdef __CONFIG_SOCFPGA_VTDEV5XS1_H_
+	.set_timing = NULL,
+	.use_hold_reg = NULL,
+#else
+	.set_timing = sdmmc_set_clk_timing,
+	.use_hold_reg = sdmmc_use_hold_reg,
+#endif
+};
+#endif
 
 /*
  * Print CPU information
@@ -37,7 +60,11 @@ int print_cpuinfo(void)
  */
 int checkboard(void)
 {
-	puts("BOARD : Altera SOCFPGA Cyclone5 Board\n");
+#ifdef CONFIG_SOCFPGA_VIRTUAL_TARGET
+	puts("BOARD : Altera VTDEV5XS1 Virtual Board\n");
+#else
+	puts("BOARD : Altera SOCFPGA Cyclone 5 Board\n");
+#endif
 	return 0;
 }
 
@@ -46,6 +73,10 @@ int checkboard(void)
  */
 int board_early_init_f(void)
 {
+#ifdef CONFIG_HW_WATCHDOG
+	/* disable the watchdog when entering U-Boot */
+	watchdog_disable();
+#endif
 	return 0;
 }
 
@@ -54,7 +85,8 @@ int board_early_init_f(void)
  */
 int board_init(void)
 {
-	icache_enable();
+	/* adress of boot parameters (ATAG or FDT blob) */
+	gd->bd->bi_boot_params = 0x00000100;
 	return 0;
 }
 
@@ -78,3 +110,41 @@ int board_eth_init(bd_t *bis)
 {
 	return 0;
 }
+
+/*
+ * Initializes MMC controllers.
+ * to override, implement board_mmc_init()
+ */
+int cpu_mmc_init(bd_t *bis)
+{
+#ifdef CONFIG_DW_MMC
+	return dw_mmc_init(&socfpga_dw_mmc_host);
+#else
+	return 0;
+#endif
+}
+
+#ifdef CONFIG_BOARD_LATE_INIT
+int board_late_init(void)
+{
+	/* create event for tracking ECC count */
+	setenv_ulong("ECC_SDRAM", 0);
+#ifndef __CONFIG_SOCFPGA_VTDEV5XS1_H_
+	setenv_ulong("ECC_SDRAM_SBE", 0);
+	setenv_ulong("ECC_SDRAM_DBE", 0);
+#endif
+	/* register SDRAM ECC handler */
+	irq_register(IRQ_ECC_SDRAM,
+		irq_handler_ecc_sdram,
+		(void *)&irq_cnt_ecc_sdram, 0);
+	return 0;
+}
+#endif
+
+#ifndef CONFIG_SYS_DCACHE_OFF
+void enable_caches(void)
+{
+	/* Enable D-cache. I-cache is already enabled in start.S */
+	dcache_enable();
+}
+#endif

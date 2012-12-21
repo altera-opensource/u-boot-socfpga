@@ -15,28 +15,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-MEMORY { .sdram : ORIGIN = (0), LENGTH = (0xffffffff) }
+ MEMORY { .sram : ORIGIN = CONFIG_SPL_TEXT_BASE,\
+		LENGTH = CONFIG_SPL_MAX_SIZE }
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
 ENTRY(_start)
 SECTIONS
 {
-	. = 0x00000000;
-
-	. = ALIGN(4);
 	.text	:
 	{
 		arch/arm/cpu/armv7/start.o	(.text)
 		*(.text*)
-	} >.sdram
+	} >.sram
+
+	__text_end = .;
+	. = ALIGN(0x1000) + 0x1000;
+	__ecc_padding_end = .;
+	. = __text_end;
 
 	. = ALIGN(4);
-	.rodata : { *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*))) } >.sdram
+	.rodata : { *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*))) } >.sram
 
 	. = ALIGN(4);
-	.data : { *(SORT_BY_ALIGNMENT(.data*)) } >.sdram
+	.data : { *(SORT_BY_ALIGNMENT(.data*)) } >.sram
 
+	__ecc_padding_start = .;
 	. = ALIGN(4);
 	__image_copy_end = .;
 	_end = .;
@@ -47,14 +51,29 @@ SECTIONS
 		*(.bss*)
 		. = ALIGN(4);
 		__bss_end__ = .;
-	} >.sdram
+	} >.sram
 
 	. = ALIGN(8);
-	__malloc_start = .;
-	. = . + CONFIG_SPL_MALLOC_SIZE;
-	__malloc_end = .;
+	.malloc :
+	{
+		__malloc_start = .;
+		. = . + CONFIG_SPL_MALLOC_SIZE;
+		__malloc_end = .;
+	} >.sram
 
-	. = . + CONFIG_SPL_STACK_SIZE;
-	. = ALIGN(8);
-	__stack_start = .;
+	.stack :
+	{
+		. = . + CONFIG_SPL_STACK_SIZE;
+		. = ALIGN(8);
+		__stack_start = .;
+	} >.sram
+
+#ifdef CONFIG_USE_IRQ
+	.spl_irq_stack :
+	{
+		. = . + CONFIG_STACKSIZE_IRQ;
+		. = ALIGN(8);
+		__irq_stack_start = .;
+	} >.sram
+#endif
 }

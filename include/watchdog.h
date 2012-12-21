@@ -90,4 +90,9 @@
 	void reset_4xx_watchdog(void);
 #endif
 
+/* Designware Watchdog */
+#if defined(CONFIG_SOCFPGA)
+	void hw_watchdog_init(void);
+#endif
+
 #endif /* _WATCHDOG_H_ */
