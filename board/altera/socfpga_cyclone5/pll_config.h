@@ -60,7 +60,7 @@
 
 /* SDRAM PLL */
 #define CONFIG_HPS_SDRPLLGRP_VCO_DENOM			(1)
-#define CONFIG_HPS_SDRPLLGRP_VCO_NUMER			(47)
+#define CONFIG_HPS_SDRPLLGRP_VCO_NUMER			(63)
 /*
  * To tell where is the VCOs source:
  * 0 = EOSC1
