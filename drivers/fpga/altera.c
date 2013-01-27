@@ -1,4 +1,7 @@
 /*
+ * (C) Copyright 2013
+ * Altera Corporation <www.altera.com>
+ *
  * (C) Copyright 2003
  * Steven Scholz, imc Measurement & Control, steven.scholz@imc-berlin.de
  *
@@ -31,6 +34,9 @@
 #include <common.h>
 #include <ACEX1K.h>
 #include <stratixII.h>
+#if defined(CONFIG_FPGA_SOCFPGA)
+#include <asm/arch/fpga_manager.h>
+#endif
 
 /* Define FPGA_DEBUG to get debug printf's */
 /* #define FPGA_DEBUG */
@@ -76,6 +82,18 @@ int altera_load(Altera_desc *desc, const void *buf, size_t bsize)
 			ret_val = StratixII_load (desc, buf, bsize);
 			break;
 #endif
+#if defined(CONFIG_FPGA_SOCFPGA)
+		case Altera_SoCFPGA:
+			PRINTF("%s: Launching the SoC FPGA Loader...\n",
+				__func__);
+			ret_val = fpgamgr_program_fpga(buf, bsize);
+			if (ret_val) {
+				printf("%s: Failed with error code %d\n",
+				__func__, ret_val);
+				ret_val = 1;
+			}
+			break;
+#endif
 		default:
 			printf ("%s: Unsupported family type, %d\n",
 					__FUNCTION__, desc->family);
@@ -111,6 +129,11 @@ int altera_dump(Altera_desc *desc, const void *buf, size_t bsize)
 			ret_val = StratixII_dump (desc, buf, bsize);
 			break;
 #endif
+		case Altera_SoCFPGA:
+			printf("%s: Unsupported due to security reason, %d\n",
+					__func__, desc->family);
+			ret_val = FPGA_SUCCESS;
+			break;
 		default:
 			printf ("%s: Unsupported family type, %d\n",
 					__FUNCTION__, desc->family);
@@ -135,6 +158,9 @@ int altera_info( Altera_desc *desc )
 			break;
 		case Altera_StratixII:
 			printf ("Stratix II\n");
+			break;
+		case Altera_SoCFPGA:
+			printf("SoC FPGA\n");
 			break;
 			/* Add new family types here */
 		default:

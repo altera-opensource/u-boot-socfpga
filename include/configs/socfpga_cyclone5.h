@@ -152,6 +152,8 @@
 #define CONFIG_ENV_OVERWRITE
 /* Enable auto completion of commands using TAB */
 #define CONFIG_AUTO_COMPLETE
+/* Additional help message */
+#define CONFIG_SYS_LONGHELP
 /* use "hush" command parser */
 #define CONFIG_SYS_HUSH_PARSER
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
@@ -199,7 +201,11 @@
 		"sf read ${fdtaddr} ${qspifdtaddr} ${fdtimagesize};\0" \
 	"qspiboot=setenv bootargs " CONFIG_BOOTARGS \
 		" root=${qspiroot} rw rootfstype=${qspirootfstype};"\
-		"bootm ${loadaddr} - ${fdtaddr}\0"
+		"bootm ${loadaddr} - ${fdtaddr}\0" \
+	"fpga=0\0" \
+	"fpgadata=0x2000000\0" \
+	"fpgadatasize=0x700000\0"
+
 
 /*
  * Environment setup
@@ -425,6 +431,20 @@
 #define CONFIG_CQSPI_DECODER		(0)
 #define CONFIG_CQSPI_4BYTE_ADDR		(0)
 #endif	/* CONFIG_CADENCE_QSPI */
+
+/*
+ * FPGA support
+ */
+/* Enables FPGA subsystem */
+#define CONFIG_FPGA
+/* Altera FPGA */
+#define CONFIG_FPGA_ALTERA
+/* Family type */
+#define CONFIG_FPGA_SOCFPGA
+/* Only support single device */
+#define CONFIG_FPGA_COUNT		(1)
+/* Enable FPGA command at console */
+#define CONFIG_CMD_FPGA
 
 
 /*

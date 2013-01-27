@@ -30,6 +30,10 @@
 #include <micrel.h>
 #include <../drivers/net/designware.h>
 
+#include <altera.h>
+#include <fpga.h>
+
+
 DECLARE_GLOBAL_DATA_PTR;
 
 /*
@@ -49,6 +53,29 @@ struct dw_host socfpga_dw_mmc_host = {
 #endif
 };
 #endif
+
+/*
+ * FPGA programming support for SoC FPGA Cyclone V
+ */
+/* currently only single FPGA device avaiable on dev kit */
+Altera_desc altera_fpga[CONFIG_FPGA_COUNT] = {
+	{Altera_SoCFPGA, /* family */
+	fast_passive_parallel, /* interface type */
+	-1,		/* no limitation as
+			additional data will be ignored */
+	NULL,		/* no device function table */
+	NULL,		/* base interface address specified in driver */
+	0}		/* no cookie implementation */
+};
+
+/* add device descriptor to FPGA device table */
+void socfpga_fpga_add(void)
+{
+	int i;
+	fpga_init();
+	for (i = 0; i < CONFIG_FPGA_COUNT; i++)
+		fpga_add(fpga_altera, &altera_fpga[i]);
+}
 
 /*
  * Print CPU information
@@ -96,6 +123,8 @@ int board_init(void)
 
 int misc_init_r(void)
 {
+	/* add device descriptor to FPGA device table */
+	socfpga_fpga_add();
 	return 0;
 }
 
@@ -182,7 +211,7 @@ int board_eth_init(bd_t *bis)
 	return rval;
 #else
 	return 0;
-#endif 
+#endif
 }
 
 /*

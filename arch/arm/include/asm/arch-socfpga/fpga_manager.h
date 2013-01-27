@@ -39,19 +39,45 @@ struct socfpga_fpga_manager {
 	u32	misci;
 };
 
+#define FPGAMGRREGS_MON_GPIO_PORTA_EOI_ADDRESS	0x84c
 #define FPGAMGRREGS_MON_GPIO_EXT_PORTA_ADDRESS	0x850
 
-#define FPGAMGRREGS_STAT_MODE_ENUM_USERMODE 0x4
-#define FPGAMGRREGS_STAT_MODE_MASK 0x00000007
-#define FPGAMGRREGS_MISCI_BOOTFPGARDY_MASK 0x00000002
-#define MON_GPIO_EXT_PORTA_ID_MASK 0x00000004
+#define FPGAMGRREGS_CTRL_CFGWDTH_MASK		0x200
+#define FPGAMGRREGS_CTRL_AXICFGEN_MASK		0x100
+#define FPGAMGRREGS_CTRL_NCONFIGPULL_MASK	0x4
+#define FPGAMGRREGS_CTRL_NCE_MASK		0x2
+#define FPGAMGRREGS_CTRL_EN_MASK		0x1
+#define FPGAMGRREGS_CTRL_CDRATIO_LSB		6
 
-/* timeout in unit of us as CONFIG_SYS_HZ = 1000*1000 */
-#define FPGA_READY_TIMEOUT_US	5000000
+#define FPGAMGRREGS_STAT_MODE_MASK		0x7
+#define FPGAMGRREGS_STAT_MSEL_MASK		0xf8
+#define FPGAMGRREGS_STAT_MSEL_LSB		3
 
-int is_fpgamgr_in_usermode(void);
-int is_fpgamgr_bootfpgardy_high(void);
-int is_fpgamgr_initdone_high(void);
+#define FPGAMGRREGS_MON_GPIO_EXT_PORTA_CRC_MASK	0x8
+#define FPGAMGRREGS_MON_GPIO_EXT_PORTA_ID_MASK	0x4
+#define FPGAMGRREGS_MON_GPIO_EXT_PORTA_CD_MASK	0x2
+#define FPGAMGRREGS_MON_GPIO_EXT_PORTA_NS_MASK	0x1
+
+/* Timeout counter */
+#define FPGA_TIMEOUT_CNT		0x1000000
+
+/* FPGA Mode */
+#define FPGAMGRREGS_MODE_FPGAOFF	0x0
+#define FPGAMGRREGS_MODE_RESETPHASE	0x1
+#define FPGAMGRREGS_MODE_CFGPHASE	0x2
+#define FPGAMGRREGS_MODE_INITPHASE	0x3
+#define FPGAMGRREGS_MODE_USERMODE	0x4
+#define FPGAMGRREGS_MODE_UNKNOWN	0x5
+
+/* FPGA CD Ratio Value */
+#define CDRATIO_x1	0x0
+#define CDRATIO_x2	0x1
+#define CDRATIO_x4	0x2
+#define CDRATIO_x8	0x3
+
+/* Functions */
 int is_fpgamgr_fpga_ready(void);
+int fpgamgr_program_fpga(const unsigned long *rbf_data,
+	unsigned long rbf_size);
 
 #endif /* _FPGA_MANAGER_H_ */
