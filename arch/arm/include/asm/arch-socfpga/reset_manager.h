@@ -18,11 +18,8 @@
 #ifndef	_RESET_MANAGER_H_
 #define	_RESET_MANAGER_H_
 
-#if defined(CONFIG_HW_WATCHDOG)
 void watchdog_disable(void);
 int is_wdt_in_reset(void);
-#endif
-
 void reset_cpu(ulong addr);
 void reset_deassert_all_peripherals(void);
 void reset_deassert_all_bridges(void);

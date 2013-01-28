@@ -49,7 +49,6 @@ void s_init(void)
 #endif /* CONFIG_SPL_BUILD */
 
 #ifdef CONFIG_SPL_BUILD
-#ifdef CONFIG_HW_WATCHDOG
 	/* re-setup watchdog */
 	DEBUG_MEMORY
 	if (!(is_wdt_in_reset())) {
@@ -61,6 +60,7 @@ void s_init(void)
 		watchdog_disable();
 	}
 
+#ifdef CONFIG_HW_WATCHDOG
 	/* release osc1 watchdog timer 0 from reset */
 	DEBUG_MEMORY
 	reset_deassert_osc1wd0();

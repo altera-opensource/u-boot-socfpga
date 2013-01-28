@@ -29,9 +29,6 @@ DECLARE_GLOBAL_DATA_PTR;
 static const struct socfpga_reset_manager *reset_manager_base =
 		(void *)SOCFPGA_RSTMGR_ADDRESS;
 
-/* Reset Manager and Watchdog */
-
-#if defined(CONFIG_HW_WATCHDOG)
 /* Disable the watchdog (toggle reset to watchdog) */
 void watchdog_disable(void)
 {
@@ -52,7 +49,6 @@ int is_wdt_in_reset(void)
 	/* return 0x1 if watchdog in reset */
 	return val;
 }
-#endif /* #if defined(CONFIG_HW_WATCHDOG) */
 
 /* Write the reset manager register to cause reset */
 void reset_cpu(ulong addr)

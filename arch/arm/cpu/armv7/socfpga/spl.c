@@ -407,6 +407,22 @@ void spl_board_init(void)
 #ifdef CONFIG_HW_WATCHDOG
 	WATCHDOG_RESET();
 #endif
+
+	/*
+	 * if not boot specified, its special mode where user wish to loop
+	 * here after all hardware being initialized include the SDRAM
+	 */
+#if !defined(CONFIG_SPL_RAM_DEVICE) && !defined(CONFIG_SPL_MMC_SUPPORT) && \
+!defined(CONFIG_SPL_NAND_SUPPORT) && !defined(CONFIG_SPL_SPI_SUPPORT)
+	puts("\nNo boot device selected. Just loop here...\n");
+	for (;;) {
+		__udelay(1);
+#ifdef CONFIG_HW_WATCHDOG
+		WATCHDOG_RESET();
+#endif
+	}
+#endif
+
 	DEBUG_MEMORY
 	init_boot_params();
 }

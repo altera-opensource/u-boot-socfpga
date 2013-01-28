@@ -100,7 +100,6 @@
 /*
  * Stack setup
  */
-#define CONFIG_SPL_RAM_DEVICE
 #define CONFIG_SPL_STACK (&__stack_start)
 #define CONFIG_SYS_SPL_MALLOC_START ((unsigned long) (&__malloc_start))
 #define CONFIG_SYS_SPL_MALLOC_SIZE (&__malloc_end - &__malloc_start)
@@ -552,6 +551,16 @@
 #define CONFIG_SPL_SPI_CS		0
 /* offset of U-Boot with spi flash */
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	CONFIG_PRELOADER_QSPI_NEXT_BOOT_IMAGE
+#endif
+
+/*
+ * Boot from RAM
+ */
+#ifndef CONFIG_PRELOADER_BOOT_FROM_RAM
+#error "CONFIG_PRELOADER_BOOT_FROM_RAM must be defined"
+#endif
+#if (CONFIG_PRELOADER_BOOT_FROM_RAM == 1)
+#define CONFIG_SPL_RAM_DEVICE
 #endif
 
 /*
