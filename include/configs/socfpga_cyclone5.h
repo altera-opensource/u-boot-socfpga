@@ -195,6 +195,8 @@
 	"mmcboot=setenv bootargs " CONFIG_BOOTARGS \
 		" root=${mmcroot} rw rootwait;" \
 		"bootm ${loadaddr} - ${fdtaddr}\0" \
+	"netboot=dhcp ${bootimage} ; " \
+		"tftp ${fdtaddr} ${fdtimage} ; run ramboot\0" \
 	"qspiload=sf probe ${qspiloadcs};" \
 		"sf read ${loadaddr} ${qspibootimageaddr} ${bootimagesize};" \
 		"sf read ${fdtaddr} ${qspifdtaddr} ${fdtimagesize};\0" \
@@ -374,6 +376,7 @@
 #endif
 #define CONFIG_CMD_NET			1
 #define CONFIG_CMD_PING			1
+#define CONFIG_CMD_DHCP			1
 #define CONFIG_NET_MULTI		1
 #define CONFIG_DW_ALTDESCRIPTOR		1
 #define CONFIG_EPHY0_PHY_ADDR		0
