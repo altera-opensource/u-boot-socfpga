@@ -93,7 +93,7 @@ int spi_flash_read_common(struct spi_flash *flash, const u8 *cmd,
 
 /* Send a command to the device and wait for some bit to clear itself. */
 int spi_flash_cmd_poll_bit(struct spi_flash *flash, unsigned long timeout,
-			   u8 cmd, u8 poll_bit);
+			   u8 cmd, u8 poll_bit, u8 bit_set);
 
 /*
  * Send the read status command to the device and wait for the wip

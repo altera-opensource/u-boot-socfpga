@@ -32,7 +32,7 @@
 #include <pll_config.h>
 
 #define CQSPI_REG_POLL_US			(1) /* 1us */
-#define CQSPI_REG_RETRY				(1000)
+#define CQSPI_REG_RETRY				(10000)
 #define CQSPI_POLL_IDLE_RETRY			(3)
 
 #define CQSPI_FIFO_WIDTH			(4)
@@ -348,6 +348,7 @@ static unsigned int cadence_qspi_wait_idle(void *reg_base)
 			/* Read few times in succession to ensure it does
 			not transition low again */
 			count++;
+			mdelay(1);
 			if (count >= CQSPI_POLL_IDLE_RETRY)
 				return 1;
 		} else {
@@ -532,7 +533,8 @@ void cadence_qspi_apb_controller_init(void *reg_base)
 	CQSPI_WRITEL(0, reg_base + CQSPI_REG_IRQMASK);
 
 	/* Configure the read data capture register */
-	cadence_qspi_apb_readdata_capture(reg_base, 1, 0);
+	cadence_qspi_apb_readdata_capture(reg_base, 1,
+		CONFIG_CQSPI_READDATA_DELAY);
 
 	cadence_qspi_apb_controller_enable(reg_base);
 	return;

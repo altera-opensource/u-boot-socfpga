@@ -24,6 +24,10 @@
 
 /* Enabled for U-Boot debug message printout? */
 /*#define DEBUG*/
+/* if panic, will call hang as watchdog will come and trigger warm reset */
+#if defined(DEBUG) && defined(CONFIG_SPL_BUILD)
+#define CONFIG_PANIC_HANG
+#endif
 
 /*
  * Quick tips for debugging
@@ -176,7 +180,7 @@
 	"loadaddr=" MK_STR(CONFIG_SYS_LOAD_ADDR) "\0" \
 	"fdtaddr=0x00000100\0" \
 	"bootimage=uImage\0" \
-	"bootimagesize=0x500000\0" \
+	"bootimagesize=0x600000\0" \
 	"fdtimage=socfpga.dtb\0" \
 	"fdtimagesize=0x2000\0" \
 	"mmcloadcmd=fatload\0" \
@@ -431,7 +435,8 @@
 #define CONFIG_CQSPI_TCHSH_NS		(20)
 #define CONFIG_CQSPI_TSLCH_NS		(20)
 #define CONFIG_CQSPI_DECODER		(0)
-#define CONFIG_CQSPI_4BYTE_ADDR		(0)
+#define CONFIG_CQSPI_4BYTE_ADDR		(1)
+#define CONFIG_CQSPI_READDATA_DELAY	(1)
 #endif	/* CONFIG_CADENCE_QSPI */
 
 /*
@@ -546,12 +551,16 @@
 #error "CONFIG_PRELOADER_BOOT_FROM_QSPI must be defined"
 #endif
 #if (CONFIG_PRELOADER_BOOT_FROM_QSPI == 1)
+/* Enable spi_spl_load.c */
+#define CONFIG_SPL_SPI_LOAD
 /* Support for drivers/mtd/spi/libspi_flash.o in SPL binary */
 #define CONFIG_SPL_SPI_FLASH_SUPPORT
 /* Support for drivers/spi/libspi.o in SPL binary */
 #define CONFIG_SPL_SPI_SUPPORT
 /* SPL SPI flash Chip select */
 #define CONFIG_SPL_SPI_CS		0
+/* SPL SPI flash Bus Number */
+#define CONFIG_SPL_SPI_BUS		0
 /* offset of U-Boot with spi flash */
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	CONFIG_PRELOADER_QSPI_NEXT_BOOT_IMAGE
 #endif
