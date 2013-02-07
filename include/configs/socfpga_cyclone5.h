@@ -131,6 +131,8 @@
 #include <config_cmd_default.h>
 /* FAT file system support */
 #define CONFIG_CMD_FAT
+/* Enable FAT write support */
+#define CONFIG_FAT_WRITE
 /* EXT2 file system support */
 #define CONFIG_CMD_EXT2
 /* MMC support */

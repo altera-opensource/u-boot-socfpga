@@ -293,8 +293,10 @@ static int dw_pull(struct dw_host *host, void *_buf, int bytes)
 #ifndef CONFIG_SPL_BUILD
 static int dw_push(struct dw_host *host, const void *_buf, int bytes)
 {
-	u32 pending_dwords, dangling_dwords = 0, dwords_to_write;
+	u32 pending_dwords, dangling_bytes = 0, dwords_to_write;
 	u32 buffer = 0;
+	u32 fifo_count = 0;
+	u32 status = 0;
 	int count;
 	u32 *buf = (u32 *)_buf;
 	unsigned int stat;
@@ -310,22 +312,24 @@ static int dw_push(struct dw_host *host, const void *_buf, int bytes)
 		}
 
 		pending_dwords = bytes / FIFO_WIDTH_BYTES;
-		dangling_dwords = bytes % FIFO_WIDTH_BYTES;
+		dangling_bytes = bytes % FIFO_WIDTH_BYTES;
 
-		if (pending_dwords >=
-			(host->fifo_depth - host->fifo_threshold)) {
-			dwords_to_write =
-				(host->fifo_depth - host->fifo_threshold);
+		status = readl(&host->reg->status);
+		fifo_count = (GET_FIFO_COUNT(status));
+		/* Calculate the empty slots. */
+		fifo_count = host->fifo_depth - fifo_count;
 
-			dangling_dwords = 0;
+		if (pending_dwords > fifo_count) {
+			dwords_to_write  = fifo_count;
+			dangling_bytes = 0;
 		} else {
 			dwords_to_write = pending_dwords;
 		}
 
 		debug("Entered %s pending_dwords %d dwords_to_write %d "
-			"dangling_dwords %d\n",
+			"dangling_bytes %d\n",
 			__func__, pending_dwords,
-			dwords_to_write, dangling_dwords);
+			dwords_to_write, dangling_bytes);
 
 		for (count = 0; count < dwords_to_write; count++) {
 			writel(*buf, &host->reg->fifodata);
@@ -333,11 +337,11 @@ static int dw_push(struct dw_host *host, const void *_buf, int bytes)
 			bytes -= 4;
 		}
 
-		if (dangling_dwords) {
+		if (dangling_bytes) {
 			buffer = 0;
-			memcpy((void *) &buffer, (void *) buf, dangling_dwords);
+			memcpy((void *) &buffer, (void *) buf, dangling_bytes);
 			writel(buffer, &host->reg->fifodata);
-			bytes -= dangling_dwords;
+			bytes -= dangling_bytes;
 		}
 	}
 
@@ -443,6 +447,7 @@ static int dw_request(struct mmc *mmc, struct mmc_cmd *cmd,
 		unsigned int count;
 		unsigned int num_bytes = data->blocks * data->blocksize;
 		unsigned int num_of_dwords = 0;
+		unsigned int dangling_bytes = 0;
 		u32 *buf32 = (u32 *)data->src;
 
 		/* Reset FIFO */
@@ -464,6 +469,8 @@ static int dw_request(struct mmc *mmc, struct mmc_cmd *cmd,
 			} else {
 				/* Just write complete buffer out */
 				num_of_dwords = (num_bytes) / FIFO_WIDTH_BYTES;
+
+				dangling_bytes = num_bytes % FIFO_WIDTH_BYTES;
 			}
 
 			for (count = 0; count < num_of_dwords; count++) {
@@ -471,8 +478,15 @@ static int dw_request(struct mmc *mmc, struct mmc_cmd *cmd,
 				buf32++;
 			}
 
+			if (dangling_bytes) {
+				count = 0;
+				memcpy(&count, buf32, dangling_bytes);
+				writel(count, &host->reg->fifodata);
+			}
+
 			host->num_bytes_written =
-				num_of_dwords * FIFO_WIDTH_BYTES;
+				(num_of_dwords * FIFO_WIDTH_BYTES)
+					+ dangling_bytes;
 		}
 	}
 
