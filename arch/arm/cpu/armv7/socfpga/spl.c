@@ -195,7 +195,9 @@ void spl_board_init(void)
 	 * to ensure no glitch happen during PLL re-configuration
 	 */
 	reset_assert_all_peripherals_except_l4wd0();
+#if (CONFIG_PRELOADER_EXE_ON_FPGA == 0)
 	reset_assert_all_bridges();
+#endif
 
 	DEBUG_MEMORY
 #ifdef CONFIG_SPL_SERIAL_SUPPORT
@@ -308,8 +310,14 @@ void spl_board_init(void)
 	debug("Deasserting resets\n");
 #endif
 	/* de-assert reset for peripherals and bridges based on handoff */
+#ifndef CONFIG_SOCFPGA_VIRTUAL_TARGET
 	reset_deassert_peripherals_handoff();
+#else
+	reset_deassert_all_peripherals();
+#endif
+#if (CONFIG_PRELOADER_EXE_ON_FPGA == 0)
 	reset_deassert_bridges_handoff();
+#endif
 
 
 #ifndef CONFIG_SOCFPGA_VIRTUAL_TARGET

@@ -37,7 +37,7 @@ SECTIONS
 
 	. = ALIGN(4);
 	__data_start = .;
-	.data : AT (__data_start) { *(SORT_BY_ALIGNMENT(.data*)) } >.sram
+	.data : AT (__data_start) { *(SORT_BY_ALIGNMENT(.data*)) } >.fpga
 
 	. = ALIGN(4);
 	__image_copy_end = .;
