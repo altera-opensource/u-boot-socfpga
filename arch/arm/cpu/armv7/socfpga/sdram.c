@@ -51,10 +51,13 @@ void irq_handler_ecc_sdram(void *arg)
 #ifndef CONFIG_SPL_BUILD
 	setenv_ulong("ECC_SDRAM",irq_cnt_ecc_sdram);
 #ifndef CONFIG_SOCFPGA_VIRTUAL_TARGET
-	setenv_ulong("ECC_SDRAM",
+	setenv_ulong("ECC_SDRAM_SBE",
 		readl(SOCFPGA_SDR_ADDRESS+SDR_CTRLGRP_SBECOUNT_ADDRESS));
-	setenv_ulong("ECC_SDRAM",
+	setenv_ulong("ECC_SDRAM_DBE",
 		readl(SOCFPGA_SDR_ADDRESS+SDR_CTRLGRP_DBECOUNT_ADDRESS));
+	/* clear the interrupt signal from SDRAM controller */
+	setbits_le32((SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_DRAMINTR_ADDRESS),
+		SDR_CTRLGRP_DRAMINTR_INTRCLR_MASK);
 #endif /* CONFIG_SOCFPGA_VIRTUAL_TARGET */
 #endif /* CONFIG_SPL_BUILD */
 }

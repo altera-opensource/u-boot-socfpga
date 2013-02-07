@@ -29,11 +29,6 @@ SECTIONS
 		*(.text*)
 	} >.sram
 
-	__text_end = .;
-	. = ALIGN(0x1000) + 0x1000;
-	__ecc_padding_end = .;
-	. = __text_end;
-
 	. = ALIGN(4);
 	.rodata : { *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*))) } >.sram
 
@@ -76,4 +71,5 @@ SECTIONS
 		__irq_stack_start = .;
 	} >.sram
 #endif
+	__ecc_padding_end = .;
 }

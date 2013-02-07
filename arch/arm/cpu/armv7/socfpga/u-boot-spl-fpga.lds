@@ -42,6 +42,7 @@ SECTIONS
 	. = ALIGN(4);
 	__image_copy_end = .;
 	_end = .;
+	__ecc_padding_start = .;
 
 	.bss : {
 		. = ALIGN(4);
@@ -77,4 +78,5 @@ SECTIONS
 	} >.sram
 #endif
 
+	__ecc_padding_end = .;
 }

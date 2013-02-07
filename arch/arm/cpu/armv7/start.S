@@ -437,14 +437,14 @@ ENDPROC(cpu_init_crit)
 	.macro	irq_save_user_regs
 	sub	sp, sp, #S_FRAME_SIZE
 	stmia	sp, {r0 - r12}			@ Calling r0-r12
-	add	r8, sp, #S_PC			@ !! R8 NEEDS to be saved !!
+	add	r5, sp, #S_PC			@ !! R8 NEEDS to be saved !!
 						@ a reserved stack spot would
 						@ be good.
-	stmdb	r8, {sp, lr}^			@ Calling SP, LR
-	str	lr, [r8, #0]			@ Save calling PC
+	stmdb	r5, {sp, lr}^			@ Calling SP, LR
+	str	lr, [r5, #0]			@ Save calling PC
 	mrs	r6, spsr
-	str	r6, [r8, #4]			@ Save CPSR
-	str	r0, [r8, #8]			@ Save OLD_R0
+	str	r6, [r5, #4]			@ Save CPSR
+	str	r0, [r5, #8]			@ Save OLD_R0
 	mov	r0, sp
 	.endm
 

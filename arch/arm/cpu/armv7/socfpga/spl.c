@@ -386,7 +386,7 @@ void spl_board_init(void)
 		CONFIG_STACKSIZE_IRQ);
 #endif
 	/* setup the stack pointer for IRQ */
-	gd->irq_sp = __irq_stack_start;
+	gd->irq_sp = (unsigned long)&__irq_stack_start;
 	DEBUG_MEMORY
 	/* set up exceptions */
 	interrupt_init();

@@ -22,6 +22,7 @@
 #include <asm/arch/reset_manager.h>
 #include <spl.h>
 #include <asm/spl.h>
+#include <asm/arch/system_manager.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -31,6 +32,18 @@ DECLARE_GLOBAL_DATA_PTR;
 void s_init(void)
 {
 #ifdef CONFIG_SPL_BUILD
+	unsigned long reg;
+	/*
+	 * First C code to run. Clear fake OCRAM ECC first as SBE
+	 * and DBE might triggered during power on
+	 */
+	reg = readl(CONFIG_SYSMGR_ECC_OCRAM);
+	if (reg & SYSMGR_ECC_OCRAM_SERR)
+		writel(SYSMGR_ECC_OCRAM_SERR | SYSMGR_ECC_OCRAM_EN,
+			CONFIG_SYSMGR_ECC_OCRAM);
+	if (reg & SYSMGR_ECC_OCRAM_DERR)
+		writel(SYSMGR_ECC_OCRAM_DERR  | SYSMGR_ECC_OCRAM_EN,
+			CONFIG_SYSMGR_ECC_OCRAM);
 	/*
 	 * SPL : configure the remap (L3 NIC-301 GPV) so the on-chip RAM at
 	 * lower memory instead ROM. Also enable HPS2FPGA and LWHPS2FPGA
@@ -72,13 +85,11 @@ void s_init(void)
 #endif /* CONFIG_HW_WATCHDOG */
 
 	DEBUG_MEMORY
-#if (CONFIG_PRELOADER_EXE_ON_FPGA == 1)
 	/* Memory initialization for ECC padding*/
-	if(__ecc_padding_start < __ecc_padding_end) {
-		memset(__ecc_padding_start, 0,
-			__ecc_padding_end - __ecc_padding_start);
+	if (&__ecc_padding_start < &__ecc_padding_end) {
+		memset(&__ecc_padding_start, 0,
+			&__ecc_padding_end - &__ecc_padding_start);
 	}
-#endif
 
 #else
 	/*

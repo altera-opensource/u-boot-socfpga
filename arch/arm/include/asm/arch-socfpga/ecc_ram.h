@@ -18,8 +18,8 @@
 #ifndef	_ECC_RAM_H_
 #define	_ECC_RAM_H_
 
-#define IRQ_ECC_OCRAM_CORRECTED		178
-#define IRQ_ECC_OCRAM_UNCORRECTED	179
+#define IRQ_ECC_OCRAM_CORRECTED		210
+#define IRQ_ECC_OCRAM_UNCORRECTED	211
 
 extern unsigned long irq_cnt_ecc_ocram_corrected;
 extern unsigned long irq_cnt_ecc_ocram_uncorrected;

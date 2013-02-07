@@ -29,18 +29,20 @@ unsigned long irq_cnt_ecc_ocram_uncorrected;
 void irq_handler_ecc_ocram_corrected(void *arg)
 {
 	DEBUG_MEMORY
-	debug("IRQ triggered: Corrected OCRAM ECC\n");
+	puts("IRQ triggered: Corrected OCRAM ECC\n");
 	irq_cnt_ecc_ocram_corrected++;
 	/* write 1 to clear the ECC */
-	writel(SYSMGR_ECC_OCRAM_SERR,CONFIG_SYSMGR_ECC_OCRAM);
+	writel(SYSMGR_ECC_OCRAM_SERR | SYSMGR_ECC_OCRAM_EN,
+		CONFIG_SYSMGR_ECC_OCRAM);
 }
 
 void irq_handler_ecc_ocram_uncorrected(void *arg)
 {
 	DEBUG_MEMORY
 	irq_cnt_ecc_ocram_uncorrected++;
-	debug("IRQ triggered: Un-corrected OCRAM ECC\n");
+	puts("IRQ triggered: Un-corrected OCRAM ECC\n");
 	/* write 1 to clear the ECC */
-	writel(SYSMGR_ECC_OCRAM_DERR,CONFIG_SYSMGR_ECC_OCRAM);
+	writel(SYSMGR_ECC_OCRAM_DERR  | SYSMGR_ECC_OCRAM_EN,
+		CONFIG_SYSMGR_ECC_OCRAM);
 	hang();
 }
