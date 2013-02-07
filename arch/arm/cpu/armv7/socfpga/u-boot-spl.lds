@@ -61,6 +61,10 @@ SECTIONS
 		. = . + CONFIG_SPL_STACK_SIZE;
 		. = ALIGN(8);
 		__stack_start = .;
+#ifndef CONFIG_USE_IRQ
+		. = . + 0x8;
+		__ecc_padding_end = .;
+#endif
 	} >.sram
 
 #ifdef CONFIG_USE_IRQ
@@ -69,7 +73,8 @@ SECTIONS
 		. = . + CONFIG_STACKSIZE_IRQ;
 		. = ALIGN(8);
 		__irq_stack_start = .;
+		. = . + 0x8;
+		__ecc_padding_end = .;
 	} >.sram
 #endif
-	__ecc_padding_end = .;
 }
