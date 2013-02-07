@@ -44,7 +44,7 @@ struct dw_host socfpga_dw_mmc_host = {
 	.need_init_cmd = 1,
 	.clock_in = CONFIG_HPS_CLK_SDMMC_HZ / 4,
 	.reg = (struct dw_registers *)CONFIG_SDMMC_BASE,
-#ifdef __CONFIG_SOCFPGA_VTDEV5XS1_H_
+#ifdef CONFIG_SOCFPGA_VIRTUAL_TARGET
 	.set_timing = NULL,
 	.use_hold_reg = NULL,
 #else
@@ -232,7 +232,7 @@ int board_late_init(void)
 {
 	/* create event for tracking ECC count */
 	setenv_ulong("ECC_SDRAM", 0);
-#ifndef __CONFIG_SOCFPGA_VTDEV5XS1_H_
+#ifndef CONFIG_SOCFPGA_VIRTUAL_TARGET
 	setenv_ulong("ECC_SDRAM_SBE", 0);
 	setenv_ulong("ECC_SDRAM_DBE", 0);
 #endif

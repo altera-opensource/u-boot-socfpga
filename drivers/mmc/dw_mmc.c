@@ -624,7 +624,7 @@ static int dw_host_init(struct mmc *mmc)
 
 	/* default set to 1-bit mode */
 	writel(0x000000, &host->reg->ctype);
-#if 0
+#ifdef CONFIG_SOCFPGA_VIRTUAL_TARGET
 	dw_mmc_clear_bits(&host->reg->pwren, 1);
 	udelay(10);
 	writel(1, &host->reg->pwren);

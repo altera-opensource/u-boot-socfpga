@@ -49,4 +49,8 @@
 	DEBUG_MEMORY
 #endif
 
+#ifdef CONFIG_SPL_SERIAL_SUPPORT
+#define HPS_HW_SERIAL_SUPPORT
+#endif
+
 #endif /* _SDRAM_PHY_H_ */
