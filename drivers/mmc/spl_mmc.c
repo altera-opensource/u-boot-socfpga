@@ -75,6 +75,7 @@ static void mmc_load_image_mbr(struct mmc *mmc)
 #define MBR_PARTITION_TYPE_OFFSET		(4)
 #define MBR_PARTITION_START_SECTOR_OFFSET	(8)
 #define MBR_PARTITION_ENTRY_SIZE		(16)
+#define CONFIG_SYS_MMCSD_MBR_MODE_U_BOOT_PARTITION_ID	(0xA2)
 
 	u32 i;
 	u32 part_type;

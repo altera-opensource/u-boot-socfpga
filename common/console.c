@@ -410,10 +410,12 @@ void puts(const char *s)
 		fputs(stdout, s);
 	} else {
 		/* Send directly to the handler */
-#ifdef CONFIG_SPL_SEMIHOSTING_SUPPORT
 		if (gd->have_console)
-#endif
+#if !defined(CONFIG_SPL_BUILD) | defined(CONFIG_SPL_SERIAL_SUPPORT)
 			serial_puts(s);
+#else
+			;	/* no printout */
+#endif
 #ifdef CONFIG_SPL_SEMIHOSTING_SUPPORT
 		semihosting_write(s);
 #endif

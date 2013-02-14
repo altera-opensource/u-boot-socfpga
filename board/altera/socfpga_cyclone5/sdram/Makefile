@@ -26,9 +26,10 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)libsocfpga-sdram.o
 
-COBJS	:= sequencer.o tclrpt.o
-COBJS	+= sequencer_auto_ac_init.o sequencer_auto_inst_init.o
+COBJS-$(CONFIG_SPL_BUILD):= sequencer.o tclrpt.o
+COBJS-$(CONFIG_SPL_BUILD)+= sequencer_auto_ac_init.o sequencer_auto_inst_init.o
 
+COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
 

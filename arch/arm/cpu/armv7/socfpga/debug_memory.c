@@ -151,28 +151,7 @@ int svc(unsigned operation, void *value)
 /* perform a write to console buffer */
 int semihosting_write(const char *buffer)
 {
-#if 0
-	struct struct_semihosting_write s_semihosting_write;
-
-	/* open the write channel */
-	if(semihosting_write_handler==0)
-	{
-		struct struct_semihosting_open s_semihosting_open;
-		char *handle=":tt";
-		s_semihosting_open.file = handle;
-		s_semihosting_open.permissions = 0;	/* "r" mode */
-		s_semihosting_open.length = 3;
-		semihosting_write_handler = svc(0x1,&s_semihosting_open);
-	}
-
-	/* write to console buffer */
-	s_semihosting_write.handle = semihosting_write_handler;
-	s_semihosting_write.buffer = (char *)buffer;
-	s_semihosting_write.length = SEMI_LENGTH;
-	return svc(0x5, &s_semihosting_write);
-#else
 	return svc(SEMI_PRINTF, (void *)buffer);
-#endif
 }
 
 #endif

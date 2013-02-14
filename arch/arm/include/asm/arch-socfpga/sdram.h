@@ -29,9 +29,10 @@ extern unsigned long irq_cnt_ecc_sdram;
 
 /* function declaration */
 void irq_handler_ecc_sdram(void *arg);
+#ifdef CONFIG_SPL_BUILD
 unsigned sdram_mmr_init_full(void);
 unsigned sdram_calibration_full(void);
-
+#endif
 
 /* Group: sdr.phygrp.sccgrp                                                */
 #define SDR_PHYGRP_SCCGRP_ADDRESS 0x0

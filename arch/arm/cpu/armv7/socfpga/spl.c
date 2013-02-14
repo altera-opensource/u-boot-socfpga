@@ -168,9 +168,7 @@ void spl_board_init(void)
 	WATCHDOG_RESET();
 #endif
 	DEBUG_MEMORY
-#ifdef CONFIG_SPL_SERIAL_SUPPORT
 	debug("Freezing all I/O banks\n");
-#endif
 	/* freeze all IO banks */
 	sys_mgr_frzctrl_freeze_req(FREEZE_CHANNEL_0,
 		FREEZE_CONTROLLER_FSM_SW);
@@ -187,9 +185,7 @@ void spl_board_init(void)
 	WATCHDOG_RESET();
 #endif
 	DEBUG_MEMORY
-#ifdef CONFIG_SPL_SERIAL_SUPPORT
 	debug("Asserting reset to all except L4WD and SDRAM\n");
-#endif
 	/*
 	 * assert all peripherals and bridges to reset. This is
 	 * to ensure no glitch happen during PLL re-configuration
@@ -200,9 +196,7 @@ void spl_board_init(void)
 #endif
 
 	DEBUG_MEMORY
-#ifdef CONFIG_SPL_SERIAL_SUPPORT
 	debug("Deassert reset for OSC1 Timer\n");
-#endif
 	/*
 	 * deassert reset for osc1timer0. We need this for delay
 	 * function that required during PLL re-configuration
@@ -210,9 +204,7 @@ void spl_board_init(void)
 	reset_deassert_osc1timer0();
 
 	DEBUG_MEMORY
-#ifdef CONFIG_SPL_SERIAL_SUPPORT
 	debug("Init timer\n");
-#endif
 	/* init timer for enabling delay function */
 	timer_init();
 
@@ -222,9 +214,7 @@ void spl_board_init(void)
 	WATCHDOG_RESET();
 #endif
 	DEBUG_MEMORY
-#ifdef CONFIG_SPL_SERIAL_SUPPORT
 	debug("Reconfigure Clock Manager\n");
-#endif
 	/* reconfigure the PLLs */
 	cm_basic_init(&cm_default_cfg);
 
@@ -243,9 +233,7 @@ void spl_board_init(void)
 		setbits_le32(CONFIG_SYSMGR_ROMCODEGRP_CTRL,
 			SYSMGR_ROMCODEGRP_CTRL_WARMRSTCFGIO);
 #endif /* CONFIG_PRELOADER_BOOTROM_HANDSHAKE_CFGIO */
-#ifdef CONFIG_SPL_SERIAL_SUPPORT
 		debug("Configure IOCSR\n");
-#endif
 		/* configure the IOCSR through scan chain */
 		scan_mgr_io_scan_chain_prg(
 			IO_SCAN_CHAIN_0,
@@ -306,9 +294,7 @@ void spl_board_init(void)
 	WATCHDOG_RESET();
 #endif
 	DEBUG_MEMORY
-#ifdef CONFIG_SPL_SERIAL_SUPPORT
 	debug("Deasserting resets\n");
-#endif
 	/* de-assert reset for peripherals and bridges based on handoff */
 #ifndef CONFIG_SOCFPGA_VIRTUAL_TARGET
 	reset_deassert_peripherals_handoff();
@@ -325,9 +311,7 @@ void spl_board_init(void)
 	WATCHDOG_RESET();
 #endif
 	DEBUG_MEMORY
-#ifdef CONFIG_SPL_SERIAL_SUPPORT
 	debug("Unfreezing/Thaw all I/O banks\n");
-#endif
 	/* unfreeze / thaw all IO banks */
 	sys_mgr_frzctrl_thaw_req(FREEZE_CHANNEL_0,
 		FREEZE_CONTROLLER_FSM_SW);
@@ -359,9 +343,7 @@ void spl_board_init(void)
 	WATCHDOG_RESET();
 #endif
 	DEBUG_MEMORY
-#ifdef CONFIG_SPL_SERIAL_SUPPORT
 	puts("SDRAM : Initializing MMR registers\n");
-#endif
 	/* SDRAM MMR initialization */
 	if (sdram_mmr_init_full() != 0)
 		hang();
@@ -370,9 +352,7 @@ void spl_board_init(void)
 	WATCHDOG_RESET();
 #endif
 	DEBUG_MEMORY
-#ifdef CONFIG_SPL_SERIAL_SUPPORT
 	puts("SDRAM : Calibrationg PHY\n");
-#endif
 	/* SDRAM calibration */
 	if (sdram_calibration_full() == 0)
 		hang();
@@ -388,11 +368,9 @@ void spl_board_init(void)
 
 
 #ifdef CONFIG_USE_IRQ
-#ifdef CONFIG_SPL_SERIAL_SUPPORT
 	debug("Setup interrupt controller... IRQ SP at 0x%08x "
 		"with size 0x%08x\n", __irq_stack_start,
 		CONFIG_STACKSIZE_IRQ);
-#endif
 	/* setup the stack pointer for IRQ */
 	gd->irq_sp = (unsigned long)&__irq_stack_start;
 	DEBUG_MEMORY

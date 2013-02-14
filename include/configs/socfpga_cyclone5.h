@@ -147,6 +147,10 @@
 #undef CONFIG_PARTITIONS
 #endif
 
+/* OSE operating system support */
+#define CONFIG_BOOTM_OSE
+
+
 /*
  * Environment setup
  */
@@ -547,7 +551,6 @@
 #define CONFIG_SPL_MMC_SUPPORT
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR \
 	(CONFIG_PRELOADER_SDMMC_NEXT_BOOT_IMAGE / 512)
-#define CONFIG_SYS_MMCSD_MBR_MODE_U_BOOT_PARTITION_ID	(0xA2)
 #endif
 
 /*

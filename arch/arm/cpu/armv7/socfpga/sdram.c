@@ -62,6 +62,9 @@ void irq_handler_ecc_sdram(void *arg)
 #endif /* CONFIG_SPL_BUILD */
 }
 
+
+#ifdef CONFIG_SPL_BUILD
+
 /* Function to update the field within variable */
 unsigned sdram_write_register_field (unsigned masked_value,
 	unsigned data, unsigned shift, unsigned mask)
@@ -1014,4 +1017,6 @@ unsigned sdram_calibration_full(void)
 {
 	return sdram_calibration();
 }
+
+#endif	/* CONFIG_SPL_BUILD */
 
