@@ -151,8 +151,13 @@ static int dw_eth_init(struct eth_device *dev, bd_t *bis)
 	struct eth_dma_regs *dma_p = priv->dma_regs_p;
 	u32 conf;
 
-	if (priv->phy_configured != 1)
-		configure_phy(dev);
+	if (priv->phy_configured != 1) {
+		int ret = configure_phy(dev);
+		if (ret < 0) {
+			printf("failed to configure phy: %d\n", ret);
+			return ret;
+		}
+	}
 
 	/* Print link status only once */
 	if (!priv->link_printed) {
@@ -353,6 +358,7 @@ static int find_phy(struct eth_device *dev)
 	u16 ctrl, oldctrl;
 
 	do {
+		debug("trying phy addr %d\n", phy_addr);
 		eth_mdio_read(dev, phy_addr, MII_BMCR, &ctrl);
 		oldctrl = ctrl & BMCR_ANENABLE;
 
@@ -366,7 +372,7 @@ static int find_phy(struct eth_device *dev)
 		} else {
 			ctrl ^= BMCR_ANENABLE;
 			eth_mdio_write(dev, phy_addr, MII_BMCR, ctrl);
-
+			debug("found phy addr %d\n", phy_addr);
 			return phy_addr;
 		}
 	} while (phy_addr < 32);
@@ -395,8 +401,10 @@ static int dw_reset_phy(struct eth_device *dev)
 		udelay(10);
 	};
 
-	if (get_timer(start) >= CONFIG_PHYRESET_TIMEOUT)
+	if (get_timer(start) >= CONFIG_PHYRESET_TIMEOUT) {
+		printf("timed out waiting for phy reset %x\n", ctrl);
 		return -1;
+	}
 
 #ifdef CONFIG_PHY_RESET_DELAY
 	udelay(CONFIG_PHY_RESET_DELAY);
@@ -409,8 +417,11 @@ static int dw_reset_phy(struct eth_device *dev)
  */
 int __weak designware_board_phy_init(struct eth_device *dev, int phy_addr,
 		int (*mii_write)(struct eth_device *, u8, u8, u16),
-		int dw_reset_phy(struct eth_device *))
+		int (*dw_reset_phy)(struct eth_device *))
 {
+	if (dw_reset_phy(dev) < 0)
+		return -1;
+
 	return 0;
 }
 
@@ -429,8 +440,10 @@ static int configure_phy(struct eth_device *dev)
 	phy_addr = find_phy(dev);
 	if (phy_addr >= 0)
 		priv->address = phy_addr;
-	else
+	else {
+		puts("failed to find phy\n");
 		return -1;
+	}
 #else
 	phy_addr = priv->address;
 #endif
@@ -442,9 +455,6 @@ static int configure_phy(struct eth_device *dev)
 	 */
 	if (designware_board_phy_init(dev, phy_addr,
 				      eth_mdio_write, dw_reset_phy) < 0)
-		return -1;
-
-	if (dw_reset_phy(dev) < 0)
 		return -1;
 
 #if defined(CONFIG_DW_AUTONEG)
@@ -493,9 +503,10 @@ static int configure_phy(struct eth_device *dev)
 	priv->phy_configured = 1;
 #endif
 
+#if defined(CONFIG_MII)
 	priv->speed = miiphy_speed(dev->name, phy_addr);
 	priv->duplex = miiphy_duplex(dev->name, phy_addr);
-
+#endif
 	return 0;
 }
 

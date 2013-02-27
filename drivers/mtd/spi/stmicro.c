@@ -36,6 +36,27 @@
 /* M25Pxx-specific commands */
 #define CMD_M25PXX_RES		0xab	/* Release from DP, and Read Signature */
 
+/* Read flag status register */
+#define CMD_READ_FLAG_STATUS		0x70
+#define FLAG_STATUS_READY		0x80
+
+/* Read volatile configuration register */
+#define CMD_N25QXX_RVCR		0x85
+
+/* Write volatile configuration register */
+#define CMD_N25QXX_WVCR		0x81
+
+/* Enter 4-byte address mode */
+#define CMD_N25QXX_EN4B		0xB7
+
+/* Exit 4-byte address mode */
+#define CMD_N25QXX_EX4B		0xE9
+
+#define VCR_XIP_SHIFT			(0x03)
+#define VCR_XIP_MASK			(0x08)
+#define VCR_DUMMY_CLK_CYCLES_SHIFT	(0x04)
+#define VCR_DUMMY_CLK_CYCLES_MASK	(0xF0)
+
 struct stmicro_spi_flash_params {
 	u16 id;
 	u16 pages_per_sector;
@@ -92,6 +113,32 @@ static const struct stmicro_spi_flash_params stmicro_spi_flash_table[] = {
 		.nr_sectors = 64,
 		.name = "M25P128",
 	},
+
+	/* Numonyx */
+	{
+		.id = 0xba16,
+		.pages_per_sector = 256,
+		.nr_sectors = 64,
+		.name = "N25Q32",
+	},
+	{
+		.id = 0xbb16,
+		.pages_per_sector = 256,
+		.nr_sectors = 64,
+		.name = "N25Q32A",
+	},
+	{
+		.id = 0xba17,
+		.pages_per_sector = 256,
+		.nr_sectors = 128,
+		.name = "N25Q64",
+	},
+	{
+		.id = 0xba17,
+		.pages_per_sector = 256,
+		.nr_sectors = 128,
+		.name = "N25Q64A",
+	},
 	{
 		.id = 0xba18,
 		.pages_per_sector = 256,
@@ -110,7 +157,93 @@ static const struct stmicro_spi_flash_params stmicro_spi_flash_table[] = {
 		.nr_sectors = 512,
 		.name = "N25Q256",
 	},
+	{
+		.id = 0xbb19,
+		.pages_per_sector = 256,
+		.nr_sectors = 512,
+		.name = "N25Q256A",
+	},
+	{
+		.id = 0xba21,
+		.pages_per_sector = 256,
+		.nr_sectors = 2048,
+		.name = "N25Q00",
+	},
+	{
+		.id = 0xbb21,
+		.pages_per_sector = 256,
+		.nr_sectors = 2048,
+		.name = "N25Q00A",
+	},
 };
+
+static int stmicro_set_vcr(struct spi_flash *flash, u8 clk_cycles, u8 xip)
+{
+	u8 cmd;
+	u8 resp;
+	int ret;
+
+	ret = spi_flash_cmd_write_enable(flash);
+	if (ret < 0) {
+		debug("SF: enabling write failed\n");
+		return ret;
+	}
+
+	ret = spi_flash_cmd(flash->spi, CMD_N25QXX_RVCR, (void *) &resp,
+		sizeof(resp));
+	if (ret < 0) {
+		debug("SF: read volatile config register failed.\n");
+		return ret;
+	}
+
+	resp &= ~VCR_DUMMY_CLK_CYCLES_MASK;
+	resp |=  (clk_cycles << VCR_DUMMY_CLK_CYCLES_SHIFT) &
+			VCR_DUMMY_CLK_CYCLES_MASK;
+
+	if (xip)
+		resp |= VCR_XIP_MASK;
+	else
+		resp &= ~VCR_XIP_MASK;
+
+	cmd = CMD_N25QXX_WVCR;
+	ret = spi_flash_cmd_write(flash->spi, &cmd, sizeof(cmd), &resp,
+		sizeof(resp));
+	if (ret) {
+		debug("SF: fail to write vcr register\n");
+		return ret;
+	}
+
+	return 0;
+}
+
+static int stmicro_set_4byte(struct spi_flash *flash, u8 enable)
+{
+	u8 cmd;
+	int ret;
+
+	ret = spi_flash_cmd_write_enable(flash);
+	if (ret < 0) {
+		debug("SF: enabling write failed\n");
+		return ret;
+	}
+
+	cmd = enable ? CMD_N25QXX_EN4B : CMD_N25QXX_EX4B;
+
+	ret = spi_flash_cmd_write(flash->spi, &cmd, sizeof(cmd), NULL, 0);
+	if (ret) {
+		debug("SF: fail to %s 4-byte address mode\n",
+			enable ? "enter" : "exit");
+		return ret;
+	}
+
+	return 0;
+}
+
+int stmicro_wait_flag_status_ready(struct spi_flash *flash)
+{
+	return spi_flash_cmd_poll_bit(flash, SPI_FLASH_PAGE_ERASE_TIMEOUT,
+		CMD_READ_FLAG_STATUS, FLAG_STATUS_READY, 1);
+}
 
 struct spi_flash *spi_flash_probe_stmicro(struct spi_slave *spi, u8 * idcode)
 {
@@ -161,6 +294,22 @@ struct spi_flash *spi_flash_probe_stmicro(struct spi_slave *spi, u8 * idcode)
 	flash->page_size = 256;
 	flash->sector_size = 256 * params->pages_per_sector;
 	flash->size = flash->sector_size * params->nr_sectors;
+
+	/* Flash 1GBit needs to poll flag status register after erase and
+	 * write. */
+	if (id == 0xba21 || id == 0xbb21)
+		flash->poll_read_status = stmicro_wait_flag_status_ready;
+
+	/*
+	 * Numonyx flash have default 15 dummy clocks. Set dummy clocks to 8
+	 * and XIP off.
+	 */
+	if (((id & 0xFF00) == 0xBA00) || ((id & 0xFF00) == 0xBB00))
+		stmicro_set_vcr(flash, 8, 0);
+
+	/* Enter 4-byte address mode if the device is exceed 16MiB. */
+	if (flash->size > 0x1000000)
+		stmicro_set_4byte(flash, 1);
 
 	return flash;
 }

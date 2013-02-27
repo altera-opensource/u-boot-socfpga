@@ -33,7 +33,9 @@
 #define CONFIG_MACRESET_TIMEOUT	(3 * CONFIG_SYS_HZ)
 #define CONFIG_MDIO_TIMEOUT	(3 * CONFIG_SYS_HZ)
 #define CONFIG_PHYRESET_TIMEOUT	(3 * CONFIG_SYS_HZ)
+#ifndef CONFIG_AUTONEG_TIMEOUT
 #define CONFIG_AUTONEG_TIMEOUT	(5 * CONFIG_SYS_HZ)
+#endif
 
 struct eth_mac_regs {
 	u32 conf;		/* 0x00 */
@@ -264,4 +266,7 @@ struct dw_eth_dev {
 #define HALF_DUPLEX		1
 #define FULL_DUPLEX		2
 
+extern int designware_board_phy_init(struct eth_device *dev, int phy_addr,
+		int (*mii_write)(struct eth_device *, u8, u8, u16),
+		int (*dw_reset_phy)(struct eth_device *));
 #endif

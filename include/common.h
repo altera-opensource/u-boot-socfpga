@@ -704,6 +704,8 @@ void	irq_install_handler(int, interrupt_handler_t *, void *);
 void	irq_free_handler   (int);
 void	reset_timer	   (void);
 ulong	get_timer	   (ulong base);
+void	reset_timer_count(void);
+ulong	get_timer_count(ulong base);
 void	enable_interrupts  (void);
 int	disable_interrupts (void);
 

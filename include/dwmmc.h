@@ -1,4 +1,6 @@
 /*
+ * Copyright (C) 2013 Altera Corporation <www.altera.com>
+ *
  * (C) Copyright 2012 SAMSUNG Electronics
  * Jaehoon Chung <jh80.chung@samsung.com>
  *
@@ -123,6 +125,7 @@
 #define MSIZE(x)		((x) << 28)
 #define RX_WMARK(x)		((x) << 16)
 #define TX_WMARK(x)		(x)
+#define FIFO_DEPTH(x)		((((x) >> 16) & 0x3ff) + 1)
 
 #define DWMCI_IDMAC_OWN		(1 << 31)
 #define DWMCI_IDMAC_CH		(1 << 4)

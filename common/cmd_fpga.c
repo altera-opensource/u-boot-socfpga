@@ -155,6 +155,7 @@ int do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 	void *fpga_data = NULL;
 	char *devstr = getenv ("fpga");
 	char *datastr = getenv ("fpgadata");
+	char *devsizestr = getenv("fpgadatasize");
 	int rc = FPGA_FAIL;
 	int wrong_parms = 0;
 #if defined (CONFIG_FIT)
@@ -166,6 +167,8 @@ int do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 		dev = (int) simple_strtoul (devstr, NULL, 16);
 	if (datastr)
 		fpga_data = (void *) simple_strtoul (datastr, NULL, 16);
+	if (devsizestr)
+		data_size = (size_t) simple_strtoul(devsizestr, NULL, 16);
 
 	switch (argc) {
 	case 5:		/* fpga <op> <dev> <data> <datasize> */

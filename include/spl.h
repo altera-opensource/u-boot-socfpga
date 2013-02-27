@@ -31,6 +31,7 @@
 #define MMCSD_MODE_UNDEFINED	0
 #define MMCSD_MODE_RAW		1
 #define MMCSD_MODE_FAT		2
+#define MMCSD_MODE_MBR		3
 
 struct spl_image_info {
 	const char *name;
@@ -39,6 +40,8 @@ struct spl_image_info {
 	u32 entry_point;
 	u32 size;
 	u32 flags;
+	u32 crc;
+	u32 crc_size;
 };
 
 #define SPL_COPY_PAYLOAD_ONLY	1

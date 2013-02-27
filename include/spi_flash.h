@@ -45,6 +45,7 @@ struct spi_flash {
 				size_t len, const void *buf);
 	int		(*erase)(struct spi_flash *flash, u32 offset,
 				size_t len);
+	int		(*poll_read_status)(struct spi_flash *flash);
 };
 
 struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,

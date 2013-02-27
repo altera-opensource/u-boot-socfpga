@@ -1,4 +1,6 @@
 /*
+ * Copyright (C) 2013 Altera Corporation <www.altera.com>
+ *
  * (C) Copyright 2012 SAMSUNG Electronics
  * Jaehoon Chung <jh80.chung@samsung.com>
  * Rajeshawari Shinde <rajeshwari.s@samsung.com>
@@ -23,7 +25,6 @@
 #include <malloc.h>
 #include <mmc.h>
 #include <dwmmc.h>
-#include <asm/arch/clk.h>
 #include <asm-generic/errno.h>
 
 #define PAGE_SIZE 4096
@@ -257,6 +258,10 @@ static int dwmci_setup_bus(struct dwmci_host *host, u32 freq)
 	dwmci_writel(host, DWMCI_CMD, DWMCI_CMD_PRV_DAT_WAIT |
 			DWMCI_CMD_UPD_CLK | DWMCI_CMD_START);
 
+	/* phase shift is advised to be done during clock disable */
+	if (host->clksel)
+		host->clksel(host);
+
 	do {
 		status = dwmci_readl(host, DWMCI_CMD);
 		if (timeout-- < 0) {
@@ -306,9 +311,6 @@ static void dwmci_set_ios(struct mmc *mmc)
 	}
 
 	dwmci_writel(host, DWMCI_CTYPE, ctype);
-
-	if (host->clksel)
-		host->clksel(host);
 }
 
 static int dwmci_init(struct mmc *mmc)
@@ -332,6 +334,8 @@ static int dwmci_init(struct mmc *mmc)
 	dwmci_writel(host, DWMCI_BMOD, 1);
 
 	fifo_size = dwmci_readl(host, DWMCI_FIFOTH);
+	/* fifo depth was defined under rx_wmark field */
+	fifo_size = FIFO_DEPTH(fifo_size);
 	if (host->fifoth_val)
 		fifoth_val = host->fifoth_val;
 	else

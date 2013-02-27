@@ -32,6 +32,8 @@
 #include <image.h>
 #include <malloc.h>
 #include <linux/compiler.h>
+#include <asm/io.h>
+#include <watchdog.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -108,6 +110,8 @@ void spl_parse_image_header(const struct image_header *header)
 		}
 		spl_image.os = image_get_os(header);
 		spl_image.name = image_get_name(header);
+		spl_image.crc = image_get_dcrc(header);
+		spl_image.crc_size = image_get_data_size(header);
 		debug("spl: payload image: %s load addr: 0x%x size: %d\n",
 			spl_image.name, spl_image.load_addr, spl_image.size);
 	} else {
@@ -120,6 +124,7 @@ void spl_parse_image_header(const struct image_header *header)
 		spl_image.load_addr = CONFIG_SYS_TEXT_BASE;
 		spl_image.os = IH_OS_U_BOOT;
 		spl_image.name = "U-Boot";
+		spl_image.crc_size = 0;
 	}
 }
 
@@ -129,11 +134,43 @@ __weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 	image_entry_noargs_t image_entry =
 			(image_entry_noargs_t) spl_image->entry_point;
 
+#ifdef CONFIG_HW_WATCHDOG
+	WATCHDOG_RESET();
+#endif
+#ifdef CONFIG_SPL_CHECKSUM_NEXT_IMAGE
+	u32 calculated_crc;
+	if (spl_image->crc_size != 0) {
+		debug("Verifying Checksum ... ");
+		calculated_crc = crc32_wd(0,
+			(unsigned char *)spl_image->entry_point,
+			spl_image->crc_size, CHUNKSZ_CRC32);
+		if (calculated_crc != spl_image->crc) {
+			puts("Bad image with mismatched CRC\n");
+			debug("CRC calculate from 0x%08x "
+				"with length 0x%08x\n",
+				spl_image->entry_point, spl_image->size);
+			debug("CRC Result : Expected 0x%08x "
+				"Calculated 0x%08x\n",
+				spl_image->crc, calculated_crc);
+			hang();
+		} else
+			debug("OK\n");
+	}
+#endif
+
 	debug("image entry point: 0x%X\n", spl_image->entry_point);
 	/* Pass the saved boot_params from rom code */
 #if defined(CONFIG_VIRTIO) || defined(CONFIG_ZEBU)
 	image_entry = (image_entry_noargs_t)0x80100000;
 #endif
+#if defined(CONFIG_SOCFPGA) && (CONFIG_PRELOADER_STATE_REG_ENABLE == 1)
+	/* to indicate a successful run */
+	writel(CONFIG_PRELOADER_STATE_VALID, CONFIG_PRELOADER_STATE_REG);
+#endif
+#ifdef CONFIG_HW_WATCHDOG
+	WATCHDOG_RESET();
+#endif
+
 	u32 boot_params_ptr_addr = (u32)&boot_params_ptr;
 	image_entry((u32 *)boot_params_ptr_addr);
 }

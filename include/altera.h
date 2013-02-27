@@ -1,4 +1,7 @@
 /*
+ * (C) Copyright 2013
+ * Altera Corporation <www.altera.com>
+ *
  * (C) Copyright 2002
  * Rich Ireland, Enterasys Networks, rireland@enterasys.com.
  *
@@ -61,6 +64,7 @@ typedef enum {			/* typedef Altera_Family */
 	Altera_ACEX1K,		/* ACEX1K Family */
 	Altera_CYC2,		/* CYCLONII Family */
 	Altera_StratixII,	/* StratixII Familiy */
+	Altera_SoCFPGA,		/* SoC FPGA Familiy */
 /* Add new models here */
 	max_altera_type		/* insert all new types before this */
 } Altera_Family;		/* end, typedef Altera_Family */

@@ -17,6 +17,7 @@
 
 #define CMD_READ_ARRAY_SLOW		0x03
 #define CMD_READ_ARRAY_FAST		0x0b
+#define CMD_READ_ARRAY_QUAD		0x6b
 
 #define CMD_WRITE_STATUS		0x01
 #define CMD_PAGE_PROGRAM		0x02
@@ -27,6 +28,12 @@
 #define CMD_ERASE_32K			0x52
 #define CMD_ERASE_64K			0xd8
 #define CMD_ERASE_CHIP			0xc7
+
+#if (CONFIG_SPI_FLASH_QUAD == 1)
+#define CMD_READ_ARRAY		CMD_READ_ARRAY_QUAD
+#else
+#define CMD_READ_ARRAY		CMD_READ_ARRAY_FAST
+#endif
 
 /* Common status */
 #define STATUS_WIP			0x01
@@ -86,7 +93,7 @@ int spi_flash_read_common(struct spi_flash *flash, const u8 *cmd,
 
 /* Send a command to the device and wait for some bit to clear itself. */
 int spi_flash_cmd_poll_bit(struct spi_flash *flash, unsigned long timeout,
-			   u8 cmd, u8 poll_bit);
+			   u8 cmd, u8 poll_bit, u8 bit_set);
 
 /*
  * Send the read status command to the device and wait for the wip

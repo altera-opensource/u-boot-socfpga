@@ -50,7 +50,11 @@ _software_interrupt:	.word _software_interrupt
 _prefetch_abort:	.word _prefetch_abort
 _data_abort:		.word _data_abort
 _not_used:		.word _not_used
+#ifdef CONFIG_USE_IRQ
+_irq:			.word irq
+#else
 _irq:			.word _irq
+#endif
 _fiq:			.word _fiq
 _pad:			.word 0x12345678 /* now 16*4=64 */
 #else
@@ -68,6 +72,12 @@ _pad:			.word 0x12345678 /* now 16*4=64 */
 _end_vect:
 
 	.balignl 16,0xdeadbeef
+#if (defined(CONFIG_SOCFPGA) && defined(CONFIG_SPL_BUILD))
+/* prepare empty space at offset 0x40 for BootROM header */
+	.fill 12,1,0
+	b	reset
+#endif
+
 /*************************************************************************
  *
  * Startup Code (reset vector)
@@ -332,7 +342,6 @@ ENTRY(cpu_init_crit)
 ENDPROC(cpu_init_crit)
 #endif
 
-#ifndef CONFIG_SPL_BUILD
 /*
  *************************************************************************
  *
@@ -373,6 +382,7 @@ ENDPROC(cpu_init_crit)
  * use irq_save_user_regs / irq_restore_user_regs for IRQ/FIQ handling
  */
 
+#ifndef CONFIG_SPL_BUILD
 	.macro	bad_save_user_regs
 	sub	sp, sp, #S_FRAME_SIZE		@ carve out a frame on current
 						@ user stack
@@ -390,18 +400,19 @@ ENDPROC(cpu_init_crit)
 	mov	r0, sp				@ save current stack into r0
 						@ (param register)
 	.endm
+#endif /* CONFIG_SPL_BUILD */
 
 	.macro	irq_save_user_regs
 	sub	sp, sp, #S_FRAME_SIZE
 	stmia	sp, {r0 - r12}			@ Calling r0-r12
-	add	r8, sp, #S_PC			@ !! R8 NEEDS to be saved !!
+	add	r5, sp, #S_PC			@ !! R8 NEEDS to be saved !!
 						@ a reserved stack spot would
 						@ be good.
-	stmdb	r8, {sp, lr}^			@ Calling SP, LR
-	str	lr, [r8, #0]			@ Save calling PC
+	stmdb	r5, {sp, lr}^			@ Calling SP, LR
+	str	lr, [r5, #0]			@ Save calling PC
 	mrs	r6, spsr
-	str	r6, [r8, #4]			@ Save CPSR
-	str	r0, [r8, #8]			@ Save OLD_R0
+	str	r6, [r5, #4]			@ Save CPSR
+	str	r0, [r5, #8]			@ Save OLD_R0
 	mov	r0, sp
 	.endm
 
@@ -414,6 +425,7 @@ ENDPROC(cpu_init_crit)
 						@ cpsr
 	.endm
 
+#ifndef CONFIG_SPL_BUILD
 	.macro get_bad_stack
 	ldr	r13, IRQ_STACK_START_IN		@ setup our mode stack (enter
 						@ in banked mode)
@@ -447,6 +459,7 @@ ENDPROC(cpu_init_crit)
 	ldr	r0, [r13]			@ restore r0
 	add	r13, r13, #4			@ pop stack entry
 	.endm
+#endif /* CONFIG_SPL_BUILD */
 
 	.macro get_irq_stack			@ setup IRQ stack
 	ldr	sp, IRQ_STACK_START
@@ -459,6 +472,7 @@ ENDPROC(cpu_init_crit)
 /*
  * exception handlers
  */
+#ifndef CONFIG_SPL_BUILD
 	.align	5
 undefined_instruction:
 	get_bad_stack
@@ -488,6 +502,7 @@ not_used:
 	get_bad_stack
 	bad_save_user_regs
 	bl	do_not_used
+#endif /* CONFIG_SPL_BUILD */
 
 #ifdef CONFIG_USE_IRQ
 
@@ -498,6 +513,7 @@ irq:
 	bl	do_irq
 	irq_restore_user_regs
 
+#ifndef CONFIG_SPL_BUILD
 	.align	5
 fiq:
 	get_fiq_stack
@@ -505,9 +521,11 @@ fiq:
 	irq_save_user_regs
 	bl	do_fiq
 	irq_restore_user_regs
+#endif /* CONFIG_SPL_BUILD */
 
 #else
 
+#ifndef CONFIG_SPL_BUILD
 	.align	5
 irq:
 	get_bad_stack
@@ -520,5 +538,6 @@ fiq:
 	bad_save_user_regs
 	bl	do_fiq
 
-#endif /* CONFIG_USE_IRQ */
 #endif /* CONFIG_SPL_BUILD */
+#endif /* CONFIG_USE_IRQ */
+

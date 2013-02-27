@@ -72,6 +72,16 @@ void NS16550_init(NS16550_t com_port, int baud_divisor)
 #ifndef CONFIG_NS16550_MIN_FUNCTIONS
 void NS16550_reinit(NS16550_t com_port, int baud_divisor)
 {
+#ifdef CONFIG_SOCFPGA
+	/* fixed Synopsys UART v3.13a bug */
+	unsigned long i, dummy;
+	/* using a dummy loop to avoid it being optimized */
+	for (i = 0; i < 2; i++) {
+		dummy = serial_in(&com_port->msr);
+		if (dummy)
+			break;
+	}
+#endif
 	serial_out(CONFIG_SYS_NS16550_IER, &com_port->ier);
 	serial_out(UART_LCR_BKSE | UART_LCRVAL, &com_port->lcr);
 	serial_out(0, &com_port->dll);

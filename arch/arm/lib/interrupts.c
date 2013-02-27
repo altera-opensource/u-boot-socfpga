@@ -48,7 +48,9 @@ int interrupt_init (void)
 	 */
 	IRQ_STACK_START = gd->irq_sp - 4;
 	IRQ_STACK_START_IN = gd->irq_sp + 8;
+#ifndef CONFIG_SPL_BUILD
 	FIQ_STACK_START = IRQ_STACK_START - CONFIG_STACKSIZE_IRQ;
+#endif
 
 	return arch_interrupt_init();
 }
