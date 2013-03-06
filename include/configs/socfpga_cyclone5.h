@@ -572,6 +572,10 @@
 #define CONFIG_SPL_SPI_FLASH_SUPPORT
 /* Support for drivers/spi/libspi.o in SPL binary */
 #define CONFIG_SPL_SPI_SUPPORT
+/* Support for XiP */
+#undef CONFIG_SPL_SPI_XIP
+/* the XiP address that SPL will jump to */
+#define CONFIG_SPL_SPI_XIP_ADDR		0xFFA00040
 /* SPL SPI flash Chip select */
 #define CONFIG_SPL_SPI_CS		0
 /* SPL SPI flash Bus Number */

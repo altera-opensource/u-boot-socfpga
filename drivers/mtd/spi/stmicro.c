@@ -200,10 +200,11 @@ static int stmicro_set_vcr(struct spi_flash *flash, u8 clk_cycles, u8 xip)
 	resp |=  (clk_cycles << VCR_DUMMY_CLK_CYCLES_SHIFT) &
 			VCR_DUMMY_CLK_CYCLES_MASK;
 
+	/* To enable XIP, set VCR.XIP = 0 */
 	if (xip)
-		resp |= VCR_XIP_MASK;
-	else
 		resp &= ~VCR_XIP_MASK;
+	else
+		resp |= VCR_XIP_MASK;
 
 	cmd = CMD_N25QXX_WVCR;
 	ret = spi_flash_cmd_write(flash->spi, &cmd, sizeof(cmd), &resp,
@@ -244,6 +245,32 @@ int stmicro_wait_flag_status_ready(struct spi_flash *flash)
 	return spi_flash_cmd_poll_bit(flash, SPI_FLASH_PAGE_ERASE_TIMEOUT,
 		CMD_READ_FLAG_STATUS, FLAG_STATUS_READY, 1);
 }
+
+
+#ifdef CONFIG_SPL_SPI_XIP
+int stmicro_xip_enter(struct spi_flash *flash)
+{
+	char dummy[4];
+	int ret;
+
+	/* enable XiP in volatile configuration register */
+	ret = stmicro_set_vcr(flash, 8, 1);
+	if (ret) {
+		debug("SF: enable XiP in volatile configuration register"
+			"failed\n");
+		return ret;
+	}
+	/* send fast read to start with xip confirmation bit 0 */
+	ret = spi_flash_cmd_read_fast(flash, 0, 4, dummy);
+	if (ret) {
+		debug("SF: Send fast read with xip confirmation failed\n");
+		return ret;
+	}
+	/* dummy cycle = 0 to keep XiP state */
+	spi_enter_xip(flash->spi, 0);
+	return 0;
+}
+#endif
 
 struct spi_flash *spi_flash_probe_stmicro(struct spi_slave *spi, u8 * idcode)
 {
@@ -294,6 +321,9 @@ struct spi_flash *spi_flash_probe_stmicro(struct spi_slave *spi, u8 * idcode)
 	flash->page_size = 256;
 	flash->sector_size = 256 * params->pages_per_sector;
 	flash->size = flash->sector_size * params->nr_sectors;
+#ifdef CONFIG_SPL_SPI_XIP
+	flash->xip_enter = stmicro_xip_enter;
+#endif
 
 	/* Flash 1GBit needs to poll flag status register after erase and
 	 * write. */

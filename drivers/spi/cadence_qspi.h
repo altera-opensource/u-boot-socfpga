@@ -65,5 +65,6 @@ void cadence_qspi_apb_delay(void *reg_base,
 	unsigned int ref_clk, unsigned int sclk_hz,
 	unsigned int tshsl_ns, unsigned int tsd2d_ns,
 	unsigned int tchsh_ns, unsigned int tslch_ns);
+void cadence_qspi_apb_enter_xip(void *reg_base, char xip_dummy);
 
 #endif /* __CADENCE_QSPI_H__ */

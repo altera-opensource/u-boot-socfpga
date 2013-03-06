@@ -136,10 +136,6 @@ int spi_claim_bus(struct spi_slave *slave)
 
 void spi_release_bus(struct spi_slave *slave)
 {
-	struct cadence_qspi_slave *cadence_qspi = to_cadence_qspi_slave(slave);
-	void *base = cadence_qspi->regbase;
-	/* Disable QSPI */
-	cadence_qspi_apb_controller_disable(base);
 	return;
 }
 
@@ -257,5 +253,14 @@ void spi_cs_activate(struct spi_slave *slave)
 
 void spi_cs_deactivate(struct spi_slave *slave)
 {
+	return;
+}
+
+void spi_enter_xip(struct spi_slave *slave, char xip_dummy)
+{
+	struct cadence_qspi_slave *cadence_qspi = to_cadence_qspi_slave(slave);
+	void *base = cadence_qspi->regbase;
+	/* Enter XiP */
+	cadence_qspi_apb_enter_xip(base, xip_dummy);
 	return;
 }

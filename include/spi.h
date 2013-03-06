@@ -198,4 +198,10 @@ static inline int spi_w8r8(struct spi_slave *slave, unsigned char byte)
 	return ret < 0 ? ret : din[1];
 }
 
+/*-----------------------------------------------------------------------
+ * Entering XiP mode
+ *   slave:	The SPI slave
+ */
+void spi_enter_xip(struct spi_slave *slave, char xip_dummy);
+
 #endif	/* _SPI_H_ */

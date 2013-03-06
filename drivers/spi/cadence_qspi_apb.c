@@ -66,7 +66,9 @@
 #define	CQSPI_REG_CONFIG_CLK_POL_LSB		1
 #define	CQSPI_REG_CONFIG_CLK_PHA_LSB		2
 #define	CQSPI_REG_CONFIG_ENABLE_MASK		(1 << 0)
+#define	CQSPI_REG_CONFIG_DIRECT_MASK		(1 << 7)
 #define	CQSPI_REG_CONFIG_DECODE_MASK		(1 << 9)
+#define	CQSPI_REG_CONFIG_XIP_IMM_MASK		(1 << 18)
 #define	CQSPI_REG_CONFIG_CHIPSELECT_LSB		10
 #define	CQSPI_REG_CONFIG_BAUD_LSB		19
 #define	CQSPI_REG_CONFIG_IDLE_LSB		31
@@ -714,7 +716,11 @@ int cadence_qspi_apb_indirect_read_setup(void *reg_base,
 			dummy_bytes = CQSPI_DUMMY_BYTES_MAX;
 
 		rd_reg |= (1 << CQSPI_REG_RD_INSTR_MODE_EN_LSB);
+#if defined(CONFIG_SPL_SPI_XIP) && defined(CONFIG_SPL_BUILD)
+		CQSPI_WRITEL(0x0, reg_base + CQSPI_REG_MODE_BIT);
+#else
 		CQSPI_WRITEL(0xFF, reg_base + CQSPI_REG_MODE_BIT);
+#endif
 
 		/* Convert to clock cycles. */
 		dummy_clk = dummy_bytes * CQSPI_DUMMY_CLKS_PER_BYTE;
@@ -863,4 +869,35 @@ failwr:
 	CQSPI_WRITEL(CQSPI_REG_INDIRECTWR_CANCEL_MASK,
 			reg_base + CQSPI_REG_INDIRECTWR);
 	return -1;
+}
+
+void cadence_qspi_apb_enter_xip(void *reg_base, char xip_dummy)
+{
+	unsigned int reg;
+#if (CONFIG_CQSPI_4BYTE_ADDR == 1)
+	unsigned addr_bytes = 4;
+#else
+	unsigned addr_bytes = 3;
+#endif
+
+	/* enter XiP mode immediately and enable direct mode */
+	reg = CQSPI_READL(reg_base + CQSPI_REG_CONFIG);
+	reg |= CQSPI_REG_CONFIG_ENABLE_MASK;
+	reg |= CQSPI_REG_CONFIG_DIRECT_MASK;
+	reg |= CQSPI_REG_CONFIG_XIP_IMM_MASK;
+	CQSPI_WRITEL(reg, reg_base + CQSPI_REG_CONFIG);
+
+	/* keep the XiP mode */
+	CQSPI_WRITEL(xip_dummy, reg_base + CQSPI_REG_MODE_BIT);
+
+	/* Enable mode bit at devrd */
+	reg = CQSPI_READL(reg_base + CQSPI_REG_RD_INSTR);
+	reg |= (1 << CQSPI_REG_RD_INSTR_MODE_EN_LSB);
+	CQSPI_WRITEL(reg, reg_base + CQSPI_REG_RD_INSTR);
+
+	/* set device size */
+	reg = CQSPI_READL(reg_base + CQSPI_REG_SIZE);
+	reg &= ~CQSPI_REG_SIZE_ADDRESS_MASK;
+	reg |= (addr_bytes - 1);
+	CQSPI_WRITEL(reg, reg_base + CQSPI_REG_SIZE);
 }

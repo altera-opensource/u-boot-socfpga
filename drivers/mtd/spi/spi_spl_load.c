@@ -47,6 +47,20 @@ void spl_spi_load_image(void)
 		hang();
 	}
 
+
+#ifdef CONFIG_SPL_SPI_XIP
+	if (spi_flash_xip_enter(flash)) {
+		puts("SPI enter XIP mode failed.\n");
+		hang();
+	}
+	puts("Both SPI and serial NOR flash in XIP mode\n");
+	/* expected mkimage header at CONFIG_SPL_SPI_XIP_ADDR - 0x40 */
+	header = (struct image_header *)(CONFIG_SPL_SPI_XIP_ADDR -
+		sizeof(struct image_header));
+	spl_parse_image_header(header);
+	return;
+#endif
+
 	/* use CONFIG_SYS_TEXT_BASE as temporary storage area */
 	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE);
 
