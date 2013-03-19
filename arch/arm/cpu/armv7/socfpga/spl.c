@@ -70,7 +70,11 @@ u32 spl_boot_device(void)
 /* sdmmc boot mode is raw instead fat */
 u32 spl_boot_mode(void)
 {
+#ifdef CONFIG_SPL_FAT_SUPPORT
+	return MMCSD_MODE_FAT;
+#else
 	return MMCSD_MODE_MBR;
+#endif
 }
 
 static void init_boot_params(void)
@@ -424,4 +428,18 @@ void spl_board_init(void)
 
 	DEBUG_MEMORY
 	init_boot_params();
+
+#ifdef CONFIG_SPL_FAT_SUPPORT
+	/* clear the bss which located at SDRAM */
+	memset(&__bss_fat_start, 0,
+		&__bss_fat_end - &__bss_fat_start);
+	/*
+	 * To this stage, previos code didn't call malloc before.
+	 * If they did, it will trigger error as previous call of
+	 * mem_malloc_init is with zero size. From here, we will
+	 * have malloc allocated in SDRAM due to ocram size constrain
+	 */
+	mem_malloc_init((unsigned long)(&__malloc_fat_start),
+		(&__malloc_fat_end - &__malloc_fat_start));
+#endif
 }

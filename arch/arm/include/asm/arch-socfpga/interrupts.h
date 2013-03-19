@@ -29,7 +29,7 @@ typedef struct {
 	void *arg;
 } interrupt_struct;
 
-#define MAX_INT_VECTORS 256
+#define MAX_INT_VECTORS 212
 #define INVERSE_NULL ((void *)(~0))
 
 /* function declaration */

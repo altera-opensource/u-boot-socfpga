@@ -15,8 +15,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
- MEMORY { .sram : ORIGIN = CONFIG_SPL_TEXT_BASE,\
+MEMORY { .sram : ORIGIN = CONFIG_SPL_TEXT_BASE,\
 		LENGTH = CONFIG_SPL_MAX_SIZE }
+#ifdef CONFIG_SPL_FAT_SUPPORT
+/* Allocate the malloc and bss (when FAT enabled) to last 1MB of SDRAM */
+MEMORY { .sdram : ORIGIN = (PHYS_SDRAM_1_SIZE - 0x100000 \
+		+ CONFIG_SYS_SDRAM_BASE), LENGTH = 0x100000 }
+#endif
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
@@ -40,6 +45,16 @@ SECTIONS
 	__image_copy_end = .;
 	_end = .;
 
+#ifdef CONFIG_SPL_FAT_SUPPORT
+	.bss_fat : {
+		. = ALIGN(4);
+		__bss_fat_start = .;
+		fs/fat/libfat.o (.bss*)
+		. = ALIGN(4);
+		__bss_fat_end = .;
+	} >.sdram
+#endif
+
 	.bss : {
 		. = ALIGN(4);
 		__bss_start = .;
@@ -48,13 +63,25 @@ SECTIONS
 		__bss_end__ = .;
 	} >.sram
 
-	. = ALIGN(8);
+#ifdef CONFIG_SPL_FAT_SUPPORT
+	__malloc_start = .;
+	__malloc_end = .;
 	.malloc :
 	{
+		. = ALIGN(8);
+		__malloc_fat_start = .;
+		. = . + CONFIG_SPL_MALLOC_SIZE;
+		__malloc_fat_end = .;
+	} >.sdram
+#else
+	.malloc :
+	{
+		. = ALIGN(8);
 		__malloc_start = .;
 		. = . + CONFIG_SPL_MALLOC_SIZE;
 		__malloc_end = .;
 	} >.sram
+#endif
 
 	.stack :
 	{

@@ -105,9 +105,9 @@
  */
 #ifdef CONFIG_USE_IRQ
 /* IRQ stack */
-#define CONFIG_STACKSIZE_IRQ		(4 << 10)
+#define CONFIG_STACKSIZE_IRQ		(1 << 10)
 /* FIQ stack */
-#define CONFIG_STACKSIZE_FIQ		(4 << 10)
+#define CONFIG_STACKSIZE_FIQ		(1 << 10)
 #endif
 /* SP location before relocation, must use scratch RAM */
 #define CONFIG_SYS_INIT_RAM_ADDR	0xFFFF0000
@@ -135,11 +135,9 @@
 /*
  * Misc
  */
+/* Enable DOS partition */
 #define CONFIG_DOS_PARTITION            1
 
-#ifdef CONFIG_SPL_BUILD
-#undef CONFIG_PARTITIONS
-#endif
 
 /* OSE operating system support */
 #define CONFIG_BOOTM_OSE
@@ -483,19 +481,6 @@
 #define CONFIG_SPL_TEXT_BASE		0xFFFF0000
 #endif
 
-/*
- * Stack setup
- */
-#define CONFIG_SPL_STACK		CONFIG_SYS_INIT_SP_ADDR
-#define CONFIG_SYS_SPL_MALLOC_START	((unsigned long) (&__malloc_start))
-#define CONFIG_SYS_SPL_MALLOC_SIZE	(&__malloc_end - &__malloc_start)
-
-/* Stack size for SPL */
-#define CONFIG_SPL_STACK_SIZE		(4 * 1024)
-
-/* MALLOC size for SPL */
-#define CONFIG_SPL_MALLOC_SIZE		(5 * 1024)
-
 /* SPL max size */
 #define CONFIG_SPL_MAX_SIZE		(64 * 1024)
 
@@ -626,5 +611,37 @@
 #if defined(CONFIG_SPL_BUILD) && (CONFIG_PRELOADER_SEMIHOSTING == 1)
 #define CONFIG_SPL_SEMIHOSTING_SUPPORT
 #endif
+
+/*
+ * Support for FAT partition if boot from SDMMC
+ */
+#if (CONFIG_PRELOADER_BOOT_FROM_SDMMC == 1)
+/* MMC with FAT partition support */
+#undef CONFIG_SPL_FAT_SUPPORT
+#endif
+
+#ifdef CONFIG_SPL_FAT_SUPPORT
+#define CONFIG_SPL_LIBDISK_SUPPORT
+#define CONFIG_SYS_MMC_SD_FAT_BOOT_PARTITION	1
+#define CONFIG_SPL_FAT_LOAD_PAYLOAD_NAME	"u-boot.img"
+#endif /* CONFIG_SPL_FAT_SUPPORT */
+
+/*
+ * Stack setup
+ */
+#define CONFIG_SPL_STACK		CONFIG_SYS_INIT_SP_ADDR
+#define CONFIG_SYS_SPL_MALLOC_START	((unsigned long) (&__malloc_start))
+#define CONFIG_SYS_SPL_MALLOC_SIZE	(&__malloc_end - &__malloc_start)
+
+/* Stack size for SPL */
+#ifdef CONFIG_SPL_FAT_SUPPORT
+#define CONFIG_SPL_STACK_SIZE		(5 * 1024)
+#else
+#define CONFIG_SPL_STACK_SIZE		(4 * 1024)
+#endif
+
+/* MALLOC size for SPL */
+#define CONFIG_SPL_MALLOC_SIZE		(5 * 1024)
+
 
 #endif	/* __CONFIG_H */
