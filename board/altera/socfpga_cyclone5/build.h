@@ -58,7 +58,7 @@
  * Handoff files must provide user option whether to enable
  * hardware diagnostic support
  */
-#define CONFIG_PRELOADER_HARDWARE_DIAGNOSTIC	(0)
+#define CONFIG_PRELOADER_HARDWARE_DIAGNOSTIC	(1)
 
 /*
  * Preloader execute on FPGA. This is normally selected

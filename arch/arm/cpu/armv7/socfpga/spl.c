@@ -373,6 +373,17 @@ void spl_board_init(void)
 	/* SDRAM calibration */
 	if (sdram_calibration_full() == 0)
 		hang();
+#if (CONFIG_PRELOADER_HARDWARE_DIAGNOSTIC == 1)
+	/* a simple sdram memory test */
+	puts("SDRAM : Running simple memory test...");
+	/* start with 1MB region as lowest 1MB is OCRAM */
+	if (get_ram_size((long *)0x100000, PHYS_SDRAM_1_SIZE) !=
+		PHYS_SDRAM_1_SIZE) {
+		puts("failed\n");
+		hang();
+	}
+	puts("passed\n");
+#endif /* CONFIG_PRELOADER_HARDWARE_DIAGNOSTIC */
 #endif	/* CONFIG_PRELOADER_SKIP_SDRAM */
 
 #ifdef CONFIG_HW_WATCHDOG
