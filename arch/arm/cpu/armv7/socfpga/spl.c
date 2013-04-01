@@ -36,6 +36,8 @@
 #include <asm/arch/scan_manager.h>
 #include <asm/arch/sdram.h>
 #include <asm/arch/system_manager.h>
+#include <spi_flash.h>
+#include <asm/arch/fpga_manager.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -87,6 +89,100 @@ static void init_boot_params(void)
 #endif
 }
 
+#if defined(CONFIG_SPL_FPGA_LOAD) && defined(CONFIG_SPL_SPI_SUPPORT)
+/* program FPGA where rbf file is located at Quad SPI */
+void spl_program_fpga_qspi(void)
+{
+	struct spi_flash *flash;
+	struct image_header header;
+	u32 flash_addr, status;
+	u32 temp[64];
+
+	/* initialize the Quad SPI controller */
+	flash = spi_flash_probe(CONFIG_SPL_SPI_BUS, CONFIG_SPL_SPI_CS,
+		CONFIG_SF_DEFAULT_SPEED, SPI_MODE_3);
+	if (!flash) {
+		puts("SPI probe failed.\n");
+		hang();
+	}
+
+	/* Load mkimage header on top of rbf file */
+	spi_flash_read(flash, CONFIG_SPL_FPGA_QSPI_ADDR,
+		sizeof(struct image_header), &header);
+	spl_parse_image_header(&header);
+
+#ifdef CONFIG_HW_WATCHDOG
+	WATCHDOG_RESET();
+#endif
+
+	/* initialize the FPGA Manager */
+	status = fpgamgr_program_init();
+	if (status) {
+		printf("FPGA: Init failed with error code %d\n", status);
+		hang();
+	}
+
+	/* start loading the data from flash and send to FPGA Manager */
+	flash_addr = CONFIG_SPL_FPGA_QSPI_ADDR + sizeof(struct image_header);
+
+	while (spl_image.size) {
+		/*
+		 * Read the data by small chunk by chunk. At this stage,
+		 * use the temp as temporary buffer.
+		 */
+		 if (spl_image.size > sizeof(temp)) {
+			spi_flash_read(flash, flash_addr,
+				sizeof(temp), temp);
+			/* update the counter */
+			spl_image.size -= sizeof(temp);
+			flash_addr += sizeof(temp);
+		 }  else {
+			spi_flash_read(flash, flash_addr,
+				spl_image.size, temp);
+			spl_image.size = 0;
+		}
+
+		/* transfer data to FPGA Manager */
+		fpgamgr_program_write((const long unsigned int *)temp,
+			sizeof(temp));
+#ifdef CONFIG_HW_WATCHDOG
+		WATCHDOG_RESET();
+#endif
+	}
+
+	/* Ensure the FPGA entering config done */
+	status = fpgamgr_program_poll_cd();
+	if (status) {
+		printf("FPGA: Poll CD failed with error code %d\n", status);
+		hang();
+	}
+#ifdef CONFIG_HW_WATCHDOG
+		WATCHDOG_RESET();
+#endif
+
+	/* Ensure the FPGA entering init phase */
+	status = fpgamgr_program_poll_initphase();
+	if (status) {
+		printf("FPGA: Poll initphase failed with error code %d\n",
+			status);
+		hang();
+	}
+#ifdef CONFIG_HW_WATCHDOG
+		WATCHDOG_RESET();
+#endif
+
+	/* Ensure the FPGA entering user mode */
+	status = fpgamgr_program_poll_usermode();
+	if (status) {
+		printf("FPGA: Poll usermode failed with error code %d\n",
+			status);
+		hang();
+	}
+#ifdef CONFIG_HW_WATCHDOG
+		WATCHDOG_RESET();
+#endif
+}
+#endif
 
 /*
  * Board initialization after bss clearance
@@ -453,4 +549,23 @@ void spl_board_init(void)
 	mem_malloc_init((unsigned long)(&__malloc_fat_start),
 		(&__malloc_fat_end - &__malloc_fat_start));
 #endif
+
+#ifdef CONFIG_SPL_FPGA_LOAD
+	/*
+	 * When enabled, it will read the RBF file from boot device.
+	 * Then it will program the FPGA with the loaded RBF file
+	 */
+	puts("FPGA : Programming FPGA\n");
+#if defined(CONFIG_SPL_SPI_SUPPORT)
+	/* rbf file located within Quad SPI */
+	spl_program_fpga_qspi();
+#elif defined(CONFIG_SPL_MMC_SUPPORT)
+	/* rbf file located within SDMMC */
+#error Preloader FPGA programming support temporarily not supporting RBF file \
+stored within SDMMC card. Please use Quad SPI boot option for this moment.
+#endif
+
+	puts("FPGA : Programming FPGA passed\n");
+
+#endif /* CONFIG_SPL_FPGA_LOAD */
 }

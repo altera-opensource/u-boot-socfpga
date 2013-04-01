@@ -443,7 +443,7 @@
 #else
 #define CONFIG_CQSPI_4BYTE_ADDR		(1)
 #endif /* CONFIG_SOCFPGA_VIRTUAL_TARGET */
-#define CONFIG_CQSPI_READDATA_DELAY	(1)
+#define CONFIG_CQSPI_READDATA_DELAY	(2)
 #endif	/* CONFIG_CADENCE_QSPI */
 
 /*
@@ -642,6 +642,16 @@
 
 /* MALLOC size for SPL */
 #define CONFIG_SPL_MALLOC_SIZE		(5 * 1024)
+
+/*
+ * FPGA programming support with SPL
+ * FPGA RBF file source (with mkimage header) is located within the same
+ * boot device which stored the subsequent boot image (U-Boot).
+ */
+/* enabled program the FPGA */
+#undef CONFIG_SPL_FPGA_LOAD
+/* location of FPGA RBF image within QSPI */
+#define CONFIG_SPL_FPGA_QSPI_ADDR	(0x800000)
 
 
 #endif	/* __CONFIG_H */

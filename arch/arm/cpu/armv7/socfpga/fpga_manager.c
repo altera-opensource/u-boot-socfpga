@@ -110,12 +110,8 @@ static int fpgamgr_dclkcnt_set(unsigned long cnt)
 	return -1;
 }
 
-/*
- * Using FPGA Manager to program the FPGA
- * Return 0 for sucess
- */
-int fpgamgr_program_fpga(const unsigned long *rbf_data,
-	unsigned long rbf_size)
+/* Start the FPGA programming by initialize the FPGA Manager */
+int fpgamgr_program_init(void)
 {
 	unsigned long reg, i;
 
@@ -193,6 +189,15 @@ int fpgamgr_program_fpga(const unsigned long *rbf_data,
 	/* enable AXI configuration */
 	setbits_le32(&fpga_manager_base->ctrl, FPGAMGRREGS_CTRL_AXICFGEN_MASK);
 
+	return 0;
+}
+
+/* Write the RBF data to FPGA Manager */
+void fpgamgr_program_write(const unsigned long *rbf_data,
+	unsigned long rbf_size)
+{
+	unsigned long reg, i;
+
 	/* write to FPGA Manager AXI data */
 	for (i = 0; i < rbf_size; i = i + 4) {
 		reg = rbf_data[i/4];
@@ -200,6 +205,12 @@ int fpgamgr_program_fpga(const unsigned long *rbf_data,
 		reg = readl(SOCFPGA_FPGAMGRREGS_ADDRESS +
 			FPGAMGRREGS_MON_GPIO_EXT_PORTA_ADDRESS);
 	}
+}
+
+/* Ensure the FPGA entering config done */
+int fpgamgr_program_poll_cd(void)
+{
+	unsigned long reg, i;
 
 	/* (3) wait until full config done */
 	for (i = 0; i < FPGA_TIMEOUT_CNT; i++) {
@@ -220,19 +231,36 @@ int fpgamgr_program_fpga(const unsigned long *rbf_data,
 
 	/* disable AXI configuration */
 	clrbits_le32(&fpga_manager_base->ctrl, FPGAMGRREGS_CTRL_AXICFGEN_MASK);
+	return 0;
+}
+
+/* Ensure the FPGA entering init phase */
+int fpgamgr_program_poll_initphase(void)
+{
+	unsigned long i;
 
 	/* additional clocks for the CB to enter initialization phase */
 	if (fpgamgr_dclkcnt_set(0x4) != 0)
 		return -5;
 
-	/* (4) wait until FPGA enter init phase */
+	/* (4) wait until FPGA enter init phase or user mode */
 	for (i = 0; i < FPGA_TIMEOUT_CNT; i++) {
 		if (fpgamgr_get_mode() == FPGAMGRREGS_MODE_INITPHASE)
+			break;
+		if (fpgamgr_get_mode() == FPGAMGRREGS_MODE_USERMODE)
 			break;
 	}
 	/* if not in configuration state, return error */
 	if (i == FPGA_TIMEOUT_CNT)
 		return -6;
+
+	return 0;
+}
+
+/* Ensure the FPGA entering user mode */
+int fpgamgr_program_poll_usermode(void)
+{
+	unsigned long i;
 
 	/* additional clocks for the CB to exit initialization phase */
 	if (fpgamgr_dclkcnt_set(0x5000) != 0)
@@ -254,4 +282,35 @@ int fpgamgr_program_fpga(const unsigned long *rbf_data,
 	reset_deassert_all_bridges();
 
 	return 0;
+}
+
+/*
+ * Using FPGA Manager to program the FPGA
+ * Return 0 for sucess
+ */
+int fpgamgr_program_fpga(const unsigned long *rbf_data,
+	unsigned long rbf_size)
+{
+	unsigned long status;
+
+	/* initialize the FPGA Manager */
+	status = fpgamgr_program_init();
+	if (status)
+		return status;
+
+	/* Write the RBF data to FPGA Manager */
+	fpgamgr_program_write(rbf_data, rbf_size);
+
+	/* Ensure the FPGA entering config done */
+	status = fpgamgr_program_poll_cd();
+	if (status)
+		return status;
+
+	/* Ensure the FPGA entering init phase */
+	status = fpgamgr_program_poll_initphase();
+	if (status)
+		return status;
+
+	/* Ensure the FPGA entering user mode */
+	return fpgamgr_program_poll_usermode();
 }
