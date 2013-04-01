@@ -22,28 +22,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static const struct gic_cpu_if *gic_cpu_if_base = (void *)SOCFPGA_GIC_CPU_IF;
-
-inline void gic_dic_disable_secure (void)
-{
-	clrbits_le32(CONFIG_GIC_DIC_CONTROL, 0x1);
-}
-
-inline void gic_dic_disable_nonsecure (void)
-{
-	clrbits_le32(CONFIG_GIC_DIC_CONTROL, 0x2);
-}
-
-inline void gic_dic_enable_secure (void)
-{
-	setbits_le32(CONFIG_GIC_DIC_CONTROL, 0x1);
-}
-
-inline void gic_dic_enable_nonsecure (void)
-{
-	setbits_le32(CONFIG_GIC_DIC_CONTROL, 0x2);
-}
-
 void gic_dic_clear_enable_all_intr (void)
 {
 	/* disable SGI and PPI */
@@ -132,28 +110,5 @@ void gic_dic_clear_pending (unsigned char intrID)
 		(1 << mod));
 }
 
-inline void gic_cpu_disable (void)
-{
-	writel(0x0, &gic_cpu_if_base->ICCICR);
-}
 
-inline void gic_cpu_enable (void)
-{
-	writel(0x1, &gic_cpu_if_base->ICCICR);
-}
-
-inline void gic_cpu_set_priority_mask (unsigned char priority_mask)
-{
-	writel(priority_mask, &gic_cpu_if_base->ICCPMR);
-}
-
-inline unsigned long gic_cpu_get_pending_intr (void)
-{
-	return readl(&gic_cpu_if_base->ICCHPIR);
-}
-
-inline void gic_cpu_end_of_intr (unsigned char intrID)
-{
-	writel(intrID, &gic_cpu_if_base->ICCEOIR);
-}
 
