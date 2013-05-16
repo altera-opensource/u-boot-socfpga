@@ -59,8 +59,8 @@
 #define CONFIG_HPS_PERPLLGRP_SRC_QSPI			(1)
 
 /* SDRAM PLL */
-#define CONFIG_HPS_SDRPLLGRP_VCO_DENOM			(1)
-#define CONFIG_HPS_SDRPLLGRP_VCO_NUMER			(63)
+#define CONFIG_HPS_SDRPLLGRP_VCO_DENOM			(0)
+#define CONFIG_HPS_SDRPLLGRP_VCO_NUMER			(31)
 /*
  * To tell where is the VCOs source:
  * 0 = EOSC1
@@ -96,3 +96,5 @@
 #define CONFIG_HPS_CLK_L4_SP_HZ			(100000000)
 
 #endif /* _PRELOADER_PLL_CONFIG_H_ */
+
+

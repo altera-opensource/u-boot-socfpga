@@ -986,6 +986,35 @@ SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_2_THRESHOLDRSTCYCLES_79_64_MASK);
 #endif
 /* end of newly added registers */
 
+
+	/***** DRAMODT *****/
+#if defined(CONFIG_HPS_SDR_CTRLCFG_DRAMODT_READ)|\
+	defined(CONFIG_HPS_SDR_CTRLCFG_DRAMODT_WRITE)
+#ifdef DEBUG
+	debug("Configuring DRAMODT\n");
+#endif
+	register_offset = SDR_CTRLGRP_DRAMODT_ADDRESS;
+	/* Read original register value */
+	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
+#ifdef CONFIG_HPS_SDR_CTRLCFG_DRAMODT_READ
+	reg_value = sdram_write_register_field(reg_value,
+			CONFIG_HPS_SDR_CTRLCFG_DRAMODT_READ,
+			SDR_CTRLGRP_DRAMODT_READ_LSB,
+			SDR_CTRLGRP_DRAMODT_READ_MASK);
+#endif
+#ifdef CONFIG_HPS_SDR_CTRLCFG_DRAMODT_WRITE
+	reg_value = sdram_write_register_field(reg_value,
+			CONFIG_HPS_SDR_CTRLCFG_DRAMODT_WRITE,
+			SDR_CTRLGRP_DRAMODT_WRITE_LSB,
+			SDR_CTRLGRP_DRAMODT_WRITE_MASK);
+#endif
+	if (sdram_write_verify(register_offset,	reg_value) == 1) {
+		status = 1;
+		COMPARE_FAIL_ACTION
+	}
+#endif
+
+
 	DEBUG_MEMORY
 /***** Final step - apply configuration changes *****/
 #ifdef DEBUG

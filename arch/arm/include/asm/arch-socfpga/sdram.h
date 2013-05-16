@@ -58,6 +58,8 @@ unsigned sdram_calibration_full(void);
 #define SDR_CTRLGRP_DRAMTIMING4_ADDRESS 0x5010
 /* Register: sdr.ctrlgrp.lowpwrtiming                                      */
 #define SDR_CTRLGRP_LOWPWRTIMING_ADDRESS 0x5014
+/* Register: sdr.ctrlgrp.dramodt                                           */
+#define SDR_CTRLGRP_DRAMODT_ADDRESS 0x5018
 /* Register: sdr.ctrlgrp.dramaddrw                                         */
 #define SDR_CTRLGRP_DRAMADDRW_ADDRESS 0x502c
 /* Register: sdr.ctrlgrp.dramifwidth                                       */
@@ -387,4 +389,10 @@ SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_2_THRESHOLDRSTCYCLES_79_64_MASK \
 #define SDR_CTRLGRP_PHYCTRL_PHYCTRL_2_LONGIDLESAMPLECOUNT_31_20_MASK 0x00000fff
 #define SDR_CTRLGRP_PHYCTRL_PHYCTRL_2_LONGIDLESAMPLECOUNT_31_20_SET(x) \
  (((x) << 0) & 0x00000fff)
+/* Register template: sdr::ctrlgrp::dramodt                                */
+#define SDR_CTRLGRP_DRAMODT_READ_LSB 4
+#define SDR_CTRLGRP_DRAMODT_READ_MASK 0x000000f0
+#define SDR_CTRLGRP_DRAMODT_WRITE_LSB 0
+#define SDR_CTRLGRP_DRAMODT_WRITE_MASK 0x0000000f
+
 #endif /* _SDRAM_H_ */

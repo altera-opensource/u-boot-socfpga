@@ -29,7 +29,7 @@
  * Handoff files must provide user option whether to
  * enable watchdog during preloader execution phase
  */
-#define CONFIG_PRELOADER_WATCHDOG_ENABLE	(1)
+#define CONFIG_PRELOADER_WATCHDOG_ENABLE	(0)
 
 /*
  * Handoff files must provide user option whether to enable
@@ -38,7 +38,7 @@
 #define CONFIG_PRELOADER_DEBUG_MEMORY_WRITE	(0)
 /* the base address of debug memory */
 #if (CONFIG_PRELOADER_DEBUG_MEMORY_WRITE == 1)
-#define CONFIG_PRELOADER_DEBUG_MEMORY_ADDR	(0xFFFFFD00)
+#define CONFIG_PRELOADER_DEBUG_MEMORY_ADDR	(0xfffffd00)
 #define CONFIG_PRELOADER_DEBUG_MEMORY_SIZE	(0x200)
 #endif
 
@@ -66,9 +66,9 @@
  */
 #define CONFIG_PRELOADER_EXE_ON_FPGA		(0)
 #if (CONFIG_PRELOADER_EXE_ON_FPGA == 1)
-#define CONFIG_FPGA_MAX_SIZE			(64 * 1024)
-#define CONFIG_FPGA_DATA_BASE			0xFFFF0000
-#define CONFIG_FPGA_DATA_MAX_SIZE		(64 * 1024)
+#define CONFIG_FPGA_MAX_SIZE			(0x10000)
+#define CONFIG_FPGA_DATA_BASE			0xffff0000
+#define CONFIG_FPGA_DATA_MAX_SIZE		(0x10000)
 #endif
 
 /*
@@ -97,3 +97,5 @@
 
 
 #endif /* _PRELOADER_BUILD_H_ */
+
+

@@ -1,37 +1,41 @@
 /*
- * Copyright (C) 2012 Altera Corporation <www.altera.com>
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *  - Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *  - Neither the name of the Altera Corporation nor the
- *    names of its contributors may be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL ALTERA CORPORATION BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+Copyright (c) 2012, Altera Corporation
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of Altera Corporation nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL ALTERA CORPORATION BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "sequencer_defines.h"
 
 #if ENABLE_TCL_DEBUG
 
 #include "alt_types.h"
+#if HPS_HW
+#include "sdram_io.h"
+#else
 #include "io.h"
 #include "system.h"
+#endif
 #include "tclrpt.h"
 #include "sequencer.h"
 #if BFM_MODE
@@ -69,6 +73,9 @@ alt_u32 tclrpt_get_protocol(void)
 	#endif
 	#if RLDRAM3
 		protocol_enum = 5;
+	#endif
+	#if LPDDR2
+		protocol_enum = 6;
 	#endif
 
 	return protocol_enum;
@@ -404,9 +411,27 @@ void tclrpt_initialize_data(void)
 	// Initialize the static data into the report
 
 	TCLRPT_SET(debug_summary_report->protocol, tclrpt_get_protocol());
+#if !HPS_HW
 	TCLRPT_SET(debug_summary_report->sequencer_signature, IORD_32DIRECT (REG_FILE_SIGNATURE, 0));
+#endif
 
-	TCLRPT_SET(debug_summary_report->mem_address_width, RW_MGR_MEM_ADDRESS_WIDTH);
+	/*
+	 * If available, use ROW/COL addr width as they have the true width,
+	 * not the static width used by the AC ROM.
+	 */
+#if MEM_IF_ROW_ADDR_WIDTH
+#if MEM_IF_COL_ADDR_WIDTH
+	TCLRPT_SET(debug_summary_report->mem_address_width,
+		(MEM_IF_COL_ADDR_WIDTH > MEM_IF_ROW_ADDR_WIDTH) ?
+		MEM_IF_COL_ADDR_WIDTH : MEM_IF_ROW_ADDR_WIDTH);
+#else
+	TCLRPT_SET(debug_summary_report->mem_address_width,
+		RW_MGR_MEM_ADDRESS_WIDTH);
+#endif
+#else
+	TCLRPT_SET(debug_summary_report->mem_address_width,
+		RW_MGR_MEM_ADDRESS_WIDTH);
+#endif
 
 	TCLRPT_SET(debug_summary_report->mem_bank_width, RW_MGR_MEM_BANK_WIDTH);
 	TCLRPT_SET(debug_summary_report->mem_control_width, RW_MGR_MEM_CONTROL_WIDTH);
@@ -421,7 +446,11 @@ void tclrpt_initialize_data(void)
 	TCLRPT_SET(debug_summary_report->mem_num_ranks, RW_MGR_MEM_NUMBER_OF_RANKS);
 
 #if DDRX
+#if LPDDR2
+	TCLRPT_SET(debug_summary_report->mem_mmr_burst_len, MEM_BURST_LEN);
+#else
 	TCLRPT_SET(debug_summary_report->mem_mmr_burst_len, RW_MGR_MR0_BL);
+#endif
 #else
 	TCLRPT_SET(debug_summary_report->mem_mmr_burst_len, MEM_BURST_LEN);
 #endif
@@ -486,7 +515,9 @@ void tclrpt_initialize (debug_data_t *debug_data_ptr)
 		// If the debug data pointer is NULL then initialize to disallow any access
 
 		// Set the register file offset for the data to be 0
+#if !HPS_HW
 		IOWR_32DIRECT (REG_FILE_DEBUG_DATA_ADDR, 0, 0);
+#endif
 
 		// Initialize all pointers to NULL
 		debug_summary_report = 0;
@@ -499,7 +530,9 @@ void tclrpt_initialize (debug_data_t *debug_data_ptr)
 	else
 	{
 		// Set the register file offset for the data
+#if !HPS_HW
 		IOWR_32DIRECT (REG_FILE_DEBUG_DATA_ADDR, 0, (alt_u32)debug_data_ptr);
+#endif
 
 		// Set the global pointers
 		debug_data = debug_data_ptr;
@@ -606,6 +639,7 @@ void tclrpt_mark_interface_as_illegal_command(void)
 	debug_data->command_status = TCLDBG_TX_STATUS_ILLEGAL_CMD;
 }
 
+#if !HPS_HW
 void tclrpt_loop(void)
 {
 	alt_u32 rank;
@@ -728,6 +762,7 @@ void tclrpt_loop(void)
 		}
 	}
 }
+#endif
 
 #if BFM_MODE
 const char* const EMITT_XML_CSTR_CONNECTIONS = "connections";
