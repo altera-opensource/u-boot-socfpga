@@ -65,7 +65,7 @@
 #define CONFIG_SYS_TEXT_BASE		0x01000040
 #endif
 /* Default load address */
-#define CONFIG_SYS_LOAD_ADDR		0x8000
+#define CONFIG_SYS_LOAD_ADDR		0x7fc0
 #ifdef CONFIG_USE_IRQ
 /* Enable board late init for ECC setup if IRQ enabled */
 #define CONFIG_BOARD_LATE_INIT
@@ -91,8 +91,6 @@
 #define CONFIG_FDT_BLOB_SKIP_UPDATE
 /* Initial Memory map size for Linux, minus 4k alignment for DFT blob */
 #define CONFIG_SYS_BOOTMAPSZ		((256*1024*1024) - (4*1024))
-/* Support loading of zImage */
-#define CONFIG_CMD_BOOTZ
 
 /*
  * Memory allocation (MALLOC)
@@ -176,7 +174,7 @@
 #endif
 
 /*
- * arguments passed to the bootz command. The value of
+ * arguments passed to the bootm command. The value of
  * CONFIG_BOOTARGS goes into the environment value "bootargs".
  * Do note the value will overide also the chosen node in FDT blob.
  */
@@ -186,7 +184,7 @@
 	"verify=n\0" \
 	"loadaddr=" MK_STR(CONFIG_SYS_LOAD_ADDR) "\0" \
 	"fdtaddr=0x00000100\0" \
-	"bootimage=zImage\0" \
+	"bootimage=uImage\0" \
 	"bootimagesize=0x600000\0" \
 	"fdtimage=socfpga.dtb\0" \
 	"fdtimagesize=0x2000\0" \
@@ -199,13 +197,13 @@
 	"qspiroot=/dev/mtdblock1\0" \
 	"qspirootfstype=jffs2\0" \
 	"ramboot=setenv bootargs " CONFIG_BOOTARGS ";" \
-		"bootz ${loadaddr} - ${fdtaddr}\0" \
+		"bootm ${loadaddr} - ${fdtaddr}\0" \
 	"mmcload=mmc rescan;" \
 		"${mmcloadcmd} mmc 0:${mmcloadpart} ${loadaddr} ${bootimage};" \
 		"${mmcloadcmd} mmc 0:${mmcloadpart} ${fdtaddr} ${fdtimage}\0" \
 	"mmcboot=setenv bootargs " CONFIG_BOOTARGS \
 		" root=${mmcroot} rw rootwait;" \
-		"bootz ${loadaddr} - ${fdtaddr}\0" \
+		"bootm ${loadaddr} - ${fdtaddr}\0" \
 	"netboot=dhcp ${bootimage} ; " \
 		"tftp ${fdtaddr} ${fdtimage} ; run ramboot\0" \
 	"qspiload=sf probe ${qspiloadcs};" \
@@ -213,7 +211,7 @@
 		"sf read ${fdtaddr} ${qspifdtaddr} ${fdtimagesize};\0" \
 	"qspiboot=setenv bootargs " CONFIG_BOOTARGS \
 		" root=${qspiroot} rw rootfstype=${qspirootfstype};"\
-		"bootz ${loadaddr} - ${fdtaddr}\0" \
+		"bootm ${loadaddr} - ${fdtaddr}\0" \
 	"fpga=0\0" \
 	"fpgadata=0x2000000\0" \
 	"fpgadatasize=0x700000\0"
