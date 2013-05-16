@@ -91,6 +91,8 @@
 #define CONFIG_FDT_BLOB_SKIP_UPDATE
 /* Initial Memory map size for Linux, minus 4k alignment for DFT blob */
 #define CONFIG_SYS_BOOTMAPSZ		((256*1024*1024) - (4*1024))
+/* Support loading of zImage */
+#define CONFIG_CMD_BOOTZ
 
 /*
  * Memory allocation (MALLOC)
