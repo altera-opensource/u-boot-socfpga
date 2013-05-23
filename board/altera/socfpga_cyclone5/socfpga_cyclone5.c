@@ -28,6 +28,7 @@
 #include <asm/arch/sdmmc.h>
 #include <phy.h>
 #include <micrel.h>
+#include <miiphy.h>
 #include <../drivers/net/designware.h>
 
 #include <altera.h>
@@ -135,7 +136,7 @@ int overwrite_console(void)
 }
 #endif
 
-
+/* EMAC related setup */
 #ifndef CONFIG_SOCFPGA_VIRTUAL_TARGET
 
 #define MICREL_KSZ9021_EXTREG_CTRL 11
@@ -165,6 +166,28 @@ static int eth_emdio_write(struct eth_device *dev, u8 addr, u16 reg, u16 val,
 	return 0;
 }
 
+static int eth_set_ksz9021_skew(struct eth_device *dev, int phy_addr,
+		int (*mii_write)(struct eth_device *, u8, u8, u16))
+{
+	/*  RXC PAD Skew andTXC PAD Skew */
+	if (eth_emdio_write(dev, phy_addr,
+		MII_KSZ9021_EXT_RGMII_CLOCK_SKEW,
+		getenv_ulong(CONFIG_KSZ9021_CLK_SKEW_ENV, 16,
+			CONFIG_KSZ9021_CLK_SKEW_VAL),
+		mii_write) < 0)
+		return -1;
+
+	/* set no PAD skew for data */
+	if (eth_emdio_write(dev, phy_addr,
+		MII_KSZ9021_EXT_RGMII_RX_DATA_SKEW,
+		getenv_ulong(CONFIG_KSZ9021_DATA_SKEW_ENV, 16,
+			CONFIG_KSZ9021_DATA_SKEW_VAL),
+		mii_write) < 0)
+		return -1;
+
+	return 0;
+}
+
 /*
  * DesignWare Ethernet initialization
  * This function overrides the __weak  version in the driver proper.
@@ -174,20 +197,27 @@ int designware_board_phy_init(struct eth_device *dev, int phy_addr,
 		int (*mii_write)(struct eth_device *, u8, u8, u16),
 		int (*dw_reset_phy)(struct eth_device *))
 {
+	struct mii_dev *bus;
+	unsigned int phyid;
+	int ret = 0;
+
 	if ((*dw_reset_phy)(dev) < 0)
 		return -1;
 
-	/* add 2 ns of RXC PAD Skew and 2.6 ns of TXC PAD Skew */
-	if (eth_emdio_write(dev, phy_addr,
-		MII_KSZ9021_EXT_RGMII_CLOCK_SKEW, 0xa0d0, mii_write) < 0)
-		return -1;
+	bus = miiphy_get_active_dev(dev->name);
+	if (!bus)
+		return 1;
 
-	/* set no PAD skew for data */
-	if (eth_emdio_write(dev, phy_addr,
-		MII_KSZ9021_EXT_RGMII_RX_DATA_SKEW, 0, mii_write) < 0)
+	if (get_phy_id(bus, phy_addr, MDIO_DEVAD_NONE, &phyid) != 0) {
+		puts("Net:   failed to get phyid\n");
 		return -1;
+	}
+	printf("Net PHY ID: 0x%08x\n", phyid);
 
-	return 0;
+	if ((MICREL_PHY_ID_KSZ9021 | MICREL_PHY_50MHZ_CLK) == phyid)
+		ret = eth_set_ksz9021_skew(dev, phy_addr, mii_write);
+
+	return ret;
 }
 #endif
 
@@ -195,23 +225,53 @@ int designware_board_phy_init(struct eth_device *dev, int phy_addr,
 int board_eth_init(bd_t *bis)
 {
 #ifndef CONFIG_SOCFPGA_VIRTUAL_TARGET
-	/* setting emac1 to rgmii */
+
+	/* Initialize EMAC */
+
+	/* Clearing emac0 PHY interface select to 0 */
 	clrbits_le32(CONFIG_SYSMGR_EMAC_CTRL,
 		(SYSMGR_EMACGRP_CTRL_PHYSEL_MASK <<
-		SYSMGR_EMACGRP_CTRL_PHYSEL_WIDTH));
+#if (CONFIG_EMAC_BASE == CONFIG_EMAC0_BASE)
+		SYSMGR_EMACGRP_CTRL_PHYSEL0_LSB));
+#elif (CONFIG_EMAC_BASE == CONFIG_EMAC1_BASE)
+		SYSMGR_EMACGRP_CTRL_PHYSEL1_LSB));
+#endif
 
+	/* configure to PHY interface select choosed */
 	setbits_le32(CONFIG_SYSMGR_EMAC_CTRL,
+#if (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_GMII)
+		(SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_GMII_MII <<
+#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_MII)
+		(SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_GMII_MII <<
+#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_RGMII)
 		(SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_RGMII <<
-		SYSMGR_EMACGRP_CTRL_PHYSEL_WIDTH));
+#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_RMII)
+		(SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_RMII <<
+#endif
+#if (CONFIG_EMAC_BASE == CONFIG_EMAC0_BASE)
+		SYSMGR_EMACGRP_CTRL_PHYSEL0_LSB));
+#elif (CONFIG_EMAC_BASE == CONFIG_EMAC1_BASE)
+		SYSMGR_EMACGRP_CTRL_PHYSEL1_LSB));
+#endif
 
-	int rval = designware_initialize(0, CONFIG_EMAC1_BASE,
-			CONFIG_EPHY1_PHY_ADDR, PHY_INTERFACE_MODE_RGMII);
-
+	/* initialize and register the emac */
+	int rval = designware_initialize(0, CONFIG_EMAC_BASE,
+		CONFIG_EPHY_PHY_ADDR,
+#if (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_GMII)
+		PHY_INTERFACE_MODE_GMII);
+#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_MII)
+		PHY_INTERFACE_MODE_MII);
+#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_RGMII)
+		PHY_INTERFACE_MODE_RGMII);
+#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_RMII)
+		PHY_INTERFACE_MODE_RMII);
+#endif
 	debug("board_eth_init %d\n", rval);
 	return rval;
 #else
 	return 0;
 #endif
+
 }
 
 /*

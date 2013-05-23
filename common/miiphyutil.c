@@ -263,7 +263,7 @@ const char *miiphy_get_current_dev(void)
 	return NULL;
 }
 
-static struct mii_dev *miiphy_get_active_dev(const char *devname)
+struct mii_dev *miiphy_get_active_dev(const char *devname)
 {
 	/* If the current mii is the one we want, return it */
 	if (current_mii)

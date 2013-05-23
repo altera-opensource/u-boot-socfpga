@@ -198,6 +198,7 @@ static inline int is_10g_interface(phy_interface_t interface)
 #endif
 
 int phy_init(void);
+int get_phy_id(struct mii_dev *bus, int addr, int devad, u32 *phy_id);
 int phy_reset(struct phy_device *phydev);
 struct phy_device *phy_connect(struct mii_dev *bus, int addr,
 				struct eth_device *dev,

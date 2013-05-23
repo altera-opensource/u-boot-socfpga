@@ -74,6 +74,7 @@ const char *miiphy_get_current_dev(void);
 struct mii_dev *mdio_get_current_dev(void);
 struct mii_dev *miiphy_get_dev_by_name(const char *devname);
 struct phy_device *mdio_phydev_for_ethname(const char *devname);
+struct mii_dev *miiphy_get_active_dev(const char *devname);
 
 void miiphy_listdev(void);
 

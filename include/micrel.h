@@ -13,4 +13,9 @@ struct phy_device;
 int ksz9021_phy_extended_write(struct phy_device *phydev, int regnum, u16 val);
 int ksz9021_phy_extended_read(struct phy_device *phydev, int regnum);
 
+#define MICREL_PHY_ID_KSZ9021	0x00221610
+
+/* struct phy_device dev_flags definitions */
+#define MICREL_PHY_50MHZ_CLK	0x00000001
+
 #endif
