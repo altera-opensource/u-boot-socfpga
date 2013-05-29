@@ -90,6 +90,8 @@ unsigned sdram_calibration_full(void);
 #define SDR_CTRLGRP_CPORTRDWR_ADDRESS 0x5078
 /* Register: sdr.ctrlgrp.portcfg                                           */
 #define SDR_CTRLGRP_PORTCFG_ADDRESS 0x507c
+/* Register: sdr.ctrlgrp.fpgaportrst                                       */
+#define SDR_CTRLGRP_FPGAPORTRST_ADDRESS 0x5080
 /* Register: sdr.ctrlgrp.fifocfg                                           */
 #define SDR_CTRLGRP_FIFOCFG_ADDRESS 0x5088
 /* Register: sdr.ctrlgrp.mppriority                                        */
@@ -394,5 +396,9 @@ SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_2_THRESHOLDRSTCYCLES_79_64_MASK \
 #define SDR_CTRLGRP_DRAMODT_READ_MASK 0x000000f0
 #define SDR_CTRLGRP_DRAMODT_WRITE_LSB 0
 #define SDR_CTRLGRP_DRAMODT_WRITE_MASK 0x0000000f
+/* Register template: sdr::ctrlgrp::fpgaportrst                            */
+#define SDR_CTRLGRP_FPGAPORTRST_READ_PORT_0_LSB 0
+#define SDR_CTRLGRP_FPGAPORTRST_WRITE_PORT_0_LSB 4
+#define SDR_CTRLGRP_FPGAPORTRST_COMMAND_PORT_0_LSB 8
 
 #endif /* _SDRAM_H_ */

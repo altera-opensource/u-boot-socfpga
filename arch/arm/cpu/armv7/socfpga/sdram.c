@@ -1015,6 +1015,27 @@ SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_2_THRESHOLDRSTCYCLES_79_64_MASK);
 #endif
 
 
+	/***** FPGAPORTRST *****/
+#if defined(CONFIG_HPS_SDR_CTRLCFG_FPGAPORTRST_READ_PORT_USED)
+#ifdef DEBUG
+	debug("Configuring FPGAPORTRST\n");
+#endif
+	register_offset = SDR_CTRLGRP_FPGAPORTRST_ADDRESS;
+	/* All value will be provided */
+	reg_value =
+		(((1 << CONFIG_HPS_SDR_CTRLCFG_FPGAPORTRST_READ_PORT_USED)
+			- 1) << SDR_CTRLGRP_FPGAPORTRST_READ_PORT_0_LSB)|
+		(((1 << CONFIG_HPS_SDR_CTRLCFG_FPGAPORTRST_WRITE_PORT_USED)
+			- 1) << SDR_CTRLGRP_FPGAPORTRST_WRITE_PORT_0_LSB)|
+		(((1 << CONFIG_HPS_SDR_CTRLCFG_FPGAPORTRST_COMMAND_PORT_USED)
+			- 1) << SDR_CTRLGRP_FPGAPORTRST_COMMAND_PORT_0_LSB);
+	if (sdram_write_verify(register_offset,	reg_value) == 1) {
+		status = 1;
+		COMPARE_FAIL_ACTION
+	}
+#endif
+
+
 	DEBUG_MEMORY
 /***** Final step - apply configuration changes *****/
 #ifdef DEBUG
