@@ -21,6 +21,7 @@
 #include "../../board/altera/socfpga_cyclone5/build.h"
 #include "../../board/altera/socfpga_cyclone5/pinmux_config.h"
 #include "../../board/altera/socfpga_cyclone5/pll_config.h"
+#include "../../board/altera/socfpga_cyclone5/sdram/sdram_config.h"
 
 /* Enabled for U-Boot debug message printout? */
 /*#define DEBUG*/

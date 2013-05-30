@@ -43,23 +43,65 @@ int dram_init(void)
 	return 0;
 }
 
+/* Enable and disable SDRAM interrupt */
+void sdram_enable_interrupt(unsigned enable)
+{
+	/* clear the ECC prior enable or even disable */
+	setbits_le32((SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_DRAMINTR_ADDRESS),
+		SDR_CTRLGRP_DRAMINTR_INTRCLR_MASK);
+
+	if (enable)
+		setbits_le32((SOCFPGA_SDR_ADDRESS +
+			SDR_CTRLGRP_DRAMINTR_ADDRESS),
+			SDR_CTRLGRP_DRAMINTR_INTREN_MASK);
+	else
+		clrbits_le32((SOCFPGA_SDR_ADDRESS +
+			SDR_CTRLGRP_DRAMINTR_ADDRESS),
+			SDR_CTRLGRP_DRAMINTR_INTREN_MASK);
+}
+
+/* handler for SDRAM ECC interrupt */
 void irq_handler_ecc_sdram(void *arg)
 {
+	unsigned reg_value;
+
 	DEBUG_MEMORY
-	debug("IRQ triggered: SDRAM ECC\n");
-	irq_cnt_ecc_sdram++;
+
+	/* check whether SBE happen */
+	reg_value = readl(SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_DRAMSTS_ADDRESS);
+	if (reg_value & SDR_CTRLGRP_DRAMSTS_SBEERR_MASK) {
+		printf("Info: SDRAM ECC SBE @ 0x%08x\n",
+			readl(SOCFPGA_SDR_ADDRESS +
+			SDR_CTRLGRP_ERRADDR_ADDRESS));
+		irq_cnt_ecc_sdram = irq_cnt_ecc_sdram +
+			readl(SOCFPGA_SDR_ADDRESS +
+			SDR_CTRLGRP_SBECOUNT_ADDRESS);
 #ifndef CONFIG_SPL_BUILD
-	setenv_ulong("ECC_SDRAM",irq_cnt_ecc_sdram);
-#ifndef CONFIG_SOCFPGA_VIRTUAL_TARGET
-	setenv_ulong("ECC_SDRAM_SBE",
-		readl(SOCFPGA_SDR_ADDRESS+SDR_CTRLGRP_SBECOUNT_ADDRESS));
-	setenv_ulong("ECC_SDRAM_DBE",
-		readl(SOCFPGA_SDR_ADDRESS+SDR_CTRLGRP_DBECOUNT_ADDRESS));
+		setenv_ulong("sdram_ecc_sbe", irq_cnt_ecc_sdram);
+#endif /* CONFIG_SPL_BUILD */
+	}
+
+	/* check whether DBE happen */
+	if (reg_value & SDR_CTRLGRP_DRAMSTS_DBEERR_MASK) {
+		puts("Error: SDRAM ECC DBE occurred\n");
+		printf("sbecount = %lu\n", irq_cnt_ecc_sdram);
+		printf("erraddr = %08x\n", readl(SOCFPGA_SDR_ADDRESS +
+			SDR_CTRLGRP_ERRADDR_ADDRESS));
+		printf("dropcount = %08x\n", readl(SOCFPGA_SDR_ADDRESS +
+			SDR_CTRLGRP_DROPCOUNT_ADDRESS));
+		printf("dropaddr = %08x\n", readl(SOCFPGA_SDR_ADDRESS +
+			SDR_CTRLGRP_DROPADDR_ADDRESS));
+	}
+
 	/* clear the interrupt signal from SDRAM controller */
 	setbits_le32((SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_DRAMINTR_ADDRESS),
 		SDR_CTRLGRP_DRAMINTR_INTRCLR_MASK);
-#endif /* CONFIG_SOCFPGA_VIRTUAL_TARGET */
-#endif /* CONFIG_SPL_BUILD */
+
+	/* if DBE, going into hang */
+	if (reg_value & SDR_CTRLGRP_DRAMSTS_DBEERR_MASK) {
+		sdram_enable_interrupt(0);
+		hang();
+	}
 }
 
 
@@ -110,14 +152,14 @@ unsigned sdram_mmr_init_full(void)
 	DEBUG_MEMORY
 	/***** CTRLCFG *****/
 #if defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_MEMTYPE)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_MEMBL)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ADDRORDER)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCORREN)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_REORDEREN)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_STARVELIMIT)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_DQSTRKEN)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_NODMPINS)
+	defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_MEMBL)|\
+	defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ADDRORDER)|\
+	defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN)|\
+	defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCCORREN)|\
+	defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_REORDEREN)|\
+	defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_STARVELIMIT)|\
+	defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_DQSTRKEN)|\
+	defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_NODMPINS)
 #ifdef DEBUG
 	debug("\nConfiguring CTRLCFG\n");
 #endif
@@ -148,9 +190,9 @@ unsigned sdram_mmr_init_full(void)
 			SDR_CTRLGRP_CTRLCFG_ECCEN_LSB,
 			SDR_CTRLGRP_CTRLCFG_ECCEN_MASK);
 #endif
-#ifdef CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCORREN
+#ifdef CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCCORREN
 	reg_value = sdram_write_register_field( reg_value,
-			CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCORREN,
+			CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCCORREN,
 			SDR_CTRLGRP_CTRLCFG_ECCCORREN_LSB,
 			SDR_CTRLGRP_CTRLCFG_ECCCORREN_MASK);
 #endif
