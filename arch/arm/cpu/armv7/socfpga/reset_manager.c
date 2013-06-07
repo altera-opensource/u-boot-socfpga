@@ -294,3 +294,25 @@ CONFIG_HPS_RESET_ASSERT_FPGA2HPS == 0 )
 
 #endif /* CONFIG_SOCFPGA_VIRTUAL_TARGET */
 }
+
+/* Change the reset state for EMAC0 */
+void emac0_reset_enable(uint state)
+{
+	if (state)
+		setbits_le32(&reset_manager_base->per_mod_reset,
+			(1 << RSTMGR_PERMODRST_EMAC0_LSB));
+	else
+		clrbits_le32(&reset_manager_base->per_mod_reset,
+			(1 << RSTMGR_PERMODRST_EMAC0_LSB));
+}
+
+/* Change the reset state for EMAC1 */
+void emac1_reset_enable(uint state)
+{
+	if (state)
+		setbits_le32(&reset_manager_base->per_mod_reset,
+			(1 << RSTMGR_PERMODRST_EMAC1_LSB));
+	else
+		clrbits_le32(&reset_manager_base->per_mod_reset,
+			(1 << RSTMGR_PERMODRST_EMAC1_LSB));
+}

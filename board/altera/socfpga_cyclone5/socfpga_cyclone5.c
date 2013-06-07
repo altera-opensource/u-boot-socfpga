@@ -228,6 +228,13 @@ int board_eth_init(bd_t *bis)
 
 	/* Initialize EMAC */
 
+	/*
+	 * Putting the EMAC controller to reset when configuring the PHY
+	 * interface select at System Manager
+	*/
+	emac0_reset_enable(1);
+	emac1_reset_enable(1);
+
 	/* Clearing emac0 PHY interface select to 0 */
 	clrbits_le32(CONFIG_SYSMGR_EMAC_CTRL,
 		(SYSMGR_EMACGRP_CTRL_PHYSEL_MASK <<
@@ -252,6 +259,13 @@ int board_eth_init(bd_t *bis)
 		SYSMGR_EMACGRP_CTRL_PHYSEL0_LSB));
 #elif (CONFIG_EMAC_BASE == CONFIG_EMAC1_BASE)
 		SYSMGR_EMACGRP_CTRL_PHYSEL1_LSB));
+#endif
+
+	/* Release the EMAC controller from reset */
+#if (CONFIG_EMAC_BASE == CONFIG_EMAC0_BASE)
+	emac0_reset_enable(0);
+#elif (CONFIG_EMAC_BASE == CONFIG_EMAC1_BASE)
+	emac1_reset_enable(0);
 #endif
 
 	/* initialize and register the emac */
