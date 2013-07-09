@@ -18,9 +18,9 @@
 #define __CONFIG_H
 
 #include <asm/arch/socfpga_base_addrs.h>
-#include "../../board/altera/socfpga_cyclone5/build.h"
-#include "../../board/altera/socfpga_cyclone5/pinmux_config.h"
-#include "../../board/altera/socfpga_cyclone5/pll_config.h"
+#include "../../board/altera/socfpga/build.h"
+#include "../../board/altera/socfpga/pinmux_config.h"
+#include "../../board/altera/socfpga/pll_config.h"
 
 /* Enabled for U-Boot debug message printout? */
 /*#define DEBUG*/
