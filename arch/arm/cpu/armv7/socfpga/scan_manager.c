@@ -19,7 +19,6 @@
 #include <asm/io.h>
 #include <asm/arch/freeze_controller.h>
 #include <asm/arch/scan_manager.h>
-#include <iocsr_config.h>
 #include <asm/arch/debug_memory.h>
 
 /*

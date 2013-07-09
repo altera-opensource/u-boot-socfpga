@@ -1,5 +1,5 @@
 /*
- *  Copyright Altera Corporation (C) 2012-2013. All rights reserved
+ *  Copyright Altera Corporation (C) 2013. All rights reserved
  *
  *  This program is free software; you can redistribute it and/or modify it
  *  under the terms and conditions of the GNU General Public License,
@@ -15,7 +15,24 @@
  */
 
 #include <common.h>
+#include <asm/arch/reset_manager.h>
+#include <asm/arch/system_manager.h>
 #include <asm/io.h>
+
+#include <netdev.h>
+#include <mmc.h>
+#include <dwmmc.h>
+#include <asm/arch/interrupts.h>
+#include <asm/arch/sdram.h>
+#include <asm/arch/dwmmc.h>
+#include <dwmmc.h>
+#include <phy.h>
+#include <micrel.h>
+#include <../drivers/net/designware.h>
+
+#include <altera.h>
+#include <fpga.h>
+
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -27,7 +44,7 @@ int checkboard(void)
 #ifdef CONFIG_SOCFPGA_VIRTUAL_TARGET
 	puts("BOARD : Altera VTDEV5XS1 Virtual Board\n");
 #else
-	puts("BOARD : Altera SOCFPGA Cyclone V Board\n");
+	puts("BOARD : Altera SOCFPGA Arria V Board\n");
 #endif
 	return 0;
 }

@@ -15,10 +15,10 @@ Building U-Boot and SPL
 1. cd <U-Boot directory>
 2. export CROSS_COMPILE=arm-none-eabi-
 3. make mrproper
-4. ./MAKEALL socfpga_cyclone5
+4. ./MAKEALL socfpga_cyclone5 or ./MAKEALL socfpga_arria5
 
 For Virtual target, please "#define CONFIG_SOCFPGA_VIRTUAL_TARGET"
-at include/configs/socfpga_cyclone5.h
+at include/configs/socfpga_cyclone5.h or socfpga_arria5.h
 
 Output File:
 
@@ -108,7 +108,7 @@ to use other boot option instead of default ram boot option.
 QSPI boot
 
 For Preloader to load U-Boot image from QSPI flash, you need to configure
-as below at the configuration file board/altera/socfpga_cyclone5/build.h.
+as below at the configuration file board/altera/socfpga/build.h.
 #define CONFIG_PRELOADER_BOOT_FROM_QSPI		(1)
 #define CONFIG_PRELOADER_BOOT_FROM_SDMMC	(0)
 #define CONFIG_PRELOADER_BOOT_FROM_RAM		(0)
@@ -125,7 +125,7 @@ inside the qspi flash. To do that, you need to call "run qspiboot" instead
 SDMMC boot
 
 For Preloader to load U-Boot image from SDMMC card, you need to configure
-as below at the configuration file board/altera/socfpga_cyclone5/build.h.
+as below at the configuration file board/altera/socfpga/build.h
 #define CONFIG_PRELOADER_BOOT_FROM_QSPI		(0)
 #define CONFIG_PRELOADER_BOOT_FROM_SDMMC	(1)
 #define CONFIG_PRELOADER_BOOT_FROM_RAM		(0)

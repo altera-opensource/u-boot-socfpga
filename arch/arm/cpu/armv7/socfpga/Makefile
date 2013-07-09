@@ -28,7 +28,7 @@ include $(TOPDIR)/config.mk
 
 LIB	=  $(obj)lib$(SOC).o
 
-SOBJS	:= lowlevel_init.o
+SOBJS	:= lowlevel_init.o misc.o
 COBJS-y	:= s_init.o timer.o reset_manager.o sdram.o
 COBJS-y	+= fpga_manager.o gic.o interrupts.o
 COBJS-$(CONFIG_SPL_BUILD) += spl.o clock_manager.o freeze_controller.o

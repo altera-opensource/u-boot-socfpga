@@ -786,6 +786,7 @@ Dinh Nguyen <dinguyen@altera.com>
 Chin Liang See <clsee@altera.com>
 
 	socfpga		socfpga_cyclone5
+	socfpga		socfpga_arria5
 
 Sandeep Paulraj <s-paulraj@ti.com>
 

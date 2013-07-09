@@ -18,8 +18,6 @@
 #ifndef _SCAN_MANAGER_H_
 #define _SCAN_MANAGER_H_
 
-#include <iocsr_config.h>
-
 typedef unsigned long Scan_mgr_entry_t;
 
 #define NUM_OF_CHAINS     (4)
@@ -156,5 +154,13 @@ scan_mgr_io_scan_chain_engine_is_idle(uint32_t max_iter)
 	return SCAN_MGR_IO_SCAN_ENGINE_STATUS_IDLE;
 }
 
+extern const unsigned long iocsr_scan_chain0_table[
+	((CONFIG_HPS_IOCSR_SCANCHAIN0_LENGTH / 32) + 1)];
+extern const unsigned long iocsr_scan_chain1_table[
+	((CONFIG_HPS_IOCSR_SCANCHAIN1_LENGTH / 32) + 1)];
+extern const unsigned long iocsr_scan_chain2_table[
+	((CONFIG_HPS_IOCSR_SCANCHAIN2_LENGTH / 32) + 1)];
+extern const unsigned long iocsr_scan_chain3_table[
+	((CONFIG_HPS_IOCSR_SCANCHAIN3_LENGTH / 32) + 1)];
 
 #endif	/* _SCAN_MANAGER_H_ */

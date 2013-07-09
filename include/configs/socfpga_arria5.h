@@ -1,5 +1,5 @@
 /*
- *  Copyright Altera Corporation (C) 2012-2013. All rights reserved
+ *  Copyright Altera Corporation (C) 2013. All rights reserved
  *
  *  This program is free software; you can redistribute it and/or modify it
  *  under the terms and conditions of the GNU General Public License,
@@ -20,12 +20,12 @@
 #include "socfpga_common.h"
 #include "../../board/altera/socfpga/iocsr_config.h"
 
-#define CONFIG_SOCFPGA_CYCLONE5
+#define CONFIG_SOCFPGA_ARRIA5
 
 /*
  * Console setup
  */
 /* Monitor Command Prompt */
-#define CONFIG_SYS_PROMPT		"SOCFPGA_CYCLONE5 # "
+#define CONFIG_SYS_PROMPT		"SOCFPGA_ARRIA5 # "
 
 #endif	/* __CONFIG_H */
