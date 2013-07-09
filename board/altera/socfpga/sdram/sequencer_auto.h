@@ -34,7 +34,7 @@
 #define __RW_MGR_ac_read_en 0x21
 #define __RW_MGR_ac_mrs3_mirr 0x0C
 #define __RW_MGR_ac_mrs2 0x05
-#define __RW_MGR_CONTENT_ac_mrs1 0x10090000
+#define __RW_MGR_CONTENT_ac_mrs1 0x10090004
 #define __RW_MGR_CONTENT_ac_mrs3 0x100B0000
 #define __RW_MGR_CONTENT_ac_write_bank_0_col_0_nodata_wl_1 0x18980000
 #define __RW_MGR_CONTENT_ac_act_1 0x106B0000
@@ -46,8 +46,8 @@
 #define __RW_MGR_CONTENT_ac_init_reset_0_cke_0 0x20700000
 #define __RW_MGR_CONTENT_ac_read_bank_0_1_norden 0x10580008
 #define __RW_MGR_CONTENT_ac_pre_all 0x10280400
-#define __RW_MGR_CONTENT_ac_mrs0_user 0x10080231
-#define __RW_MGR_CONTENT_ac_mrs0_dll_reset 0x10080330
+#define __RW_MGR_CONTENT_ac_mrs0_user 0x10080431
+#define __RW_MGR_CONTENT_ac_mrs0_dll_reset 0x10080530
 #define __RW_MGR_CONTENT_ac_read_bank_0_0 0x13580000
 #define __RW_MGR_CONTENT_ac_write_bank_0_col_1 0x1C980008
 #define __RW_MGR_CONTENT_ac_read_bank_0_1 0x13580008
@@ -55,13 +55,13 @@
 #define __RW_MGR_CONTENT_ac_write_bank_1_col_1 0x1C9B0008
 #define __RW_MGR_CONTENT_ac_write_bank_0_col_0 0x1C980000
 #define __RW_MGR_CONTENT_ac_read_bank_1_0 0x135B0000
-#define __RW_MGR_CONTENT_ac_mrs1_mirr 0x100A0000
+#define __RW_MGR_CONTENT_ac_mrs1_mirr 0x100A0004
 #define __RW_MGR_CONTENT_ac_read_bank_1_1 0x135B0008
 #define __RW_MGR_CONTENT_ac_des_odt_1 0x38780000
-#define __RW_MGR_CONTENT_ac_mrs0_dll_reset_mirr 0x100802C8
+#define __RW_MGR_CONTENT_ac_mrs0_dll_reset_mirr 0x100804C8
 #define __RW_MGR_CONTENT_ac_zqcl 0x10380400
 #define __RW_MGR_CONTENT_ac_write_predata 0x38F80000
-#define __RW_MGR_CONTENT_ac_mrs0_user_mirr 0x10080249
+#define __RW_MGR_CONTENT_ac_mrs0_user_mirr 0x10080449
 #define __RW_MGR_CONTENT_ac_ref 0x10480000
 #define __RW_MGR_CONTENT_ac_nop 0x30780000
 #define __RW_MGR_CONTENT_ac_rdimm 0x10780000

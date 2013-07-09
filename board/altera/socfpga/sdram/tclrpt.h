@@ -1,31 +1,31 @@
 #ifndef TCLRPT_H_
 #define TCLRPT_H_
 /*
- * Copyright (C) 2012 Altera Corporation <www.altera.com>
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *  - Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *  - Neither the name of the Altera Corporation nor the
- *    names of its contributors may be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL ALTERA CORPORATION BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+Copyright (c) 2012, Altera Corporation
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of Altera Corporation nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL ALTERA CORPORATION BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "sequencer.h"
 
@@ -35,8 +35,8 @@
 #define TCLRPT_SET(item, value)
 #endif
 
-/* None of the rest of the file should be referenced if ENABLE_TCL_DEBUG is not */
-/* set (although it's not a problem if it is, but this helps catch errors) */
+/* None of the rest of the file should be referenced if ENABLE_TCL_DEBUG is not
+set (although it's not a problem if it is, but this helps catch errors) */
 #if ENABLE_TCL_DEBUG
 
 #define PRINTF_READ_BUFFER_SIZE 128/4
@@ -47,9 +47,9 @@
 #define DI_REPORT_FLAGS_READY 0x00000001
 #define DI_REPORT_FLAGS_DONE 0x00000002
 
-/*******************************************************************************/
-/* TCL Commands */
-/*******************************************************************************/
+/******************************************************************************/
+/* TCL Commands  */
+/******************************************************************************/
 /* The wait command */
 #define TCLDBG_CMD_WAIT_CMD 1000
 
@@ -74,10 +74,12 @@
 /* Run pattern to generate eye diagrams */
 #define TCLDBG_RUN_EYE_DIAGRAM_PATTERN 6
 
-/* Run full test and see how far we can push DQ delay on input and output sides */
+/* Run full test and see how far we can push DQ delay on
+input and output sides */
 #define TCLDBG_FIND_FULL_TEST_DQ 7
 
-/* Run full test and see how far we can push DQS delay on input and output sides */
+/* Run full test and see how far we can push DQS delay on
+input and output sides */
 #define TCLDBG_FIND_FULL_TEST_DQS 8
 
 /* Run full test and see how far we can push DM delay on output sides */
@@ -128,9 +130,9 @@
 /* Enable/disable non-destructive calibration */
 #define TCLDBG_SET_NON_DESTRUCTIVE_CALIBRATION 24
 
-/*******************************************************************************/
-/* TCL RX Status Codes */
-/*******************************************************************************/
+/******************************************************************************/
+/* TCL RX Status Codes  */
+/******************************************************************************/
 /* RX interface waiting for command */
 #define TCLDBG_RX_STATUS_WAIT_CMD 0
 
@@ -140,9 +142,9 @@
 /* RX interface command executing */
 #define TCLDBG_RX_STATUS_CMD_EXE 2
 
-/*******************************************************************************/
-/* TCL TX Status Codes */
-/*******************************************************************************/
+/******************************************************************************/
+/* TCL TX Status Codes  */
+/******************************************************************************/
 /* RX interface ready to accept commands in debug mode */
 #define TCLDBG_TX_STATUS_CMD_READY 0
 
@@ -157,31 +159,34 @@
 
 
 
-/*******************************************************************************/
-/* Main report status bits */
-/*******************************************************************************/
+/******************************************************************************/
+/* Main report status bits  */
+/******************************************************************************/
 #define DEBUG_STATUS_PRINTF_ENABLED_BIT 0
 #define DEBUG_STATUS_CALIBRATION_STARTED 1
 #define DEBUG_STATUS_CALIBRATION_ENDED 2
 
-/*******************************************************************************/
-/* Individual reports status bits */
-/*******************************************************************************/
+/******************************************************************************/
+/* Individual reports status bits  */
+/******************************************************************************/
 #define DEBUG_REPORT_STATUS_REPORT_READY 0x00000001
 #define DEBUG_REPORT_STATUS_REPORT_GEN_ENABLED 0x00000002
+#define DEBUG_REPORT_DTAP_PER_PTAP_DYNAMIC 0x00000004
 
-
-/*******************************************************************************/
-/* Debug report sizes */
-/*******************************************************************************/
-#define NUM_RANK_MASK_WORDS ((RW_MGR_MEM_NUMBER_OF_RANKS % 32) == 0 ? (RW_MGR_MEM_NUMBER_OF_RANKS/32) : (RW_MGR_MEM_NUMBER_OF_RANKS/32)+1)
-#define NUM_GROUP_MASK_WORDS ((RW_MGR_MEM_IF_READ_DQS_WIDTH % 32) == 0 ? (RW_MGR_MEM_IF_READ_DQS_WIDTH/32) : (RW_MGR_MEM_IF_READ_DQS_WIDTH/32)+1)
+/******************************************************************************/
+/* Debug report sizes  */
+/******************************************************************************/
+#define NUM_RANK_MASK_WORDS ((RW_MGR_MEM_NUMBER_OF_RANKS % 32) == 0 ? \
+	(RW_MGR_MEM_NUMBER_OF_RANKS/32) : (RW_MGR_MEM_NUMBER_OF_RANKS/32)+1)
+#define NUM_GROUP_MASK_WORDS ((RW_MGR_MEM_IF_READ_DQS_WIDTH % 32) == 0 ? \
+	(RW_MGR_MEM_IF_READ_DQS_WIDTH/32) : (RW_MGR_MEM_IF_READ_DQS_WIDTH/32)+1)
 
 #define COMMAND_PARAM_WORDS 4
 
-/*******************************************************************************/
-/* Debug report structs */
-/*******************************************************************************/
+/******************************************************************************/
+/* Debug report structs  */
+/* Margins are reported in terms of delay chain taps.  */
+/******************************************************************************/
 typedef struct debug_cal_observed_dq_margins_struct {
 	alt_32 left_edge;
 	alt_32 right_edge;
@@ -243,6 +248,7 @@ typedef struct debug_cal_dm_settings_struct {
 	alt_u32 dm_out_delay2;
 } debug_cal_dm_settings_t;
 
+/* Error stages are defined in sequencer.h */
 typedef struct debug_cal_status_per_group_struct {
 	alt_u32 error_stage;
 	alt_u32 error_sub_stage;
@@ -250,6 +256,7 @@ typedef struct debug_cal_status_per_group_struct {
 	alt_u32 fom_out;
 } debug_cal_status_per_group_t;
 
+/* Summary report */
 typedef struct debug_summary_report_struct {
 	/* Size in 32-bit words of the report */
 	alt_u32 data_size;
@@ -303,9 +310,14 @@ typedef struct debug_summary_report_struct {
 	alt_u32 groups_attempted_calibration[NUM_GROUP_MASK_WORDS];
 
 	alt_u32 computed_dtap_per_ptap;
-	/* The io_delay_per_io_tap is the period/dll_length */
-	alt_u32 io_delay_per_opa_tap;
-
+	/*
+	 * The delay per phase tap is the period/dll_length
+	 * alt_u32 io_delay_per_opa_tap;
+	 * The delay per delay tap is the delay per phase tap
+	 * divided by the number of delay taps per phase tap
+	 * (i.e. io_delay_per_opa_tap / computed_dtap_per_ptap)
+	 * The value of computed_dtap_per_ptap is computed during calibration.
+	 */
 	alt_u32 margin_dq_in_left_delay_chain_len;
 	alt_u32 margin_dq_in_right_delay_chain_len;
 	alt_u32 margin_dq_out_left_delay_chain_len;
@@ -313,6 +325,8 @@ typedef struct debug_summary_report_struct {
 
 } debug_summary_report_t;
 
+	/* Calibration report:  The calibration status per group is here
+	(cal_status_per_group)*/
 typedef struct debug_cal_report_struct {
 	/* Size in 32-bit words of the report */
 	alt_u32 data_size;
@@ -327,30 +341,47 @@ typedef struct debug_cal_report_struct {
 
 	alt_u32 num_shadow_regs;
 
-	debug_cal_status_per_group_t cal_status_per_group[NUM_SHADOW_REGS][RW_MGR_MEM_IF_WRITE_DQS_WIDTH];
+	/* Pass/fail status per group */
+	debug_cal_status_per_group_t cal_status_per_group[\
+		NUM_SHADOW_REGS][RW_MGR_MEM_IF_WRITE_DQS_WIDTH];
 
-	debug_cal_observed_dq_margins_t cal_dq_in_margins[NUM_SHADOW_REGS][RW_MGR_MEM_DATA_WIDTH];
-	debug_cal_observed_dq_margins_t cal_dq_out_margins[NUM_SHADOW_REGS][RW_MGR_MEM_DATA_WIDTH];
-	debug_cal_observed_dq_margins_t cal_dm_margins[NUM_SHADOW_REGS][RW_MGR_MEM_IF_WRITE_DQS_WIDTH][RW_MGR_NUM_TRUE_DM_PER_WRITE_GROUP];
-	debug_cal_observed_dqsen_margins_t cal_dqsen_margins[NUM_SHADOW_REGS][RW_MGR_MEM_IF_READ_DQS_WIDTH];
+	/* Margins observed before calibration.   */
+	debug_cal_observed_dq_margins_t cal_dq_in_margins[\
+		NUM_SHADOW_REGS][RW_MGR_MEM_DATA_WIDTH];
+	debug_cal_observed_dq_margins_t cal_dq_out_margins[\
+		NUM_SHADOW_REGS][RW_MGR_MEM_DATA_WIDTH];
+	debug_cal_observed_dq_margins_t cal_dm_margins[NUM_SHADOW_REGS][\
+		RW_MGR_MEM_IF_WRITE_DQS_WIDTH][\
+		RW_MGR_NUM_TRUE_DM_PER_WRITE_GROUP];
+	debug_cal_observed_dqsen_margins_t cal_dqsen_margins[NUM_SHADOW_REGS][\
+		RW_MGR_MEM_IF_READ_DQS_WIDTH];
 
-	debug_cal_observed_dqs_in_margins_t cal_dqs_in_margins[NUM_SHADOW_REGS][RW_MGR_MEM_IF_READ_DQS_WIDTH];
-	debug_cal_observed_dqs_out_margins_t cal_dqs_out_margins[NUM_SHADOW_REGS][RW_MGR_MEM_IF_WRITE_DQS_WIDTH];
+	debug_cal_observed_dqs_in_margins_t cal_dqs_in_margins[\
+		NUM_SHADOW_REGS][RW_MGR_MEM_IF_READ_DQS_WIDTH];
+	debug_cal_observed_dqs_out_margins_t cal_dqs_out_margins[\
+		NUM_SHADOW_REGS][RW_MGR_MEM_IF_WRITE_DQS_WIDTH];
 
-	debug_cal_dq_settings_t cal_dq_settings[NUM_SHADOW_REGS][RW_MGR_MEM_DATA_WIDTH];
-	debug_cal_dqs_in_settings_t cal_dqs_in_settings[NUM_SHADOW_REGS][RW_MGR_MEM_IF_READ_DQS_WIDTH];
-	debug_cal_dqs_out_settings_t cal_dqs_out_settings[NUM_SHADOW_REGS][RW_MGR_MEM_IF_WRITE_DQS_WIDTH];
-	debug_cal_dm_settings_t cal_dm_settings[NUM_SHADOW_REGS][RW_MGR_MEM_IF_WRITE_DQS_WIDTH][RW_MGR_NUM_TRUE_DM_PER_WRITE_GROUP];
+	/* Phase, delay chain settings */
+	debug_cal_dq_settings_t cal_dq_settings[NUM_SHADOW_REGS][\
+		RW_MGR_MEM_DATA_WIDTH];
+	debug_cal_dqs_in_settings_t cal_dqs_in_settings[NUM_SHADOW_REGS][\
+		RW_MGR_MEM_IF_READ_DQS_WIDTH];
+	debug_cal_dqs_out_settings_t cal_dqs_out_settings[NUM_SHADOW_REGS][\
+		RW_MGR_MEM_IF_WRITE_DQS_WIDTH];
+	debug_cal_dm_settings_t cal_dm_settings[NUM_SHADOW_REGS][\
+		RW_MGR_MEM_IF_WRITE_DQS_WIDTH][\
+		RW_MGR_NUM_TRUE_DM_PER_WRITE_GROUP];
 
 } debug_cal_report_t;
 
-
+/* Left and right edges of the data valid window, in units of delay taps. */
 typedef struct debug_margin_min_max_margins_struct {
 	alt_u32 min_working_setting;
 	alt_u32 max_working_setting;
 } debug_margin_min_max_margins_t;
 
-
+/* Post-calibration margin report (must be enabled using the
+TCLDBG_ENABLE_MARGIN_REPORT command first)*/
 typedef struct debug_margin_report_struct {
 	/* Size in 32-bit words of the report */
 	alt_u32 data_size;
@@ -362,10 +393,14 @@ typedef struct debug_margin_report_struct {
 
 	alt_u32 num_shadow_regs;
 
-	debug_margin_min_max_margins_t margin_dm_margins[NUM_SHADOW_REGS][RW_MGR_MEM_IF_WRITE_DQS_WIDTH][RW_MGR_NUM_TRUE_DM_PER_WRITE_GROUP];
+	debug_margin_min_max_margins_t margin_dm_margins[NUM_SHADOW_REGS][\
+		RW_MGR_MEM_IF_WRITE_DQS_WIDTH][\
+		RW_MGR_NUM_TRUE_DM_PER_WRITE_GROUP];
 
-	debug_margin_min_max_margins_t margin_dq_in_margins[NUM_SHADOW_REGS][RW_MGR_MEM_DATA_WIDTH];
-	debug_margin_min_max_margins_t margin_dq_out_margins[NUM_SHADOW_REGS][RW_MGR_MEM_DATA_WIDTH];
+	debug_margin_min_max_margins_t margin_dq_in_margins[NUM_SHADOW_REGS][\
+		RW_MGR_MEM_DATA_WIDTH];
+	debug_margin_min_max_margins_t margin_dq_out_margins[NUM_SHADOW_REGS][\
+		RW_MGR_MEM_DATA_WIDTH];
 
 
 } debug_margin_report_t;
@@ -429,7 +464,16 @@ typedef struct emif_toolkit_debug_data {
 	alt_u32 rank_mask_size_ptr;
 } emif_toolkit_debug_data_t;
 
-
+/* This the main debug data structure.  This is where you write
+commands, poll command status, pass command parameters, etc.  Contained
+within this data structure are the reports. The memory address of this
+data structure is in core_debug_defines.h (it is dynamic). For example:
+#define SEQ_CORE_DEBUG_BASE 0x000140c4
+The sizes of all the data structures are dynamic, as they depend on
+interface size and other parameters.  Accessing them outside a software
+context is trickier but it can be done by looking at the "data_size"
+field of the reports.
+*/
 typedef struct debug_data_struct {
 	/* Size in 32-bit words of all the debug data */
 	alt_u32 data_size;
@@ -458,6 +502,7 @@ typedef struct debug_data_struct {
 	alt_u32 di_report_ptr;
 #endif
 
+	/* Report data structures */
 	debug_summary_report_t summary_report;
 	debug_cal_report_t cal_report;
 	debug_margin_report_t margin_report;
