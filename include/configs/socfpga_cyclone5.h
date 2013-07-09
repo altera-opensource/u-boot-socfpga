@@ -18,7 +18,7 @@
 #define __CONFIG_H
 
 #include "socfpga_common.h"
-#include "../../board/altera/socfpga/iocsr_config.h"
+#include "../../board/altera/socfpga/iocsr_config_cyclone5.h"
 
 #define CONFIG_SOCFPGA_CYCLONE5
 
