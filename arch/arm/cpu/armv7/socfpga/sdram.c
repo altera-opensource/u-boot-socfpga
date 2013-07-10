@@ -109,18 +109,16 @@ unsigned sdram_mmr_init_full(void)
 
 	DEBUG_MEMORY
 	/***** CTRLCFG *****/
-#if defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_MEMTYPE)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_MEMBL)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ADDRORDER)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCORREN)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_REORDEREN)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_STARVELIMIT)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_DQSTRKEN)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_NODMPINS)
-#ifdef DEBUG
+#if defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_MEMTYPE) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_MEMBL) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ADDRORDER) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCORREN) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_REORDEREN) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_STARVELIMIT) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_DQSTRKEN) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_NODMPINS)
 	debug("\nConfiguring CTRLCFG\n");
-#endif
 	register_offset = SDR_CTRLGRP_CTRLCFG_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -186,15 +184,13 @@ unsigned sdram_mmr_init_full(void)
 
 
 	/***** DRAMTIMING1 *****/
-#if defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING1_TCWL)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING1_AL)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING1_TCL)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING1_TRRD)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING1_TFAW)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING1_TRFC)
-#ifdef DEBUG
+#if defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING1_TCWL) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING1_AL) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING1_TCL) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING1_TRRD) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING1_TFAW) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING1_TRFC)
 	debug("Configuring DRAMTIMING1\n");
-#endif
 	register_offset = SDR_CTRLGRP_DRAMTIMING1_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -242,14 +238,12 @@ unsigned sdram_mmr_init_full(void)
 
 
 	/***** DRAMTIMING2 *****/
-#if defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING2_IF_TREFI)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING2_IF_TRCD)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING2_IF_TRP)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING2_IF_TWR)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING2_IF_TWTR)
-#ifdef DEBUG
+#if defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING2_IF_TREFI) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING2_IF_TRCD) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING2_IF_TRP) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING2_IF_TWR) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING2_IF_TWTR)
 	debug("Configuring DRAMTIMING2\n");
-#endif
 	register_offset = SDR_CTRLGRP_DRAMTIMING2_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -291,14 +285,12 @@ unsigned sdram_mmr_init_full(void)
 
 
 	/***** DRAMTIMING3 *****/
-#if defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING3_TRTP)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING3_TRAS)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING3_TRC)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING3_TMRD)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING3_TCCD)
-#ifdef DEBUG
+#if defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING3_TRTP) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING3_TRAS) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING3_TRC) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING3_TMRD) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING3_TCCD)
 	debug("Configuring DRAMTIMING3\n");
-#endif
 	register_offset = SDR_CTRLGRP_DRAMTIMING3_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -340,11 +332,9 @@ unsigned sdram_mmr_init_full(void)
 
 
 	/***** DRAMTIMING4 *****/
-#if defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING4_SELFRFSHEXIT)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING4_PWRDOWNEXIT)
-#ifdef DEBUG
+#if defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING4_SELFRFSHEXIT) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING4_PWRDOWNEXIT)
 	debug("Configuring DRAMTIMING4\n");
-#endif
 	register_offset = SDR_CTRLGRP_DRAMTIMING4_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -369,9 +359,7 @@ unsigned sdram_mmr_init_full(void)
 
 	/***** LOWPWRTIMING *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_LOWPWRTIMING_AUTOPDCYCLES
-#ifdef DEBUG
 	debug("Configuring LOWPWRTIMING\n");
-#endif
 	register_offset = SDR_CTRLGRP_LOWPWRTIMING_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -386,13 +374,11 @@ unsigned sdram_mmr_init_full(void)
 #endif
 
 	/***** DRAMADDRW *****/
-#if defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_COLBITS)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_ROWBITS)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_BANKBITS)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_CSBITS)
-#ifdef DEBUG
+#if defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_COLBITS) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_ROWBITS) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_BANKBITS) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_CSBITS)
 	debug("Configuring DRAMADDRW\n");
-#endif
 	register_offset = SDR_CTRLGRP_DRAMADDRW_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -428,9 +414,7 @@ unsigned sdram_mmr_init_full(void)
 
 	/***** DRAMIFWIDTH *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_DRAMIFWIDTH_IFWIDTH
-#ifdef DEBUG
 	debug("Configuring DRAMIFWIDTH\n");
-#endif
 	register_offset = SDR_CTRLGRP_DRAMIFWIDTH_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -447,9 +431,7 @@ unsigned sdram_mmr_init_full(void)
 
 	/***** DRAMDEVWIDTH *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_DRAMDEVWIDTH_DEVWIDTH
-#ifdef DEBUG
 	debug("Configuring DRAMDEVWIDTH\n");
-#endif
 	register_offset = SDR_CTRLGRP_DRAMDEVWIDTH_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -466,9 +448,7 @@ unsigned sdram_mmr_init_full(void)
 
 	/***** DRAMINTR *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_DRAMINTR_INTREN
-#ifdef DEBUG
 	debug("Configuring DRAMINTR\n");
-#endif
 	register_offset = SDR_CTRLGRP_DRAMINTR_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -484,11 +464,9 @@ unsigned sdram_mmr_init_full(void)
 
 
 	/***** STATICCFG *****/
-#if defined(CONFIG_HPS_SDR_CTRLCFG_STATICCFG_MEMBL)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_STATICCFG_USEECCASDATA)
-#ifdef DEBUG
+#if defined(CONFIG_HPS_SDR_CTRLCFG_STATICCFG_MEMBL) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_STATICCFG_USEECCASDATA)
 	debug("Configuring STATICCFG\n");
-#endif
 	register_offset = SDR_CTRLGRP_STATICCFG_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -513,9 +491,7 @@ unsigned sdram_mmr_init_full(void)
 
 	/***** CTRLWIDTH *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_CTRLWIDTH_CTRLWIDTH
-#ifdef DEBUG
 	debug("Configuring CTRLWIDTH\n");
-#endif
 	register_offset = SDR_CTRLGRP_CTRLWIDTH_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -532,9 +508,7 @@ unsigned sdram_mmr_init_full(void)
 
 	/***** PORTCFG *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_PORTCFG_AUTOPCHEN
-#ifdef DEBUG
 	debug("Configuring PORTCFG\n");
-#endif
 	register_offset = SDR_CTRLGRP_PORTCFG_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -550,11 +524,9 @@ unsigned sdram_mmr_init_full(void)
 
 
 	/***** FIFOCFG *****/
-#if defined(CONFIG_HPS_SDR_CTRLCFG_FIFOCFG_SYNCMODE)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_FIFOCFG_INCSYNC)
-#ifdef DEBUG
+#if defined(CONFIG_HPS_SDR_CTRLCFG_FIFOCFG_SYNCMODE) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_FIFOCFG_INCSYNC)
 	debug("Configuring FIFOCFG\n");
-#endif
 	register_offset = SDR_CTRLGRP_FIFOCFG_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -579,9 +551,7 @@ unsigned sdram_mmr_init_full(void)
 
 	/***** MPPRIORITY *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_MPPRIORITY_USERPRIORITY
-#ifdef DEBUG
 	debug("Configuring MPPRIORITY\n");
-#endif
 	register_offset = SDR_CTRLGRP_MPPRIORITY_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -598,9 +568,7 @@ unsigned sdram_mmr_init_full(void)
 
 	/***** MPWEIGHT_MPWEIGHT_0 *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_MPWIEIGHT_0_STATICWEIGHT_31_0
-#ifdef DEBUG
 	debug("Configuring MPWEIGHT_MPWEIGHT_0\n");
-#endif
 	register_offset = SDR_CTRLGRP_MPWEIGHT_MPWEIGHT_0_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -616,11 +584,9 @@ unsigned sdram_mmr_init_full(void)
 
 
 	/***** MPWEIGHT_MPWEIGHT_1 *****/
-#if defined(CONFIG_HPS_SDR_CTRLCFG_MPWIEIGHT_1_STATICWEIGHT_49_32)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_MPWIEIGHT_1_SUMOFWEIGHT_13_0)
-#ifdef DEBUG
+#if defined(CONFIG_HPS_SDR_CTRLCFG_MPWIEIGHT_1_STATICWEIGHT_49_32) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_MPWIEIGHT_1_SUMOFWEIGHT_13_0)
 	debug("Configuring MPWEIGHT_MPWEIGHT_1\n");
-#endif
 	register_offset = SDR_CTRLGRP_MPWEIGHT_MPWEIGHT_1_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -645,9 +611,7 @@ unsigned sdram_mmr_init_full(void)
 
 	/***** MPWEIGHT_MPWEIGHT_2 *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_MPWIEIGHT_2_SUMOFWEIGHT_45_14
-#ifdef DEBUG
 	debug("Configuring MPWEIGHT_MPWEIGHT_2\n");
-#endif
 	register_offset = SDR_CTRLGRP_MPWEIGHT_MPWEIGHT_2_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -664,9 +628,7 @@ unsigned sdram_mmr_init_full(void)
 
 	/***** MPWEIGHT_MPWEIGHT_3 *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_MPWIEIGHT_3_SUMOFWEIGHT_63_46
-#ifdef DEBUG
 	debug("Configuring MPWEIGHT_MPWEIGHT_3\n");
-#endif
 	register_offset = SDR_CTRLGRP_MPWEIGHT_MPWEIGHT_3_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -683,9 +645,7 @@ unsigned sdram_mmr_init_full(void)
 
 	/***** MPPACING_MPPACING_0 *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_MPPACING_0_THRESHOLD1_31_0
-#ifdef DEBUG
 	debug("Configuring MPPACING_MPPACING_0\n");
-#endif
 	register_offset = SDR_CTRLGRP_MPPACING_MPPACING_0_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -700,11 +660,9 @@ unsigned sdram_mmr_init_full(void)
 #endif
 
 	/***** MPPACING_MPPACING_1 *****/
-#if defined(CONFIG_HPS_SDR_CTRLCFG_MPPACING_1_THRESHOLD1_59_32)|\
-    defined(CONFIG_HPS_SDR_CTRLCFG_MPPACING_1_THRESHOLD2_3_0)
-#ifdef DEBUG
+#if defined(CONFIG_HPS_SDR_CTRLCFG_MPPACING_1_THRESHOLD1_59_32) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_MPPACING_1_THRESHOLD2_3_0)
 	debug("Configuring MPPACING_MPPACING_1\n");
-#endif
 	register_offset = SDR_CTRLGRP_MPPACING_MPPACING_1_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -728,9 +686,7 @@ unsigned sdram_mmr_init_full(void)
 
 	/***** MPPACING_MPPACING_2 *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_MPPACING_2_THRESHOLD2_35_4
-#ifdef DEBUG
 	debug("Configuring MPPACING_MPPACING_2\n");
-#endif
 	register_offset = SDR_CTRLGRP_MPPACING_MPPACING_2_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -747,9 +703,7 @@ unsigned sdram_mmr_init_full(void)
 
 	/***** MPPACING_MPPACING_3 *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_MPPACING_3_THRESHOLD2_59_36
-#ifdef DEBUG
 	debug("Configuring MPPACING_MPPACING_3\n");
-#endif
 	register_offset = SDR_CTRLGRP_MPPACING_MPPACING_3_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -766,9 +720,7 @@ unsigned sdram_mmr_init_full(void)
 
 	/***** MPTHRESHOLDRST_MPTHRESHOLDRST_0 *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_MPTHRESHOLDRST_0_THRESHOLDRSTCYCLES_31_0
-#ifdef DEBUG
 	debug("Configuring MPTHRESHOLDRST_MPTHRESHOLDRST_0\n");
-#endif
 	register_offset = SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_0_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -785,9 +737,7 @@ SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_0_THRESHOLDRSTCYCLES_31_0_MASK);
 
 	/***** MPTHRESHOLDRST_MPTHRESHOLDRST_1 *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_MPTHRESHOLDRST_1_THRESHOLDRSTCYCLES_63_32
-#ifdef DEBUG
 	debug("Configuring MPTHRESHOLDRST_MPTHRESHOLDRST_1\n");
-#endif
 	register_offset = SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_1_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -804,9 +754,7 @@ SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_1_THRESHOLDRSTCYCLES_63_32_MASK);
 
 	/***** MPTHRESHOLDRST_MPTHRESHOLDRST_2 *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_MPTHRESHOLDRST_2_THRESHOLDRSTCYCLES_79_64
-#ifdef DEBUG
 	debug("Configuring MPTHRESHOLDRST_MPTHRESHOLDRST_2\n");
-#endif
 	register_offset = SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_2_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -822,9 +770,7 @@ SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_2_THRESHOLDRSTCYCLES_79_64_MASK);
 
 	/***** PHYCTRL_PHYCTRL_0 *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_PHYCTRL_PHYCTRL_0
-#ifdef DEBUG
 	debug("Configuring PHYCTRL_PHYCTRL_0\n");
-#endif
 	register_offset = SDR_CTRLGRP_PHYCTRL_PHYCTRL_0_ADDRESS;
 	/* Read original register value */
 	reg_value = CONFIG_HPS_SDR_CTRLCFG_PHYCTRL_PHYCTRL_0;
@@ -837,9 +783,7 @@ SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_2_THRESHOLDRSTCYCLES_79_64_MASK);
 /* newly added registers */
 	/***** CPORTWIDTH_CPORTWIDTH *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_CPORTWIDTH_CPORTWIDTH
-#ifdef DEBUG
 	debug("Configuring CPORTWIDTH\n");
-#endif
 	register_offset = SDR_CTRLGRP_CPORTWIDTH_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -847,24 +791,18 @@ SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_2_THRESHOLDRSTCYCLES_79_64_MASK);
 			CONFIG_HPS_SDR_CTRLCFG_CPORTWIDTH_CPORTWIDTH,
 			SDR_CTRLGRP_CPORTWIDTH_CMDPORTWIDTH_LSB,
 			SDR_CTRLGRP_CPORTWIDTH_CMDPORTWIDTH_MASK);
-#ifdef DEBUG
 	debug("   Write - Address ");
 	debug("0x%08x Data 0x%08x\n",
 		(unsigned)(SOCFPGA_SDR_ADDRESS+register_offset),
 		(unsigned)reg_value);
-#endif
 	writel(reg_value, (SOCFPGA_SDR_ADDRESS + register_offset));
-#ifdef DEBUG
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
 	debug("   Read value without verify 0x%08x\n", (unsigned)reg_value);
-#endif
 #endif
 
 	/***** CPORTWMAP_CPORTWMAP *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_CPORTWMAP_CPORTWMAP
-#ifdef DEBUG
 	debug("Configuring CPORTWMAP\n");
-#endif
 	register_offset = SDR_CTRLGRP_CPORTWMAP_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -872,24 +810,18 @@ SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_2_THRESHOLDRSTCYCLES_79_64_MASK);
 			CONFIG_HPS_SDR_CTRLCFG_CPORTWMAP_CPORTWMAP,
 			SDR_CTRLGRP_CPORTWMAP_CPORTWFIFOMAP_LSB,
 			SDR_CTRLGRP_CPORTWMAP_CPORTWFIFOMAP_MASK);
-#ifdef DEBUG
 	debug("   Write - Address ");
 	debug("0x%08x Data 0x%08x\n",
 		(unsigned)(SOCFPGA_SDR_ADDRESS+register_offset),
 		(unsigned)reg_value);
-#endif
 	writel(reg_value, (SOCFPGA_SDR_ADDRESS + register_offset));
-#ifdef DEBUG
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
 	debug("   Read value without verify 0x%08x\n", (unsigned)reg_value);
-#endif
 #endif
 
 	/***** CPORTRMAP_CPORTRMAP *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_CPORTRMAP_CPORTRMAP
-#ifdef DEBUG
 	debug("Configuring CPORTRMAP\n");
-#endif
 	register_offset = SDR_CTRLGRP_CPORTRMAP_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -897,24 +829,18 @@ SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_2_THRESHOLDRSTCYCLES_79_64_MASK);
 			CONFIG_HPS_SDR_CTRLCFG_CPORTRMAP_CPORTRMAP,
 			SDR_CTRLGRP_CPORTRMAP_CPORTRFIFOMAP_LSB,
 			SDR_CTRLGRP_CPORTRMAP_CPORTRFIFOMAP_MASK);
-#ifdef DEBUG
 	debug("   Write - Address ");
 	debug("0x%08x Data 0x%08x\n",
 		(unsigned)(SOCFPGA_SDR_ADDRESS+register_offset),
 		(unsigned)reg_value);
-#endif
 	writel(reg_value, (SOCFPGA_SDR_ADDRESS + register_offset));
-#ifdef DEBUG
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
 	debug("   Read value without verify 0x%08x\n", (unsigned)reg_value);
-#endif
 #endif
 
 	/***** RFIFOCMAP_RFIFOCMAP *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_RFIFOCMAP_RFIFOCMAP
-#ifdef DEBUG
 	debug("Configuring RFIFOCMAP\n");
-#endif
 	register_offset = SDR_CTRLGRP_RFIFOCMAP_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -922,24 +848,18 @@ SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_2_THRESHOLDRSTCYCLES_79_64_MASK);
 			CONFIG_HPS_SDR_CTRLCFG_RFIFOCMAP_RFIFOCMAP,
 			SDR_CTRLGRP_RFIFOCMAP_RFIFOCPORTMAP_LSB,
 			SDR_CTRLGRP_RFIFOCMAP_RFIFOCPORTMAP_MASK);
-#ifdef DEBUG
 	debug("   Write - Address ");
 	debug("0x%08x Data 0x%08x\n",
 		(unsigned)(SOCFPGA_SDR_ADDRESS+register_offset),
 		(unsigned)reg_value);
-#endif
 	writel(reg_value, (SOCFPGA_SDR_ADDRESS + register_offset));
-#ifdef DEBUG
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
 	debug("   Read value without verify 0x%08x\n", (unsigned)reg_value);
-#endif
 #endif
 
 	/***** WFIFOCMAP_WFIFOCMAP *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_WFIFOCMAP_WFIFOCMAP
-#ifdef DEBUG
 	debug("Configuring WFIFOCMAP\n");
-#endif
 	register_offset = SDR_CTRLGRP_WFIFOCMAP_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -947,24 +867,18 @@ SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_2_THRESHOLDRSTCYCLES_79_64_MASK);
 			CONFIG_HPS_SDR_CTRLCFG_WFIFOCMAP_WFIFOCMAP,
 			SDR_CTRLGRP_WFIFOCMAP_WFIFOCPORTMAP_LSB,
 			SDR_CTRLGRP_WFIFOCMAP_WFIFOCPORTMAP_MASK);
-#ifdef DEBUG
 	debug("   Write - Address ");
 	debug("0x%08x Data 0x%08x\n",
 		(unsigned)(SOCFPGA_SDR_ADDRESS+register_offset),
 		(unsigned)reg_value);
-#endif
 	writel(reg_value, (SOCFPGA_SDR_ADDRESS + register_offset));
-#ifdef DEBUG
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
 	debug("   Read value without verify 0x%08x\n", (unsigned)reg_value);
-#endif
 #endif
 
 	/***** CPORTRDWR_CPORTRDWR *****/
 #ifdef CONFIG_HPS_SDR_CTRLCFG_CPORTRDWR_CPORTRDWR
-#ifdef DEBUG
 	debug("Configuring CPORTRDWR\n");
-#endif
 	register_offset = SDR_CTRLGRP_CPORTRDWR_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
@@ -972,42 +886,59 @@ SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_2_THRESHOLDRSTCYCLES_79_64_MASK);
 			CONFIG_HPS_SDR_CTRLCFG_CPORTRDWR_CPORTRDWR,
 			SDR_CTRLGRP_CPORTRDWR_CPORTRDWR_LSB,
 			SDR_CTRLGRP_CPORTRDWR_CPORTRDWR_MASK);
-#ifdef DEBUG
 	debug("   Write - Address ");
 	debug("0x%08x Data 0x%08x\n",
 		(unsigned)(SOCFPGA_SDR_ADDRESS+register_offset),
 		(unsigned)reg_value);
-#endif
 	writel(reg_value, (SOCFPGA_SDR_ADDRESS + register_offset));
-#ifdef DEBUG
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
 	debug("   Read value without verify 0x%08x\n", (unsigned)reg_value);
 #endif
-#endif
 /* end of newly added registers */
+
+
+	/***** DRAMODT *****/
+#if defined(CONFIG_HPS_SDR_CTRLCFG_DRAMODT_READ) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMODT_WRITE)
+	debug("Configuring DRAMODT\n");
+	register_offset = SDR_CTRLGRP_DRAMODT_ADDRESS;
+	/* Read original register value */
+	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
+#ifdef CONFIG_HPS_SDR_CTRLCFG_DRAMODT_READ
+	reg_value = sdram_write_register_field(reg_value,
+			CONFIG_HPS_SDR_CTRLCFG_DRAMODT_READ,
+			SDR_CTRLGRP_DRAMODT_READ_LSB,
+			SDR_CTRLGRP_DRAMODT_READ_MASK);
+#endif
+#ifdef CONFIG_HPS_SDR_CTRLCFG_DRAMODT_WRITE
+	reg_value = sdram_write_register_field(reg_value,
+			CONFIG_HPS_SDR_CTRLCFG_DRAMODT_WRITE,
+			SDR_CTRLGRP_DRAMODT_WRITE_LSB,
+			SDR_CTRLGRP_DRAMODT_WRITE_MASK);
+#endif
+	if (sdram_write_verify(register_offset,	reg_value) == 1) {
+		status = 1;
+		COMPARE_FAIL_ACTION
+	}
+#endif
+
 
 	DEBUG_MEMORY
 /***** Final step - apply configuration changes *****/
-#ifdef DEBUG
 	debug("Configuring STATICCFG_\n");
-#endif
 	register_offset = SDR_CTRLGRP_STATICCFG_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
 	reg_value = sdram_write_register_field(reg_value, 1,
 			SDR_CTRLGRP_STATICCFG_APPLYCFG_LSB,
 			SDR_CTRLGRP_STATICCFG_APPLYCFG_MASK);
-#ifdef DEBUG
 	debug("   Write - Address ");
 	debug("0x%08x Data 0x%08x\n",
 		(unsigned)(SOCFPGA_SDR_ADDRESS+register_offset),
 		(unsigned)reg_value);
-#endif
 	writel(reg_value, (SOCFPGA_SDR_ADDRESS + register_offset));
-#ifdef DEBUG
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
 	debug("   Read value without verify 0x%08x\n", (unsigned)reg_value);
-#endif
 
 	DEBUG_MEMORY
 	return status;
