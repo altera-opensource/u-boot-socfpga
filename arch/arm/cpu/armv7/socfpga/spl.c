@@ -465,7 +465,7 @@ void spl_board_init(void)
 	WATCHDOG_RESET();
 #endif
 	DEBUG_MEMORY
-	puts("SDRAM : Calibrationg PHY\n");
+	puts("SDRAM : Calibrating PHY\n");
 	/* SDRAM calibration */
 	if (sdram_calibration_full() == 0)
 		hang();
