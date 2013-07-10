@@ -90,7 +90,7 @@
 /* skip updating the FDT blob */
 #define CONFIG_FDT_BLOB_SKIP_UPDATE
 /* Initial Memory map size for Linux, minus 4k alignment for DFT blob */
-#define CONFIG_SYS_BOOTMAPSZ		((256*1024*1024) - (4*1024))
+#define CONFIG_SYS_BOOTMAPSZ		(64 * 1024 * 1024)
 
 /*
  * Memory allocation (MALLOC)
