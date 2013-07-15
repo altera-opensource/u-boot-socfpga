@@ -98,7 +98,7 @@
 /* Room required on the stack for the environment data */
 #define CONFIG_ENV_SIZE			4096
 /* Size of DRAM reserved for malloc() use */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 128*1024)
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 192 * 1024)
 
 /*
  * Stack setup
