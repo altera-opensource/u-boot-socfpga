@@ -319,7 +319,7 @@
 #else
 #define V_NS16550_CLK			CONFIG_HPS_CLK_L4_SP_HZ
 #endif
-#define CONFIG_BAUDRATE			57600
+#define CONFIG_BAUDRATE			115200
 #endif /* CONFIG_SYS_NS16550 */
 
 /*
