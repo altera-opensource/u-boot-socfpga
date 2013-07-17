@@ -164,6 +164,18 @@ static const struct stmicro_spi_flash_params stmicro_spi_flash_table[] = {
 		.name = "N25Q256A",
 	},
 	{
+		.id = 0xba20,
+		.pages_per_sector = 256,
+		.nr_sectors = 1024,
+		.name = "N25Q512",
+	},
+	{
+		.id = 0xbb20,
+		.pages_per_sector = 256,
+		.nr_sectors = 1024,
+		.name = "N25Q512A",
+	},
+	{
 		.id = 0xba21,
 		.pages_per_sector = 256,
 		.nr_sectors = 2048,
@@ -325,9 +337,9 @@ struct spi_flash *spi_flash_probe_stmicro(struct spi_slave *spi, u8 * idcode)
 	flash->xip_enter = stmicro_xip_enter;
 #endif
 
-	/* Flash 1GBit needs to poll flag status register after erase and
-	 * write. */
-	if (id == 0xba21 || id == 0xbb21)
+	/* Micron flash above 512Mbit (512Mbit and 1Gbit) needs to poll
+	flag status register after erase and write. */
+	if (flash->size >= 0x4000000)	/* 512Mbit equal 64MByte */
 		flash->poll_read_status = stmicro_wait_flag_status_ready;
 
 	/*
