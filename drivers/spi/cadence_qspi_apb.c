@@ -364,7 +364,7 @@ static unsigned int cadence_qspi_wait_idle(void *reg_base)
 	return 0;
 }
 
-static void cadence_qspi_apb_readdata_capture(void *reg_base,
+void cadence_qspi_apb_readdata_capture(void *reg_base,
 				unsigned int bypass, unsigned int delay)
 {
 	unsigned int reg;
@@ -533,10 +533,6 @@ void cadence_qspi_apb_controller_init(void *reg_base)
 
 	/* Disable all interrupts */
 	CQSPI_WRITEL(0, reg_base + CQSPI_REG_IRQMASK);
-
-	/* Configure the read data capture register */
-	cadence_qspi_apb_readdata_capture(reg_base, 1,
-		CONFIG_CQSPI_READDATA_DELAY);
 
 	cadence_qspi_apb_controller_enable(reg_base);
 	return;

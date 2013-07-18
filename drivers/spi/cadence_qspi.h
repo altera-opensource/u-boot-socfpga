@@ -33,6 +33,7 @@
 
 #define CQSPI_NO_DECODER_MAX_CS		(4)
 #define CQSPI_DECODER_MAX_CS		(16)
+#define CQSPI_READ_CAPTURE_MAX_DELAY	(16)
 
 /* Functions call declaration */
 void cadence_qspi_apb_controller_init(void *reg_base_addr);
@@ -66,5 +67,7 @@ void cadence_qspi_apb_delay(void *reg_base,
 	unsigned int tshsl_ns, unsigned int tsd2d_ns,
 	unsigned int tchsh_ns, unsigned int tslch_ns);
 void cadence_qspi_apb_enter_xip(void *reg_base, char xip_dummy);
+void cadence_qspi_apb_readdata_capture(void *reg_base,
+	unsigned int bypass, unsigned int delay);
 
 #endif /* __CADENCE_QSPI_H__ */

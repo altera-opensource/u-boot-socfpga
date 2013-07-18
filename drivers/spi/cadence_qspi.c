@@ -33,6 +33,8 @@
 #define CQSPI_INDIRECT_WRITE		3
 
 static int qspi_is_init;
+static unsigned int qspi_calibrated_hz;
+static unsigned int qspi_calibrated_cs;
 
 struct cadence_qspi_slave {
 	struct spi_slave slave;
@@ -107,12 +109,92 @@ void spi_init(void)
 	return;
 }
 
+/* calibration sequence to determine the read data capture delay register */
+int spi_calibration(struct spi_slave *slave)
+{
+	struct cadence_qspi_slave *cadence_qspi = to_cadence_qspi_slave(slave);
+	void *base = cadence_qspi->regbase;
+	u8 opcode_rdid = 0x9F;
+	unsigned int idcode = 0, temp = 0;
+	int err = 0, i, range_lo = -1, range_hi = -1;
+
+	/* start with slowest clock (1 MHz) */
+	spi_set_speed(slave, 1000000);
+
+	/* configure the read data capture delay register to 0 */
+	cadence_qspi_apb_readdata_capture(base, 1, 0);
+
+	/* Enable QSPI */
+	cadence_qspi_apb_controller_enable(base);
+
+	/* read the ID which will be our golden value */
+	err = cadence_qspi_apb_command_read(base, 1, &opcode_rdid,
+		3, (u8 *)&idcode);
+	if (err) {
+		puts("SF: Calibration failed (read)\n");
+		return err;
+	}
+
+	/* use back the intended clock and find low range */
+	spi_set_speed(slave, cadence_qspi->max_hz);
+	for (i = 0; i < CQSPI_READ_CAPTURE_MAX_DELAY; i++) {
+		/* Disable QSPI */
+		cadence_qspi_apb_controller_disable(base);
+
+		/* reconfigure the read data capture delay register */
+		cadence_qspi_apb_readdata_capture(base, 1, i);
+
+		/* Enable back QSPI */
+		cadence_qspi_apb_controller_enable(base);
+
+		/* issue a RDID to get the ID value */
+		err = cadence_qspi_apb_command_read(base, 1, &opcode_rdid,
+			3, (u8 *)&temp);
+		if (err) {
+			puts("SF: Calibration failed (read)\n");
+			return err;
+		}
+
+		/* search for range lo */
+		if (range_lo == -1 && temp == idcode) {
+			range_lo = i;
+			continue;
+		}
+
+		/* search for range hi */
+		if (range_lo != -1 && temp != idcode) {
+			range_hi = i - 1;
+			break;
+		}
+		range_hi = i;
+	}
+
+	if (range_lo == -1) {
+		puts("SF: Calibration failed (low range)\n");
+		return err;
+	}
+
+	/* Disable QSPI for subsequent initialization */
+	cadence_qspi_apb_controller_disable(base);
+
+	/* configure the final value for read data capture delay register */
+	cadence_qspi_apb_readdata_capture(base, 1, (range_hi + range_lo) / 2);
+	printf("SF: Read data capture delay calibrated to %i (%i - %i)\n",
+		(range_hi + range_lo) / 2, range_lo, range_hi);
+
+	/* just to ensure we do once only when speed or chip select change */
+	qspi_calibrated_hz = cadence_qspi->max_hz;
+	qspi_calibrated_cs = slave->cs;
+	return 0;
+}
+
 int spi_claim_bus(struct spi_slave *slave)
 {
 	struct cadence_qspi_slave *cadence_qspi = to_cadence_qspi_slave(slave);
 	unsigned int clk_pol = (cadence_qspi->mode & SPI_CPOL) ? 1 : 0;
 	unsigned int clk_pha = (cadence_qspi->mode & SPI_CPHA) ? 1 : 0;
 	void *base = cadence_qspi->regbase;
+	int err = 0;
 
 	debug("%s: bus:%i cs:%i\n", __func__, slave->bus, slave->cs);
 
@@ -127,6 +209,14 @@ int spi_claim_bus(struct spi_slave *slave)
 
 	/* Set clock speed */
 	spi_set_speed(slave, cadence_qspi->max_hz);
+
+	/* calibration required for different SCLK speed or chip select */
+	if (qspi_calibrated_hz != cadence_qspi->max_hz ||
+		qspi_calibrated_cs != slave->cs) {
+		err = spi_calibration(slave);
+		if (err)
+			return err;
+	}
 
 	/* Enable QSPI */
 	cadence_qspi_apb_controller_enable(base);
