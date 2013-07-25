@@ -34,6 +34,9 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+static const struct socfpga_reset_manager *reset_manager_base =
+		(void *)SOCFPGA_RSTMGR_ADDRESS;
+
 /*
  * FPGA programming support for SoC FPGA Cyclone V
  */
@@ -227,23 +230,42 @@ int board_late_init(void)
 	sprintf(buf, "0x%08x", readl(ISWGRP_HANDOFF_FPGA2SDR));
 	setenv("fpga2sdram_handoff", buf);
 
+	/* axi bridges (hps2fpga, lwhps2fpga and fpga2hps) */
+	setenv_addr("axibridge", (void *)&reset_manager_base->brg_mod_reset);
+	sprintf(buf, "0x%08x", readl(ISWGRP_HANDOFF_AXIBRIDGE));
+	setenv("axibridge_handoff", buf);
+
+	/* l3 remap register */
+	setenv_addr("l3remap", (void *)SOCFPGA_L3REGS_ADDRESS);
+	sprintf(buf, "0x%08x", readl(ISWGRP_HANDOFF_L3REMAP));
+	setenv("l3remap_handoff", buf);
+
+
 	/* add signle command to enable all bridges based on handoff */
 	setenv("bridge_enable_handoff",
 		"mw $fpgaintf ${fpgaintf_handoff}; "
 		"mw $fpga2sdram ${fpga2sdram_handoff}; "
+		"mw $axibridge ${axibridge_handoff}; "
+		"mw $l3remap ${l3remap_handoff}; "
 		"echo fpgaintf; "
 		"md $fpgaintf 1; "
 		"echo fpga2sdram; "
-		"md $fpga2sdram 1");
+		"md $fpga2sdram 1; "
+		"echo axibridge; "
+		"md $axibridge 1");
 
 	/* add signle command to disable all bridges */
 	setenv("bridge_disable",
 		"mw $fpgaintf 0; "
 		"mw $fpga2sdram 0; "
+		"mw $axibridge 0; "
+		"mw $l3remap 0x1; "
 		"echo fpgaintf; "
 		"md $fpgaintf 1; "
 		"echo fpga2sdram; "
-		"md $fpga2sdram 1");
+		"md $fpga2sdram 1; "
+		"echo axibridge; "
+		"md $axibridge 1");
 
 	return 0;
 }

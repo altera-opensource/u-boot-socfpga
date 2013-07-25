@@ -46,9 +46,9 @@ void s_init(void)
 			CONFIG_SYSMGR_ECC_OCRAM);
 	/*
 	 * SPL : configure the remap (L3 NIC-301 GPV) so the on-chip RAM at
-	 * lower memory instead ROM. Also enable HPS2FPGA and LWHPS2FPGA
+	 * lower memory instead ROM.
 	 */
-	writel(0x19, SOCFPGA_L3REGS_ADDRESS);
+	writel(0x1, SOCFPGA_L3REGS_ADDRESS);
 #else
 	/*
 	 * U-Boot : configure the remap (L3 NIC-301 GPV)

@@ -576,6 +576,14 @@ stored within SDMMC card. Please use Quad SPI boot option for this moment.
 	writel(readl(ISWGRP_HANDOFF_FPGA2SDR),
 		(SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_FPGAPORTRST_ADDRESS));
 
+	/* enable the axi bridges if FPGA programmed */
+	writel(readl(ISWGRP_HANDOFF_AXIBRIDGE),
+		&reset_manager_base->brg_mod_reset);
+
+	/* remap the enabled bridge into NIC-301 */
+	writel(readl(ISWGRP_HANDOFF_L3REMAP),
+		SOCFPGA_L3REGS_ADDRESS);
+
 	puts("FPGA : Programming FPGA passed\n");
 
 #endif /* CONFIG_SPL_FPGA_LOAD */

@@ -294,9 +294,6 @@ int fpgamgr_program_poll_usermode(void)
 	/* to release FPGA Manager drive over configuration line */
 	clrbits_le32(&fpga_manager_base->ctrl, FPGAMGRREGS_CTRL_EN_MASK);
 
-	/* release bridge from reset in case Preloader skip it */
-	reset_deassert_all_bridges();
-
 	return 0;
 }
 
@@ -316,6 +313,11 @@ int fpgamgr_program_fpga(const unsigned long *rbf_data,
 
 	/* disable all signals from fpga to hps sdram */
 	writel(0, (SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_FPGAPORTRST_ADDRESS));
+
+	/* disable all axi bridge (hps2fpga, lwhps2fpga & fpga2hps) */
+	reset_assert_all_bridges();
+	/* unmap the bridges from NIC-301 */
+	writel(0x1, SOCFPGA_L3REGS_ADDRESS);
 
 	/* initialize the FPGA Manager */
 	status = fpgamgr_program_init();

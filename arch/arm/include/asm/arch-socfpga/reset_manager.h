@@ -61,8 +61,12 @@ struct socfpga_reset_manager {
 #define RSTMGR_CTRL_SWWARMRSTREQ_LSB 1
 #define RSTMGR_PERMODRST_OSC1TIMER0_LSB 8
 #endif
+
 #define RSTMGR_PERMODRST_L4WD0_LSB 6
 #define RSTMGR_PERMODRST_SDR_LSB 29
+#define RSTMGR_BRGMODRST_HPS2FPGA_MASK		0x00000001
+#define RSTMGR_BRGMODRST_LWHPS2FPGA_MASK	0x00000002
+#define RSTMGR_BRGMODRST_FPGA2HPS_MASK		0x00000004
 
 /* Warm Reset mask */
 #if defined(CONFIG_SOCFPGA_VIRTUAL_TARGET)
@@ -240,13 +244,6 @@ struct socfpga_reset_manager {
 (((x) << 6) & 0x00000040)
 #define RSTMGR_PER2MODRST_DMAIF7_SET(x) \
 (((x) << 7) & 0x00000080)
-
-#define RSTMGR_BRGMODRST_HPS2FPGA_SET(x) \
-(((x) << 0) & 0x00000001)
-#define RSTMGR_BRGMODRST_LWHPS2FPGA_SET(x) \
-(((x) << 1) & 0x00000002)
-#define RSTMGR_BRGMODRST_FPGA2HPS_SET(x) \
-(((x) << 2) & 0x00000004)
 
 #endif
 

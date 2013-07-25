@@ -23,6 +23,7 @@
 #include <watchdog.h>
 #include <reset_config.h>
 #include <asm/arch/debug_memory.h>
+#include <asm/arch/system_manager.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -262,35 +263,33 @@ void reset_deassert_peripherals_handoff(void)
 void reset_deassert_bridges_handoff(void)
 {
 #if !defined(CONFIG_SOCFPGA_VIRTUAL_TARGET)
-	unsigned val = 0;
+	unsigned brgmodrst = 0;
+	unsigned remap_val = L3REGS_REMAP_OCRAM_MASK;
 
-#if (CONFIG_HPS_RESET_ASSERT_HPS2FPGA == 0 || \
-CONFIG_HPS_RESET_ASSERT_LWHPS2FPGA == 0 || \
-CONFIG_HPS_RESET_ASSERT_FPGA2HPS == 0)
-	/* check signal from FPGA */
-	DEBUG_MEMORY
-	if (poll_fpgamgr_fpga_ready() == 0) {
-		/* FPGA not ready. Not much can be done but let WD timeout */
-		for (;;)
-			;
-	}
+#if (CONFIG_HPS_RESET_ASSERT_HPS2FPGA == 1)
+	brgmodrst |= RSTMGR_BRGMODRST_HPS2FPGA_MASK;
+#else
+	remap_val |= L3REGS_REMAP_HPS2FPGA_MASK;
 #endif
-	DEBUG_MEMORY
-	/* brdmodrst */
-	val |= RSTMGR_BRGMODRST_HPS2FPGA_SET(
-		CONFIG_HPS_RESET_ASSERT_HPS2FPGA);
-	val |= RSTMGR_BRGMODRST_LWHPS2FPGA_SET(
-		CONFIG_HPS_RESET_ASSERT_LWHPS2FPGA);
-	val |= RSTMGR_BRGMODRST_FPGA2HPS_SET(
-		CONFIG_HPS_RESET_ASSERT_FPGA2HPS);
-	writel(val, &reset_manager_base->brg_mod_reset);
+#if (CONFIG_HPS_RESET_ASSERT_LWHPS2FPGA == 1)
+	brgmodrst |= RSTMGR_BRGMODRST_LWHPS2FPGA_MASK;
+#else
+	remap_val |= L3REGS_REMAP_LWHPS2FPGA_MASK;
+#endif
+#if (CONFIG_HPS_RESET_ASSERT_FPGA2HPS == 1)
+	brgmodrst |= RSTMGR_BRGMODRST_FPGA2HPS_MASK;
+#endif
+	writel(brgmodrst, ISWGRP_HANDOFF_AXIBRIDGE);
+	writel(remap_val, ISWGRP_HANDOFF_L3REMAP);
 
-	/* remap the bridges into memory map */
 	DEBUG_MEMORY
-	writel((L3REGS_REMAP_LWHPS2FPGA_MASK |
-		L3REGS_REMAP_OCRAM_MASK |
-		L3REGS_REMAP_HPS2FPGA_MASK),
-		SOCFPGA_L3REGS_ADDRESS);
+	if (is_fpgamgr_fpga_ready()) {
+		DEBUG_MEMORY
+		/* enable the axi bridges if FPGA programmed */
+		writel(brgmodrst, &reset_manager_base->brg_mod_reset);
 
+		/* remap the enabled bridge into NIC-301 */
+		writel(remap_val, SOCFPGA_L3REGS_ADDRESS);
+	}
 #endif /* CONFIG_SOCFPGA_VIRTUAL_TARGET */
 }

@@ -147,11 +147,11 @@ design. As of now, these handoff registers mainly contain the info for bridges
 between the HPS and FPGA as below
 
 
-SYSMGR.ISWGRP.HANDOFF0 	- RSTMGR.BRGMODRST
-SYSMGR.ISWGRP.HANDOFF1	- SYSMGR.FPGAINTF.MODULE
-			- U-Boot environment $fpgaintf, $fpgaintf_handoff
-SYSMGR.ISWGRP.HANDOFF2	- SDR.CTRLGRP.FPGAPORTRST
-SYSMGR.ISWGRP.HANDOFF3	- unused
+SYSMGR.ISWGRP.HANDOFF0 	- hps axi bridges (RSTMGR.BRGMODRST)
+SYSMGR.ISWGRP.HANDOFF1	- hps l3 remap (L3REGS.REMAP)
+SYSMGR.ISWGRP.HANDOFF2	- hps peripheral controller to fpga bridge
+				(SYSMGR.FPGAINTF.MODULE)
+SYSMGR.ISWGRP.HANDOFF3	- fpga to hps sdram bridge (SDR.CTRLGRP.FPGAPORTRST)
 SYSMGR.ISWGRP.HANDOFF4	- unused
 SYSMGR.ISWGRP.HANDOFF5	- unused
 SYSMGR.ISWGRP.HANDOFF6	- unused
@@ -183,12 +183,17 @@ that used to generate Preloader handoff.
 where bridge_enable_handoff will execute below steps
 > mw $fpgaintf $fpgaintf_handoff
 > mw $fpga2sdram $fpga2sdram_handoff
+> mw $axibridge $axibridge_handoff
+> mw $l3remap $l3remap_handoff
 > md $fpgaintf
 > md $fpga2sdram
+> md $axibridge
 
 * For your info, below U-Boot environment are referring to particular address
 - "fpgaintf" 	-	SYSMGR.FPGAINTF.MODULE
 - "fpga2sdram" 	-	SDR.CTRLGRP.FPGAPORTRST
+- "axibridge"	-	RSTMGR.BRGMODRST
+- "l3remap"	-	L3REGS.REMAP
 
 ---
 
@@ -203,6 +208,10 @@ For HPS peripheral controller to FPGA interface
 
 For FPGA to SDRAM bridge
 > mw $fpga2sdram <my_fpga2sdram_new_value>
+
+For AXI bridges (HPS2FPGA, LWHPS2FPGA, FPGA2HPS)
+> mw $axibridge <my_axibridge_new_value>
+> mw $l3remap <my_l3remap_new_value>
 
 * To understand the value required, please refer to address map info page at
 http://www.altera.com/literature/hb/cyclone-v/hps.html
