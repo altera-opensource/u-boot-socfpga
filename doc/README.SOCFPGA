@@ -139,3 +139,45 @@ inside the SDMMC card. To do that, you need to call "run mmcboot" instead
 "run ramboot".
 
 
+Usage of registers SYSMGR.ISWGRP.HANDOFF
+----------------------------------------
+Below are "Preloader to bootloader" handoff register and handoff value.
+These handoff value are provided by the tools (to Preloader) based on user Qsys
+design. As of now, these handoff registers mainly contain the info for bridges
+between the HPS and FPGA as below
+
+
+SYSMGR.ISWGRP.HANDOFF0 	- RSTMGR.BRGMODRST
+SYSMGR.ISWGRP.HANDOFF1	- SYSMGR.FPGAINTF.MODULE
+			- U-Boot environment $fpgaintf, $fpgaintf_handoff
+SYSMGR.ISWGRP.HANDOFF2	- SDR.CTRLGRP.FPGAPORTRST
+SYSMGR.ISWGRP.HANDOFF3	- unused
+SYSMGR.ISWGRP.HANDOFF4	- unused
+SYSMGR.ISWGRP.HANDOFF5	- unused
+SYSMGR.ISWGRP.HANDOFF6	- unused
+SYSMGR.ISWGRP.HANDOFF7	- unused
+
+
+If user reprogram the FPGA at U-Boot, all the HPS and FPGA bridges will be
+disabled. This is to prevent the noise generated during FPGA programming from
+going into HPS domain. But U-Boot will not enable back the bridge later as
+U-Boot won't have the knowledge about the bridges used by SOF file. User need
+to release the HPS and FPGA bridges based on their design.
+
+But if the SOF programmed by U-Boot matched with the design to generate
+Preloader handoff files, user can program the bridges at U-Boot based on these
+handoff value. It provide a faster mean for user to re-enable the bridges.
+These additional steps can be saved as series of action for FPGA programming
+(which as part of U-Boot environment too).
+
+As example, below are steps if U-Boot programming the FPGA with the same design
+that used to generate Preloader handoff.
+
+> fatload mmc 0:1 $fpgadata my_design.rbf
+> fpga load 0 $fpgadata $filesize
+> mw $fpgaintf $fpgaintf_handoff
+
+For your info, the U-Boot environment "fpgaintf" is pointing to the address
+of register sysmgr.fpgaintfgrp.module while "fpgaintf_handoff" is pointing to
+the address of sysmgr.iswgrp.handoff1.
+

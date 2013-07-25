@@ -568,6 +568,10 @@ void spl_board_init(void)
 stored within SDMMC card. Please use Quad SPI boot option for this moment.
 #endif
 
+	/* enable signals from hps peripheral controller to fpga
+	(based on handoff) */
+	writel(readl(ISWGRP_HANDOFF_FPGAINTF), SYSMGR_FPGAINTF_MODULE);
+
 	puts("FPGA : Programming FPGA passed\n");
 
 #endif /* CONFIG_SPL_FPGA_LOAD */

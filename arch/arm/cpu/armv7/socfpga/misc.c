@@ -167,11 +167,11 @@ int board_eth_init(bd_t *bis)
 	/* setting emac1 to rgmii */
 	clrbits_le32(CONFIG_SYSMGR_EMAC_CTRL,
 		(SYSMGR_EMACGRP_CTRL_PHYSEL_MASK <<
-		SYSMGR_EMACGRP_CTRL_PHYSEL_WIDTH));
+		SYSMGR_EMACGRP_CTRL_PHYSEL1_LSB));
 
 	setbits_le32(CONFIG_SYSMGR_EMAC_CTRL,
 		(SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_RGMII <<
-		SYSMGR_EMACGRP_CTRL_PHYSEL_WIDTH));
+		SYSMGR_EMACGRP_CTRL_PHYSEL1_LSB));
 
 	int rval = designware_initialize(0, CONFIG_EMAC1_BASE,
 			CONFIG_EPHY1_PHY_ADDR, PHY_INTERFACE_MODE_RGMII);
@@ -201,6 +201,8 @@ int cpu_mmc_init(bd_t *bis)
 #ifdef CONFIG_BOARD_LATE_INIT
 int board_late_init(void)
 {
+	char buf[32];
+
 	/* create event for tracking ECC count */
 	setenv_ulong("ECC_SDRAM", 0);
 #ifndef CONFIG_SOCFPGA_VIRTUAL_TARGET
@@ -211,6 +213,13 @@ int board_late_init(void)
 	irq_register(IRQ_ECC_SDRAM,
 		irq_handler_ecc_sdram,
 		(void *)&irq_cnt_ecc_sdram, 0);
+
+	/* create environment for bridges and handoff */
+
+	/* hps peripheral controller to fgpa */
+	setenv_addr("fpgaintf", (void *)SYSMGR_FPGAINTF_MODULE);
+	sprintf(buf, "0x%08x", readl(ISWGRP_HANDOFF_FPGAINTF));
+	setenv("fpgaintf_handoff", buf);
 	return 0;
 }
 #endif

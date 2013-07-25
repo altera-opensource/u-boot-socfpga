@@ -31,6 +31,7 @@
 #include <asm/arch/fpga_manager.h>
 #include <asm/arch/debug_memory.h>
 #include <asm/arch/reset_manager.h>
+#include <asm/arch/system_manager.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -50,17 +51,41 @@ static int is_fpgamgr_initdone_high(void)
 		return 0;
 }
 
+/* Get the FPGA mode */
+static int fpgamgr_get_mode(void)
+{
+	unsigned long val;
+	DEBUG_MEMORY
+	val = readl(&fpga_manager_base->stat);
+	val = val & FPGAMGRREGS_STAT_MODE_MASK;
+	return val;
+}
+
 /* Check whether FPGA is ready to be accessed */
 int is_fpgamgr_fpga_ready(void)
+{
+	/* check for init done signal */
+	if (is_fpgamgr_initdone_high() == 0)
+		return 0;
+	/* check again to avoid false glitches */
+	if (is_fpgamgr_initdone_high() == 0)
+		return 0;
+	if (fpgamgr_get_mode() != FPGAMGRREGS_MODE_USERMODE)
+		return 0;
+	return 1;
+}
+
+/* Poll until FPGA is ready to be accessed or timeout occurred */
+int poll_fpgamgr_fpga_ready(void)
 {
 	unsigned long i;
 	DEBUG_MEMORY
 	/* If FPGA is blank, wait till WD invoke warm reset */
 	for (i = 0; i < FPGA_TIMEOUT_CNT; i++) {
-		/* check whether in user mode */
+		/* check for init done signal */
 		if (is_fpgamgr_initdone_high() == 0)
 			continue;
-		/* check again whether in user mode */
+		/* check again to avoid false glitches */
 		if (is_fpgamgr_initdone_high() == 0)
 			continue;
 		return 1;
@@ -77,16 +102,6 @@ static void fpgamgr_set_cd_ratio(unsigned long ratio)
 	reg = (reg & ~(0x3 << FPGAMGRREGS_CTRL_CDRATIO_LSB)) |
 		((ratio & 0x3) << FPGAMGRREGS_CTRL_CDRATIO_LSB);
 	writel(reg, &fpga_manager_base->ctrl);
-}
-
-/* Get the FPGA mode */
-static int fpgamgr_get_mode(void)
-{
-	unsigned long val;
-	DEBUG_MEMORY
-	val = readl(&fpga_manager_base->stat);
-	val = val & FPGAMGRREGS_STAT_MODE_MASK;
-	return val;
 }
 
 static int fpgamgr_dclkcnt_set(unsigned long cnt)
@@ -292,6 +307,11 @@ int fpgamgr_program_fpga(const unsigned long *rbf_data,
 	unsigned long rbf_size)
 {
 	unsigned long status;
+
+	/* prior programming the FPGA, all bridges need to be shut off */
+
+	/* disable all signals from hps peripheral controller to fpga */
+	writel(0, SYSMGR_FPGAINTF_MODULE);
 
 	/* initialize the FPGA Manager */
 	status = fpgamgr_program_init();

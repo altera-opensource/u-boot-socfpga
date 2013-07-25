@@ -75,7 +75,7 @@ void reset_deassert_all_bridges(void)
 {
 #if !defined(CONFIG_SOCFPGA_VIRTUAL_TARGET)
 	/* check signal from FPGA */
-	if (is_fpgamgr_fpga_ready() == 0) {
+	if (poll_fpgamgr_fpga_ready() == 0) {
 		/* FPGA not ready. Not much can be done but let WD timeout */
 		for (;;)
 			;
@@ -269,7 +269,7 @@ CONFIG_HPS_RESET_ASSERT_LWHPS2FPGA == 0 || \
 CONFIG_HPS_RESET_ASSERT_FPGA2HPS == 0)
 	/* check signal from FPGA */
 	DEBUG_MEMORY
-	if (is_fpgamgr_fpga_ready() == 0) {
+	if (poll_fpgamgr_fpga_ready() == 0) {
 		/* FPGA not ready. Not much can be done but let WD timeout */
 		for (;;)
 			;
