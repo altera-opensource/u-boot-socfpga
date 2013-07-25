@@ -522,6 +522,7 @@
  * Support for common/libcommon.o in SPL binary
  */
 #define CONFIG_SPL_LIBCOMMON_SUPPORT
+#define CONFIG_SPL_LIBGENERIC_SUPPORT
 
 /*
  * Support for drivers/watchdog.o in SPL binary
@@ -592,7 +593,6 @@
 #error "CONFIG_PRELOADER_CHECKSUM_NEXT_IMAGE must be defined"
 #endif
 #if (CONFIG_PRELOADER_CHECKSUM_NEXT_IMAGE == 1)
-#define CONFIG_SPL_LIBGENERIC_SUPPORT
 #define CONFIG_SPL_CHECKSUM_NEXT_IMAGE
 #endif
 
