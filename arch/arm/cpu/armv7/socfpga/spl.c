@@ -548,6 +548,9 @@ void spl_board_init(void)
 	 */
 	mem_malloc_init((unsigned long)(&__malloc_fat_start),
 		(&__malloc_fat_end - &__malloc_fat_start));
+
+	/* relocated the stack to SDRAM which is much bigger */
+	relocate_stack_to_sdram();
 #endif
 
 #ifdef CONFIG_SPL_FPGA_LOAD

@@ -24,6 +24,7 @@ extern char __ecc_padding_start, __ecc_padding_end;
 #ifdef CONFIG_SPL_FAT_SUPPORT
 extern char __bss_fat_start, __bss_fat_end;
 extern char __malloc_fat_start, __malloc_fat_end;
+extern char __sdram_stack_start;
 #endif
 
 #ifdef CONFIG_USE_IRQ
@@ -32,6 +33,10 @@ extern char __irq_stack_start;
 
 #if (CONFIG_PRELOADER_WARMRST_SKIP_CFGIO == 1)
 extern u32 rst_mgr_status __attribute__ ((section(".data")));
+#endif
+
+#ifdef CONFIG_SPL_FAT_SUPPORT
+void relocate_stack_to_sdram(void);
 #endif
 
 #define BOOT_DEVICE_RAM 1

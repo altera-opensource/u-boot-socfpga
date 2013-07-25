@@ -19,6 +19,7 @@
 #include <version.h>
 #include <build.h>
 #include <asm/arch/system_manager.h>
+#include <linux/linkage.h>
 
 #define PRELOADER_DEBUG_MEMMORY_MAGIC		0x444d
 #define PRELOADER_DEBUG_MEMMORY_VERSION		0x1
@@ -55,10 +56,36 @@ save_boot_params:
 relocate_loop:
 	ldmia	r0!, {r3}		/* copy from source address [r0] */
 	stmia	r1!, {r3}		/* copy to   target address [r1] */
-	cmp	r1, r2			/* until source end addreee [r2] */
-	ble	relocate_loop
+	cmp	r0, r2			/* until source end addreee [r2] */
+	blo	relocate_loop
 #endif	/* CONFIG_PRELOADER_EXE_ON_FPGA */
 #endif	/* CONFIG_SPL_BUILD */
 	bx	lr
 
+
+#ifdef CONFIG_SPL_BUILD
+#ifdef CONFIG_SPL_FAT_SUPPORT
+ENTRY(relocate_stack_to_sdram)
+	PUSH	{r4-r11, lr}		/* save registers per AAPCS */
+
+	mov	r0, sp			/* [r0] source address */
+	ldr	r2, =__stack_start	/* [r2] source end address */
+	sub	r3, r2, r0
+	ldr	r4, =__sdram_stack_start
+	sub	r1, r4, r3		/* [r1] target address */
+	mov	r5, r1			/* [r5] new sp within SDRAM */
+
+relocate_loop:
+	ldmia	r0!, {r3}
+	stmia	r1!, {r3}
+	cmp	r0, r2
+	blo	relocate_loop
+
+	/* assign SP to new address within SDRAM now */
+	mov	sp, r5
+
+	POP	{r4-r11, pc}
+ENDPROC(relocate_stack_to_sdram)
+#endif /* CONFIG_SPL_FAT_SUPPORT */
+#endif	/* CONFIG_SPL_BUILD */
 

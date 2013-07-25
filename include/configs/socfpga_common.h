@@ -468,6 +468,15 @@
 /* Enable the SPL framework under common */
 #define CONFIG_SPL_FRAMEWORK
 
+/*
+ * Disable cache for SPL. By default, SPL didn't enable cache. But some
+ * peripheral controller driver such as SDMMC driver might call cache
+ * invalidation function after using internal DMA to transfer the read data.
+ */
+#ifdef CONFIG_SPL_BUILD
+#define CONFIG_SYS_DCACHE_OFF
+#endif
+
 /* TEXT_BASE for linking the SPL binary */
 #ifndef CONFIG_PRELOADER_EXE_ON_FPGA
 #error "CONFIG_PRELOADER_EXE_ON_FPGA must be defined"
@@ -633,6 +642,11 @@
 /* Stack size for SPL */
 #ifdef CONFIG_SPL_FAT_SUPPORT
 #define CONFIG_SPL_STACK_SIZE		(5 * 1024)
+/*
+ * New stack size which located within SDRAM after SDRAM is available.
+ * FYI, 128kB stack can support fatload up to 7MB bootloader image
+ */
+#define CONFIG_SPL_SDRAM_STACK_SIZE	(128 * 1024)
 #else
 #define CONFIG_SPL_STACK_SIZE		(4 * 1024)
 #endif

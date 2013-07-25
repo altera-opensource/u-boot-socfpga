@@ -104,4 +104,13 @@ SECTIONS
 		__ecc_padding_end = .;
 	} >.sram
 #endif
+
+#ifdef CONFIG_SPL_FAT_SUPPORT
+	.sdram_stack :
+	{
+		. = . + CONFIG_SPL_SDRAM_STACK_SIZE;
+		. = ALIGN(8);
+		__sdram_stack_start = .;
+	} >.sdram
+#endif
 }
