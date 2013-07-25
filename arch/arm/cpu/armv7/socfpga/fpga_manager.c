@@ -32,6 +32,7 @@
 #include <asm/arch/debug_memory.h>
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/system_manager.h>
+#include <asm/arch/sdram.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -312,6 +313,9 @@ int fpgamgr_program_fpga(const unsigned long *rbf_data,
 
 	/* disable all signals from hps peripheral controller to fpga */
 	writel(0, SYSMGR_FPGAINTF_MODULE);
+
+	/* disable all signals from fpga to hps sdram */
+	writel(0, (SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_FPGAPORTRST_ADDRESS));
 
 	/* initialize the FPGA Manager */
 	status = fpgamgr_program_init();

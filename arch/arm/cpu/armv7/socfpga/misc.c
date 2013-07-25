@@ -220,6 +220,31 @@ int board_late_init(void)
 	setenv_addr("fpgaintf", (void *)SYSMGR_FPGAINTF_MODULE);
 	sprintf(buf, "0x%08x", readl(ISWGRP_HANDOFF_FPGAINTF));
 	setenv("fpgaintf_handoff", buf);
+
+	/* fpga2sdram port */
+	setenv_addr("fpga2sdram", (void *)(SOCFPGA_SDR_ADDRESS +
+		SDR_CTRLGRP_FPGAPORTRST_ADDRESS));
+	sprintf(buf, "0x%08x", readl(ISWGRP_HANDOFF_FPGA2SDR));
+	setenv("fpga2sdram_handoff", buf);
+
+	/* add signle command to enable all bridges based on handoff */
+	setenv("bridge_enable_handoff",
+		"mw $fpgaintf ${fpgaintf_handoff}; "
+		"mw $fpga2sdram ${fpga2sdram_handoff}; "
+		"echo fpgaintf; "
+		"md $fpgaintf 1; "
+		"echo fpga2sdram; "
+		"md $fpga2sdram 1");
+
+	/* add signle command to disable all bridges */
+	setenv("bridge_disable",
+		"mw $fpgaintf 0; "
+		"mw $fpga2sdram 0; "
+		"echo fpgaintf; "
+		"md $fpgaintf 1; "
+		"echo fpga2sdram; "
+		"md $fpga2sdram 1");
+
 	return 0;
 }
 #endif

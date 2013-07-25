@@ -572,6 +572,10 @@ stored within SDMMC card. Please use Quad SPI boot option for this moment.
 	(based on handoff) */
 	writel(readl(ISWGRP_HANDOFF_FPGAINTF), SYSMGR_FPGAINTF_MODULE);
 
+	/* enable signals from fpga to hps sdram (based on handoff) */
+	writel(readl(ISWGRP_HANDOFF_FPGA2SDR),
+		(SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_FPGAPORTRST_ADDRESS));
+
 	puts("FPGA : Programming FPGA passed\n");
 
 #endif /* CONFIG_SPL_FPGA_LOAD */

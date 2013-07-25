@@ -20,6 +20,8 @@
 #include <asm/arch/sdram.h>
 #include <sdram_config.h>
 #include <asm/arch/debug_memory.h>
+#include <asm/arch/fpga_manager.h>
+#include <asm/arch/system_manager.h>
 
 /*
  * SDRAM MMR init skip read back/verify steps
@@ -922,6 +924,36 @@ defined(CONFIG_HPS_SDR_CTRLCFG_DRAMODT_WRITE)
 	}
 #endif
 
+	/***** FPGAPORTRST *****/
+#if defined(CONFIG_HPS_SDR_CTRLCFG_FPGAPORTRST_READ_PORT_USED)
+#ifdef DEBUG
+	debug("Configuring FPGAPORTRST\n");
+#endif
+	register_offset = SDR_CTRLGRP_FPGAPORTRST_ADDRESS;
+	/* All value will be provided */
+	reg_value =
+		(((1 << CONFIG_HPS_SDR_CTRLCFG_FPGAPORTRST_READ_PORT_USED)
+			- 1) << SDR_CTRLGRP_FPGAPORTRST_READ_PORT_0_LSB)|
+		(((1 << CONFIG_HPS_SDR_CTRLCFG_FPGAPORTRST_WRITE_PORT_USED)
+			- 1) << SDR_CTRLGRP_FPGAPORTRST_WRITE_PORT_0_LSB)|
+		(((1 << CONFIG_HPS_SDR_CTRLCFG_FPGAPORTRST_COMMAND_PORT_USED)
+			- 1) << SDR_CTRLGRP_FPGAPORTRST_COMMAND_PORT_0_LSB);
+
+	/* saving this value to SYSMGR.ISWGRP.HANDOFF.FPGA2SDR */
+	writel(reg_value, ISWGRP_HANDOFF_FPGA2SDR);
+
+	/* only enable if the FPGA is programmed */
+	if (is_fpgamgr_fpga_ready()) {
+		if (sdram_write_verify(register_offset,	reg_value) == 1) {
+			/* Set status to 1 to ensure we return failed status
+			if user wish the COMPARE_FAIL_ACTION not to do anything.
+			This is to cater scenario where user wish to
+			continue initlization even verify failed. */
+			status = 1;
+			COMPARE_FAIL_ACTION
+		}
+	}
+#endif
 
 	DEBUG_MEMORY
 /***** Final step - apply configuration changes *****/

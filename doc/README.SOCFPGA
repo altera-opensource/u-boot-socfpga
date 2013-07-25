@@ -170,14 +170,39 @@ handoff value. It provide a faster mean for user to re-enable the bridges.
 These additional steps can be saved as series of action for FPGA programming
 (which as part of U-Boot environment too).
 
+---
+
 As example, below are steps if U-Boot programming the FPGA with the same design
 that used to generate Preloader handoff.
 
 > fatload mmc 0:1 $fpgadata my_design.rbf
 > fpga load 0 $fpgadata $filesize
+> run bridge_enable_handoff
+
+
+where bridge_enable_handoff will execute below steps
 > mw $fpgaintf $fpgaintf_handoff
+> mw $fpga2sdram $fpga2sdram_handoff
+> md $fpgaintf
+> md $fpga2sdram
 
-For your info, the U-Boot environment "fpgaintf" is pointing to the address
-of register sysmgr.fpgaintfgrp.module while "fpgaintf_handoff" is pointing to
-the address of sysmgr.iswgrp.handoff1.
+* For your info, below U-Boot environment are referring to particular address
+- "fpgaintf" 	-	SYSMGR.FPGAINTF.MODULE
+- "fpga2sdram" 	-	SDR.CTRLGRP.FPGAPORTRST
 
+---
+
+To disable all bridge, just "run bridge_disable"
+
+----
+
+If using the new SOF which is different than handoff, please use below commands
+
+For HPS peripheral controller to FPGA interface
+> mw $fpgaintf <my_fpgaintf_new_value>
+
+For FPGA to SDRAM bridge
+> mw $fpga2sdram <my_fpga2sdram_new_value>
+
+* To understand the value required, please refer to address map info page at
+http://www.altera.com/literature/hb/cyclone-v/hps.html
