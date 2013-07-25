@@ -18,7 +18,6 @@
 #include <asm/io.h>
 #include <common.h>
 #include <asm/arch/debug_memory.h>
-#include <build.h>
 
 unsigned char *debug_memory_write_addr;
 

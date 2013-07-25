@@ -18,9 +18,11 @@
 #ifndef	_SDRAM_H_
 #define	_SDRAM_H_
 
+#ifdef CONFIG_SPL_BUILD
 #include <alt_types.h>
 #include <sequencer_defines.h>
 #include <sequencer.h>
+#endif
 
 #define IRQ_ECC_SDRAM		71
 #define CONFIG_SDRAM_CONTROLLER		SOCFPGA_SDR_ADDRESS

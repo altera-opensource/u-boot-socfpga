@@ -73,7 +73,7 @@ int altera_dwmmc_init(u32 regbase, int bus_width, int index)
 	host->clksel = altera_dwmci_clksel;
 	host->dev_index = index;
 	/* fixed clock divide by 4 which due to the SDMMC wrapper */
-	host->bus_hz = CONFIG_HPS_CLK_SDMMC_HZ / 4;
+	host->bus_hz = CONFIG_DWMMC_BUS_HZ;
 	host->fifoth_val = MSIZE(0x2) |
 		RX_WMARK(CONFIG_DWMMC_FIFO_DEPTH / 2 - 1) |
 		TX_WMARK(CONFIG_DWMMC_FIFO_DEPTH / 2);

@@ -21,7 +21,6 @@
 #include <asm/arch/fpga_manager.h>
 #include <asm/arch/nic301.h>
 #include <watchdog.h>
-#include <reset_config.h>
 #include <asm/arch/debug_memory.h>
 #include <asm/arch/system_manager.h>
 
@@ -130,6 +129,9 @@ void reset_assert_all_peripherals_except_l4wd0(void)
 	writel(~(1<<RSTMGR_PERMODRST_L4WD0_LSB),
 		&reset_manager_base->per_mod_reset);
 }
+
+/* Below function only applicable for SPL */
+#ifdef CONFIG_SPL_BUILD
 
 /* Release peripherals from reset based on handoff */
 void reset_deassert_peripherals_handoff(void)
@@ -293,6 +295,8 @@ void reset_deassert_bridges_handoff(void)
 	}
 #endif /* CONFIG_SOCFPGA_VIRTUAL_TARGET */
 }
+
+#endif /* CONFIG_SPL_BUILD */
 
 
 /* Change the reset state for EMAC0 */

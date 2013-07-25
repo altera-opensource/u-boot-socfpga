@@ -25,7 +25,6 @@
 #include <malloc.h>
 #include <spi.h>
 #include "cadence_qspi.h"
-#include <pll_config.h>
 
 #define CQSPI_STIG_READ			0
 #define CQSPI_STIG_WRITE		1

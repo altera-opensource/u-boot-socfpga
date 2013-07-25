@@ -18,6 +18,7 @@
 #ifndef	_SYSTEM_MANAGER_H_
 #define	_SYSTEM_MANAGER_H_
 
+#ifdef CONFIG_SPL_BUILD
 #ifndef __ASSEMBLY__
 /* declaration for system_manager.c */
 void sysmgr_pinmux_init(void);
@@ -25,7 +26,8 @@ void sysmgr_pinmux_init(void);
 /* declaration for handoff table type */
 typedef unsigned long sys_mgr_pinmux_entry_t;
 extern unsigned long sys_mgr_init_table[CONFIG_HPS_PINMUX_NUM];
-#endif
+#endif /* __ASSEMBLY__ */
+#endif /* CONFIG_SPL_BUILD */
 
 /* address */
 #if defined(CONFIG_SOCFPGA_VIRTUAL_TARGET)

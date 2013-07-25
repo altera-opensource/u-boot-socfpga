@@ -17,8 +17,9 @@
 
 #include <config.h>
 #include <version.h>
-#include <build.h>
+#ifdef CONFIG_SPL_BUILD
 #include <asm/arch/system_manager.h>
+#endif
 #include <linux/linkage.h>
 
 #define PRELOADER_DEBUG_MEMMORY_MAGIC		0x444d

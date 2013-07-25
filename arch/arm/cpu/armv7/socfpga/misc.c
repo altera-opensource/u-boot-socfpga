@@ -178,7 +178,7 @@ int cpu_mmc_init(bd_t *bis)
 {
 #ifdef CONFIG_DWMMC
 	return altera_dwmmc_init(CONFIG_SDMMC_BASE,
-		CONFIG_HPS_SDMMC_BUSWIDTH, 0);
+		CONFIG_DWMMC_BUS_WIDTH, 0);
 #else
 	return 0;
 #endif

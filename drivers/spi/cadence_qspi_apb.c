@@ -29,7 +29,6 @@
 #include <asm/io.h>
 #include <asm/errno.h>
 #include "cadence_qspi.h"
-#include <pll_config.h>
 
 #define CQSPI_REG_POLL_US			(1) /* 1us */
 #define CQSPI_REG_RETRY				(10000)

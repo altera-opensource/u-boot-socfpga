@@ -22,6 +22,7 @@
 #include "../../board/altera/socfpga/pinmux_config.h"
 #include "../../board/altera/socfpga/pll_config.h"
 #include "../../board/altera/socfpga/sdram/sdram_config.h"
+#include "../../board/altera/socfpga/reset_config.h"
 
 /* Enabled for U-Boot debug message printout? */
 /*#define DEBUG*/
@@ -319,10 +320,12 @@
 #define CONFIG_CONS_INDEX               1
 #define CONFIG_SYS_NS16550_COM1		UART0_BASE
 #define CONFIG_SYS_BAUDRATE_TABLE {4800, 9600, 19200, 38400, 57600, 115200}
-#ifdef CONFIG_SOCFPGA_VIRTUAL_TARGET
+#if defined(CONFIG_SOCFPGA_VIRTUAL_TARGET)
 #define V_NS16550_CLK			1000000
-#else
+#elif defined(CONFIG_SPL_BUILD)
 #define V_NS16550_CLK			CONFIG_HPS_CLK_L4_SP_HZ
+#else
+#define V_NS16550_CLK			(100000000)
 #endif
 #define CONFIG_BAUDRATE			115200
 #endif /* CONFIG_SYS_NS16550 */
@@ -350,10 +353,13 @@
 #define TIMER_LOAD_VAL			0xFFFFFFFF
 /* Timer info */
 #define CONFIG_SYS_HZ			1000
-#ifdef CONFIG_SOCFPGA_VIRTUAL_TARGET
+/* Clocks source frequency to timer */
+#if defined(CONFIG_SOCFPGA_VIRTUAL_TARGET)
 #define CONFIG_TIMER_CLOCK_KHZ		2400
-#else
+#elif defined(CONFIG_SPL_BUILD)
 #define CONFIG_TIMER_CLOCK_KHZ		(CONFIG_HPS_CLK_OSC1_HZ/1000)
+#else
+#define CONFIG_TIMER_CLOCK_KHZ		(25000)
 #endif
 
 /*
@@ -363,10 +369,13 @@
 #define CONFIG_HW_WATCHDOG_TIMEOUT_MS	(2000)
 #define CONFIG_DESIGNWARE_WATCHDOG
 #define CONFIG_DW_WDT_BASE		SOCFPGA_L4WD0_ADDRESS
-#ifdef CONFIG_SOCFPGA_VIRTUAL_TARGET
+/* Clocks source frequency to watchdog timer */
+#if defined(CONFIG_SOCFPGA_VIRTUAL_TARGET)
 #define CONFIG_DW_WDT_CLOCK_KHZ		2400
-#else
+#elif defined(CONFIG_SPL_BUILD)
 #define CONFIG_DW_WDT_CLOCK_KHZ		(CONFIG_HPS_CLK_OSC1_HZ/1000)
+#else
+#define CONFIG_DW_WDT_CLOCK_KHZ		(25000)
 #endif
 
 /*
@@ -420,7 +429,14 @@
 #define CONFIG_DWMMC			1
 #define CONFIG_ALTERA_DWMMC		1
 #define CONFIG_DWMMC_FIFO_DEPTH		1024
-#endif
+#if defined(CONFIG_SPL_BUILD)
+#define CONFIG_DWMMC_BUS_WIDTH		CONFIG_HPS_SDMMC_BUSWIDTH
+#define CONFIG_DWMMC_BUS_HZ		(CONFIG_HPS_CLK_SDMMC_HZ / 4)
+#else
+#define CONFIG_DWMMC_BUS_WIDTH		4
+#define CONFIG_DWMMC_BUS_HZ		(12500000)
+#endif	/* CONFIG_SPL_BUILD */
+#endif	/* CONFIG_MMC */
 
 /*
  * MTD
@@ -443,8 +459,13 @@
 #define CONFIG_SF_DEFAULT_SPEED		(50000000)
 #define CONFIG_SF_DEFAULT_MODE		SPI_MODE_3
 #define CONFIG_SPI_FLASH_QUAD		(1)
-/* QSPI page size and block size */
+/* QSPI reference clock */
+#if defined(CONFIG_SPL_BUILD)
 #define CONFIG_CQSPI_REF_CLK		CONFIG_HPS_CLK_QSPI_HZ
+#else
+#define CONFIG_CQSPI_REF_CLK		(400000000)
+#endif	/* CONFIG_SPL_BUILD */
+/* QSPI page size and block size */
 #define CONFIG_CQSPI_PAGE_SIZE		(256)
 #define CONFIG_CQSPI_BLOCK_SIZE		(16)
 /* QSPI Delay timing */
@@ -457,7 +478,7 @@
 #define CONFIG_CQSPI_4BYTE_ADDR		(0)
 #else
 #define CONFIG_CQSPI_4BYTE_ADDR		(1)
-#endif /* CONFIG_SOCFPGA_VIRTUAL_TARGET */
+#endif	/* CONFIG_SOCFPGA_VIRTUAL_TARGET */
 #endif	/* CONFIG_CADENCE_QSPI */
 
 /*
@@ -492,7 +513,7 @@
  */
 #ifdef CONFIG_SPL_BUILD
 #define CONFIG_SYS_DCACHE_OFF
-#endif
+#endif	/* CONFIG_SPL_BUILD */
 
 /* TEXT_BASE for linking the SPL binary */
 #ifndef CONFIG_PRELOADER_EXE_ON_FPGA
@@ -552,7 +573,7 @@
 #else
 #ifdef CONFIG_SPL_BUILD
 #undef CONFIG_HW_WATCHDOG
-#endif
+#endif	/* CONFIG_SPL_BUILD */
 #endif
 
 /*
@@ -631,7 +652,7 @@
 #ifndef CONFIG_PRELOADER_SEMIHOSTING
 #error "CONFIG_PRELOADER_SEMIHOSTING must be defined"
 #endif
-#if defined(CONFIG_SPL_BUILD) && (CONFIG_PRELOADER_SEMIHOSTING == 1)
+#if (CONFIG_PRELOADER_SEMIHOSTING == 1) && defined(CONFIG_SPL_BUILD)
 #define CONFIG_SPL_SEMIHOSTING_SUPPORT
 #endif
 

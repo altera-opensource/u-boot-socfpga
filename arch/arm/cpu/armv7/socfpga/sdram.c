@@ -18,7 +18,6 @@
 #include <common.h>
 #include <asm/io.h>
 #include <asm/arch/sdram.h>
-#include <sdram_config.h>
 #include <asm/arch/debug_memory.h>
 #include <asm/arch/fpga_manager.h>
 #include <asm/arch/system_manager.h>
@@ -107,6 +106,7 @@ void irq_handler_ecc_sdram(void *arg)
 }
 
 
+/* Below function only applicable for SPL */
 #ifdef CONFIG_SPL_BUILD
 
 /* Function to update the field within variable */
@@ -144,6 +144,7 @@ unsigned sdram_write_verify (unsigned register_offset, unsigned reg_value)
 #endif	/* SDRAM_MMR_SKIP_VERIFY */
 	return 0;
 }
+
 
 /* Function to initialize SDRAM MMR */
 unsigned sdram_mmr_init_full(void)

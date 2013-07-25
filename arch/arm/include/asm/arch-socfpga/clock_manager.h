@@ -18,8 +18,6 @@
 #ifndef	_CLOCK_MANAGER_H_
 #define	_CLOCK_MANAGER_H_
 
-#include <pll_config.h>
-
 typedef struct {
 	/* main group */
 	uint32_t main_vco_base;

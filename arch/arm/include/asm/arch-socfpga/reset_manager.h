@@ -29,8 +29,10 @@ void reset_deassert_osc1wd0(void);
 void reset_assert_all_peripherals(void);
 void reset_assert_all_peripherals_except_l4wd0(void);
 void reset_assert_all_bridges(void);
+#ifdef CONFIG_SPL_BUILD
 void reset_deassert_peripherals_handoff(void);
 void reset_deassert_bridges_handoff(void);
+#endif
 void emac0_reset_enable(uint state);
 void emac1_reset_enable(uint state);
 
