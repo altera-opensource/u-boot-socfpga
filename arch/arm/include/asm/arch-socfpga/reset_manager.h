@@ -31,6 +31,8 @@ void reset_assert_all_peripherals_except_l4wd0(void);
 void reset_assert_all_bridges(void);
 void reset_deassert_peripherals_handoff(void);
 void reset_deassert_bridges_handoff(void);
+void emac0_reset_enable(uint state);
+void emac1_reset_enable(uint state);
 
 #if defined(CONFIG_SOCFPGA_VIRTUAL_TARGET)
 struct socfpga_reset_manager {
@@ -62,6 +64,8 @@ struct socfpga_reset_manager {
 #define RSTMGR_PERMODRST_OSC1TIMER0_LSB 8
 #endif
 
+#define RSTMGR_PERMODRST_EMAC0_LSB 0
+#define RSTMGR_PERMODRST_EMAC1_LSB 1
 #define RSTMGR_PERMODRST_L4WD0_LSB 6
 #define RSTMGR_PERMODRST_SDR_LSB 29
 #define RSTMGR_BRGMODRST_HPS2FPGA_MASK		0x00000001

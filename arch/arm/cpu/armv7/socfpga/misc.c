@@ -28,7 +28,6 @@
 #ifndef CONFIG_SPL_BUILD
 #include <netdev.h>
 #include <phy.h>
-#include <micrel.h>
 #endif
 
 
@@ -107,85 +106,69 @@ int overwrite_console(void)
 #endif
 
 
-#ifndef CONFIG_SPL_BUILD
-#ifndef CONFIG_SOCFPGA_VIRTUAL_TARGET
-
-#define MICREL_KSZ9021_EXTREG_CTRL 11
-#define MICREL_KSZ9021_EXTREG_DATA_WRITE 12
-
-
-/*
- * Write the extended registers in the PHY
- */
-static int eth_emdio_write(struct eth_device *dev, u8 addr, u16 reg, u16 val,
-		int (*mii_write)(struct eth_device *, u8, u8, u16))
-
-{
-	int ret = (*mii_write)(dev, addr,
-		MICREL_KSZ9021_EXTREG_CTRL, 0x8000|reg);
-
-	if (0 != ret) {
-		printf("eth_emdio_read write0 failed %d\n", ret);
-		return ret;
-	}
-	ret = (*mii_write)(dev, addr, MICREL_KSZ9021_EXTREG_DATA_WRITE, val);
-	if (0 != ret) {
-		printf("eth_emdio_read write1 failed %d\n", ret);
-		return ret;
-	}
-
-	return 0;
-}
-
-/*
- * DesignWare Ethernet initialization
- * This function overrides the __weak  version in the driver proper.
- * Our Micrel Phy needs slightly non-conventional setup
- */
-int designware_board_phy_init(struct eth_device *dev, int phy_addr,
-		int (*mii_write)(struct eth_device *, u8, u8, u16),
-		int (*dw_reset_phy)(struct eth_device *))
-{
-	if ((*dw_reset_phy)(dev) < 0)
-		return -1;
-
-	/* add 2 ns of RXC PAD Skew and 2.6 ns of TXC PAD Skew */
-	if (eth_emdio_write(dev, phy_addr,
-		MII_KSZ9021_EXT_RGMII_CLOCK_SKEW, 0xa0d0, mii_write) < 0)
-		return -1;
-
-	/* set no PAD skew for data */
-	if (eth_emdio_write(dev, phy_addr,
-		MII_KSZ9021_EXT_RGMII_RX_DATA_SKEW, 0, mii_write) < 0)
-		return -1;
-
-	return 0;
-}
-#endif
-
 /* We know all the init functions have been run now */
 int board_eth_init(bd_t *bis)
 {
-#ifndef CONFIG_SOCFPGA_VIRTUAL_TARGET
-	/* setting emac1 to rgmii */
+#if !defined(CONFIG_SOCFPGA_VIRTUAL_TARGET) && \
+!defined(CONFIG_SPL_BUILD)
+
+	/* Initialize EMAC */
+
+	/*
+	 * Putting the EMAC controller to reset when configuring the PHY
+	 * interface select at System Manager
+	*/
+	emac0_reset_enable(1);
+	emac1_reset_enable(1);
+
+	/* Clearing emac0 PHY interface select to 0 */
 	clrbits_le32(CONFIG_SYSMGR_EMAC_CTRL,
 		(SYSMGR_EMACGRP_CTRL_PHYSEL_MASK <<
+#if (CONFIG_EMAC_BASE == CONFIG_EMAC0_BASE)
+		SYSMGR_EMACGRP_CTRL_PHYSEL0_LSB));
+#elif (CONFIG_EMAC_BASE == CONFIG_EMAC1_BASE)
 		SYSMGR_EMACGRP_CTRL_PHYSEL1_LSB));
+#endif
 
+	/* configure to PHY interface select choosed */
 	setbits_le32(CONFIG_SYSMGR_EMAC_CTRL,
+#if (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_GMII)
+		(SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_GMII_MII <<
+#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_MII)
+		(SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_GMII_MII <<
+#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_RGMII)
 		(SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_RGMII <<
+#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_RMII)
+		(SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_RMII <<
+#endif
+#if (CONFIG_EMAC_BASE == CONFIG_EMAC0_BASE)
+		SYSMGR_EMACGRP_CTRL_PHYSEL0_LSB));
+	/* Release the EMAC controller from reset */
+	emac0_reset_enable(0);
+#elif (CONFIG_EMAC_BASE == CONFIG_EMAC1_BASE)
 		SYSMGR_EMACGRP_CTRL_PHYSEL1_LSB));
+	/* Release the EMAC controller from reset */
+	emac1_reset_enable(0);
+#endif
 
-	int rval = designware_initialize(0, CONFIG_EMAC1_BASE,
-			CONFIG_EPHY1_PHY_ADDR, PHY_INTERFACE_MODE_RGMII);
-
+	/* initialize and register the emac */
+	int rval = designware_initialize(0, CONFIG_EMAC_BASE,
+		CONFIG_EPHY_PHY_ADDR,
+#if (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_GMII)
+		PHY_INTERFACE_MODE_GMII);
+#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_MII)
+		PHY_INTERFACE_MODE_MII);
+#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_RGMII)
+		PHY_INTERFACE_MODE_RGMII);
+#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_RMII)
+		PHY_INTERFACE_MODE_RMII);
+#endif
 	debug("board_eth_init %d\n", rval);
 	return rval;
 #else
 	return 0;
 #endif
 }
-#endif /* CONFIG_SPL_BUILD */
 
 /*
  * Initializes MMC controllers.

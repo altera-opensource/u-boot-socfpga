@@ -15,24 +15,7 @@
  */
 
 #include <common.h>
-#include <asm/arch/reset_manager.h>
-#include <asm/arch/system_manager.h>
 #include <asm/io.h>
-
-#include <netdev.h>
-#include <mmc.h>
-#include <dwmmc.h>
-#include <asm/arch/interrupts.h>
-#include <asm/arch/sdram.h>
-#include <asm/arch/dwmmc.h>
-#include <dwmmc.h>
-#include <phy.h>
-#include <micrel.h>
-#include <../drivers/net/designware.h>
-
-#include <altera.h>
-#include <fpga.h>
-
 
 DECLARE_GLOBAL_DATA_PTR;
 

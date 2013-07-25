@@ -27,10 +27,10 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(BOARD).o
 
 ifdef CONFIG_SOCFPGA_ARRIA5
-COBJS-y := socfpga_arria5.o
+COBJS-y := socfpga_arria5.o socfpga_common.o
 COBJS-$(CONFIG_SPL_BUILD) += pinmux_config_arria5.o iocsr_config_arria5.o
 else
-COBJS-y := socfpga_cyclone5.o
+COBJS-y := socfpga_cyclone5.o socfpga_common.o
 COBJS-$(CONFIG_SPL_BUILD) += pinmux_config_cyclone5.o iocsr_config_cyclone5.o
 endif
 

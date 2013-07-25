@@ -211,7 +211,11 @@
 		"bootz ${loadaddr} - ${fdtaddr}\0" \
 	"fpga=0\0" \
 	"fpgadata=0x2000000\0" \
-	"fpgadatasize=0x700000\0"
+	"fpgadatasize=0x700000\0" \
+	CONFIG_KSZ9021_CLK_SKEW_ENV "=" \
+		__stringify(CONFIG_KSZ9021_CLK_SKEW_VAL) "\0" \
+	CONFIG_KSZ9021_DATA_SKEW_ENV "=" \
+		__stringify(CONFIG_KSZ9021_DATA_SKEW_VAL) "\0"
 
 
 /*
@@ -375,23 +379,35 @@
 #ifdef CONFIG_DESIGNWARE_ETH
 #define CONFIG_EMAC0_BASE		SOCFPGA_EMAC0_ADDRESS
 #define CONFIG_EMAC1_BASE		SOCFPGA_EMAC1_ADDRESS
-#ifdef CONFIG_CMD_NET
-#undef CONFIG_CMD_NET
-#endif
-#define CONFIG_CMD_NET			1
-#define CONFIG_CMD_PING			1
-#define CONFIG_CMD_DHCP			1
-#define CONFIG_NET_MULTI		1
-#define CONFIG_DW_ALTDESCRIPTOR		1
+/* console support for network */
+#define CONFIG_CMD_DHCP
+#define CONFIG_CMD_MII
+#define CONFIG_CMD_NET
+#define CONFIG_CMD_PING
+/* designware */
+#define CONFIG_NET_MULTI
+#define CONFIG_DW_ALTDESCRIPTOR
+#define CONFIG_DW_SEARCH_PHY
+#define CONFIG_MII
+#define CONFIG_PHY_GIGE
+#define CONFIG_DW_AUTONEG
+#define CONFIG_AUTONEG_TIMEOUT		(15 * CONFIG_SYS_HZ)
+#define CONFIG_PHYLIB
+#define CONFIG_PHY_MICREL
+#define CONFIG_PHY_MICREL_KSZ9021
+/* phy */
 #define CONFIG_EPHY0_PHY_ADDR		0
 #define CONFIG_EPHY1_PHY_ADDR		4
-#define CONFIG_DW_SEARCH_PHY		1
-#define CONFIG_MII			1
-#define CONFIG_CMD_MII			1
-#define CONFIG_PHY_GIGE			1
-#define CONFIG_DW_AUTONEG		1
-#define CONFIG_AUTONEG_TIMEOUT	(15 * CONFIG_SYS_HZ)
-#endif
+#define CONFIG_KSZ9021_CLK_SKEW_ENV	"micrel-ksz9021-clk-skew"
+#define CONFIG_KSZ9021_CLK_SKEW_VAL	0xf0f0
+#define CONFIG_KSZ9021_DATA_SKEW_ENV	"micrel-ksz9021-data-skew"
+#define CONFIG_KSZ9021_DATA_SKEW_VAL	0x0
+/* Type of PHY available */
+#define SOCFPGA_PHYSEL_ENUM_GMII	0x0
+#define SOCFPGA_PHYSEL_ENUM_MII		0x1
+#define SOCFPGA_PHYSEL_ENUM_RGMII	0x2
+#define SOCFPGA_PHYSEL_ENUM_RMII	0x3
+#endif	/* CONFIG_DESIGNWARE_ETH */
 
 /*
  * MMC support

@@ -28,4 +28,9 @@
 /* Monitor Command Prompt */
 #define CONFIG_SYS_PROMPT		"SOCFPGA_ARRIA5 # "
 
+/* EMAC controller and PHY used */
+#define CONFIG_EMAC_BASE		CONFIG_EMAC1_BASE
+#define CONFIG_EPHY_PHY_ADDR		CONFIG_EPHY1_PHY_ADDR
+#define CONFIG_PHY_INTERFACE_MODE	SOCFPGA_PHYSEL_ENUM_RGMII
+
 #endif	/* __CONFIG_H */
