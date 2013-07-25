@@ -21,6 +21,7 @@
 #include "../../board/altera/socfpga/build.h"
 #include "../../board/altera/socfpga/pinmux_config.h"
 #include "../../board/altera/socfpga/pll_config.h"
+#include "../../board/altera/socfpga/sdram/sdram_config.h"
 
 /* Enabled for U-Boot debug message printout? */
 /*#define DEBUG*/
@@ -664,5 +665,11 @@
 /* location of FPGA RBF image within QSPI */
 #define CONFIG_SPL_FPGA_QSPI_ADDR	(0x800000)
 
+/*
+ * Enable memory padding if SDRAM ECC is enabled
+ */
+#if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN == 1)
+#define CONFIG_SPL_SDRAM_ECC_PADDING	32
+#endif
 
 #endif	/* __CONFIG_COMMON_H */

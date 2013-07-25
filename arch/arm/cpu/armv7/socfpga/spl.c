@@ -456,7 +456,7 @@ void spl_board_init(void)
 	WATCHDOG_RESET();
 #endif
 	DEBUG_MEMORY
-	puts("SDRAM : Initializing MMR registers\n");
+	puts("SDRAM: Initializing MMR registers\n");
 	/* SDRAM MMR initialization */
 	if (sdram_mmr_init_full() != 0)
 		hang();
@@ -465,7 +465,7 @@ void spl_board_init(void)
 	WATCHDOG_RESET();
 #endif
 	DEBUG_MEMORY
-	puts("SDRAM : Calibrating PHY\n");
+	puts("SDRAM: Calibrating PHY\n");
 	/* SDRAM calibration */
 	if (sdram_calibration_full() == 0)
 		hang();
@@ -508,11 +508,17 @@ void spl_board_init(void)
 	irq_register(IRQ_ECC_OCRAM_UNCORRECTED,
 		irq_handler_ecc_ocram_uncorrected,
 		(void *)&irq_cnt_ecc_ocram_uncorrected, 0);
+#ifndef CONFIG_SOCFPGA_VIRTUAL_TARGET
+#if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN == 1)
 	/* register SDRAM ECC handler */
 	irq_register(IRQ_ECC_SDRAM,
 		irq_handler_ecc_sdram,
 		(void *)&irq_cnt_ecc_sdram, 0);
-#endif
+	sdram_enable_interrupt(1);
+	puts("SDRAM: ECC Enabled\n");
+#endif	/* CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN */
+#endif	/* CONFIG_SOCFPGA_VIRTUAL_TARGET */
+#endif	/* CONFIG_USE_IRQ */
 
 #ifdef CONFIG_HW_WATCHDOG
 	WATCHDOG_RESET();

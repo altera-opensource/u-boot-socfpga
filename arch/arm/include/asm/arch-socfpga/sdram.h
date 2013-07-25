@@ -29,6 +29,7 @@ extern unsigned long irq_cnt_ecc_sdram;
 
 /* function declaration */
 void irq_handler_ecc_sdram(void *arg);
+void sdram_enable_interrupt(unsigned enable);
 #ifdef CONFIG_SPL_BUILD
 unsigned sdram_mmr_init_full(void);
 unsigned sdram_calibration_full(void);
@@ -66,12 +67,20 @@ unsigned sdram_calibration_full(void);
 #define SDR_CTRLGRP_DRAMIFWIDTH_ADDRESS 0x5030
 /* Register: sdr.ctrlgrp.dramdevwidth                                      */
 #define SDR_CTRLGRP_DRAMDEVWIDTH_ADDRESS 0x5034
+/* Register: sdr.ctrlgrp.dramsts                                           */
+#define SDR_CTRLGRP_DRAMSTS_ADDRESS 0x5038
 /* Register: sdr.ctrlgrp.dramintr                                          */
 #define SDR_CTRLGRP_DRAMINTR_ADDRESS 0x503c
 /* Register: sdr.ctrlgrp.sbecount                                          */
 #define SDR_CTRLGRP_SBECOUNT_ADDRESS 0x5040
 /* Register: sdr.ctrlgrp.dbecount                                          */
 #define SDR_CTRLGRP_DBECOUNT_ADDRESS 0x5044
+/* Register: sdr.ctrlgrp.erraddr                                           */
+#define SDR_CTRLGRP_ERRADDR_ADDRESS 0x5048
+/* Register: sdr.ctrlgrp.dropcount                                         */
+#define SDR_CTRLGRP_DROPCOUNT_ADDRESS 0x504c
+/* Register: sdr.ctrlgrp.dropaddr                                          */
+#define SDR_CTRLGRP_DROPADDR_ADDRESS 0x5050
 /* Register: sdr.ctrlgrp.staticcfg                                         */
 #define SDR_CTRLGRP_STATICCFG_ADDRESS 0x505c
 /* Register: sdr.ctrlgrp.ctrlwidth                                         */
@@ -400,5 +409,8 @@ SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_2_THRESHOLDRSTCYCLES_79_64_MASK \
 #define SDR_CTRLGRP_FPGAPORTRST_READ_PORT_0_LSB 0
 #define SDR_CTRLGRP_FPGAPORTRST_WRITE_PORT_0_LSB 4
 #define SDR_CTRLGRP_FPGAPORTRST_COMMAND_PORT_0_LSB 8
+/* Field instance: sdr::ctrlgrp::dramsts                                   */
+#define SDR_CTRLGRP_DRAMSTS_DBEERR_MASK 0x00000008
+#define SDR_CTRLGRP_DRAMSTS_SBEERR_MASK 0x00000004
 
 #endif /* _SDRAM_H_ */

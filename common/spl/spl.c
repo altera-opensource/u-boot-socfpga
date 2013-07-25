@@ -140,6 +140,17 @@ __weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 #ifdef CONFIG_SPL_CHECKSUM_NEXT_IMAGE
 	u32 calculated_crc;
 	if (spl_image->crc_size != 0) {
+#ifdef CONFIG_SPL_SDRAM_ECC_PADDING
+		/*
+		 * do additional memory initialization / padding to avoid
+		 * the false double bit error (DBE) during read back
+		 * (for checksum purpose) when ECC is enabled
+		 */
+		debug("Padding the SDRAM to avoid false ECC DBE\n");
+		memset((unsigned char *)
+			(spl_image->entry_point + spl_image->crc_size),
+			0, CONFIG_SPL_SDRAM_ECC_PADDING);
+#endif
 		debug("Verifying Checksum ... ");
 		calculated_crc = crc32_wd(0,
 			(unsigned char *)spl_image->entry_point,

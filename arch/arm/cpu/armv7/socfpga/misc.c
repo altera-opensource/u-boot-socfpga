@@ -206,17 +206,6 @@ int board_late_init(void)
 {
 	char buf[32];
 
-	/* create event for tracking ECC count */
-	setenv_ulong("ECC_SDRAM", 0);
-#ifndef CONFIG_SOCFPGA_VIRTUAL_TARGET
-	setenv_ulong("ECC_SDRAM_SBE", 0);
-	setenv_ulong("ECC_SDRAM_DBE", 0);
-#endif
-	/* register SDRAM ECC handler */
-	irq_register(IRQ_ECC_SDRAM,
-		irq_handler_ecc_sdram,
-		(void *)&irq_cnt_ecc_sdram, 0);
-
 	/* create environment for bridges and handoff */
 
 	/* hps peripheral controller to fgpa */
