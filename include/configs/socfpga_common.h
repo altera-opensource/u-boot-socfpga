@@ -344,10 +344,11 @@
 /*
  * USB
  */
-/*#define CONFIG_CMD_USB		1
+#define CONFIG_SYS_USB_BASE		0xFFB40000
+#define CONFIG_CMD_USB			1
 #define CONFIG_USB_STORAGE		1
 #define CONFIG_USB_DWC_OTG_HCD		1
-#define CONFIG_DOS_PARTITION		1*/
+#define CONFIG_DOS_PARTITION		1
 
 /*
  * L4 OSC1 Timer 0
