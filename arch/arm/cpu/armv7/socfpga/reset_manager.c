@@ -84,8 +84,8 @@ void reset_deassert_all_bridges(void)
 	writel(0, &reset_manager_base->brg_mod_reset);
 
 	/* remap the bridges into memory map */
-	setbits_le32(SOCFPGA_L3REGS_ADDRESS,
-		(L3REGS_REMAP_LWHPS2FPGA_MASK | L3REGS_REMAP_HPS2FPGA_MASK));
+	writel((L3REGS_REMAP_LWHPS2FPGA_MASK | L3REGS_REMAP_HPS2FPGA_MASK |
+		L3REGS_REMAP_OCRAM_MASK), SOCFPGA_L3REGS_ADDRESS);
 #endif
 }
 
