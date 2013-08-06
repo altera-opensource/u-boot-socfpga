@@ -18,7 +18,7 @@
 #ifndef _DEBUG_MEMORY_H_
 #define _DEBUG_MEMORY_H_
 
-extern unsigned char *debug_memory_write_addr;
+extern unsigned char *debug_memory_write_addr __attribute__((section(".data")));
 
 #ifdef CONFIG_SPL_BUILD
 #if (CONFIG_PRELOADER_DEBUG_MEMORY_WRITE == 1)
