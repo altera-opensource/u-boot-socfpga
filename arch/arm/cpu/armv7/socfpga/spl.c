@@ -45,6 +45,11 @@ DECLARE_GLOBAL_DATA_PTR;
 u32 rst_mgr_status;
 #endif
 
+#ifdef CONFIG_SPL_FPGA_LOAD
+static const struct socfpga_reset_manager *reset_manager_base =
+	(void *)SOCFPGA_RSTMGR_ADDRESS;
+#endif
+
 /* Using own board_init_f function as bss already cleared during ecc
 initialized and reassign the stack to lcoation specified by linker script */
 void board_init_f(ulong dummy)
