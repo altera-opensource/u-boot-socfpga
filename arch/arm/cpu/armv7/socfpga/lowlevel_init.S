@@ -41,13 +41,17 @@ save_boot_params:
 	ldr	r5, =CONFIG_PRELOADER_DEBUG_MEMORY_ADDR
 	ldr	r4, =PRELOADER_DEBUG_MEMMORY_HEADER
 	stmia	r5!, {r4}
-	stmia	r5, {r0 -r3}
+	stmia	r5!, {r0 -r3}
+	ldr	r4, =debug_memory_write_addr
+	str	r5, [r4]
+#endif	/* CONFIG_PRELOADER_DEBUG_MEMORY_WRITE */
+#if (CONFIG_PRELOADER_WARMRST_SKIP_CFGIO == 1)
 	/* get the reset manager status register passed by BootROM */
 	add	r5, r0,#0x34
 	ldr	r4, =rst_mgr_status
 	ldr	r5, [r5]
 	str	r5, [r4]
-#endif	/* CONFIG_PRELOADER_DEBUG_MEMORY_WRITE */
+#endif /* CONFIG_PRELOADER_WARMRST_SKIP_CFGIO */
 
 #if (CONFIG_PRELOADER_EXE_ON_FPGA == 1)
 	/* relocate the .data section to supprt preloader execute on FPGA */

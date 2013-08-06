@@ -83,7 +83,7 @@ static void init_boot_params(void)
 {
 #if (CONFIG_PRELOADER_DEBUG_MEMORY_WRITE == 1)
 	/* Pass the debug memory address  to next boot image */
-	boot_params_ptr = CONFIG_PRELOADER_DEBUG_MEMORY_ADDR;
+	boot_params_ptr = (u32 *)CONFIG_PRELOADER_DEBUG_MEMORY_ADDR;
 #else
 	boot_params_ptr = 0;
 #endif

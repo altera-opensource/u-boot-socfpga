@@ -182,8 +182,7 @@ __weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 	WATCHDOG_RESET();
 #endif
 
-	u32 boot_params_ptr_addr = (u32)&boot_params_ptr;
-	image_entry((u32 *)boot_params_ptr_addr);
+	image_entry((u32 *)boot_params_ptr);
 }
 
 #ifdef CONFIG_SPL_RAM_DEVICE
