@@ -444,6 +444,8 @@ void spl_board_init(void)
 	DEBUG_MEMORY
 	/* enable console uart printing */
 	preloader_console_init();
+	/* printout to know the board configuration during run time */
+	checkboard();
 #endif
 
 
