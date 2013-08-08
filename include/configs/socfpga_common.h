@@ -429,6 +429,8 @@
 #define CONFIG_DWMMC			1
 #define CONFIG_ALTERA_DWMMC		1
 #define CONFIG_DWMMC_FIFO_DEPTH		1024
+/* using smaller max blk cnt to avoid flooding the limited stack we have */
+#define CONFIG_SYS_MMC_MAX_BLK_COUNT     256
 #if defined(CONFIG_SPL_BUILD)
 #define CONFIG_DWMMC_BUS_WIDTH		CONFIG_HPS_SDMMC_BUSWIDTH
 #define CONFIG_DWMMC_BUS_HZ		(CONFIG_HPS_CLK_SDMMC_HZ / 4)
