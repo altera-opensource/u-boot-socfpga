@@ -48,7 +48,12 @@ void s_init(void)
 	 * SPL : configure the remap (L3 NIC-301 GPV) so the on-chip RAM at
 	 * lower memory instead ROM.
 	 */
+#if (CONFIG_PRELOADER_EXE_ON_FPGA == 1)
+	/* if we run from FPGA, ensure we don't shutdown the bridge */
+	writel(0x9, SOCFPGA_L3REGS_ADDRESS);
+#else
 	writel(0x1, SOCFPGA_L3REGS_ADDRESS);
+#endif /* CONFIG_PRELOADER_EXE_ON_FPGA */
 #else
 	/*
 	 * U-Boot : configure the remap (L3 NIC-301 GPV)
