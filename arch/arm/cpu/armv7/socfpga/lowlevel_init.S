@@ -61,7 +61,7 @@ save_boot_params:
 relocate_loop:
 	ldmia	r0!, {r3}		/* copy from source address [r0] */
 	stmia	r1!, {r3}		/* copy to   target address [r1] */
-	cmp	r0, r2			/* until source end addreee [r2] */
+	cmp	r1, r2			/* until target end addreee [r2] */
 	blo	relocate_loop
 #endif	/* CONFIG_PRELOADER_EXE_ON_FPGA */
 #endif	/* CONFIG_SPL_BUILD */
