@@ -24,7 +24,7 @@ extern char __ecc_padding_start, __ecc_padding_end;
 #ifdef CONFIG_SPL_FAT_SUPPORT
 extern char __bss_fat_start, __bss_fat_end;
 extern char __malloc_fat_start, __malloc_fat_end;
-extern char __sdram_stack_start;
+extern char __sdram_stack_start, __sdram_stack_end;
 #endif
 
 #ifdef CONFIG_USE_IRQ
