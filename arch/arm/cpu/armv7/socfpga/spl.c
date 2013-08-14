@@ -562,6 +562,10 @@ void spl_board_init(void)
 	mem_malloc_init((unsigned long)(&__malloc_fat_start),
 		(&__malloc_fat_end - &__malloc_fat_start));
 
+	/* clear the stack to avoid false DBE (as stack in SDRAM now) */
+	memset(&__sdram_stack_end, 0,
+		&__sdram_stack_start - &__sdram_stack_end);
+
 	/* relocated the stack to SDRAM which is much bigger */
 	relocate_stack_to_sdram();
 #endif

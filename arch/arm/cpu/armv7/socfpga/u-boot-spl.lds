@@ -47,10 +47,10 @@ SECTIONS
 
 #ifdef CONFIG_SPL_FAT_SUPPORT
 	.bss_fat : {
-		. = ALIGN(4);
+		. = ALIGN(CONFIG_SPL_SDRAM_ECC_PADDING);
 		__bss_fat_start = .;
 		fs/fat/libfat.o (.bss*)
-		. = ALIGN(4);
+		. = ALIGN(CONFIG_SPL_SDRAM_ECC_PADDING);
 		__bss_fat_end = .;
 	} >.sdram
 #endif
@@ -68,9 +68,10 @@ SECTIONS
 	__malloc_end = .;
 	.malloc :
 	{
-		. = ALIGN(8);
+		. = ALIGN(CONFIG_SPL_SDRAM_ECC_PADDING);
 		__malloc_fat_start = .;
 		. = . + CONFIG_SPL_MALLOC_SIZE;
+		. = ALIGN(CONFIG_SPL_SDRAM_ECC_PADDING);
 		__malloc_fat_end = .;
 	} >.sdram
 #else
@@ -108,8 +109,10 @@ SECTIONS
 #ifdef CONFIG_SPL_FAT_SUPPORT
 	.sdram_stack :
 	{
+		. = ALIGN(CONFIG_SPL_SDRAM_ECC_PADDING);
+		__sdram_stack_end = .;
 		. = . + CONFIG_SPL_SDRAM_STACK_SIZE;
-		. = ALIGN(8);
+		. = ALIGN(CONFIG_SPL_SDRAM_ECC_PADDING);
 		__sdram_stack_start = .;
 	} >.sdram
 #endif
