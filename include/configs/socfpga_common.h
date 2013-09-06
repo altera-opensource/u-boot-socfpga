@@ -168,7 +168,7 @@
 #ifdef CONFIG_SOCFPGA_VIRTUAL_TARGET
 #define CONFIG_BOOTCOMMAND "run ramboot"
 #else
-#define CONFIG_BOOTCOMMAND "run mmcload; run mmcboot"
+#define CONFIG_BOOTCOMMAND "run callscript; run mmcload; run mmcboot"
 #endif
 
 /*
@@ -216,8 +216,14 @@
 	CONFIG_KSZ9021_CLK_SKEW_ENV "=" \
 		__stringify(CONFIG_KSZ9021_CLK_SKEW_VAL) "\0" \
 	CONFIG_KSZ9021_DATA_SKEW_ENV "=" \
-		__stringify(CONFIG_KSZ9021_DATA_SKEW_VAL) "\0"
-
+		__stringify(CONFIG_KSZ9021_DATA_SKEW_VAL) "\0" \
+	"scriptfile=u-boot.scr\0" \
+	"callscript=if fatload mmc 0:1 $fpgadata $scriptfile;" \
+			"then source $fpgadata; " \
+		"else " \
+			"echo Optional boot script not found. " \
+			"Continuing to boot normally; " \
+		"fi;\0"
 
 /*
  * Environment setup
