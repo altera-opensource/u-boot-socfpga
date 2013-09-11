@@ -60,8 +60,8 @@ unsigned long sys_mgr_init_table[CONFIG_HPS_PINMUX_NUM] = {
 	0, /* GENERALIO20 */
 	0, /* GENERALIO21 */
 	0, /* GENERALIO22 */
-	0, /* GENERALIO23 */
-	0, /* GENERALIO24 */
+	3, /* GENERALIO23 */
+	3, /* GENERALIO24 */
 	0, /* GENERALIO25 */
 	0, /* GENERALIO26 */
 	0, /* GENERALIO27 */
