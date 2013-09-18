@@ -672,17 +672,22 @@ int cadence_qspi_apb_indirect_read_setup(void *reg_base,
 	unsigned int addr_value;
 	unsigned int dummy_clk;
 	unsigned int dummy_bytes;
-#if (CONFIG_CQSPI_4BYTE_ADDR == 1)
-	unsigned addr_bytes = 4;
-#else
-	unsigned addr_bytes = 3;
-#endif
+	unsigned int addr_bytes;
 
-	if ((addr_bytes == 3 && cmdlen < 4) ||
-		(addr_bytes == 4 && cmdlen < 5)) {
-		printf("QSPI: Invalid txbuf length, length %d\n", cmdlen);
-		return -EINVAL;
-	}
+	/*
+	 * Identify addr_byte. All NOR flash device drivers are using fast read
+	 * which always expecting 1 dummy byte, 1 cmd byte and 3/4 addr byte.
+	 * With that, the length is in value of 5 or 6. Only FRAM chip from
+	 * ramtron using normal read (which won't need dummy byte).
+	 * Unlikely NOR flash using normal read due to performance issue.
+	 */
+	if (cmdlen >= 5)
+		/* to cater fast read where cmd + addr + dummy */
+		addr_bytes = cmdlen - 2;
+	else
+		/* for normal read (only ramtron as of now) */
+		addr_bytes = cmdlen - 1;
+
 	/* Setup the indirect trigger address */
 	CQSPI_WRITEL((ahb_phy_addr & CQSPI_INDIRECTTRIGGER_ADDR_MASK),
 		reg_base + CQSPI_REG_INDIRECTTRIGGER);
@@ -869,11 +874,6 @@ failwr:
 void cadence_qspi_apb_enter_xip(void *reg_base, char xip_dummy)
 {
 	unsigned int reg;
-#if (CONFIG_CQSPI_4BYTE_ADDR == 1)
-	unsigned addr_bytes = 4;
-#else
-	unsigned addr_bytes = 3;
-#endif
 
 	/* enter XiP mode immediately and enable direct mode */
 	reg = CQSPI_READL(reg_base + CQSPI_REG_CONFIG);
@@ -889,10 +889,4 @@ void cadence_qspi_apb_enter_xip(void *reg_base, char xip_dummy)
 	reg = CQSPI_READL(reg_base + CQSPI_REG_RD_INSTR);
 	reg |= (1 << CQSPI_REG_RD_INSTR_MODE_EN_LSB);
 	CQSPI_WRITEL(reg, reg_base + CQSPI_REG_RD_INSTR);
-
-	/* set device size */
-	reg = CQSPI_READL(reg_base + CQSPI_REG_SIZE);
-	reg &= ~CQSPI_REG_SIZE_ADDRESS_MASK;
-	reg |= (addr_bytes - 1);
-	CQSPI_WRITEL(reg, reg_base + CQSPI_REG_SIZE);
 }

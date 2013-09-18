@@ -258,7 +258,9 @@ int spi_flash_cmd_erase(struct spi_flash *flash, u32 offset, size_t len)
 		if (ret)
 			goto out;
 
-		ret = spi_flash_cmd_write(flash->spi, cmd, sizeof(cmd), NULL, 0);
+		/* address byte for extended is 4 while normal is 3 */
+		ret = spi_flash_cmd_write(flash->spi, cmd,
+			ADDR_WIDTH(flash->size) + 1, NULL, 0);
 		if (ret)
 			goto out;
 
