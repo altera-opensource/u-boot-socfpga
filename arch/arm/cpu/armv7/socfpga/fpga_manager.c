@@ -212,15 +212,7 @@ int fpgamgr_program_init(void)
 void fpgamgr_program_write(const unsigned long *rbf_data,
 	unsigned long rbf_size)
 {
-	unsigned long reg, i;
-
-	/* write to FPGA Manager AXI data */
-	for (i = 0; i < rbf_size; i = i + 4) {
-		reg = rbf_data[i/4];
-		writel(reg, SOCFPGA_FPGAMGRDATA_ADDRESS);
-		reg = readl(SOCFPGA_FPGAMGRREGS_ADDRESS +
-			FPGAMGRREGS_MON_GPIO_EXT_PORTA_ADDRESS);
-	}
+	fpgamgr_axi_write(rbf_data, SOCFPGA_FPGAMGRDATA_ADDRESS, rbf_size);
 }
 
 /* Ensure the FPGA entering config done */

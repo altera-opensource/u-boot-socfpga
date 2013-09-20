@@ -86,5 +86,7 @@ int fpgamgr_program_poll_initphase(void);
 int fpgamgr_program_poll_usermode(void);
 int fpgamgr_program_fpga(const unsigned long *rbf_data,
 	unsigned long rbf_size);
+void fpgamgr_axi_write(const unsigned long *rbf_data,
+	const unsigned long fpgamgr_data_addr, unsigned long rbf_size);
 
 #endif /* _FPGA_MANAGER_H_ */
