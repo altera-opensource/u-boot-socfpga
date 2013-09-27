@@ -68,126 +68,12 @@ int print_cpuinfo(void)
 	return 0;
 }
 
-/*
- * Initialization function which happen at early stage of c code
- */
-int board_early_init_f(void)
-{
-#ifdef CONFIG_HW_WATCHDOG
-	/* disable the watchdog when entering U-Boot */
-	watchdog_disable();
-#endif
-	return 0;
-}
-
-/*
- * Miscellaneous platform dependent initialisations
- */
-int board_init(void)
-{
-	/* adress of boot parameters for ATAG (if ATAG is used) */
-	gd->bd->bi_boot_params = 0x00000100;
-	return 0;
-}
-
 int misc_init_r(void)
 {
+	char buf[32];
+
 	/* add device descriptor to FPGA device table */
 	socfpga_fpga_add();
-	return 0;
-}
-
-#if defined(CONFIG_SYS_CONSOLE_IS_IN_ENV) && \
-defined(CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE)
-int overwrite_console(void)
-{
-	return 0;
-}
-#endif
-
-
-/* We know all the init functions have been run now */
-int board_eth_init(bd_t *bis)
-{
-#if !defined(CONFIG_SOCFPGA_VIRTUAL_TARGET) && \
-!defined(CONFIG_SPL_BUILD)
-
-	/* Initialize EMAC */
-
-	/*
-	 * Putting the EMAC controller to reset when configuring the PHY
-	 * interface select at System Manager
-	*/
-	emac0_reset_enable(1);
-	emac1_reset_enable(1);
-
-	/* Clearing emac0 PHY interface select to 0 */
-	clrbits_le32(CONFIG_SYSMGR_EMAC_CTRL,
-		(SYSMGR_EMACGRP_CTRL_PHYSEL_MASK <<
-#if (CONFIG_EMAC_BASE == CONFIG_EMAC0_BASE)
-		SYSMGR_EMACGRP_CTRL_PHYSEL0_LSB));
-#elif (CONFIG_EMAC_BASE == CONFIG_EMAC1_BASE)
-		SYSMGR_EMACGRP_CTRL_PHYSEL1_LSB));
-#endif
-
-	/* configure to PHY interface select choosed */
-	setbits_le32(CONFIG_SYSMGR_EMAC_CTRL,
-#if (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_GMII)
-		(SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_GMII_MII <<
-#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_MII)
-		(SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_GMII_MII <<
-#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_RGMII)
-		(SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_RGMII <<
-#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_RMII)
-		(SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_RMII <<
-#endif
-#if (CONFIG_EMAC_BASE == CONFIG_EMAC0_BASE)
-		SYSMGR_EMACGRP_CTRL_PHYSEL0_LSB));
-	/* Release the EMAC controller from reset */
-	emac0_reset_enable(0);
-#elif (CONFIG_EMAC_BASE == CONFIG_EMAC1_BASE)
-		SYSMGR_EMACGRP_CTRL_PHYSEL1_LSB));
-	/* Release the EMAC controller from reset */
-	emac1_reset_enable(0);
-#endif
-
-	/* initialize and register the emac */
-	int rval = designware_initialize(0, CONFIG_EMAC_BASE,
-		CONFIG_EPHY_PHY_ADDR,
-#if (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_GMII)
-		PHY_INTERFACE_MODE_GMII);
-#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_MII)
-		PHY_INTERFACE_MODE_MII);
-#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_RGMII)
-		PHY_INTERFACE_MODE_RGMII);
-#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_RMII)
-		PHY_INTERFACE_MODE_RMII);
-#endif
-	debug("board_eth_init %d\n", rval);
-	return rval;
-#else
-	return 0;
-#endif
-}
-
-/*
- * Initializes MMC controllers.
- * to override, implement board_mmc_init()
- */
-int cpu_mmc_init(bd_t *bis)
-{
-#ifdef CONFIG_DWMMC
-	return altera_dwmmc_init(CONFIG_SDMMC_BASE,
-		CONFIG_DWMMC_BUS_WIDTH, 0);
-#else
-	return 0;
-#endif
-}
-
-#ifdef CONFIG_BOARD_LATE_INIT
-int board_late_init(void)
-{
-	char buf[32];
 
 	/* create environment for bridges and handoff */
 
@@ -241,7 +127,28 @@ int board_late_init(void)
 
 	return 0;
 }
+
+#if defined(CONFIG_SYS_CONSOLE_IS_IN_ENV) && \
+defined(CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE)
+int overwrite_console(void)
+{
+	return 0;
+}
 #endif
+
+/*
+ * Initializes MMC controllers.
+ * to override, implement board_mmc_init()
+ */
+int cpu_mmc_init(bd_t *bis)
+{
+#ifdef CONFIG_DWMMC
+	return altera_dwmmc_init(CONFIG_SDMMC_BASE,
+		CONFIG_DWMMC_BUS_WIDTH, 0);
+#else
+	return 0;
+#endif
+}
 
 #ifndef CONFIG_SYS_DCACHE_OFF
 void enable_caches(void)
