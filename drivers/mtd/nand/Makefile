@@ -59,6 +59,7 @@ COBJS-$(CONFIG_NAND_ECC_BCH) += nand_bch.o
 COBJS-$(CONFIG_NAND_ATMEL) += atmel_nand.o
 COBJS-$(CONFIG_DRIVER_NAND_BFIN) += bfin_nand.o
 COBJS-$(CONFIG_NAND_DAVINCI) += davinci_nand.o
+COBJS-$(CONFIG_NAND_DENALI) += denali_nand.o
 COBJS-$(CONFIG_NAND_FSL_ELBC) += fsl_elbc_nand.o
 COBJS-$(CONFIG_NAND_FSL_IFC) += fsl_ifc_nand.o
 COBJS-$(CONFIG_NAND_FSL_UPM) += fsl_upm.o
