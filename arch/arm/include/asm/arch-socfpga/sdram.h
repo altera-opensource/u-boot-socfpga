@@ -18,6 +18,8 @@
 #ifndef	_SDRAM_H_
 #define	_SDRAM_H_
 
+#ifndef __ASSEMBLY__
+
 #ifdef CONFIG_SPL_BUILD
 #include <alt_types.h>
 #include <sequencer_defines.h>
@@ -32,10 +34,13 @@ extern unsigned long irq_cnt_ecc_sdram;
 /* function declaration */
 void irq_handler_ecc_sdram(void *arg);
 void sdram_enable_interrupt(unsigned enable);
+void sdram_applycfg_uboot(void);
 #ifdef CONFIG_SPL_BUILD
 unsigned sdram_mmr_init_full(void);
 unsigned sdram_calibration_full(void);
-#endif
+#endif /* CONFIG_SPL_BUILD */
+
+#endif /* __ASSEMBLY__ */
 
 /* Group: sdr.phygrp.sccgrp                                                */
 #define SDR_PHYGRP_SCCGRP_ADDRESS 0x0

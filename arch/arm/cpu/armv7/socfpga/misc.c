@@ -87,6 +87,7 @@ int misc_init_r(void)
 		SDR_CTRLGRP_FPGAPORTRST_ADDRESS));
 	sprintf(buf, "0x%08x", readl(ISWGRP_HANDOFF_FPGA2SDR));
 	setenv("fpga2sdram_handoff", buf);
+	setenv_addr("fpga2sdram_apply", (void *)sdram_applycfg_uboot);
 
 	/* axi bridges (hps2fpga, lwhps2fpga and fpga2hps) */
 	setenv_addr("axibridge", (void *)&reset_manager_base->brg_mod_reset);
@@ -103,6 +104,7 @@ int misc_init_r(void)
 	setenv("bridge_enable_handoff",
 		"mw $fpgaintf ${fpgaintf_handoff}; "
 		"mw $fpga2sdram ${fpga2sdram_handoff}; "
+		"go $fpga2sdram_apply; "
 		"mw $axibridge ${axibridge_handoff}; "
 		"mw $l3remap ${l3remap_handoff}; "
 		"echo fpgaintf; "
@@ -116,6 +118,7 @@ int misc_init_r(void)
 	setenv("bridge_disable",
 		"mw $fpgaintf 0; "
 		"mw $fpga2sdram 0; "
+		"go $fpga2sdram_apply; "
 		"mw $axibridge 0; "
 		"mw $l3remap 0x1; "
 		"echo fpgaintf; "
