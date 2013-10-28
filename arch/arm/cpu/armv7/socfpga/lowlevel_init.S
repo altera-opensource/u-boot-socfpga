@@ -17,10 +17,10 @@
 
 #include <config.h>
 #include <version.h>
-#ifdef CONFIG_SPL_BUILD
 #include <asm/arch/system_manager.h>
-#endif
 #include <linux/linkage.h>
+#include <asm/arch/sdram.h>
+#include <asm/system.h>
 
 #define PRELOADER_DEBUG_MEMMORY_MAGIC		0x444d
 #define PRELOADER_DEBUG_MEMMORY_VERSION		0x1
@@ -94,3 +94,62 @@ ENDPROC(relocate_stack_to_sdram)
 #endif /* CONFIG_SPL_FAT_SUPPORT */
 #endif	/* CONFIG_SPL_BUILD */
 
+#ifndef CONFIG_SPL_BUILD
+/*
+ * Configure the fpga2sdram register
+ * For U-Boot only and this code need to run on OCRAM
+ * No stack activity or function call to avoid access to SDRAM
+ */
+
+.global sdram_applycfg_ocram
+sdram_applycfg_ocram:
+	mrc	p15, 0, r0, c1, c0, 0	@ Read CP15 SCTRL Register
+	bic	r0, #CR_Z		@ Disable branch predictor
+	bic	r0, #CR_I		@ Disable i-cache
+	mcr	p15, 0, r0, c1, c0, 0	@ Write CP15 SCTRL Register
+	dsb
+	isb
+
+	ldr	r1, SDR_CTRL
+	ldr	r2, SDR_STATICCFG
+	add	r1, r1, r2
+	ldr	r0, [r1]
+	ldr	r3, SDR_APPLYCFG_MASK
+	orr	r0, r0, r3
+	str	r0, [r1]
+	dsb
+	isb
+
+	mrc	p15, 0, r4, c1, c0, 0	@ Read CP15 SCTRL Register
+	orr	r4, r0, #CR_Z		@ Enable back branch predictor
+	orr	r4, r0, #CR_I		@ Enable back i-cache
+	mcr	p15, 0, r4, c1, c0, 0	@ Write CP15 SCTRL Register
+
+	mov	pc, lr
+
+SDR_CTRL:		.word	SOCFPGA_SDR_ADDRESS
+SDR_STATICCFG:		.word	SDR_CTRLGRP_STATICCFG_ADDRESS
+SDR_APPLYCFG_MASK:	.word	SDR_CTRLGRP_STATICCFG_APPLYCFG_MASK
+
+/*
+ * Relocate the sdram_applycfg_ocram function to OCRAM and call it
+ */
+ENTRY(sdram_applycfg_uboot)
+	PUSH	{r4-r11, lr}		/* save registers per AAPCS */
+
+	ldr	r1, =sdram_applycfg_ocram
+	ldr	r2, =CONFIG_SYS_INIT_RAM_ADDR
+	mov	r3, r2
+	ldmia	r1!, {r4 - r11}
+	stmia	r3!, {r4 - r11}
+	ldmia	r1!, {r4 - r11}		/* copy more in case code added */
+	stmia	r3!, {r4 - r11}		/* in the future */
+	ldmia	r1!, {r4 - r11}		/* copy more in case code added */
+	stmia	r3!, {r4 - r11}		/* in the future */
+	dsb
+	isb
+	blx	r2			/* jump to OCRAM */
+	POP	{r4-r11, pc}
+ENDPROC(sdram_applycfg_uboot)
+
+#endif /* ONFIG_SPL_BUILD */
