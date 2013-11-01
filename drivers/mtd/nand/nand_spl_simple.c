@@ -23,14 +23,14 @@
 #include <asm/io.h>
 #include <linux/mtd/nand_ecc.h>
 
-static int nand_ecc_pos[] = CONFIG_SYS_NAND_ECCPOS;
 static nand_info_t mtd;
 static struct nand_chip nand_chip;
 
+#ifndef CONFIG_SPL_USE_ECC_READ
+static int nand_ecc_pos[] = CONFIG_SYS_NAND_ECCPOS;
 #define ECCSTEPS	(CONFIG_SYS_NAND_PAGE_SIZE / \
 					CONFIG_SYS_NAND_ECCSIZE)
 #define ECCTOTAL	(ECCSTEPS * CONFIG_SYS_NAND_ECCBYTES)
-
 
 #if (CONFIG_SYS_NAND_PAGE_SIZE <= 512)
 /*
@@ -124,11 +124,13 @@ static int nand_command(int block, int page, uint32_t offs,
 	return 0;
 }
 #endif
+#endif	/* CONFIG_SPL_USE_ECC_READ */
 
 static int nand_is_bad_block(int block)
 {
 	struct nand_chip *this = mtd.priv;
 
+#ifndef CONFIG_SPL_USE_ECC_READ
 	nand_command(block, 0, CONFIG_SYS_NAND_BAD_BLOCK_POS,
 		NAND_CMD_READOOB);
 
@@ -142,10 +144,23 @@ static int nand_is_bad_block(int block)
 		if (readb(this->IO_ADDR_R) != 0xff)
 			return 1;
 	}
-
+#else
+	mtd.writesize = CONFIG_SYS_NAND_PAGE_SIZE;
+	mtd.oobsize = CONFIG_SYS_NAND_OOBSIZE;
+	this->cmdfunc(&mtd, NAND_CMD_READ0, 0,
+		block * CONFIG_SYS_NAND_PAGE_COUNT);
+	this->ecc.read_oob(&mtd, this,
+		block * CONFIG_SYS_NAND_PAGE_COUNT, 1);
+	if (this->oob_poi[CONFIG_SYS_NAND_BAD_BLOCK_POS] != 0xff)
+		return 1;
+	if (this->options & NAND_BUSWIDTH_16)
+		if (this->oob_poi[CONFIG_SYS_NAND_BAD_BLOCK_POS + 1] != 0xff)
+			return 1;
+#endif
 	return 0;
 }
 
+#ifndef CONFIG_SPL_USE_ECC_READ
 #if defined(CONFIG_SYS_NAND_HW_ECC_OOBFIRST)
 static int nand_read_page(int block, int page, uchar *dst)
 {
@@ -217,7 +232,18 @@ static int nand_read_page(int block, int page, void *dst)
 
 	return 0;
 }
-#endif
+#endif	/* CONFIG_SYS_NAND_HW_ECC_OOBFIRST */
+#else
+static int nand_read_page(int block, int page, void *dst)
+{
+	struct nand_chip *this = mtd.priv;
+	this->cmdfunc(&mtd, NAND_CMD_READ0, 0,
+		(block * CONFIG_SYS_NAND_PAGE_COUNT) + page);
+	this->ecc.read_page(&mtd, this, dst,
+		(block * CONFIG_SYS_NAND_PAGE_COUNT) + page);
+	return 0;
+}
+#endif	/* CONFIG_SPL_USE_ECC_READ */
 
 int nand_spl_load_image(uint32_t offs, unsigned int size, void *dst)
 {
