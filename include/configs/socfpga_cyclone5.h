@@ -14,6 +14,8 @@
  *  this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define CONFIG_SOCFPGA_CYCLONE5
+
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
@@ -21,8 +23,6 @@
 #ifdef CONFIG_SPL_BUILD
 #include "../../board/altera/socfpga/iocsr_config_cyclone5.h"
 #endif
-
-#define CONFIG_SOCFPGA_CYCLONE5
 
 /*
  * Console setup

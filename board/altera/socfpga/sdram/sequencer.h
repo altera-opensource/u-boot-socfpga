@@ -220,6 +220,7 @@ extern void err_report_internal_error (const char *description,
 #define REG_FILE_TRK_RW_MGR_ADDR        (BASE_REG_FILE + 0x002C)
 #define REG_FILE_TRK_READ_DQS_WIDTH     (BASE_REG_FILE + 0x0030)
 #define REG_FILE_TRK_RFSH               (BASE_REG_FILE + 0x0034)
+#define CTRL_CONFIG_REG			(BASE_MMR      + 0x0000)
 #else
 /* Tracking slave addresses. */
 #define TRK_DTAPS_PER_PTAP     (BASE_TRK_MGR + 0x0000)
@@ -563,6 +564,53 @@ extern void err_report_internal_error (const char *description,
 #define PHY_DEBUG_DISABLE_GUARANTEED_READ 0x00000010
 #define PHY_DEBUG_ENABLE_NON_DESTRUCTIVE_CALIBRATION 0x00000020
 
+/* Init and Reset delay constants - Only use if defined by sequencer_defines.h,
+ * otherwise, revert to defaults
+ * Default for Tinit = (0+1) * ((202+1) * (2 * 131 + 1) + 1) = 53532 =
+ * 200.75us @ 266MHz
+ */
+#ifdef TINIT_CNTR0_VAL
+#define SEQ_TINIT_CNTR0_VAL TINIT_CNTR0_VAL
+#else
+#define SEQ_TINIT_CNTR0_VAL 0
+#endif
+
+#ifdef TINIT_CNTR1_VAL
+#define SEQ_TINIT_CNTR1_VAL TINIT_CNTR1_VAL
+#else
+#define SEQ_TINIT_CNTR1_VAL 202
+#endif
+
+#ifdef TINIT_CNTR2_VAL
+#define SEQ_TINIT_CNTR2_VAL TINIT_CNTR2_VAL
+#else
+#define SEQ_TINIT_CNTR2_VAL 131
+#endif
+
+
+/* Default for Treset = (2+1) * ((252+1) * (2 * 131 + 1) + 1) = 133563 =
+ * 500.86us @ 266MHz
+ */
+#ifdef TRESET_CNTR0_VAL
+#define SEQ_TRESET_CNTR0_VAL TRESET_CNTR0_VAL
+#else
+#define SEQ_TRESET_CNTR0_VAL 2
+#endif
+
+#ifdef TRESET_CNTR1_VAL
+#define SEQ_TRESET_CNTR1_VAL TRESET_CNTR1_VAL
+#else
+#define SEQ_TRESET_CNTR1_VAL 252
+#endif
+
+#ifdef TRESET_CNTR2_VAL
+#define SEQ_TRESET_CNTR2_VAL TRESET_CNTR2_VAL
+#else
+#define SEQ_TRESET_CNTR2_VAL 131
+#endif
+
+
+
 /* Bitfield type changes depending on protocol */
 #if QDRII
 typedef long long t_btfld;
@@ -651,6 +699,34 @@ extern void rw_mgr_load_mrs_calib (void);
 extern void rw_mgr_load_mrs_exec (void);
 extern void rw_mgr_mem_initialize (void);
 extern void rw_mgr_mem_dll_lock_wait(void);
+extern inline void scc_mgr_set_dq_in_delay(alt_u32 write_group,
+	alt_u32 dq_in_group, alt_u32 delay);
+extern inline void scc_mgr_set_dq_out1_delay(alt_u32 write_group,
+	alt_u32 dq_in_group, alt_u32 delay);
+extern inline void scc_mgr_set_dq_out2_delay(alt_u32 write_group,
+	alt_u32 dq_in_group, alt_u32 delay);
+extern inline void scc_mgr_load_dq(alt_u32 dq_in_group);
+extern inline void scc_mgr_set_dqs_bus_in_delay(alt_u32 read_group,
+	alt_u32 delay);
+extern inline void scc_mgr_load_dqs(alt_u32 dqs);
+extern void scc_mgr_set_group_dqs_io_and_oct_out1_gradual(alt_u32 write_group,
+	alt_u32 delay);
+extern void scc_mgr_set_group_dqs_io_and_oct_out2_gradual(alt_u32 write_group,
+	alt_u32 delay);
+extern void scc_mgr_set_dqs_en_delay_all_ranks(alt_u32 read_group,
+	alt_u32 delay);
+extern void scc_mgr_set_dqs_en_phase_all_ranks(alt_u32 read_group,
+	alt_u32 phase);
+extern void scc_mgr_set_dqdqs_output_phase_all_ranks(alt_u32 write_group,
+	alt_u32 phase);
+extern inline void scc_mgr_set_dm_out1_delay(alt_u32 write_group, alt_u32 dm,
+	alt_u32 delay);
+extern inline void scc_mgr_set_dm_out2_delay(alt_u32 write_group, alt_u32 dm,
+	alt_u32 delay);
+extern inline void scc_mgr_load_dm(alt_u32 dm);
+extern void scc_mgr_load_dqs_for_write_group(alt_u32 write_group);
+extern void rw_mgr_incr_vfifo_auto(alt_u32 grp);
+extern void rw_mgr_decr_vfifo_auto(alt_u32 grp);
 #if HPS_HW
 extern int sdram_calibration(void);
 #endif
