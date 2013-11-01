@@ -69,6 +69,8 @@ u32 spl_boot_device(void)
 	return BOOT_DEVICE_SPI;
 #elif (CONFIG_PRELOADER_BOOT_FROM_RAM == 1)
 	return BOOT_DEVICE_RAM;
+#elif (CONFIG_PRELOADER_BOOT_FROM_NAND == 1)
+	return BOOT_DEVICE_NAND;
 #else
 	return BOOT_DEVICE_MMC1;
 #endif

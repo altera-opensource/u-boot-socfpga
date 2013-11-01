@@ -44,5 +44,6 @@ void relocate_stack_to_sdram(void);
 #define BOOT_DEVICE_MMC1 3
 #define BOOT_DEVICE_MMC2 4
 #define BOOT_DEVICE_MMC2_2 5
+#define BOOT_DEVICE_NAND 6
 
 #endif

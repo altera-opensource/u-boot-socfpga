@@ -215,3 +215,74 @@ For AXI bridges (HPS2FPGA, LWHPS2FPGA, FPGA2HPS)
 
 * To understand the value required, please refer to address map info page at
 http://www.altera.com/literature/hb/cyclone-v/hps.html
+
+
+
+NAND support
+----------------------------------------
+In SoCFPGA, we are using Denali NAND controller from Cadence. This controller
+implemented HW ECC where it will auto calculate the ECC and append within the
+data during write. During read, it will auto correct when ECC error happen.
+If the error is un-correctable, it will issue interrupt to indicate to the host.
+
+Controller configuration and driver features
+1. Using Main + spare area for data storage
+2. Using 512 byte sectors protected with 8 bit ECC
+3. To ensure minimum data transfer latency, the driver is utilizing the DMA
+   to read and write to the NAND flash.
+4. Bad block management with bad block table located at end of flash
+
+Example layout for NAND flash
+For standard 2048 data + 128 spare page flash (default)
+a. 1st Preloader image - 0x0
+b. 2nd Preloader image - 0x20000
+c. 3rd Preloader image - 0x40000
+d. 4th Preloader image - 0x60000
+e. U-Boot environment - 0x80000
+f. DTB image - 0xA0000
+g. U-Boot image - 0xC0000
+h. Linux zImage - 0x120000
+.
+For standard 4096 data page flash
+a. 1st Preloader image - 0x0
+b. 2nd Preloader image - 0x40000
+c. 3rd Preloader image - 0x80000
+d. 4th Preloader image - 0xC0000
+e. U-Boot environment - 0x100000
+f. DTB image - 0x140000
+g. U-Boot image - 0x180000
+h. Linux zImage - 0x200000
+
+Preloader driver configuration
+For Preloader, its design to support multiple NAND device include
+non ONFI. With that, you would need to configure below macro according to
+the NAND flash used
+
+Location: board/altera/socfpga/build.h
+#define CONFIG_PRELOADER_BOOT_FROM_NAND		(1)
+#define CONFIG_PRELOADER_NAND_NEXT_BOOT_IMAGE	(0xC0000)
+
+Location: include/configs/socfpga_common.h
+#define CONFIG_SYS_NAND_PAGE_SIZE	2048
+#define CONFIG_SYS_NAND_OOBSIZE		64
+#define CONFIG_SYS_NAND_BLOCK_SIZE	(128 * 1024)
+/ number of pages per block /
+#define CONFIG_SYS_NAND_PAGE_COUNT	64
+
+U-Boot driver configuration
+For U-Boot, no configuration is required as it will pick the info through
+ONFI signature. While for non ONFI part, it should be based on existing table
+listed in NAND base driver. At same time, you would need to configure below
+macro according to the page size of NAND flash used
+
+Location: include/configs/socfpga_common.h
+"nandbootimageaddr=0x120000\0" \
+"nandfdtaddr=0xA0000\0" \
+...
+/ environment setting for NAND /
+#ifdef CONFIG_ENV_IS_IN_NAND
+#define CONFIG_ENV_OFFSET (0x00080000) <---
+#endif
+...
+#define CONFIG_NAND_DENALI
+

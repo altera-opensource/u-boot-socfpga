@@ -100,7 +100,7 @@
 /* Room required on the stack for the environment data */
 #define CONFIG_ENV_SIZE			4096
 /* Size of DRAM reserved for malloc() use */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 192 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 256 * 1024)
 
 /*
  * Stack setup
@@ -194,6 +194,10 @@
 	"qspifdtaddr=0x50000\0" \
 	"qspiroot=/dev/mtdblock1\0" \
 	"qspirootfstype=jffs2\0" \
+	"nandbootimageaddr=0x120000\0" \
+	"nandfdtaddr=0xA0000\0" \
+	"nandroot=/dev/mtdblock1\0" \
+	"nandrootfstype=jffs2\0" \
 	"ramboot=setenv bootargs " CONFIG_BOOTARGS ";" \
 		"bootz ${loadaddr} - ${fdtaddr}\0" \
 	"mmcload=mmc rescan;" \
@@ -209,6 +213,11 @@
 		"sf read ${fdtaddr} ${qspifdtaddr} ${fdtimagesize};\0" \
 	"qspiboot=setenv bootargs " CONFIG_BOOTARGS \
 		" root=${qspiroot} rw rootfstype=${qspirootfstype};"\
+		"bootz ${loadaddr} - ${fdtaddr}\0" \
+	"nandload=nand read ${loadaddr} ${nandbootimageaddr} ${bootimagesize};"\
+		"nand read ${fdtaddr} ${nandfdtaddr} ${fdtimagesize}\0" \
+	"nandboot=setenv bootargs " CONFIG_BOOTARGS \
+		" root=${nandroot} rw rootfstype=${nandrootfstype};"\
 		"bootz ${loadaddr} - ${fdtaddr}\0" \
 	"fpga=0\0" \
 	"fpgadata=0x2000000\0" \
@@ -238,6 +247,9 @@
 #if (CONFIG_PRELOADER_BOOT_FROM_SDMMC == 1)
 /* Store envirnoment in MMC card */
 #define CONFIG_ENV_IS_IN_MMC
+#elif (CONFIG_PRELOADER_BOOT_FROM_NAND == 1)
+/* Store envirnoment in NAND flash */
+#define CONFIG_ENV_IS_IN_NAND
 #else
 /* Store envirnoment in SPI flash */
 #define CONFIG_ENV_IS_IN_SPI_FLASH
@@ -257,6 +269,11 @@
 #ifdef CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV		0	/* device 0 */
 #define CONFIG_ENV_OFFSET		512	/* just after the MBR */
+#endif
+
+/* environment setting for NAND */
+#ifdef CONFIG_ENV_IS_IN_NAND
+#define CONFIG_ENV_OFFSET		(0x00080000)
 #endif
 
 /*
@@ -484,6 +501,22 @@
 #define CONFIG_CQSPI_DECODER		(0)
 #endif	/* CONFIG_CADENCE_QSPI */
 
+/* NAND */
+#undef CONFIG_NAND_DENALI
+#ifdef CONFIG_NAND_DENALI
+#define CONFIG_CMD_NAND
+#define CONFIG_SYS_MAX_NAND_DEVICE	1
+#define CONFIG_SYS_NAND_USE_FLASH_BBT
+#define CONFIG_SYS_NAND_REGS_BASE	SOCFPGA_NAND_REGS_ADDRESS
+#define CONFIG_SYS_NAND_DATA_BASE	SOCFPGA_NAND_DATA_ADDRESS
+#define CONFIG_SYS_NAND_BASE		CONFIG_SYS_NAND_REGS_BASE
+#define CONFIG_SYS_NAND_ONFI_DETECTION
+/* How many bytes need to be skipped at the start of spare area */
+#define CONFIG_NAND_DENALI_SPARE_AREA_SKIP_BYTES	(2)
+/* The ECC size which either 512 or 1024 */
+#define CONFIG_NAND_DENALI_ECC_SIZE			(512)
+#endif /* CONFIG_NAND_DENALI */
+
 /*
  * FPGA support
  */
@@ -625,6 +658,34 @@
 #endif
 #if (CONFIG_PRELOADER_BOOT_FROM_RAM == 1)
 #define CONFIG_SPL_RAM_DEVICE
+#endif
+
+/*
+ * Boot from NAND
+ */
+#ifndef CONFIG_PRELOADER_BOOT_FROM_NAND
+#error "CONFIG_PRELOADER_BOOT_FROM_NAND must be defined"
+#endif
+#if (CONFIG_PRELOADER_BOOT_FROM_NAND == 1)
+/* Support for drivers/mmc/libmmc.o in SPL binary */
+#define CONFIG_SPL_NAND_SUPPORT
+#define CONFIG_SPL_NAND_SIMPLE
+#define CONFIG_SPL_NAND_DRIVERS
+#define CONFIG_SYS_NAND_U_BOOT_OFFS	CONFIG_PRELOADER_NAND_NEXT_BOOT_IMAGE
+#define CONFIG_SYS_NAND_PAGE_SIZE	2048
+#define CONFIG_SYS_NAND_OOBSIZE		64
+#define CONFIG_SYS_NAND_BLOCK_SIZE	(128 * 1024)
+/* number of pages per block */
+#define CONFIG_SYS_NAND_PAGE_COUNT	64
+/* location of bad block marker within OOB */
+#define CONFIG_SYS_NAND_BAD_BLOCK_POS	0
+/* to use the ecc.read_page and ecc.read_page_raw */
+#define CONFIG_SPL_USE_ECC_READ
+/* To allocate buffer size for Denali driver. Cannot use standard as its
+ * too large which bloated Preloader a lot
+ */
+#define NAND_MAX_OOBSIZE	CONFIG_SYS_NAND_OOBSIZE
+#define NAND_MAX_PAGESIZE	CONFIG_SYS_NAND_PAGE_SIZE
 #endif
 
 /*
