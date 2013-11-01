@@ -137,10 +137,10 @@ defined(CONFIG_SPL_SERIAL_SUPPORT)
 int svc(unsigned operation, void *value)
 {
 	int temp;
-	asm volatile("push {lr}");
-	asm volatile("svc 0x123456");
-	asm volatile("mov %0, r0" : "=r" (temp) : : "cc");
-	asm volatile("pop {lr}");
+	asm volatile ("mov r0, %1; mov r1, %2; svc 0x123456; mov %0, r0"
+		: "=r" (temp)
+		: "r" (operation), "r" (value)
+		: "r0", "r1", "r2", "r3", "ip", "lr", "memory", "cc");
 	return temp;
 }
 
