@@ -46,7 +46,8 @@ static int onfi_timing_mode = NAND_DEFAULT_TIMINGS;
 			INTR_STATUS__RST_COMP | \
 			INTR_STATUS__ERASE_COMP | \
 			INTR_STATUS__ECC_UNCOR_ERR | \
-			INTR_STATUS__INT_ACT)
+			INTR_STATUS__INT_ACT | \
+			INTR_STATUS__LOCKED_BLK)
 
 /* indicates whether or not the internal value for the flash bank is
  * valid or not */
@@ -64,6 +65,10 @@ static int onfi_timing_mode = NAND_DEFAULT_TIMINGS;
 #define MAIN_ACCESS		0x42
 #define MAIN_SPARE_ACCESS	0x43
 
+#define DENALI_UNLOCK_START	0x10
+#define DENALI_UNLOCK_END	0x11
+#define DENALI_LOCK		0x21
+#define DENALI_LOCK_TIGHT	0x31
 #define DENALI_BUFFER_LOAD	0x60
 #define DENALI_BUFFER_WRITE	0x62
 
@@ -773,6 +778,11 @@ static void write_page(struct mtd_info *mtd, struct nand_chip *chip,
 		debug("DMA timeout for denali write_page\n");
 		denali.status = NAND_STATUS_FAIL;
 	}
+
+	if (irq_status & INTR_STATUS__LOCKED_BLK) {
+		debug("Failed as write to locked block\n");
+		denali.status = NAND_STATUS_FAIL;
+	}
 }
 
 /* NAND core entry points */
@@ -958,8 +968,11 @@ static void denali_erase(struct mtd_info *mtd, int page)
 	irq_status = wait_for_irq(INTR_STATUS__ERASE_COMP |
 		INTR_STATUS__ERASE_FAIL);
 
-	denali.status = (irq_status & INTR_STATUS__ERASE_FAIL) ?
-				NAND_STATUS_FAIL : PASS;
+	if (irq_status & INTR_STATUS__ERASE_FAIL ||
+		irq_status & INTR_STATUS__LOCKED_BLK)
+		denali.status = NAND_STATUS_FAIL;
+	else
+		denali.status = PASS;
 }
 
 static void denali_cmdfunc(struct mtd_info *mtd, unsigned int cmd, int col,
@@ -1006,6 +1019,22 @@ static void denali_cmdfunc(struct mtd_info *mtd, unsigned int cmd, int col,
 		break;
 	case NAND_CMD_ERASE2:
 		/* nothing to do here as it was done during NAND_CMD_ERASE1 */
+		break;
+	case NAND_CMD_UNLOCK1:
+		addr = (uint32_t)MODE_10 | BANK(denali.flash_bank) | page;
+		index_addr((uint32_t)addr | 0, DENALI_UNLOCK_START);
+		break;
+	case NAND_CMD_UNLOCK2:
+		addr = (uint32_t)MODE_10 | BANK(denali.flash_bank) | page;
+		index_addr((uint32_t)addr | 0, DENALI_UNLOCK_END);
+		break;
+	case NAND_CMD_LOCK:
+		addr = (uint32_t)MODE_10 | BANK(denali.flash_bank);
+		index_addr((uint32_t)addr | 0, DENALI_LOCK);
+		break;
+	case NAND_CMD_LOCK_TIGHT:
+		addr = (uint32_t)MODE_10 | BANK(denali.flash_bank);
+		index_addr((uint32_t)addr | 0, DENALI_LOCK_TIGHT);
 		break;
 	default:
 		printf(": unsupported command received 0x%x\n", cmd);
