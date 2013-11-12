@@ -102,7 +102,7 @@ void spl_program_fpga_qspi(void)
 {
 	struct spi_flash *flash;
 	struct image_header header;
-	u32 flash_addr, status;
+	u32 flash_addr, status, transfer_size;
 	u32 temp[64];
 
 	/* initialize the Quad SPI controller */
@@ -137,21 +137,19 @@ void spl_program_fpga_qspi(void)
 		 * Read the data by small chunk by chunk. At this stage,
 		 * use the temp as temporary buffer.
 		 */
-		 if (spl_image.size > sizeof(temp)) {
-			spi_flash_read(flash, flash_addr,
-				sizeof(temp), temp);
-			/* update the counter */
-			spl_image.size -= sizeof(temp);
-			flash_addr += sizeof(temp);
-		 }  else {
-			spi_flash_read(flash, flash_addr,
-				spl_image.size, temp);
-			spl_image.size = 0;
-		}
+		if (spl_image.size > sizeof(temp))
+			transfer_size = sizeof(temp);
+		else
+			transfer_size = spl_image.size;
+
+		spi_flash_read(flash, flash_addr, transfer_size, temp);
+		/* update the counter */
+		spl_image.size -= transfer_size;
+		flash_addr += transfer_size;
 
 		/* transfer data to FPGA Manager */
 		fpgamgr_program_write((const long unsigned int *)temp,
-			sizeof(temp));
+			transfer_size);
 #ifdef CONFIG_HW_WATCHDOG
 		WATCHDOG_RESET();
 #endif
@@ -594,6 +592,8 @@ stored within SDMMC card. Please use Quad SPI boot option for this moment.
 	/* enable signals from fpga to hps sdram (based on handoff) */
 	writel(readl(ISWGRP_HANDOFF_FPGA2SDR),
 		(SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_FPGAPORTRST_ADDRESS));
+	setbits_le32((SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_STATICCFG_ADDRESS),
+		SDR_CTRLGRP_STATICCFG_APPLYCFG_MASK);
 
 	/* enable the axi bridges if FPGA programmed */
 	writel(readl(ISWGRP_HANDOFF_AXIBRIDGE),

@@ -185,8 +185,11 @@ write_word_cont:
 	b	write_word
 
 write_byte:
+	cmp	r2,#0
+	beq	write_end
 	ldr	r3, [r0]
 	str	r3, [r1]
+write_end:
 	POP	{r4-r11, pc}
 ENDPROC(fpgamgr_axi_write)
 
