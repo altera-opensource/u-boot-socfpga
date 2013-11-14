@@ -341,20 +341,23 @@ void cadence_qspi_apb_controller_disable(void *reg_base)
 /* Return 1 if idle, otherwise return 0 (busy). */
 static unsigned int cadence_qspi_wait_idle(void *reg_base)
 {
-	unsigned int i = 0;
-	unsigned int count = 0;
+	unsigned int start, count;
+	/* timeout in unit of ms */
+	unsigned int timeout = 5000;
 
-	for (i = 0; i < CQSPI_REG_RETRY; i++) {
-		if (CQSPI_REG_IS_IDLE(reg_base)) {
-			/* Read few times in succession to ensure it does
-			not transition low again */
+	reset_timer();
+	start = get_timer(0);
+	for ( ; get_timer(start) < timeout ; ) {
+		if (CQSPI_REG_IS_IDLE(reg_base))
 			count++;
-			mdelay(1);
-			if (count >= CQSPI_POLL_IDLE_RETRY)
-				return 1;
-		} else {
+		else
 			count = 0;
-		}
+		/*
+		 * Ensure the QSPI controller is in true idle state after
+		 * reading back the same idle status consecutively
+		 */
+		if (count >= CQSPI_POLL_IDLE_RETRY)
+			return 1;
 	}
 
 	/* Timeout, still in busy mode. */
