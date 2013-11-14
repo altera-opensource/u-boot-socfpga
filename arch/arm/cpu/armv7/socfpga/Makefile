@@ -30,7 +30,7 @@ LIB	=  $(obj)lib$(SOC).o
 
 SOBJS	:= lowlevel_init.o misc.o
 COBJS-y	:= s_init.o timer.o reset_manager.o sdram.o
-COBJS-y	+= fpga_manager.o gic.o interrupts.o
+COBJS-y	+= fpga_manager.o gic.o interrupts.o sdram_test.o
 COBJS-$(CONFIG_SPL_BUILD) += spl.o clock_manager.o freeze_controller.o
 COBJS-$(CONFIG_SPL_BUILD) += ecc_ram.o nic301.o scan_manager.o
 COBJS-$(CONFIG_SPL_BUILD) += system_manager.o debug_memory.o

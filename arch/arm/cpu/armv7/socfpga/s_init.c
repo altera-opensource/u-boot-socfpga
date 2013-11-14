@@ -44,29 +44,14 @@ void s_init(void)
 	if (reg & SYSMGR_ECC_OCRAM_DERR)
 		writel(SYSMGR_ECC_OCRAM_DERR  | SYSMGR_ECC_OCRAM_EN,
 			CONFIG_SYSMGR_ECC_OCRAM);
-	/*
-	 * SPL : configure the remap (L3 NIC-301 GPV) so the on-chip RAM at
-	 * lower memory instead ROM.
-	 */
-#if (CONFIG_PRELOADER_EXE_ON_FPGA == 1)
-	/* if we run from FPGA, ensure we don't shutdown the bridge */
-	writel(0x9, SOCFPGA_L3REGS_ADDRESS);
-#else
-	writel(0x1, SOCFPGA_L3REGS_ADDRESS);
-#endif /* CONFIG_PRELOADER_EXE_ON_FPGA */
-#else
-	/*
-	 * U-Boot : configure the remap (L3 NIC-301 GPV)
-	 * so the SDRAM at lower memory instead on-chip RAM.
-	 */
+
+	/* Configure the L2 controller to nake SDRAM start at 0	*/
 #ifdef CONFIG_SOCFPGA_VIRTUAL_TARGET
 	writel(0x2, SOCFPGA_L3REGS_ADDRESS);
 #else
 	writel(0x1, (SOCFPGA_MPUL2_ADDRESS + SOCFPGA_MPUL2_ADRFLTR_START));
 #endif
-#endif /* CONFIG_SPL_BUILD */
 
-#ifdef CONFIG_SPL_BUILD
 	/* re-setup watchdog */
 	DEBUG_MEMORY
 	if (!(is_wdt_in_reset())) {

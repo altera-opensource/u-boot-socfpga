@@ -477,15 +477,23 @@ void spl_board_init(void)
 	if (sdram_calibration_full() == 0)
 		hang();
 #if (CONFIG_PRELOADER_HARDWARE_DIAGNOSTIC == 1)
-	/* a simple sdram memory test */
-	puts("SDRAM : Running simple memory test...");
+	/* Sanity check ensure correct SDRAM size specified */
+	puts("SDRAM: Ensuring specified SDRAM size is correct ...");
 	/* start with 1MB region as lowest 1MB is OCRAM */
-	if (get_ram_size((long *)0x100000, PHYS_SDRAM_1_SIZE) !=
-		PHYS_SDRAM_1_SIZE) {
+	if (get_ram_size(0, PHYS_SDRAM_1_SIZE) != PHYS_SDRAM_1_SIZE) {
 		puts("failed\n");
 		hang();
 	}
 	puts("passed\n");
+	/*
+	 * A simple sdram memory test
+	 * If you want more coverage, change the argument as below
+	 * SDRAM_TEST_FAST -> quick test which run around 5s
+	 * SDRAM_TEST_NORMAL -> normal test which run around 30s
+	 * SDRAM_TEST_LONG -> long test which run in minutes
+	 */
+	if (hps_emif_diag_test(SDRAM_TEST_FAST) == 0)
+		hang();
 #endif /* CONFIG_PRELOADER_HARDWARE_DIAGNOSTIC */
 #endif	/* CONFIG_PRELOADER_SKIP_SDRAM */
 
