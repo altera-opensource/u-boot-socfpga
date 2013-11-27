@@ -106,13 +106,7 @@ int misc_init_r(void)
 		"mw $fpga2sdram ${fpga2sdram_handoff}; "
 		"go $fpga2sdram_apply; "
 		"mw $axibridge ${axibridge_handoff}; "
-		"mw $l3remap ${l3remap_handoff}; "
-		"echo fpgaintf; "
-		"md $fpgaintf 1; "
-		"echo fpga2sdram; "
-		"md $fpga2sdram 1; "
-		"echo axibridge; "
-		"md $axibridge 1");
+		"mw $l3remap ${l3remap_handoff} ");
 
 	/* add signle command to disable all bridges */
 	setenv("bridge_disable",
@@ -120,13 +114,7 @@ int misc_init_r(void)
 		"mw $fpga2sdram 0; "
 		"go $fpga2sdram_apply; "
 		"mw $axibridge 0; "
-		"mw $l3remap 0x1; "
-		"echo fpgaintf; "
-		"md $fpgaintf 1; "
-		"echo fpga2sdram; "
-		"md $fpga2sdram 1; "
-		"echo axibridge; "
-		"md $axibridge 1");
+		"mw $l3remap 0x1 ");
 
 	return 0;
 }
