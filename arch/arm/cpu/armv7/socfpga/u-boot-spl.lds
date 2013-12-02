@@ -47,10 +47,14 @@ SECTIONS
 
 #ifdef CONFIG_SPL_FAT_SUPPORT
 	.bss_fat : {
+#if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN == 1)
 		. = ALIGN(CONFIG_SPL_SDRAM_ECC_PADDING);
+#endif
 		__bss_fat_start = .;
 		fs/fat/libfat.o (.bss*)
+#if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN == 1)
 		. = ALIGN(CONFIG_SPL_SDRAM_ECC_PADDING);
+#endif
 		__bss_fat_end = .;
 	} >.sdram
 #endif
@@ -68,10 +72,14 @@ SECTIONS
 	__malloc_end = .;
 	.malloc :
 	{
+#if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN == 1)
 		. = ALIGN(CONFIG_SPL_SDRAM_ECC_PADDING);
+#endif
 		__malloc_fat_start = .;
 		. = . + CONFIG_SPL_MALLOC_SIZE;
+#if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN == 1)
 		. = ALIGN(CONFIG_SPL_SDRAM_ECC_PADDING);
+#endif
 		__malloc_fat_end = .;
 	} >.sdram
 #else
@@ -109,10 +117,14 @@ SECTIONS
 #ifdef CONFIG_SPL_FAT_SUPPORT
 	.sdram_stack :
 	{
+#if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN == 1)
 		. = ALIGN(CONFIG_SPL_SDRAM_ECC_PADDING);
+#endif
 		__sdram_stack_end = .;
 		. = . + CONFIG_SPL_SDRAM_STACK_SIZE;
+#if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN == 1)
 		. = ALIGN(CONFIG_SPL_SDRAM_ECC_PADDING);
+#endif
 		__sdram_stack_start = .;
 	} >.sdram
 #endif
