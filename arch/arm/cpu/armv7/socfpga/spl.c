@@ -453,6 +453,9 @@ void spl_board_init(void)
 	checkboard();
 #endif
 
+#ifdef CONFIG_HW_WATCHDOG
+	puts("INFO : Watchdog enabled\n");
+#endif
 
 #ifndef CONFIG_SOCFPGA_VIRTUAL_TARGET
 #ifndef CONFIG_PRELOADER_SKIP_SDRAM
