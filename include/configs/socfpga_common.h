@@ -479,6 +479,7 @@
 #ifdef CONFIG_CADENCE_QSPI
 #define CONFIG_SPI_FLASH		/* SPI flash subsystem */
 #define CONFIG_SPI_FLASH_STMICRO	/* Micron/Numonyx flash */
+#define CONFIG_SPI_FLASH_SPANSION	/* Spansion flash */
 #define CONFIG_CMD_SF			/* Serial flash commands */
 /* Flash device info */
 #define CONFIG_SF_DEFAULT_SPEED		(50000000)
