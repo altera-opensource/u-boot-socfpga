@@ -35,7 +35,9 @@ extern unsigned long irq_cnt_ecc_sdram;
 void irq_handler_ecc_sdram(void *arg);
 void sdram_enable_interrupt(unsigned enable);
 void sdram_applycfg_uboot(void);
-int hps_emif_diag_test(int complexity);
+int hps_emif_diag_test(int complexity, unsigned int addr_bgn,
+	unsigned int addr_end);
+unsigned long sdram_calculate_size(void);
 #ifdef CONFIG_SPL_BUILD
 unsigned sdram_mmr_init_full(void);
 unsigned sdram_calibration_full(void);
@@ -424,5 +426,9 @@ SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_2_THRESHOLDRSTCYCLES_79_64_MASK \
 #define SDRAM_TEST_NORMAL	1
 /* long test which run in minutes */
 #define SDRAM_TEST_LONG		2
+
+/* SDRAM width macro for configuration with ECC */
+#define SDRAM_WIDTH_32BIT_WITH_ECC	40
+#define SDRAM_WIDTH_16BIT_WITH_ECC	24
 
 #endif /* _SDRAM_H_ */

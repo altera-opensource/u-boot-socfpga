@@ -79,10 +79,9 @@ int test_rand_address(int loop_cnt, unsigned int addr_bgn,
  * SDRAM_TEST_NORMAL -> normal test which run around 30s
  * SDRAM_TEST_LONG -> long test which run in minutes
  */
-int hps_emif_diag_test(int coverage)
+int hps_emif_diag_test(int coverage, unsigned int addr_bgn,
+	unsigned int addr_end)
 {
-	unsigned int addr_bgn = CONFIG_SYS_MEMTEST_START;
-	unsigned int addr_end = CONFIG_SYS_MEMTEST_END;
 	int cnt_max = 1000000, status;
 	unsigned int seed = 0xdeadbeef;
 

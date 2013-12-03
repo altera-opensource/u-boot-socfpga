@@ -40,7 +40,14 @@ unsigned long irq_cnt_ecc_sdram;
 /* Initialise the DRAM by telling the DRAM Size */
 int dram_init(void)
 {
-	gd->ram_size = get_ram_size((long *)PHYS_SDRAM_1, PHYS_SDRAM_1_SIZE);
+	unsigned long sdram_size;
+
+#ifdef CONFIG_SDRAM_CALCULATE_SIZE
+	sdram_size = sdram_calculate_size();
+#else
+	sdram_size = PHYS_SDRAM_1_SIZE;
+#endif
+	gd->ram_size = get_ram_size(0, sdram_size);
 	return 0;
 }
 
@@ -1020,3 +1027,35 @@ unsigned sdram_calibration_full(void)
 
 #endif	/* CONFIG_SPL_BUILD */
 
+/* To calculate SDRAM device size based on SDRAM controller parameters
+ * Size is specified in bytes
+ */
+unsigned long sdram_calculate_size(void)
+{
+	unsigned long temp;
+	unsigned long row, bank, col, cs, width;
+
+	temp = readl(SOCFPGA_SDR_ADDRESS +
+		SDR_CTRLGRP_DRAMADDRW_ADDRESS);
+	col = (temp & SDR_CTRLGRP_DRAMADDRW_COLBITS_MASK) >>
+		SDR_CTRLGRP_DRAMADDRW_COLBITS_LSB;
+	row = (temp & SDR_CTRLGRP_DRAMADDRW_ROWBITS_MASK) >>
+		SDR_CTRLGRP_DRAMADDRW_ROWBITS_LSB;
+	bank = (temp & SDR_CTRLGRP_DRAMADDRW_BANKBITS_MASK) >>
+		SDR_CTRLGRP_DRAMADDRW_BANKBITS_LSB;
+	cs = (temp & SDR_CTRLGRP_DRAMADDRW_CSBITS_MASK) >>
+		SDR_CTRLGRP_DRAMADDRW_CSBITS_LSB;
+
+	width = readl(SOCFPGA_SDR_ADDRESS +
+		SDR_CTRLGRP_DRAMIFWIDTH_ADDRESS);
+	/* ECC would not be calculated as its not addressible */
+	if (width == SDRAM_WIDTH_32BIT_WITH_ECC)
+		width = 32;
+	if (width == SDRAM_WIDTH_16BIT_WITH_ECC)
+		width = 16;
+
+	/* calculate the SDRAM size base on this info */
+	temp = 1 << (row + bank + col);
+	temp = temp * cs * (width  / 8);
+	return temp;
+}

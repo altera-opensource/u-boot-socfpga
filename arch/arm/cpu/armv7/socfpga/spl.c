@@ -194,6 +194,10 @@ void spl_program_fpga_qspi(void)
  */
 void spl_board_init(void)
 {
+#if (CONFIG_PRELOADER_SKIP_SDRAM == 0)
+	unsigned long sdram_size;
+#endif
+
 #ifndef CONFIG_SOCFPGA_VIRTUAL_TARGET
 	cm_config_t cm_default_cfg = {
 		/* main group */
@@ -479,11 +483,19 @@ void spl_board_init(void)
 	/* SDRAM calibration */
 	if (sdram_calibration_full() == 0)
 		hang();
+
+	/* detect the SDRAM size */
+#ifdef CONFIG_SDRAM_CALCULATE_SIZE
+	sdram_size = sdram_calculate_size();
+#else
+	sdram_size = PHYS_SDRAM_1_SIZE;
+#endif
+	printf("SDRAM: %ld MiB\n", (sdram_size >> 20));
+
 #if (CONFIG_PRELOADER_HARDWARE_DIAGNOSTIC == 1)
 	/* Sanity check ensure correct SDRAM size specified */
 	puts("SDRAM: Ensuring specified SDRAM size is correct ...");
-	/* start with 1MB region as lowest 1MB is OCRAM */
-	if (get_ram_size(0, PHYS_SDRAM_1_SIZE) != PHYS_SDRAM_1_SIZE) {
+	if (get_ram_size(0, sdram_size) != sdram_size) {
 		puts("failed\n");
 		hang();
 	}
@@ -495,7 +507,7 @@ void spl_board_init(void)
 	 * SDRAM_TEST_NORMAL -> normal test which run around 30s
 	 * SDRAM_TEST_LONG -> long test which run in minutes
 	 */
-	if (hps_emif_diag_test(SDRAM_TEST_FAST) == 0)
+	if (hps_emif_diag_test(SDRAM_TEST_FAST, 0, sdram_size) == 0)
 		hang();
 #endif /* CONFIG_PRELOADER_HARDWARE_DIAGNOSTIC */
 #endif	/* CONFIG_PRELOADER_SKIP_SDRAM */

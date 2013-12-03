@@ -302,17 +302,29 @@
 /* SDRAM Bank #1 */
 #define CONFIG_SYS_SDRAM_BASE		0x00000000
 /* SDRAM memory size */
+/*
+ * Enable auto calculation of sdram size. Code will ignore PHYS_SDRAM_1_SIZE
+ * Auto calculation can be disabled for use case where user want to
+ * utilize portion of SDRAM only (PHYS_SDRAM_1_SIZE will be used then)
+ */
+#define CONFIG_SDRAM_CALCULATE_SIZE
+/*
+ * Remain PHYS_SDRAM_1_SIZE as its still used by U-Boot memory test (mtest)
+ * when user didn't specify mtest end address in console
+ */
 #ifdef CONFIG_SOCFPGA_VIRTUAL_TARGET
 #define PHYS_SDRAM_1_SIZE		0x80000000
 #else
-#define PHYS_SDRAM_1_SIZE		0x40000000
+/* Put to 32MB as the smallest SDRAM size to prevent mtest from failing */
+#define PHYS_SDRAM_1_SIZE		0x02000000
 #endif
 /* SDRAM Bank #1 base address */
 #define PHYS_SDRAM_1			CONFIG_SYS_SDRAM_BASE
-/* memtest setup */
+/* U-Boot memtest setup */
 /* Begin and end addresses of the area used by the simple memory test.c */
 #define CONFIG_SYS_MEMTEST_START	0x00000000
 #define CONFIG_SYS_MEMTEST_END		PHYS_SDRAM_1_SIZE
+
 
 /*
  * L2 PL-310
