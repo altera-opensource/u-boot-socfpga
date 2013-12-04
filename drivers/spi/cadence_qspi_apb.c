@@ -341,7 +341,7 @@ void cadence_qspi_apb_controller_disable(void *reg_base)
 /* Return 1 if idle, otherwise return 0 (busy). */
 static unsigned int cadence_qspi_wait_idle(void *reg_base)
 {
-	unsigned int start, count;
+	unsigned int start, count = 0;
 	/* timeout in unit of ms */
 	unsigned int timeout = 5000;
 
