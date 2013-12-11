@@ -21,6 +21,7 @@
 #include <linux/linkage.h>
 #include <asm/arch/sdram.h>
 #include <asm/system.h>
+#include <asm-offsets.h>
 
 #define PRELOADER_DEBUG_MEMMORY_MAGIC		0x444d
 #define PRELOADER_DEBUG_MEMMORY_VERSION		0x1
@@ -64,6 +65,19 @@ relocate_loop:
 	cmp	r1, r2			/* until target end addreee [r2] */
 	blo	relocate_loop
 #endif	/* CONFIG_PRELOADER_EXE_ON_FPGA */
+
+	/*
+	 *Initialize the early stack point on OCRAM. This is to avoid OCRAM
+	 * false double bit error as OCRAM always ready in 64 bit manner
+	 */
+	ldr	r1, =(CONFIG_SYS_INIT_SP_ADDR)	/* start of temporary SP */
+	sub	r0, r1, #GD_SIZE	/* start of mem init */
+	mov	r2, #0x00000000		/* prepare zero to mem init */
+clrsp:	cmp	r0, r1			/* while not at end of BSS */
+	strlo	r2, [r0]		/* clear 32-bit BSS word */
+	addlo	r0, r0, #4		/* move to next */
+	blo	clrsp
+
 #endif	/* CONFIG_SPL_BUILD */
 	bx	lr
 
