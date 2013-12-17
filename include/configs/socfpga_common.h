@@ -72,6 +72,8 @@
 /* Enable board late init for ECC setup if IRQ enabled */
 #define CONFIG_BOARD_LATE_INIT
 #endif
+/* Enable THUMB2 mode to reduce software size which yield better boot time */
+#define CONFIG_SYS_THUMB_BUILD
 
 /*
  * Display CPU and Board Info
