@@ -613,10 +613,10 @@ stored within SDMMC card. Please use Quad SPI boot option for this moment.
 	writel(readl(ISWGRP_HANDOFF_FPGAINTF), SYSMGR_FPGAINTF_MODULE);
 
 	/* enable signals from fpga to hps sdram (based on handoff) */
-	writel(readl(ISWGRP_HANDOFF_FPGA2SDR),
-		(SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_FPGAPORTRST_ADDRESS));
 	setbits_le32((SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_STATICCFG_ADDRESS),
 		SDR_CTRLGRP_STATICCFG_APPLYCFG_MASK);
+	writel(readl(ISWGRP_HANDOFF_FPGA2SDR),
+		(SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_FPGAPORTRST_ADDRESS));
 
 	/* enable the axi bridges if FPGA programmed */
 	writel(readl(ISWGRP_HANDOFF_AXIBRIDGE),

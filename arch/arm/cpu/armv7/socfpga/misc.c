@@ -103,8 +103,8 @@ int misc_init_r(void)
 	/* add signle command to enable all bridges based on handoff */
 	setenv("bridge_enable_handoff",
 		"mw $fpgaintf ${fpgaintf_handoff}; "
-		"mw $fpga2sdram ${fpga2sdram_handoff}; "
 		"go $fpga2sdram_apply; "
+		"mw $fpga2sdram ${fpga2sdram_handoff}; "
 		"mw $axibridge ${axibridge_handoff}; "
 		"mw $l3remap ${l3remap_handoff} ");
 

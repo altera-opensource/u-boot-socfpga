@@ -182,8 +182,8 @@ that used to generate Preloader handoff.
 
 where bridge_enable_handoff will execute below steps
 > mw $fpgaintf $fpgaintf_handoff
-> mw $fpga2sdram $fpga2sdram_handoff
 > go $fpga2sdram_apply
+> mw $fpga2sdram $fpga2sdram_handoff
 > mw $axibridge $axibridge_handoff
 > mw $l3remap $l3remap_handoff
 > md $fpgaintf
@@ -208,8 +208,8 @@ For HPS peripheral controller to FPGA interface
 > mw $fpgaintf <my_fpgaintf_new_value>
 
 For FPGA to SDRAM bridge
-> mw $fpga2sdram <my_fpga2sdram_new_value>
 > go $fpga2sdram_apply
+> mw $fpga2sdram <my_fpga2sdram_new_value>
 
 For AXI bridges (HPS2FPGA, LWHPS2FPGA, FPGA2HPS)
 > mw $axibridge <my_axibridge_new_value>
