@@ -42,6 +42,9 @@ unsigned long sdram_calculate_size(void);
 unsigned sdram_mmr_init_full(void);
 unsigned sdram_calibration_full(void);
 #endif /* CONFIG_SPL_BUILD */
+void sdram_scrub_boot_region(void);
+void sdram_scrub_remain_region_trigger(void);
+void sdram_scrub_remain_region_finish(void);
 
 #endif /* __ASSEMBLY__ */
 

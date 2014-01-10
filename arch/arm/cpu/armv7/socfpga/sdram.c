@@ -21,6 +21,8 @@
 #include <asm/arch/debug_memory.h>
 #include <asm/arch/fpga_manager.h>
 #include <asm/arch/system_manager.h>
+#include <pl330.h>
+#include <watchdog.h>
 
 /*
  * SDRAM MMR init skip read back/verify steps
@@ -36,6 +38,13 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 unsigned long irq_cnt_ecc_sdram;
+
+#if (CONFIG_PRELOADER_SDRAM_SCRUB_REMAIN_REGION == 1)
+struct pl330_transfer_struct pl330_0;
+struct pl330_transfer_struct pl330_1;
+u8 pl330_buf0[100];
+u8 pl330_buf1[1500];
+#endif
 
 /* Initialise the DRAM by telling the DRAM Size */
 int dram_init(void)
@@ -1059,3 +1068,171 @@ unsigned long sdram_calculate_size(void)
 	temp = temp * cs * (width  / 8);
 	return temp;
 }
+
+#if (CONFIG_PRELOADER_SDRAM_SCRUBBING == 1)
+
+/* Scrubbing the memory region used for boot image storing */
+void sdram_scrub_boot_region(void)
+{
+	struct pl330_transfer_struct pl330;
+	u8 buf[100];
+	unsigned int start;
+
+	pl330.dst_addr = CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_START;
+	pl330.size_byte = CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_END -
+		CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_START;
+	pl330.channel_num = 0;
+	pl330.buf_size = sizeof(buf);
+	pl330.buf = buf;
+
+	printf("SDRAM: Scrubbing 0x%08x - 0x%08x\n",
+		CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_START,
+		CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_END);
+	reset_timer();
+	start = get_timer(0);
+
+	if (pl330_transfer_zeroes(&pl330)) {
+		puts("ERROR - DMA setup failed\n");
+		hang();
+	}
+
+	if (pl330_transfer_start(&pl330)) {
+		puts("ERROR - DMA start failed\n");
+		hang();
+	}
+
+	if (pl330_transfer_finish(&pl330)) {
+		puts("ERROR - DMA finish failed\n");
+		hang();
+	}
+
+	printf("SDRAM: Scrubbing success with %d ms\n",
+		(unsigned)get_timer(start));
+}
+
+#if (CONFIG_PRELOADER_SDRAM_SCRUB_REMAIN_REGION == 1)
+
+/* Scrubbing the remaining memory region */
+void sdram_scrub_remain_region_trigger(void)
+{
+	unsigned int sdram_size;
+
+	pl330_0.size_byte = 0;
+	pl330_1.size_byte = 0;
+
+
+	/* check whether we need to scrub the memory before the boot region */
+	if (CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_START !=
+		CONFIG_SYS_SDRAM_BASE) {
+		/* we need scrub it */
+		pl330_0.dst_addr = CONFIG_SYS_SDRAM_BASE;
+		pl330_0.size_byte =
+			CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_START -
+			CONFIG_SYS_SDRAM_BASE;
+		pl330_0.channel_num = 0;
+		pl330_0.buf_size = sizeof(pl330_buf0);
+		pl330_0.buf = pl330_buf0;
+
+		printf("SDRAM: Scrubbing 0x%08x - 0x%08x\n",
+			CONFIG_SYS_SDRAM_BASE,
+			CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_START);
+
+		if (pl330_transfer_zeroes(&pl330_0)) {
+			puts("ERROR - DMA setup 0 failed\n");
+			hang();
+		}
+
+		if (pl330_transfer_start(&pl330_0)) {
+			puts("ERROR - DMA start 0 failed\n");
+			hang();
+		}
+	}
+
+#ifdef CONFIG_HW_WATCHDOG
+	WATCHDOG_RESET();
+#endif
+	/* check whether we need to scrub the memory after the boot region */
+	sdram_size = sdram_calculate_size();
+
+	if (CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_END !=
+		(CONFIG_SYS_SDRAM_BASE + sdram_size)) {
+		/* we need scrub it */
+		pl330_1.dst_addr = CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_END;
+		pl330_1.size_byte = CONFIG_SYS_SDRAM_BASE + sdram_size -
+			CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_END;
+		pl330_1.channel_num = 1;
+		pl330_1.buf_size = sizeof(pl330_buf1);
+		pl330_1.buf = pl330_buf1;
+
+		printf("SDRAM: Scrubbing 0x%08x - 0x%08x\n",
+			CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_END,
+			(CONFIG_SYS_SDRAM_BASE + sdram_size));
+
+		if (pl330_transfer_zeroes(&pl330_1)) {
+			puts("ERROR - DMA setup 1 failed\n");
+			hang();
+		}
+
+		if (pl330_transfer_start(&pl330_1)) {
+			puts("ERROR - DMA start 1 failed\n");
+			hang();
+		}
+	}
+
+#ifdef CONFIG_HW_WATCHDOG
+	WATCHDOG_RESET();
+#endif
+}
+
+/* Checking whether the scrubbing the remaining memory region finish? */
+void sdram_scrub_remain_region_finish(void)
+{
+	unsigned long ddr_scrub_time;
+
+#ifdef CONFIG_HW_WATCHDOG
+	WATCHDOG_RESET();
+#endif
+
+	reset_timer();
+	ddr_scrub_time = get_timer(0);
+
+	/* always poll for smallest transfer first */
+	if (pl330_1.size_byte > pl330_0.size_byte) {
+		if (pl330_0.size_byte != 0)
+			if (pl330_transfer_finish(&pl330_0)) {
+				puts("ERROR - DMA 0 finish failed\n");
+				hang();
+			}
+#ifdef CONFIG_HW_WATCHDOG
+		WATCHDOG_RESET();
+#endif
+		if (pl330_1.size_byte != 0)
+			if (pl330_transfer_finish(&pl330_1)) {
+				puts("ERROR - DMA 1 finish failed\n");
+				hang();
+			}
+	} else {
+		if (pl330_1.size_byte != 0)
+			if (pl330_transfer_finish(&pl330_1)) {
+				puts("ERROR - DMA 1 finish failed\n");
+				hang();
+			}
+#ifdef CONFIG_HW_WATCHDOG
+		WATCHDOG_RESET();
+#endif
+		if (pl330_0.size_byte != 0)
+			if (pl330_transfer_finish(&pl330_0)) {
+				puts("ERROR - DMA 0 finish failed\n");
+				hang();
+			}
+	}
+	printf("SDRAM: Scrubbing success with consuming additional %d ms\n",
+		(unsigned)get_timer(ddr_scrub_time));
+
+#ifdef CONFIG_HW_WATCHDOG
+	WATCHDOG_RESET();
+#endif
+}
+
+#endif /* CONFIG_PRELOADER_SDRAM_SCRUB_REMAIN_REGION */
+#endif /* CONFIG_PRELOADER_SDRAM_SCRUBBING */

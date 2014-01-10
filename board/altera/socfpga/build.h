@@ -97,6 +97,28 @@
  */
 #define CONFIG_PRELOADER_SKIP_SDRAM		(0)
 
+/*
+ * To configure whether to scrub the SDRAM to initialize the ECC bits
+ */
+#define CONFIG_PRELOADER_SDRAM_SCRUBBING	(0)
+
+/* To configure whether to scrub the SDRAM to initialize the ECC bits */
+#if (CONFIG_PRELOADER_SDRAM_SCRUBBING == 1)
+/*
+ * The region of next stage boot image will be copied to
+ */
+#define CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_START	(0x1000000)
+#define CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_END	(0x2000000)
+/*
+ * Decide remaining region will be scrubbed. This will be done during the flash
+ * access (to load next boot image). The region is auto calculated based on the
+ * remain region. For SOCFPAGA, it would be 2 regions as below
+ * > CONFIG_SYS_SDRAM_BASE to CONFIG_SPL_SDRAM_SCRUB_BOOT_REGION_START
+ * > CONFIG_SPL_SDRAM_SCRUB_BOOT_REGION_END to calculated SDRAM size
+ */
+#define CONFIG_PRELOADER_SDRAM_SCRUB_REMAIN_REGION	(1)
+
+#endif /* CONFIG_PRELOADER_SDRAM_SCRUBBING */
 
 #endif /* _PRELOADER_BUILD_H_ */
 
