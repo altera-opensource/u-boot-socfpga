@@ -109,6 +109,7 @@
 #endif
 
 /* Info for driver */
+/* U-Boot derived clock source frequency (OSC1, OSC2 and F2S only) from here */
 #define CONFIG_HPS_CLK_OSC1_HZ			(25000000)
 #define CONFIG_HPS_CLK_OSC2_HZ			(0)
 #define CONFIG_HPS_CLK_F2S_SDR_REF_HZ		(0)

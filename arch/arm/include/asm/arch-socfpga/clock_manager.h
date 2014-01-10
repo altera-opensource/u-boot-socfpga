@@ -18,38 +18,42 @@
 #ifndef	_CLOCK_MANAGER_H_
 #define	_CLOCK_MANAGER_H_
 
+#ifndef __ASSEMBLY__
+
+#include <asm/io.h>
+
 typedef struct {
 	/* main group */
-	uint32_t main_vco_base;
-	uint32_t mpuclk;
-	uint32_t mainclk;
-	uint32_t dbgatclk;
-	uint32_t mainqspiclk;
-	uint32_t mainnandsdmmcclk;
-	uint32_t cfg2fuser0clk;
-	uint32_t maindiv;
-	uint32_t dbgdiv;
-	uint32_t tracediv;
-	uint32_t l4src;
+	uint32_t	main_vco_base;
+	uint32_t	mpuclk;
+	uint32_t	mainclk;
+	uint32_t	dbgatclk;
+	uint32_t	mainqspiclk;
+	uint32_t	mainnandsdmmcclk;
+	uint32_t	cfg2fuser0clk;
+	uint32_t	maindiv;
+	uint32_t	dbgdiv;
+	uint32_t	tracediv;
+	uint32_t	l4src;
 
 	/* peripheral group */
-	uint32_t peri_vco_base;
-	uint32_t emac0clk;
-	uint32_t emac1clk;
-	uint32_t perqspiclk;
-	uint32_t pernandsdmmcclk;
-	uint32_t perbaseclk;
-	uint32_t s2fuser1clk;
-	uint32_t perdiv;
-	uint32_t gpiodiv;
-	uint32_t persrc;
+	uint32_t	peri_vco_base;
+	uint32_t	emac0clk;
+	uint32_t	emac1clk;
+	uint32_t	perqspiclk;
+	uint32_t	pernandsdmmcclk;
+	uint32_t	perbaseclk;
+	uint32_t	s2fuser1clk;
+	uint32_t	perdiv;
+	uint32_t	gpiodiv;
+	uint32_t	persrc;
 
 	/* sdram pll group */
-	uint32_t sdram_vco_base;
-	uint32_t ddrdqsclk;
-	uint32_t ddr2xdqsclk;
-	uint32_t ddrdqclk;
-	uint32_t s2fuser2clk;
+	uint32_t	sdram_vco_base;
+	uint32_t	ddrdqsclk;
+	uint32_t	ddr2xdqsclk;
+	uint32_t	ddrdqclk;
+	uint32_t	s2fuser2clk;
 } cm_config_t;
 
 extern int cm_basic_init(const cm_config_t *cfg);
@@ -59,6 +63,7 @@ unsigned long cm_get_uart_clk_hz(void);
 unsigned long cm_get_mmc_controller_clk_hz(void);
 unsigned long cm_get_qspi_controller_clk_hz(void);
 void cm_print_clock_quick_summary(void);
+void cm_derive_clocks_for_drivers(void);
 
 #define CLKMGR_CTRL_ADDRESS 0x0
 #define CLKMGR_BYPASS_ADDRESS 0x4
@@ -242,5 +247,12 @@ void cm_print_clock_quick_summary(void);
 #define CLKMGR_QSPI_CLK_SRC_F2S		0x0
 #define CLKMGR_QSPI_CLK_SRC_MAIN	0x1
 #define CLKMGR_QSPI_CLK_SRC_PER		0x2
+
+/* global variable which consume by drivers */
+extern unsigned long cm_uart_clock;
+extern unsigned long cm_sdmmc_clock;
+extern unsigned long cm_qspi_clock;
+
+#endif /* __ASSEMBLY__ */
 
 #endif /* _CLOCK_MANAGER_H_ */

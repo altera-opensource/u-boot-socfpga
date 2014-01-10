@@ -39,6 +39,10 @@
 	CLKMGR_MAINPLLGRP_VCO_EN_SET(1)| \
 	CLKMGR_MAINPLLGRP_VCO_BGPWRDN_SET(0))
 
+unsigned long cm_uart_clock;
+unsigned long cm_sdmmc_clock;
+unsigned long cm_qspi_clock;
+
 static inline void cm_wait_for_lock(uint32_t mask)
 {
 	register uint32_t inter_val;
@@ -661,4 +665,11 @@ void cm_print_clock_quick_summary(void)
 			(cm_get_mmc_controller_clk_hz() / 1000));
 	printf("CLOCK: QSPI clock %ld KHz\n",
 			(cm_get_qspi_controller_clk_hz() / 1000));
+}
+
+void cm_derive_clocks_for_drivers(void)
+{
+	cm_uart_clock = cm_get_uart_clk_hz();
+	cm_sdmmc_clock = cm_get_mmc_controller_clk_hz();
+	cm_qspi_clock = cm_get_qspi_controller_clk_hz();
 }

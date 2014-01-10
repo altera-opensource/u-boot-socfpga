@@ -339,6 +339,8 @@ void spl_board_init(void)
 	debug("Reconfigure Clock Manager\n");
 	/* reconfigure the PLLs */
 	cm_basic_init(&cm_default_cfg);
+	/* calculate the clock frequencies required for drivers */
+	cm_derive_clocks_for_drivers();
 
 #ifdef CONFIG_HW_WATCHDOG
 	WATCHDOG_RESET();
