@@ -409,8 +409,14 @@ void cadence_qspi_apb_config_baudrate_div(void *reg_base,
 	/* Check if even number. */
 	if ((div & 1))
 		div = (div / 2);
-	else
-		div = (div / 2) - 1;
+	else {
+		if (ref_clk_hz % sclk_hz)
+			/* ensure generated SCLK doesn't exceed user
+			specified sclk_hz */
+			div = (div / 2);
+		else
+			div = (div / 2) - 1;
+	}
 
 	debug("%s: ref_clk %dHz sclk %dHz Div 0x%x\n", __func__,
 		ref_clk_hz, sclk_hz, div);
