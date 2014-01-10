@@ -53,6 +53,12 @@ typedef struct {
 } cm_config_t;
 
 extern int cm_basic_init(const cm_config_t *cfg);
+unsigned long cm_get_mpu_clk_hz(void);
+unsigned long cm_get_sdram_clk_hz(void);
+unsigned long cm_get_uart_clk_hz(void);
+unsigned long cm_get_mmc_controller_clk_hz(void);
+unsigned long cm_get_qspi_controller_clk_hz(void);
+void cm_print_clock_quick_summary(void);
 
 #define CLKMGR_CTRL_ADDRESS 0x0
 #define CLKMGR_BYPASS_ADDRESS 0x4
@@ -210,5 +216,31 @@ extern int cm_basic_init(const cm_config_t *cfg);
 	CONFIG_HPS_SDRPLLGRP_VCO_DENOM) | \
 	CLKMGR_SDRPLLGRP_VCO_NUMER_SET(\
 	CONFIG_HPS_SDRPLLGRP_VCO_NUMER))
+
+#define CLKMGR_MAINPLLGRP_VCO_DENOM_GET(x)	(((x) & 0x003f0000) >> 16)
+#define CLKMGR_MAINPLLGRP_VCO_NUMER_GET(x)	(((x) & 0x0000fff8) >> 3)
+#define CLKMGR_MAINPLLGRP_L4SRC_L4SP_GET(x)	(((x) & 0x00000002) >> 1)
+#define CLKMGR_MAINPLLGRP_MAINDIV_L4SPCLK_GET(x)  (((x) & 0x00000380) >> 7)
+#define CLKMGR_SDRPLLGRP_VCO_SSRC_GET(x)	(((x) & 0x00c00000) >> 22)
+#define CLKMGR_SDRPLLGRP_VCO_DENOM_GET(x)	(((x) & 0x003f0000) >> 16)
+#define CLKMGR_SDRPLLGRP_VCO_NUMER_GET(x)	(((x) & 0x0000fff8) >> 3)
+#define CLKMGR_SDRPLLGRP_DDRDQSCLK_CNT_GET(x)	(((x) & 0x000001ff) >> 0)
+#define CLKMGR_PERPLLGRP_VCO_SSRC_GET(x)	(((x) & 0x00c00000) >> 22)
+#define CLKMGR_PERPLLGRP_VCO_DENOM_GET(x)	(((x) & 0x003f0000) >> 16)
+#define CLKMGR_PERPLLGRP_VCO_NUMER_GET(x)	(((x) & 0x0000fff8) >> 3)
+#define CLKMGR_PERPLLGRP_SRC_QSPI_GET(x)	(((x) & 0x00000030) >> 4)
+#define CLKMGR_PERPLLGRP_SRC_SDMMC_GET(x)	(((x) & 0x00000003) >> 0)
+
+#define CLKMGR_VCO_SSRC_EOSC1		0x0
+#define CLKMGR_VCO_SSRC_EOSC2		0x1
+#define CLKMGR_VCO_SSRC_F2S		0x2
+#define CLKMGR_L4_SP_CLK_SRC_MAINPLL	0x0
+#define CLKMGR_L4_SP_CLK_SRC_PERPLL	0x1
+#define CLKMGR_SDMMC_CLK_SRC_F2S	0x0
+#define CLKMGR_SDMMC_CLK_SRC_MAIN	0x1
+#define CLKMGR_SDMMC_CLK_SRC_PER	0x2
+#define CLKMGR_QSPI_CLK_SRC_F2S		0x0
+#define CLKMGR_QSPI_CLK_SRC_MAIN	0x1
+#define CLKMGR_QSPI_CLK_SRC_PER		0x2
 
 #endif /* _CLOCK_MANAGER_H_ */

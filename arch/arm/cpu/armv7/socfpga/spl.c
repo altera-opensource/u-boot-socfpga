@@ -455,6 +455,9 @@ void spl_board_init(void)
 	preloader_console_init();
 	/* printout to know the board configuration during run time */
 	checkboard();
+
+	/* printout the clock info */
+	cm_print_clock_quick_summary();
 #endif
 
 #ifdef CONFIG_HW_WATCHDOG

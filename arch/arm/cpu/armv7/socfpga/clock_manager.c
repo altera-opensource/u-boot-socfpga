@@ -437,3 +437,228 @@ int cm_basic_init(const cm_config_t *cfg)
 
 	return 0;
 }
+
+/* calculated the clock speed based on register values */
+unsigned long cm_get_mpu_clk_hz(void)
+{
+	uint32_t reg, clock;
+
+	/* get the main VCO clock */
+	reg = readl(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_MAINPLLGRP_VCO_ADDRESS);
+	clock = CONFIG_HPS_CLK_OSC1_HZ /
+		(CLKMGR_MAINPLLGRP_VCO_DENOM_GET(reg) + 1);
+	clock *= (CLKMGR_MAINPLLGRP_VCO_NUMER_GET(reg) + 1);
+
+	/* get the MPU clock */
+	reg = readl(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_ALTERAGRP_MPUCLK);
+	clock /= (reg + 1);
+	reg = readl(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_MAINPLLGRP_MPUCLK_ADDRESS);
+	clock /= (reg + 1);
+	return clock;
+}
+
+unsigned long cm_get_sdram_clk_hz(void)
+{
+	uint32_t reg, clock = 0;
+
+	/* identify SDRAM PLL clock source */
+	reg = readl(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_VCO_ADDRESS);
+	reg = CLKMGR_SDRPLLGRP_VCO_SSRC_GET(reg);
+	if (reg == CLKMGR_VCO_SSRC_EOSC1)
+		clock = CONFIG_HPS_CLK_OSC1_HZ;
+	else if (reg == CLKMGR_VCO_SSRC_EOSC2)
+		clock = CONFIG_HPS_CLK_OSC2_HZ;
+	else if (reg == CLKMGR_VCO_SSRC_F2S)
+		clock = CONFIG_HPS_CLK_F2S_SDR_REF_HZ;
+
+	/* get the SDRAM VCO clock */
+	reg = readl(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_VCO_ADDRESS);
+	clock /= (CLKMGR_SDRPLLGRP_VCO_DENOM_GET(reg) + 1);
+	clock *= (CLKMGR_SDRPLLGRP_VCO_NUMER_GET(reg) + 1);
+
+	/* get the SDRAM (DDR_DQS) clock */
+	reg = readl(SOCFPGA_CLKMGR_ADDRESS +
+		CLKMGR_SDRPLLGRP_DDRDQSCLK_ADDRESS);
+	reg = CLKMGR_SDRPLLGRP_DDRDQSCLK_CNT_GET(reg);
+	clock /= (reg + 1);
+
+	return clock;
+}
+
+unsigned long cm_get_uart_clk_hz(void)
+{
+	uint32_t reg, clock = 0;
+
+	/* identify the source of L4 SP clock */
+	reg = readl(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_MAINPLLGRP_L4SRC_ADDRESS);
+	reg = CLKMGR_MAINPLLGRP_L4SRC_L4SP_GET(reg);
+
+	if (reg == CLKMGR_L4_SP_CLK_SRC_MAINPLL) {
+		/* get the main VCO clock */
+		reg = readl(SOCFPGA_CLKMGR_ADDRESS +
+			CLKMGR_MAINPLLGRP_VCO_ADDRESS);
+		clock = CONFIG_HPS_CLK_OSC1_HZ /
+			(CLKMGR_MAINPLLGRP_VCO_DENOM_GET(reg) + 1);
+		clock *= (CLKMGR_MAINPLLGRP_VCO_NUMER_GET(reg) + 1);
+
+		/* get the clock prior L4 SP divider (main clk) */
+		reg = readl(SOCFPGA_CLKMGR_ADDRESS +
+			CLKMGR_ALTERAGRP_MAINCLK);
+		clock /= (reg + 1);
+		reg = readl(SOCFPGA_CLKMGR_ADDRESS +
+			CLKMGR_MAINPLLGRP_MAINCLK_ADDRESS);
+		clock /= (reg + 1);
+	} else if (reg == CLKMGR_L4_SP_CLK_SRC_PERPLL) {
+		/* identify PER PLL clock source */
+		reg = readl(SOCFPGA_CLKMGR_ADDRESS +
+			CLKMGR_PERPLLGRP_VCO_ADDRESS);
+		reg = CLKMGR_PERPLLGRP_VCO_SSRC_GET(reg);
+		if (reg == CLKMGR_VCO_SSRC_EOSC1)
+			clock = CONFIG_HPS_CLK_OSC1_HZ;
+		else if (reg == CLKMGR_VCO_SSRC_EOSC2)
+			clock = CONFIG_HPS_CLK_OSC2_HZ;
+		else if (reg == CLKMGR_VCO_SSRC_F2S)
+			clock = CONFIG_HPS_CLK_F2S_PER_REF_HZ;
+
+		/* get the PER VCO clock */
+		reg = readl(SOCFPGA_CLKMGR_ADDRESS +
+			CLKMGR_PERPLLGRP_VCO_ADDRESS);
+		clock /= (CLKMGR_PERPLLGRP_VCO_DENOM_GET(reg) + 1);
+		clock *= (CLKMGR_PERPLLGRP_VCO_NUMER_GET(reg) + 1);
+
+		/* get the clock prior L4 SP divider (periph_base_clk) */
+		reg = readl(SOCFPGA_CLKMGR_ADDRESS +
+			CLKMGR_PERPLLGRP_PERBASECLK_ADDRESS);
+		clock /= (reg + 1);
+	}
+
+	/* get the L4 SP clock which supplied to UART */
+	reg = readl(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_MAINPLLGRP_MAINDIV_ADDRESS);
+	reg = CLKMGR_MAINPLLGRP_MAINDIV_L4SPCLK_GET(reg);
+	clock = clock / (reg + 1);
+
+	return clock;
+}
+
+unsigned long cm_get_mmc_controller_clk_hz(void)
+{
+	uint32_t reg, clock = 0;
+
+	/* identify the source of MMC clock */
+	reg = readl(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_PERPLLGRP_SRC_ADDRESS);
+	reg = CLKMGR_PERPLLGRP_SRC_SDMMC_GET(reg);
+
+	if (reg == CLKMGR_SDMMC_CLK_SRC_F2S)
+		clock = CONFIG_HPS_CLK_F2S_PER_REF_HZ;
+	else if (reg == CLKMGR_SDMMC_CLK_SRC_MAIN) {
+		/* get the main VCO clock */
+		reg = readl(SOCFPGA_CLKMGR_ADDRESS +
+			CLKMGR_MAINPLLGRP_VCO_ADDRESS);
+		clock = CONFIG_HPS_CLK_OSC1_HZ /
+			(CLKMGR_MAINPLLGRP_VCO_DENOM_GET(reg) + 1);
+		clock *= (CLKMGR_MAINPLLGRP_VCO_NUMER_GET(reg) + 1);
+
+		/* get the SDMMC clock */
+		reg = readl(SOCFPGA_CLKMGR_ADDRESS +
+			CLKMGR_MAINPLLGRP_MAINNANDSDMMCCLK_ADDRESS);
+		clock /= (reg + 1);
+	} else if (reg == CLKMGR_SDMMC_CLK_SRC_PER) {
+		/* identify PER PLL clock source */
+		reg = readl(SOCFPGA_CLKMGR_ADDRESS +
+			CLKMGR_PERPLLGRP_VCO_ADDRESS);
+		reg = CLKMGR_PERPLLGRP_VCO_SSRC_GET(reg);
+		if (reg == CLKMGR_VCO_SSRC_EOSC1)
+			clock = CONFIG_HPS_CLK_OSC1_HZ;
+		else if (reg == CLKMGR_VCO_SSRC_EOSC2)
+			clock = CONFIG_HPS_CLK_OSC2_HZ;
+		else if (reg == CLKMGR_VCO_SSRC_F2S)
+			clock = CONFIG_HPS_CLK_F2S_PER_REF_HZ;
+
+		/* get the PER VCO clock */
+		reg = readl(SOCFPGA_CLKMGR_ADDRESS +
+			CLKMGR_PERPLLGRP_VCO_ADDRESS);
+		clock /= (CLKMGR_PERPLLGRP_VCO_DENOM_GET(reg) + 1);
+		clock *= (CLKMGR_PERPLLGRP_VCO_NUMER_GET(reg) + 1);
+
+		/* get the SDMMC clock */
+		reg = readl(SOCFPGA_CLKMGR_ADDRESS +
+			CLKMGR_PERPLLGRP_PERNANDSDMMCCLK_ADDRESS);
+		clock /= (reg + 1);
+	}
+
+	/* further divide by 4 as we have fixed divider at wrapper */
+	clock /= 4;
+
+	return clock;
+}
+
+unsigned long cm_get_qspi_controller_clk_hz(void)
+{
+	uint32_t reg, clock = 0;
+
+	/* identify the source of QSPI clock */
+	reg = readl(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_PERPLLGRP_SRC_ADDRESS);
+	reg = CLKMGR_PERPLLGRP_SRC_QSPI_GET(reg);
+
+	if (reg == CLKMGR_QSPI_CLK_SRC_F2S)
+		clock = CONFIG_HPS_CLK_F2S_PER_REF_HZ;
+	else if (reg == CLKMGR_QSPI_CLK_SRC_MAIN) {
+		/* get the main VCO clock */
+		reg = readl(SOCFPGA_CLKMGR_ADDRESS +
+			CLKMGR_MAINPLLGRP_VCO_ADDRESS);
+		clock = CONFIG_HPS_CLK_OSC1_HZ /
+			(CLKMGR_MAINPLLGRP_VCO_DENOM_GET(reg) + 1);
+		clock *= (CLKMGR_MAINPLLGRP_VCO_NUMER_GET(reg) + 1);
+
+		/* get the qspi clock */
+		reg = readl(SOCFPGA_CLKMGR_ADDRESS +
+			CLKMGR_MAINPLLGRP_MAINQSPICLK_ADDRESS);
+		clock /= (reg + 1);
+	} else if (reg == CLKMGR_QSPI_CLK_SRC_PER) {
+		/* identify PER PLL clock source */
+		reg = readl(SOCFPGA_CLKMGR_ADDRESS +
+			CLKMGR_PERPLLGRP_VCO_ADDRESS);
+		reg = CLKMGR_PERPLLGRP_VCO_SSRC_GET(reg);
+		if (reg == CLKMGR_VCO_SSRC_EOSC1)
+			clock = CONFIG_HPS_CLK_OSC1_HZ;
+		else if (reg == CLKMGR_VCO_SSRC_EOSC2)
+			clock = CONFIG_HPS_CLK_OSC2_HZ;
+		else if (reg == CLKMGR_VCO_SSRC_F2S)
+			clock = CONFIG_HPS_CLK_F2S_PER_REF_HZ;
+
+		/* get the PER VCO clock */
+		reg = readl(SOCFPGA_CLKMGR_ADDRESS +
+			CLKMGR_PERPLLGRP_VCO_ADDRESS);
+		clock /= (CLKMGR_PERPLLGRP_VCO_DENOM_GET(reg) + 1);
+		clock *= (CLKMGR_PERPLLGRP_VCO_NUMER_GET(reg) + 1);
+
+		/* get the qspi clock */
+		reg = readl(SOCFPGA_CLKMGR_ADDRESS +
+			CLKMGR_PERPLLGRP_PERQSPICLK_ADDRESS);
+		clock /= (reg + 1);
+	}
+
+	return clock;
+}
+
+void cm_print_clock_quick_summary(void)
+{
+	printf("CLOCK: EOSC1 clock %d KHz\n",
+			(CONFIG_HPS_CLK_OSC1_HZ / 1000));
+	printf("CLOCK: EOSC2 clock %d KHz\n",
+			(CONFIG_HPS_CLK_OSC2_HZ / 1000));
+	printf("CLOCK: F2S_SDR_REF clock %d KHz\n",
+			(CONFIG_HPS_CLK_F2S_SDR_REF_HZ / 1000));
+	printf("CLOCK: F2S_PER_REF clock %d KHz\n",
+			(CONFIG_HPS_CLK_F2S_PER_REF_HZ / 1000));
+	printf("CLOCK: MPU clock %ld MHz\n",
+			(cm_get_mpu_clk_hz() / 1000000));
+	printf("CLOCK: DDR clock %ld MHz\n",
+			(cm_get_sdram_clk_hz() / 1000000));
+	printf("CLOCK: UART clock %ld KHz\n",
+			(cm_get_uart_clk_hz() / 1000));
+	printf("CLOCK: MMC clock %ld KHz\n",
+			(cm_get_mmc_controller_clk_hz() / 1000));
+	printf("CLOCK: QSPI clock %ld KHz\n",
+			(cm_get_qspi_controller_clk_hz() / 1000));
+}
