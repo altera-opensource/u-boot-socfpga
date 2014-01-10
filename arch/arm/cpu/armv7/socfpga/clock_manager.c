@@ -235,9 +235,21 @@ int cm_basic_init(const cm_config_t *cfg)
 	writel(cfg->mainclk, (SOCFPGA_CLKMGR_ADDRESS +
 		CLKMGR_MAINPLLGRP_MAINCLK_ADDRESS));
 
+#ifdef CONFIG_HPS_ALTERAGRP_MPUCLK
+	/* re-configuring the fixed divider for faster MPU clock */
+	writel(CONFIG_HPS_ALTERAGRP_MPUCLK,
+		(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_ALTERAGRP_MPUCLK));
+#endif
+
 	/* main for dbg */
 	writel(cfg->dbgatclk, (SOCFPGA_CLKMGR_ADDRESS +
 		CLKMGR_MAINPLLGRP_DBGATCLK_ADDRESS));
+
+#ifdef CONFIG_HPS_ALTERAGRP_MAINCLK
+	/* re-configuring the fixed divider due to different main VCO */
+	writel(CONFIG_HPS_ALTERAGRP_MAINCLK,
+		(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_ALTERAGRP_MAINCLK));
+#endif
 
 	/* main for cfgs2fuser0clk */
 	writel(cfg->cfg2fuser0clk, (SOCFPGA_CLKMGR_ADDRESS +
