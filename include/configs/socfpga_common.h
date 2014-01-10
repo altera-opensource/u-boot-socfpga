@@ -546,6 +546,11 @@
 /* Enable FPGA command at console */
 #define CONFIG_CMD_FPGA
 
+/*
+ * DMA support
+ */
+#define CONFIG_PL330_DMA
+#define CONFIG_SPL_DMA_SUPPORT
 
 /*
  * SPL "Second Program Loader" aka Preloader
@@ -787,5 +792,7 @@
 #if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN == 1)
 #define CONFIG_SPL_SDRAM_ECC_PADDING	32
 #endif
+
+
 
 #endif	/* __CONFIG_COMMON_H */
