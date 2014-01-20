@@ -439,6 +439,11 @@ int cm_basic_init(const cm_config_t *cfg)
 	writel(~0, (SOCFPGA_CLKMGR_ADDRESS + CLKMGR_PERPLLGRP_EN_ADDRESS));
 	writel(~0, (SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_EN_ADDRESS));
 
+	/* Clear the loss of lock bits (write 1 to clear) */
+	writel((CLKMGR_INTER_SDRPLLLOST_MASK |
+		CLKMGR_INTER_PERPLLLOST_MASK |
+		CLKMGR_INTER_MAINPLLLOST_MASK),
+		(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_INTER_ADDRESS));
 	return 0;
 }
 
