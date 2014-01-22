@@ -17,7 +17,7 @@
 #ifndef __CONFIG_COMMON_H
 #define __CONFIG_COMMON_H
 
-#include <asm/arch/socfpga_base_addrs.h>
+#include <asm/arch/hardware.h>
 #include <asm/arch/clock_manager.h>
 #include "../../board/altera/socfpga/build.h"
 #include "../../board/altera/socfpga/pinmux_config.h"
@@ -360,7 +360,7 @@
 #if defined(CONFIG_SOCFPGA_VIRTUAL_TARGET)
 #define CONFIG_SYS_NS16550_CLK		1000000
 #else
-#define CONFIG_SYS_NS16550_CLK		(cm_uart_clock)
+#define CONFIG_SYS_NS16550_CLK		(cm_l4_sp_clock)
 #endif
 #define CONFIG_BAUDRATE			115200
 #endif /* CONFIG_SYS_NS16550 */
@@ -542,6 +542,20 @@
  */
 #define CONFIG_PL330_DMA
 #define CONFIG_SPL_DMA_SUPPORT
+
+/*
+ * I2C support
+ */
+#define CONFIG_HARD_I2C
+#define CONFIG_DW_I2C
+#define CONFIG_SYS_I2C_BASE		SOCFPGA_I2C0_ADDRESS
+/* using standard mode which the speed up to 100Kb/s) */
+#define CONFIG_SYS_I2C_SPEED		(100000)
+/* address of device when used as slave */
+#define CONFIG_SYS_I2C_SLAVE		(0x02)
+/* clock supplied to I2C controller in unit of MHz */
+#define IC_CLK				(cm_l4_sp_clock / 1000000)
+#define CONFIG_CMD_I2C
 
 /*
  * SPL "Second Program Loader" aka Preloader

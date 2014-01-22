@@ -59,7 +59,7 @@ typedef struct {
 extern int cm_basic_init(const cm_config_t *cfg);
 unsigned long cm_get_mpu_clk_hz(void);
 unsigned long cm_get_sdram_clk_hz(void);
-unsigned long cm_get_uart_clk_hz(void);
+unsigned long cm_get_l4_sp_clk_hz(void);
 unsigned long cm_get_mmc_controller_clk_hz(void);
 unsigned long cm_get_qspi_controller_clk_hz(void);
 void cm_print_clock_quick_summary(void);
@@ -252,7 +252,7 @@ void cm_derive_clocks_for_drivers(void);
 #define CLKMGR_QSPI_CLK_SRC_PER		0x2
 
 /* global variable which consume by drivers */
-extern unsigned long cm_uart_clock;
+extern unsigned long cm_l4_sp_clock;
 extern unsigned long cm_sdmmc_clock;
 extern unsigned long cm_qspi_clock;
 

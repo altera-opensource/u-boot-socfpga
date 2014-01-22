@@ -39,7 +39,7 @@
 	CLKMGR_MAINPLLGRP_VCO_EN_SET(1)| \
 	CLKMGR_MAINPLLGRP_VCO_BGPWRDN_SET(0))
 
-unsigned long cm_uart_clock;
+unsigned long cm_l4_sp_clock;
 unsigned long cm_sdmmc_clock;
 unsigned long cm_qspi_clock;
 
@@ -494,7 +494,7 @@ unsigned long cm_get_sdram_clk_hz(void)
 	return clock;
 }
 
-unsigned long cm_get_uart_clk_hz(void)
+unsigned long cm_get_l4_sp_clk_hz(void)
 {
 	uint32_t reg, clock = 0;
 
@@ -665,7 +665,7 @@ void cm_print_clock_quick_summary(void)
 	printf("CLOCK: DDR clock %ld MHz\n",
 			(cm_get_sdram_clk_hz() / 1000000));
 	printf("CLOCK: UART clock %ld KHz\n",
-			(cm_get_uart_clk_hz() / 1000));
+			(cm_get_l4_sp_clk_hz() / 1000));
 	printf("CLOCK: MMC clock %ld KHz\n",
 			(cm_get_mmc_controller_clk_hz() / 1000));
 	printf("CLOCK: QSPI clock %ld KHz\n",
@@ -674,7 +674,7 @@ void cm_print_clock_quick_summary(void)
 
 void cm_derive_clocks_for_drivers(void)
 {
-	cm_uart_clock = cm_get_uart_clk_hz();
+	cm_l4_sp_clock = cm_get_l4_sp_clk_hz();
 	cm_sdmmc_clock = cm_get_mmc_controller_clk_hz();
 	cm_qspi_clock = cm_get_qspi_controller_clk_hz();
 }
