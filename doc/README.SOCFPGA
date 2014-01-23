@@ -288,3 +288,45 @@ Location: include/configs/socfpga_common.h
 ...
 #define CONFIG_NAND_DENALI
 
+
+HPS EMAC address / EEPROM support
+----------------------------------------
+Within Altera dev kit, there is an EEPROM chip 24LC32A. This chip is being used
+to store board related information which include EMAC address. As of now,
+user have the option to get the EMAC address from below location
+
+1. Environment data that saved within flashes
+   > setenv ethaddr 02:11:22:33:44:55
+   > saveenv
+   After this is done once, U-Boot will set the ethaddr value every time its
+   boot up. This information then passed to kernel.
+
+2. EEPROM
+   Upon boot up, U-Boot will check whether ethaddr environment variable is
+   available. If not, U-Boot will grab it from EEPROM and assign to ethaddr if
+   its valid. At same time, user can invoke it manually using below command.
+   > go $setenv_ethaddr_eeprom
+   After this command being called, U-Boot will grab the EMAC address from
+   EEPROM and set the ethaddr value. This information then passed to kernel.
+
+Per current EEPROM layout, the location of EMAC address is located as below
+- 0x16c for HPS EMAC 0 address
+- 0x174 for HPS EMAC 1 address
+
+To view the EMAC address, you can use the i2c console command as below
+> SOCFPGA_CYCLONE5 # i2c md 0x51 0x174.2 6
+> 0174: 55 44 33 22 11 02    UD3"..
+
+To modify the EMAC address, you can the i2c console command as below
+> SOCFPGA_CYCLONE5 # i2c mm 0x51 0x174.2
+> 00000174: 55 ? 55
+> 00000175: 44 ? 44
+> 00000176: 33 ? 33
+> 00000177: 22 ? 22
+> 00000178: 11 ? 11
+> 00000179: 02 ? 02
+
+< Note if you are not using Altera dev kit >
+Do note that the function which set the ethaddr from EEPROM is located at
+board/altera/socfpga/socfpga_common.c as this is board specific code. You would
+need to copy and modify this code based on your board specific implementation.
