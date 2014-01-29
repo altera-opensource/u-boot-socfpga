@@ -106,6 +106,8 @@
 #ifdef CONFIG_SOCFPGA_ARRIA5
 #define CONFIG_HPS_ALTERAGRP_MPUCLK			(0)
 #define CONFIG_HPS_ALTERAGRP_MAINCLK			(2)
+#else
+#define CONFIG_HPS_ALTERAGRP_MAINCLK			(4)
 #endif
 
 /* Info for driver */
