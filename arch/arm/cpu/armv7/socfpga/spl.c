@@ -38,6 +38,9 @@
 #include <asm/arch/system_manager.h>
 #include <spi_flash.h>
 #include <asm/arch/fpga_manager.h>
+#include <fat.h>
+#include <fs.h>
+#include <mmc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -186,6 +189,121 @@ void spl_program_fpga_qspi(void)
 #ifdef CONFIG_HW_WATCHDOG
 		WATCHDOG_RESET();
 #endif
+}
+#endif
+
+#if defined(CONFIG_SPL_FPGA_LOAD) && defined(CONFIG_SPL_MMC_SUPPORT)
+/* program FPGA where rbf file is located at FAT partition with SD */
+void spl_program_fpga_sd_fat(void)
+{
+	u32 filesize, status;
+	const u32 temp_sdram = 0x2000000;
+	struct mmc *mmc;
+
+	/* initialize the MMC controller */
+	mmc_initialize(gd->bd);
+
+	/* We register only one device. So, the dev id is always 0 */
+	mmc = find_mmc_device(0);
+	if (!mmc) {
+		puts("spl: mmc device not found!!\n");
+		hang();
+	}
+
+#ifdef CONFIG_HW_WATCHDOG
+	WATCHDOG_RESET();
+#endif
+
+	status = mmc_init(mmc);
+	if (status) {
+		printf("spl: mmc init failed: err - %d\n", status);
+		hang();
+	}
+
+	status = fat_register_device(&mmc->block_dev,
+				CONFIG_SYS_MMC_SD_FAT_BOOT_PARTITION);
+	if (status) {
+		printf("spl: fat register err - %d\n", status);
+		hang();
+	}
+
+#ifdef CONFIG_HW_WATCHDOG
+	WATCHDOG_RESET();
+#endif
+
+	/* do memory padding as data in SDRAM */
+	filesize = file_fat_read(CONFIG_SPL_FPGA_FAT_NAME, NULL, 0);
+	if (filesize != -1) {
+		memset((unsigned char *)((temp_sdram + filesize)
+			& ~(CONFIG_SPL_SDRAM_ECC_PADDING - 1)),
+			0, CONFIG_SPL_SDRAM_ECC_PADDING);
+	}
+
+#ifdef CONFIG_HW_WATCHDOG
+	WATCHDOG_RESET();
+#endif
+
+	filesize = file_fat_read(CONFIG_SPL_FPGA_FAT_NAME,
+					(u8 *)temp_sdram, 0);
+	if (filesize == -1) {
+		printf("Error - " CONFIG_SPL_FPGA_FAT_NAME
+			" not found within SDMMC FAT parition\n");
+		hang();
+	}
+
+#ifdef CONFIG_HW_WATCHDOG
+	WATCHDOG_RESET();
+#endif
+	/* initialize the FPGA Manager */
+	status = fpgamgr_program_init();
+	if (status) {
+		printf("FPGA: Init failed with error code %d\n", status);
+		hang();
+	}
+
+#ifdef CONFIG_HW_WATCHDOG
+	WATCHDOG_RESET();
+#endif
+	/* transfer data to FPGA Manager */
+	fpgamgr_program_write((const long unsigned int *)temp_sdram, filesize);
+
+#ifdef CONFIG_HW_WATCHDOG
+	WATCHDOG_RESET();
+#endif
+
+	/* Ensure the FPGA entering config done */
+	status = fpgamgr_program_poll_cd();
+	if (status) {
+		printf("FPGA: Poll CD failed with error code %d\n", status);
+		hang();
+	}
+
+#ifdef CONFIG_HW_WATCHDOG
+	WATCHDOG_RESET();
+#endif
+
+	/* Ensure the FPGA entering init phase */
+	status = fpgamgr_program_poll_initphase();
+	if (status) {
+		printf("FPGA: Poll initphase failed with error code %d\n",
+			status);
+		hang();
+	}
+#ifdef CONFIG_HW_WATCHDOG
+	WATCHDOG_RESET();
+#endif
+
+	/* Ensure the FPGA entering user mode */
+	status = fpgamgr_program_poll_usermode();
+	if (status) {
+		printf("FPGA: Poll usermode failed with error code %d\n",
+			status);
+		hang();
+	}
+#ifdef CONFIG_HW_WATCHDOG
+	WATCHDOG_RESET();
+#endif
+	free(mmc);
 }
 #endif
 
@@ -622,8 +740,7 @@ void spl_board_init(void)
 	spl_program_fpga_qspi();
 #elif defined(CONFIG_SPL_MMC_SUPPORT)
 	/* rbf file located within SDMMC */
-#error Preloader FPGA programming support temporarily not supporting RBF file \
-stored within SDMMC card. Please use Quad SPI boot option for this moment.
+	spl_program_fpga_sd_fat();
 #endif
 
 	/* enable signals from hps peripheral controller to fpga

@@ -343,6 +343,9 @@ get_contents(fsdata *mydata, dir_entry *dentptr, unsigned long pos,
 
 	debug("Filesize: %ld bytes\n", filesize);
 
+	if (buffer == NULL)
+		return filesize;
+
 	if (pos >= filesize) {
 		debug("Read position past EOF: %lu\n", pos);
 		return gotsize;

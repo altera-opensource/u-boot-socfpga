@@ -790,6 +790,15 @@
 #undef CONFIG_SPL_FPGA_LOAD
 /* location of FPGA RBF image within QSPI */
 #define CONFIG_SPL_FPGA_QSPI_ADDR	(0x800000)
+/* RBF file name if its located within SD card */
+#define CONFIG_SPL_FPGA_FAT_NAME	"fpga.rbf"
+
+/* ensure FAT is defined if CONFIG_SPL_FPGA_LOAD is defined */
+#ifdef CONFIG_SPL_FPGA_LOAD
+#ifndef CONFIG_SPL_FAT_SUPPORT
+#error "CONFIG_SPL_FAT_SUPPORT required for  CONFIG_SPL_FPGA_LOAD"
+#endif	/* CONFIG_SPL_FAT_SUPPORT */
+#endif	/* CONFIG_SPL_FPGA_LOAD */
 
 /*
  * Enable memory padding if SDRAM ECC is enabled

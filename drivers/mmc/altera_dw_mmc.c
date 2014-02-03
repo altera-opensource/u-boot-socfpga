@@ -61,9 +61,9 @@ static void altera_dwmci_clksel(struct dwmci_host *host)
 int altera_dwmmc_init(u32 regbase, int bus_width, int index)
 {
 	struct dwmci_host *host = NULL;
-	host = malloc(sizeof(struct dwmci_host));
+	host = calloc(sizeof(struct dwmci_host), 1);
 	if (!host) {
-		printf("dwmci_host malloc fail!\n");
+		printf("dwmci_host calloc fail!\n");
 		return 1;
 	}
 
