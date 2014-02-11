@@ -54,6 +54,22 @@
 #define CONFIG_PRELOADER_NAND_NEXT_BOOT_IMAGE	(0xC0000)
 #endif
 
+/* Enable FAT partition support when booting from SDMMC. */
+#define CONFIG_PRELOADER_FAT_SUPPORT		(1)
+
+/*
+ * When FAT partition support is enabled, this specifies the
+ * FAT partition where the boot image is located.
+ */
+#define CONFIG_PRELOADER_FAT_BOOT_PARTITION	(1)
+
+/*
+ * When FAT partition supported is enabled, this specifies the
+ * boot image filename within a FAT partition to be used as
+ * fatload payload.
+ */
+#define CONFIG_PRELOADER_FAT_LOAD_PAYLOAD_NAME	"u-boot.img"
+
 /*
  * Handoff files must provide user option whether to
  * enable watchdog during preloader execution phase
