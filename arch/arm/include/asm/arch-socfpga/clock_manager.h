@@ -141,6 +141,7 @@ void cm_derive_clocks_for_drivers(void);
 #define CLKMGR_MAINPLLGRP_MPUCLK_CNT_SET(x) (((x) << 0) & 0x000001ff)
 #define CLKMGR_MAINPLLGRP_MAINCLK_CNT_SET(x) (((x) << 0) & 0x000001ff)
 #define CLKMGR_MAINPLLGRP_DBGATCLK_CNT_SET(x) (((x) << 0) & 0x000001ff)
+#define CLKMGR_MAINPLLGRP_PERNANDSDMMCCLK_CNT_SET(x) (((x) << 0) & 0x000001ff)
 #define CLKMGR_MAINPLLGRP_CFGS2FUSER0CLK_CNT_SET(x) \
 	(((x) << 0) & 0x000001ff)
 #define CLKMGR_PERPLLGRP_EMAC0CLK_CNT_SET(x) (((x) << 0) & 0x000001ff)

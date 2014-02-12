@@ -275,6 +275,9 @@ int cm_basic_init(const cm_config_t *cfg)
 		CLKMGR_PERPLLGRP_PERQSPICLK_ADDRESS));
 
 	/* Peri pernandsdmmcclk */
+	writel(cfg->mainnandsdmmcclk, (SOCFPGA_CLKMGR_ADDRESS +
+		CLKMGR_MAINPLLGRP_MAINNANDSDMMCCLK_ADDRESS));
+
 	writel(cfg->pernandsdmmcclk, (SOCFPGA_CLKMGR_ADDRESS +
 		CLKMGR_PERPLLGRP_PERNANDSDMMCCLK_ADDRESS));
 
