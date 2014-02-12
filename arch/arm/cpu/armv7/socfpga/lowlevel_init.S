@@ -135,10 +135,11 @@ sdram_applycfg_ocram:
 	isb
 
 	mrc	p15, 0, r4, c1, c0, 0	@ Read CP15 SCTRL Register
-	orr	r4, r0, #CR_Z		@ Enable back branch predictor
-	orr	r4, r0, #CR_I		@ Enable back i-cache
+	orr	r4, r4, #CR_Z		@ Enable back branch predictor
+	orr	r4, r4, #CR_I		@ Enable back i-cache
 	mcr	p15, 0, r4, c1, c0, 0	@ Write CP15 SCTRL Register
 
+	mov	r0, #0
 	mov	pc, lr
 
 SDR_CTRL:		.word	SOCFPGA_SDR_ADDRESS
