@@ -1,6 +1,9 @@
 /*
  * Copyright (C) 2012
  * Altera Corporation <www.altera.com>
+ * Created with references to Linux dwc usb driver
+ *
+ * Author: Tien Hock Loh <thloh@altera.com>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -22,27 +25,29 @@
  */
 
 #include <asm/types.h>
+#include <asm/io.h>
 #include <common.h>
 
 #include <usb.h>
 #include <usb_defs.h>
 
-#define CONFIG_SYS_USB0_BASE 0xffb00000
+#define usb_base			CONFIG_SYS_USB_ADDRESS
 
-#define dwc_read32(x) (*(volatile unsigned long *)(x))
-#define dwc_write32(x, y) (*(volatile unsigned long *)(x) = (y))
+#define MAX_PACKET_SIZE			1023
+#define DATA0				0
+#define DATA1				2
+#define DATASETUP			3
 
 /* MSC control transfers */
 #define USB_MSC_BBB_RESET		0xFF
 #define USB_MSC_BBB_GET_MAX_LUN		0xFE
 
-#define CONFIG_DWC_USB_NPTXFDEP		8192
-#define CONFIG_DWC_USB_NPTXFSTADDR	0
-#define CONFIG_DWC_USB_RXFDEP		8192
+#define CONFIG_DWC_USB_NPTXFDEP		512
+#define CONFIG_DWC_USB_NPTXFSTADDR	512
+#define CONFIG_DWC_USB_RXFDEP		512
+#define CONFIG_DWC_USB_HPTXFSIZ		512
 
 #define DWC_USBCFG_ULPI_EXT_VBUS_DRV	1
-
-#define internal_base CONFIG_SYS_USB0_BASE
 
 #define	DWC_GINTSTS			0x014
 #define DWC_GINTSTS_CURMOD		(1<<0)
@@ -54,6 +59,7 @@
 
 #define	DWC_GOTGCTL			0x000
 #define DWC_GOTGCTL_CONIDSTS		(1<<16)
+#define DWC_GOTGCTL_HSTNEGSCS		(1<<8)
 #define DWC_GOTGCTL_HNPREQ		(1<<9)
 #define DWC_GOTGCTL_DEVHNPEN		(1<<11)
 
@@ -75,7 +81,6 @@
 #define DWC_HPRT_PRTRST			(1<<8)
 #define DWC_HPRT_PRTENA			(1<<2)
 #define DWC_HPRT_PRTDET			(1<<1)
-#define DWC_HPRT_PRTRST			(1<<8)
 #define DWC_HPRT_PRTENCHNG		(1<<3)
 #define DWC_HPRT_PRTSPD			(1<<17)
 #define DWC_HPRT_PRTSPD_MSK		(3<<17)
@@ -89,10 +94,15 @@
 #define DWC_HCTSIZN_PKTCNT(c)		(c << 19)
 #define DWC_HCTSIZN_XFERSIZE(x)		(x << 0)
 #define DWC_HCTSIZN_PID(x)		(x << 29)
+#define DWC_HCTSIZN_PID_READ		(3 << 29)
+#define DWC_HCTSIZN_PING		(1 << 31)
 
 #define DWC_HCINT(x)			(0x508+0x20*x)
 #define DWC_HCINTMSK			0x50C
 #define DWC_HCINT_XFERCOMP		(1<<0)
+#define DWC_HCINT_CHHLTD		(1<<1)
+#define DWC_HCINT_NAK			(1<<4)
+#define DWC_HCINT_ACK			(1<<5)
 
 #define DWC_HCCHAR			(0x500)
 #define DWC_HCCHARN(x)			(0x500+0x20*x)
@@ -225,11 +235,12 @@
 
 #define HCSPLT_SPLT_ENABLE(x) 0x0504
 
-#define DWC_GUSBCFG_HNPCAP (1<<9)
-#define DWC_GUSBCFG_SRPCAP (1<<8)
-#define DWC_GUSBCFG_PHYSEL (1<<6)
-#define DWC_GUSBCFG_ULPI_UTIM_SEL (1<<4)
-#define DWC_GUSBCFG_PHYIF (1<<3)
+#define DWC_GUSBCFG_PHYIF		(1<<3)
+#define DWC_GUSBCFG_ULPI_UTIM_SEL	(1<<4)
+#define DWC_GUSBCFG_PHYSEL		(1<<6)
+#define DWC_GUSBCFG_SRPCAP		(1<<8)
+#define DWC_GUSBCFG_HNPCAP		(1<<9)
+#define DWC_GUSBCFG_FORCEHSTMODE	(1<<29)
 
 #define DWC_GRXFSIX_RXFDEP(x) 1
 #define	DWC_GNPTXFSIZ		0x028
@@ -254,57 +265,58 @@ struct hwcfg {
 
 } hwcfg;
 
-void dwc_modify32(int address, u32 clear, u32 set)
+int dwc_wait_xfer_complete(int channel)
 {
-	dwc_write32(address, (dwc_read32(address) & ~clear) | set);
+	unsigned int start;
+	const unsigned int timeout = 10000000;
+
+	/* wait for xfer complete */
+	start = get_timer(0);
+	while (get_timer(start) < timeout) {
+		if ((__raw_readl(usb_base + DWC_HCINT(channel))
+				& (DWC_HCINT_XFERCOMP)))
+			return 0;
+	}
+
+	return -1;
 }
 
 int wait_for_connection(void)
 {
-	int loop = 0;
-	u32 gintmsk = dwc_read32(internal_base + DWC_GINTMSK);
-	gintmsk |= DWC_GINTMSK_PRTINTMSK;
-	dwc_write32(internal_base + DWC_GINTMSK, gintmsk);
+	unsigned int start;
+	const unsigned int timeout = 10000;
 
-	u32 hcfg = dwc_read32(internal_base + DWC_HCFG);
-	hcfg &= ~DWC_HPRT_FSLSUPP;
-	dwc_write32(internal_base + DWC_HCFG, hcfg);
+	setbits_le32(usb_base + DWC_GINTMSK, DWC_GINTMSK_PRTINTMSK);
+	clrbits_le32(usb_base + DWC_HCFG, DWC_HPRT_FSLSUPP);
 
+	__raw_writel(DWC_GAHBCFG_GLBLINTRMSK, usb_base + DWC_GAHBCFG);
 
-	dwc_write32(internal_base+DWC_GAHBCFG, 0x1);
-	dwc_write32(internal_base+DWC_GUSBCFG, 0x00800000);
-	dwc_write32(internal_base+DWC_HCFG, 0x4);
-
-	u32 hprt = dwc_read32(internal_base + DWC_HPRT);
-	hprt |= DWC_HPRT_PRTPWR;
-	dwc_write32(internal_base + DWC_HPRT, hprt);
+	setbits_le32(usb_base + DWC_HPRT, DWC_HPRT_PRTPWR);
 
 	/*
 	 * ensure core is in A-host mode and connected
 	 * we'll have to loop a couple of times, and wait a little
 	 * so that prtpwr gets its time to init
 	 */
-	while (!(dwc_read32(internal_base+DWC_HPRT) & DWC_HPRT_PRTCONNSTS)
-			&& loop < 500) {
-		udelay(1000);
-		loop++;
-	}
+	start = get_timer(0);
+	do {
+		if (get_timer(start) > timeout)
+			return -1;
+	} while (!(__raw_readl(usb_base + DWC_HPRT) & DWC_HPRT_PRTDET));
 
-	if ((dwc_read32(internal_base+DWC_GINTSTS) & DWC_GINTSTS_CURMOD) != 1)
+	if ((__raw_readl(usb_base + DWC_GINTSTS) & DWC_GINTSTS_CURMOD) != 1)
 		return -1;
 
 	/* clears the port connected interrupt */
-	dwc_write32(internal_base+DWC_HPRT,
-		dwc_read32(internal_base+DWC_HPRT) | DWC_HPRT_PRTDET);
+	__raw_writel(__raw_readl(usb_base + DWC_HPRT) | DWC_HPRT_PRTDET,
+		usb_base + DWC_HPRT);
 
 	return 0;
 }
 
 int port_reset(void)
 {
-	u32 hprt = dwc_read32(internal_base+DWC_HPRT);
-	hprt |= DWC_HPRT_PRTRST;
-	dwc_write32(internal_base + DWC_HPRT, hprt);
+	setbits_le32(usb_base + DWC_HPRT, DWC_HPRT_PRTRST);
 	{
 		/*
 		 * wait for minimum of 10ms for the reset complete
@@ -312,8 +324,7 @@ int port_reset(void)
 		 */
 		udelay(15000);
 	}
-	hprt &= ~DWC_HPRT_PRTRST;
-	dwc_write32(internal_base + DWC_HPRT, hprt);
+	clrbits_le32(usb_base + DWC_HPRT, DWC_HPRT_PRTRST);
 	return 0;
 }
 
@@ -321,83 +332,83 @@ int wait_for_debounce(void)
 {
 	/* if not hnp and srp capable, just return 0 */
 	return 0;
-/*	while (!(dwc_read32(internal_base+DWC_GOTGINT) &
-		DWC_GOTGINT_DBNCEDONE)){
-		udelay(100);
-	}
-	return 0;*/
 }
 
 int port_enabled(void)
 {
-	while (!(dwc_read32(internal_base+DWC_GINTSTS) & DWC_GINTSTS_PRTINT))
+	while (!(__raw_readl(usb_base + DWC_HPRT) & DWC_HPRT_PRTENCHNG))
 		udelay(100);
 	return 0;
 }
 
 int port_speed(u32 speed)
 {
-	u32 hprt = dwc_read32(internal_base+DWC_HPRT);
-	hprt &= ~DWC_HPRT_PRTSPD_MSK;
-	hprt |= speed;
-
-	while (!(dwc_read32(internal_base+DWC_GINTSTS) & DWC_GINTSTS_PRTINT))
+	while (!(__raw_readl(usb_base + DWC_GINTSTS) & DWC_GINTSTS_PRTINT))
 		udelay(100);
 	return 0;
 }
 
 int dyn_fifo_config(void)
 {
-	dwc_write32(internal_base+DWC_GRXFSIZ,
-			DWC_GRXFSIX_RXFDEP(CONFIG_DWC_USB_RXFDEP));
-	dwc_write32(internal_base+DWC_GNPTXFSIZ,
-			DWC_GNPTXFSIZ_NPTXFDEP(CONFIG_DWC_USB_NPTXFDEP));
-	dwc_write32(internal_base+DWC_GNPTXFSIZ,
-			DWC_GNPTXFSIZ_NPTXSTADDR(CONFIG_DWC_USB_NPTXFSTADDR));
+	__raw_writel(CONFIG_DWC_USB_RXFDEP,
+			usb_base + DWC_GRXFSIZ);
+	__raw_writel(CONFIG_DWC_USB_NPTXFDEP,
+			usb_base + DWC_GNPTXFSIZ);
+	__raw_writel(CONFIG_DWC_USB_HPTXFSIZ,
+			usb_base + DWC_HPTXFSIZ);
+	return 0;
+}
+
+int switch_to_host(void)
+{
+	setbits_le32(usb_base + DWC_GUSBCFG, DWC_GUSBCFG_FORCEHSTMODE);
+	udelay(25000); /* 25ms delay until the USB switches to host mode */
+
+	if ((__raw_readl(usb_base + DWC_GINTSTS) & DWC_GINTSTS_CURMOD) != 1)
+		return -1;
+
 	return 0;
 }
 
 int dwc_host_init(void)
 {
+	if (switch_to_host())
+		return 1<<1;
 	if (wait_for_connection())
 		return 1<<2;
 	if (port_reset())
 		return 1<<3;
 	if (port_enabled())
-		return 1<<5;
+		return 1<<4;
 	if (port_speed(DWC_HPRT_PRTSPD_HS))
-		return 1<<4;
+		return 1<<5;
+	if (dyn_fifo_config())
+		return 1<<6;
 	if (wait_for_debounce())
-		return 1<<4;
+		return 1<<7;
 	return 0;
 }
 
 void dwc_core_init(struct core_init init)
 {
-	int otg_base = internal_base;
-	u32 gahbcfg = dwc_read32(otg_base + DWC_GAHBCFG);
 	if (init.dma)
-		gahbcfg |= DWC_GAHBCFG_DMAEN;
+		setbits_le32(usb_base + DWC_GAHBCFG, DWC_GAHBCFG_DMAEN);
 	else
-		gahbcfg &= ~DWC_GAHBCFG_DMAEN;
-	gahbcfg |= DWC_GAHBCFG_BURSTLEN(0);
-	gahbcfg |= DWC_GAHBCFG_GLBLINTRMSK;
-	dwc_write32(otg_base + DWC_GAHBCFG, gahbcfg);
+		clrbits_le32(usb_base + DWC_GAHBCFG, DWC_GAHBCFG_DMAEN);
+	setbits_le32(usb_base + DWC_GAHBCFG,
+		DWC_GAHBCFG_BURSTLEN(0) | DWC_GAHBCFG_GLBLINTRMSK);
 
 	/*
 	 * Configuring the txfifo, only in slave mode we need this interrupt
 	 * don't really need this, since we're not using interrupt
 	 */
-	if (!init.dma) {
-		dwc_modify32(otg_base+DWC_GAHBCFG, 0, DWC_GAHBCFG_NPTXFEMPLVL);
-		dwc_modify32(otg_base+DWC_GAHBCFG, 0, DWC_GAHBCFG_PTXFEMPLVL);
-	}
+	if (!init.dma)
+		setbits_le32(usb_base + DWC_GAHBCFG,
+			DWC_GAHBCFG_NPTXFEMPLVL | DWC_GAHBCFG_PTXFEMPLVL);
 
-	u32 gintmsk = dwc_read32(otg_base+DWC_GINTMSK);
-	gintmsk &= ~(DWC_GINTMSK_RXFLVL);
-	dwc_write32(otg_base + DWC_GINTMSK, gintmsk);
+	clrbits_le32(usb_base + DWC_GINTMSK, DWC_GINTMSK_RXFLVL);
 
-	u32 gusbcfg = dwc_read32(otg_base+DWC_GUSBCFG);
+	u32 gusbcfg = __raw_readl(usb_base + DWC_GUSBCFG);
 	gusbcfg = init.hnp_capable ? gusbcfg | DWC_GUSBCFG_HNPCAP
 			: gusbcfg & ~(DWC_GUSBCFG_HNPCAP);
 	gusbcfg = init.srp_capable ? gusbcfg | DWC_GUSBCFG_SRPCAP
@@ -405,11 +416,11 @@ void dwc_core_init(struct core_init init)
 	gusbcfg &= ~DWC_GUSBCFG_PHYSEL;
 	gusbcfg |= DWC_GUSBCFG_ULPI_UTIM_SEL;
 	gusbcfg &= ~DWC_GUSBCFG_PHYIF;
-	dwc_write32(otg_base+DWC_GUSBCFG, gusbcfg);
+	__raw_writel(gusbcfg, usb_base + DWC_GUSBCFG);
 
-	gintmsk |= DWC_GINTMSK_OTGINTR;
-	gintmsk |= DWC_GINTMSK_MODEMIS;
-	dwc_write32(otg_base + DWC_GINTMSK, gintmsk);
+	setbits_le32(usb_base + DWC_GINTMSK,
+		DWC_GINTMSK_OTGINTR | DWC_GINTMSK_MODEMIS);
+
 }
 
 enum ep_type {
@@ -438,16 +449,16 @@ int dwc_setup_transfer(struct packet p)
 	u32 haintmsk = 0x0;
 	u32 hcintmsk = 0x0;
 
-	haintmsk = dwc_read32(internal_base+DWC_HAINTMSK) | (1 << p.channel);
-	dwc_write32(internal_base+DWC_HAINTMSK, haintmsk);
+	haintmsk = __raw_readl(usb_base + DWC_HAINTMSK) | (1 << p.channel);
+	__raw_writel(haintmsk, usb_base + DWC_HAINTMSK);
 
-	hcintmsk = dwc_read32(internal_base+DWC_HCINTMSK) | DWC_HCINT_XFERCOMP;
-	dwc_write32(internal_base+DWC_HCINTMSK, hcintmsk);
+	hcintmsk = __raw_readl(usb_base + DWC_HCINTMSK) | DWC_HCINT_XFERCOMP;
+	__raw_writel(hcintmsk, usb_base + DWC_HCINTMSK);
 
 	hctsizn |= DWC_HCTSIZN_PKTCNT(p.packet_count);
 	hctsizn |= DWC_HCTSIZN_XFERSIZE(p.xfer_size);
 	hctsizn |= DWC_HCTSIZN_PID(p.pid);
-	dwc_write32(internal_base+DWC_HCTSIZN(p.channel), hctsizn);
+	__raw_writel(hctsizn, usb_base + DWC_HCTSIZN(p.channel));
 
 	hccharn = p.ep_is_in ? hccharn | DWC_HCCHARN_EPDIR
 				: hccharn & ~DWC_HCCHARN_EPDIR;
@@ -457,8 +468,8 @@ int dwc_setup_transfer(struct packet p)
 	hccharn |= DWC_HCCHARN_MPS(p.mps);
 	hccharn |= 1<<20;
 	hccharn |= DWC_HCCHARN_CHENA;
-	dwc_write32(internal_base+DWC_HCCHARN(p.channel), hccharn);
-
+	hccharn &= ~DWC_HCCHARN_CHDIS;
+	__raw_writel(hccharn, usb_base + DWC_HCCHARN(p.channel));
 
 	return 0;
 }
@@ -467,21 +478,26 @@ static int dwc_read_packet(struct packet p, void *odata)
 {
 	u8 *data = (u8 *)odata;
 	/* clear the xfer complete interrupt */
-	dwc_write32(internal_base+DWC_HCINT(p.channel), 1);
+	__raw_writel(DWC_HCINT_XFERCOMP, usb_base + DWC_HCINT(p.channel));
 
+	setbits_le32(usb_base + DWC_GINTMSK, DWC_GINTSTS_RXFLVL);
 	/* wait for rxfifo non empty */
-	while (!(dwc_read32(internal_base+DWC_GINTSTS) & DWC_GINTSTS_RXFLVL))
-		udelay(100);
+	while (!(__raw_readl(usb_base + DWC_GINTSTS) & DWC_GINTSTS_RXFLVL)) {
+		u32 hccharn = (__raw_readl(usb_base + DWC_HCCHARN(p.channel)) |
+				DWC_HCCHARN_CHENA) & ~DWC_HCCHARN_CHDIS;
+		__raw_writel(hccharn, usb_base + DWC_HCCHARN(p.channel));
+	}
 
 	int read_total = 0;
 
 	int packet_read = 0;
 
 	/* masking rxfifo not empty interrupt */
-	dwc_write32(internal_base+DWC_GINTMSK,
-		dwc_read32(internal_base+DWC_GINTMSK) | DWC_GINTSTS_RXFLVL);
+	setbits_le32(usb_base + DWC_GINTMSK, DWC_GINTSTS_RXFLVL);
+	__raw_writel(__raw_readl(usb_base + DWC_GINTMSK) | DWC_GINTSTS_RXFLVL,
+			usb_base + DWC_GINTMSK);
 	while (1) {
-		u32 packet_status = dwc_read32(internal_base+DWC_GRXSTSP);
+		u32 packet_status = __raw_readl(usb_base + DWC_GRXSTSP);
 		if ((packet_status & DWC_GRXSTSP_PKTSTS(0xF)) ==
 			DWC_GRXSTSP_PKTSTS(3)) {
 			break;
@@ -494,7 +510,7 @@ static int dwc_read_packet(struct packet p, void *odata)
 			read_total += bytecount;
 
 			while (bytecount > 0) {
-				u32 read = dwc_read32(internal_base +
+				u32 read = __raw_readl(usb_base +
 						FIFO(p.channel));
 				if (bytecount--)
 					*data++ = read & 0xff;
@@ -505,43 +521,86 @@ static int dwc_read_packet(struct packet p, void *odata)
 				if (bytecount--)
 					*data++ = (read & (0xff << 24)) >> 24;
 			}
+
 		}
 		/* re-enable the channel if pktcnt is > 0 */
 		if (packet_read < p.packet_count) {
-			u32 hccharn = dwc_read32(internal_base+
-				DWC_HCCHARN(p.channel));
-			hccharn |= DWC_HCCHARN_CHENA;
-			dwc_write32(internal_base+DWC_HCCHARN(p.channel),
-				hccharn);
+			setbits_le32(usb_base + DWC_HCCHARN(p.channel),
+				DWC_HCCHARN_CHENA);
 		}
 	}
 
+
 	/* wait for xfer complete interrupt. */
-	while (!(dwc_read32(internal_base+DWC_HCINT(p.channel)) & 1<<0))
-		udelay(100);
+	if (dwc_wait_xfer_complete(p.channel))
+		printf("DW_USB: Timed out waiting for xfer complete interrupt");
+
 	/* clear the xfer complete interrupt */
-	dwc_write32(internal_base+DWC_HCINT(p.channel), 1);
+	__raw_writel(DWC_HCINT_XFERCOMP, usb_base + DWC_HCINT(p.channel));
 
 	return read_total;
 }
 
 static int dwc_send_packet(struct packet p, u32 *data, int datasize)
 {
-
-	/* clear xfer complete interrupt. */
-	dwc_write32(internal_base+DWC_HCINT(p.channel), 1);
 	int i = 0;
+	unsigned int start;
+	const unsigned int timeout = 1000;
+	/* clear xfer complete interrupt. */
+	__raw_writel(DWC_HCINT_XFERCOMP, usb_base + DWC_HCINT(p.channel));
 	for (; i < datasize; i++)
-		dwc_write32(internal_base + FIFO(p.channel), data[i]);
-	while (!(dwc_read32(internal_base+DWC_HCINT(p.channel)) & (1<<0)))
-		udelay(100);
+		__raw_writel(data[i], usb_base + FIFO(p.channel));
+
+	start = get_timer(0);
+	while (get_timer(start) < timeout) {
+		if (__raw_readl(usb_base + DWC_HCINT(p.channel)) &
+			(DWC_HCINT_XFERCOMP))
+			break;
+		if (__raw_readl(usb_base + DWC_HCINT(p.channel)) &
+			(DWC_HCINT_NAK)) {
+			__raw_writel(DWC_HCINT_NAK,
+				usb_base + DWC_HCINT(p.channel));
+			__raw_writel(
+				(__raw_readl(usb_base + DWC_HCCHARN(p.channel)))
+				| (DWC_HCCHARN_CHDIS & ~DWC_HCCHARN_CHENA),
+				usb_base + DWC_HCCHARN(p.channel));
+
+			u32 hcint = __raw_readl(usb_base +
+						DWC_HCINT(p.channel));
+			while (!(hcint & (DWC_HCINT_CHHLTD))) {
+				hcint = __raw_readl(usb_base +
+						DWC_HCINT(p.channel));
+				if (__raw_readl(usb_base + DWC_GINTSTS)
+					& DWC_GINTSTS_RXFLVL) {
+					__raw_readl(usb_base + DWC_GRXSTSP);
+				}
+			}
+			__raw_writel(DWC_HCINT_CHHLTD,
+				usb_base + DWC_HCINT(p.channel));
+			return -1;
+		}
+	}
+
+	if (!(__raw_readl(usb_base + DWC_HCINT(p.channel)) &
+		(DWC_HCINT_XFERCOMP)))
+		printf("DW_USB: Transfer completion interrupt timeout\n");
+
 	/* disables the xfer complete interrupt */
-	dwc_write32(internal_base+DWC_HCINT(p.channel),
-		dwc_read32(internal_base+DWC_HCINT(p.channel)) | (1<<0));
+	setbits_le32(usb_base + DWC_HCINT(p.channel), DWC_HCINT_XFERCOMP);
+
+	start = get_timer(0);
+	while ((__raw_readl(usb_base + DWC_HCCHARN(p.channel))
+		& DWC_HCCHARN_CHENA)) {
+		if (get_timer(start) > timeout) {
+			printf("Timed out waiting for channel to disable\n");
+			return -1;
+		}
+	}
+
 	return 0;
 }
 
-int usb_lowlevel_init(void)
+int usb_lowlevel_init(int index, void **controller)
 {
 	struct core_init init;
 	init.dma = 0;
@@ -556,44 +615,84 @@ int usb_lowlevel_init(void)
 	return 0;
 }
 
-int usb_lowlevel_stop(void)
+int usb_lowlevel_stop(int index)
 {
+	clrbits_le32(usb_base + DWC_HPRT, DWC_HPRT_PRTPWR);
 	return 0;
 }
+
 
 int submit_bulk_msg(struct usb_device *dev, unsigned long pipe,
 			void *buffer, int transfer_len)
 {
 	int dir_out = usb_pipeout(pipe);
 	int ep = usb_pipeendpoint(pipe);
+	int total_read = 0;
+	int sent = 0;
+	unsigned int start;
+	const unsigned int timeout = 1000;
 
 	struct packet bulk_msg;
-	bulk_msg.channel = 0;
+	bulk_msg.channel = 3;
 	bulk_msg.endpoint = ep;
 	bulk_msg.packet_count = (transfer_len-1) / 512 + 1;
 	bulk_msg.xfer_size = transfer_len;
 	bulk_msg.ep_is_in = !dir_out;
 	bulk_msg.devaddr = usb_pipedevice(pipe);
 	bulk_msg.type = EP_BULK;
-	bulk_msg.mps = 512;
-	bulk_msg.pid = 0;
+	bulk_msg.mps = MAX_PACKET_SIZE;
+	bulk_msg.pid =
+		usb_gettoggle(dev, ep, dir_out) == DATA0 ? DATA0 : DATA1;
 
-	dwc_setup_transfer(bulk_msg);
 
-	if (dir_out)
-		dwc_send_packet(bulk_msg, buffer, transfer_len/4+1);
+	if (dir_out) {
+		__raw_writel(DWC_HCINT_ACK | DWC_HCINT_NAK,
+			usb_base + DWC_HCINT(bulk_msg.channel));
+
+		start = get_timer(0);
+		while (get_timer(start) < timeout && !sent) {
+			dwc_setup_transfer(bulk_msg);
+			if (dwc_send_packet(bulk_msg, buffer, transfer_len/4+1)
+				== 0)
+				sent = 1;
+		}
+		if (!sent)
+			return -1;
+
+		usb_dotoggle(dev, ep, dir_out);
+	}
 	else {
-		dwc_read_packet(bulk_msg, buffer);
+		while (total_read < transfer_len) {
+			bulk_msg.pid =
+				usb_gettoggle(dev, ep, dir_out) == DATA0 ?
+					DATA0 : DATA1;
 
-		/* halt the channel */
-		dwc_write32(internal_base+DWC_HCCHARN(bulk_msg.channel),
-			dwc_read32(internal_base+DWC_HCCHARN(bulk_msg.channel))
-			| DWC_HCCHARN_CHDIS);
-		u32 packet_status = dwc_read32(internal_base+DWC_GRXSTSP);
-		if ((packet_status & DWC_GRXSTSP_PKTSTS(0xf)) !=
-		DWC_GRXSTSP_PKTSTS(0x7))
-			printf("WARNING: channel not halted, pktsts:%x\n",
-				packet_status);
+			__raw_writel(DWC_HCINT_ACK | DWC_HCINT_NAK,
+				usb_base + DWC_HCINT(bulk_msg.channel));
+
+			dwc_setup_transfer(bulk_msg);
+			total_read += dwc_read_packet(bulk_msg,
+				buffer + total_read);
+
+			/* halt the channel */
+			setbits_le32(usb_base + DWC_HCCHARN(bulk_msg.channel),
+				DWC_HCCHARN_CHDIS | DWC_HCCHARN_CHENA);
+
+			u32 hcint = __raw_readl(
+				usb_base + DWC_HCINT(bulk_msg.channel));
+			while (!(hcint & (DWC_HCINT_CHHLTD))) {
+				hcint = __raw_readl(
+					usb_base + DWC_HCINT(bulk_msg.channel));
+
+			if (__raw_readl(usb_base + DWC_GINTSTS)
+					& DWC_GINTSTS_RXFLVL)
+				__raw_readl(usb_base + DWC_GRXSTSP);
+			}
+
+			__raw_writel(DWC_HCINT_CHHLTD,
+				usb_base + DWC_HCINT(bulk_msg.channel));
+			usb_dotoggle(dev, ep, dir_out);
+		}
 	}
 
 	/* bulk transfer is complete */
@@ -606,6 +705,7 @@ int submit_bulk_msg(struct usb_device *dev, unsigned long pipe,
 static int ctrlreq_setup_phase(struct usb_device *dev,
 				struct devrequest *setup, unsigned long pipe) {
 	struct packet control_msg;
+	int ret = 0;
 
 	control_msg.channel = 0;
 	control_msg.endpoint = 0;
@@ -614,28 +714,29 @@ static int ctrlreq_setup_phase(struct usb_device *dev,
 	control_msg.ep_is_in = 0;
 	control_msg.devaddr = usb_pipedevice(pipe);
 	control_msg.type = EP_CTRL;
-	control_msg.mps = 64;
-	control_msg.pid = 3;
+	control_msg.mps = MAX_PACKET_SIZE;
+	control_msg.pid = DATASETUP;
 
 	/* clear xfer complete interrupt. */
-	dwc_write32(internal_base+DWC_HCINT(control_msg.channel), 1);
+	__raw_writel(DWC_HCINT_XFERCOMP,
+		usb_base + DWC_HCINT(control_msg.channel));
+	__raw_writel(DWC_HCINT_NAK | DWC_HCINT_ACK,
+		usb_base + DWC_HCINT(control_msg.channel));
 
 	dwc_setup_transfer(control_msg);
 
-	dwc_send_packet(control_msg, (void *)setup,
+	ret = dwc_send_packet(control_msg, (void *)setup,
 		sizeof(struct devrequest)/4);
 
-	control_msg.xfer_size = 0;
+	__raw_writel(DWC_HCINT_XFERCOMP,
+		usb_base + DWC_HCINT(control_msg.channel));
 
-	/* wait for xfer complete */
-	while ((dwc_read32(internal_base+DWC_HCINT(control_msg.channel))
-		& (1<<31)) != 0)
-		udelay(100);
-	return 0;
+	return ret;
 }
 
 static int ctrlreq_out_data_phase(struct usb_device *dev, unsigned long pipe,
 			int len, void *buffer) {
+	usb_settoggle(dev, usb_pipeendpoint(pipe), 1, 0);
 	int result;
 	int devnum = usb_pipedevice(pipe);
 	int epnum = usb_pipeendpoint(pipe);
@@ -657,7 +758,7 @@ static int ctrlreq_out_data_phase(struct usb_device *dev, unsigned long pipe,
 		control_msg.devaddr = devnum;
 		control_msg.type = EP_CTRL;
 		control_msg.mps = 3;
-		control_msg.pid = 3;
+		control_msg.pid = DATA1;
 
 		result = dwc_send_packet(control_msg, buffer, txlen);
 
@@ -668,17 +769,15 @@ static int ctrlreq_out_data_phase(struct usb_device *dev, unsigned long pipe,
 		dev->act_len = txlen;
 	}
 
-	/* wait for xfer complete */
-	while ((dwc_read32(internal_base+DWC_HCINT(control_msg.channel))
-		& (1<<31)) != 0) {
-		udelay(100);
-	}
 	return result;
 }
 
-static int ctrlreq_out_status_phase(struct usb_device *dev, unsigned long pipe)
+static int ctrlreq_in_status_phase(struct usb_device *dev, unsigned long pipe)
 {
+	u32 tmp[10];
 	struct packet control_msg;
+
+	usb_settoggle(dev, usb_pipeendpoint(pipe), 1, 0);
 
 	control_msg.channel = 0;
 	control_msg.endpoint = 0;
@@ -687,35 +786,30 @@ static int ctrlreq_out_status_phase(struct usb_device *dev, unsigned long pipe)
 	control_msg.ep_is_in = 1;
 	control_msg.devaddr = usb_pipedevice(pipe);
 	control_msg.type = EP_CTRL;
-	control_msg.mps = 1;
-	control_msg.pid = 2;
+	control_msg.mps = MAX_PACKET_SIZE;
+	control_msg.pid = DATA1;
 
-	dwc_write32(internal_base+DWC_HCINT(control_msg.channel), 0x1);
-
+	setbits_le32(usb_base + DWC_HCINT(control_msg.channel),
+		DWC_HCINT_XFERCOMP | DWC_HCINT_NAK | DWC_HCINT_ACK);
 	dwc_setup_transfer(control_msg);
-	dwc_write32(internal_base+DWC_HCCHARN(control_msg.channel),
-		dwc_read32(internal_base+DWC_HCCHARN(control_msg.channel))
-		| DWC_HCCHARN_CHENA);
 
 	/* status phase, shouldn't have any IN data, use a tmp variable
 	to read */
-	u32 tmp[10];
 	dwc_read_packet(control_msg, tmp);
 
-	dwc_write32(internal_base+DWC_HCINT(control_msg.channel),
-		dwc_read32(internal_base+DWC_HCINT(control_msg.channel))
-		| (1<<0));
+	setbits_le32(usb_base + DWC_HCINT(control_msg.channel),
+		DWC_HCINT_XFERCOMP);
 
 	/* nothing to send here, just remove the xfer complete status */
-	dwc_write32(internal_base+DWC_HCINT(control_msg.channel),
-		dwc_read32(internal_base+DWC_HCINT(control_msg.channel))
-		& ~(1<<0));
+	clrbits_le32(usb_base + DWC_HCINT(control_msg.channel),
+		DWC_HCINT_XFERCOMP);
 
 	return 0;
 }
 
 static int ctrlreq_in_data_phase(struct usb_device *dev, unsigned long pipe,
 				int len, void *buffer) {
+	usb_settoggle(dev, usb_pipeendpoint(pipe), 1, 0);
 	u32 rxlen = 0;
 	u32 nextlen = 0;
 	u8  maxpktsize = (1 << dev->maxpacketsize) * 8;
@@ -735,28 +829,38 @@ static int ctrlreq_in_data_phase(struct usb_device *dev, unsigned long pipe,
 		control_msg.ep_is_in = 1;
 		control_msg.devaddr = usb_pipedevice(pipe);
 		control_msg.type = EP_CTRL;
-		control_msg.mps = 64;
-		control_msg.pid = 2;
+		control_msg.mps = MAX_PACKET_SIZE;
+		control_msg.pid = DATA1;
 
-		dwc_setup_transfer(control_msg);
+		__raw_writel(DWC_HCINT_ACK | DWC_HCINT_NAK,
+			usb_base + DWC_HCINT(control_msg.channel));
 		dwc_setup_transfer(control_msg);
 
 		rxedlength = dwc_read_packet(control_msg,
 			(u32 *)&rxbuff[rxlen]);
 
 		/* halt the channel... */
-		dwc_write32(internal_base+DWC_HCCHARN(control_msg.channel),
-			dwc_read32(
-			internal_base+DWC_HCCHARN(control_msg.channel)
-			) | DWC_HCCHARN_CHDIS);
-		u32 packet_status = dwc_read32(internal_base+DWC_GRXSTSP);
-		if ((packet_status & DWC_GRXSTSP_PKTSTS(0xf))
-			!= DWC_GRXSTSP_PKTSTS(0x7))
-			printf("WARNING: channel not halted, pktsts:%x\n",
-				(u32)packet_status);
+		__raw_writel(
+			__raw_readl(usb_base + DWC_HCCHARN(control_msg.channel)
+			) | DWC_HCCHARN_CHDIS | DWC_HCCHARN_CHENA,
+			usb_base + DWC_HCCHARN(control_msg.channel));
+
+		u32 hcint = __raw_readl(
+			usb_base + DWC_HCINT(control_msg.channel));
+		while (!(hcint & (DWC_HCINT_CHHLTD))) {
+			hcint = __raw_readl(
+				usb_base + DWC_HCINT(control_msg.channel));
+			if (__raw_readl(usb_base + DWC_GINTSTS)
+				& DWC_GINTSTS_RXFLVL) {
+				__raw_readl(usb_base + DWC_GRXSTSP);
+			}
+		}
+		__raw_writel(DWC_HCINT_CHHLTD,
+			usb_base + DWC_HCINT(control_msg.channel));
 
 		/* clear xfer complete interrupt. */
-		dwc_write32(internal_base+DWC_HCINT(control_msg.channel), 1);
+		__raw_writel(DWC_HCINT_XFERCOMP,
+			usb_base + DWC_HCINT(control_msg.channel));
 
 		/* short packet? */
 		if (rxedlength != nextlen) {
@@ -770,44 +874,37 @@ static int ctrlreq_in_data_phase(struct usb_device *dev, unsigned long pipe,
 	return 0;
 }
 
-static int ctrlreq_in_status_phase(struct usb_device *dev, unsigned long pipe)
+static int ctrlreq_out_status_phase(struct usb_device *dev, unsigned long pipe)
 {
 	struct packet control_msg;
 
+	usb_settoggle(dev, usb_pipeendpoint(pipe), 1, 0);
+
 	control_msg.channel = 0;
 	control_msg.endpoint = 0;
-	control_msg.packet_count = 0;
+	control_msg.packet_count = 1;
 	control_msg.xfer_size = 0;
 	control_msg.ep_is_in = 0;
 	control_msg.devaddr = usb_pipedevice(pipe);
 	control_msg.type = EP_CTRL;
-	control_msg.mps = 64;
-	control_msg.pid = 0;
-
-	dwc_read32(internal_base+DWC_HCINT(control_msg.channel));
-	dwc_read32(internal_base+DWC_HCINT(control_msg.channel));
-	dwc_read32(internal_base+DWC_HCINT(control_msg.channel));
-	dwc_read32(internal_base+DWC_HCINT(control_msg.channel));
-	dwc_read32(internal_base+DWC_HCINT(control_msg.channel));
-	dwc_read32(internal_base+DWC_HCINT(control_msg.channel));
-	dwc_read32(internal_base+DWC_HCINT(control_msg.channel));
-	dwc_read32(internal_base+DWC_HCINT(control_msg.channel));
-	dwc_read32(internal_base+DWC_HCINT(control_msg.channel));
-	dwc_read32(internal_base+DWC_HCINT(control_msg.channel));
-	dwc_read32(internal_base+DWC_HCINT(control_msg.channel));
+	control_msg.mps = MAX_PACKET_SIZE;
+	control_msg.pid = DATA1;
 
 	/* clear xfer complete interrupt. */
-	dwc_write32(internal_base+DWC_HCINT(control_msg.channel), 1);
+	__raw_writel(DWC_HCINT_XFERCOMP,
+		usb_base + DWC_HCINT(control_msg.channel));
 
+	__raw_writel(DWC_HCINT_ACK | DWC_HCINT_NAK,
+		usb_base + DWC_HCINT(control_msg.channel));
 	dwc_setup_transfer(control_msg);
 
 	/* should wait for interrupt hcint here... */
-	while (!(dwc_read32(internal_base+DWC_HCINT(control_msg.channel))
-		& 0x1))
-		udelay(100);
+	if (dwc_wait_xfer_complete(control_msg.channel))
+		printf("DW_USB: Timed out waiting for xfer complete interrupt");
 
 	/* clear xfer complete interrupt. */
-	dwc_write32(internal_base+DWC_HCINT(control_msg.channel), 1);
+	__raw_writel(DWC_HCINT_XFERCOMP,
+		usb_base + DWC_HCINT(control_msg.channel));
 
 	return 0;
 }
@@ -820,51 +917,21 @@ int submit_int_msg(struct usb_device *dev, unsigned long pipe, void *buffer,
 	return -1;
 }
 
-
-
 int submit_control_msg(struct usb_device *dev, unsigned long pipe, void *buffer,
 			int transfer_len, struct devrequest *setup) {
-
 	if (ctrlreq_setup_phase(dev, setup, pipe) < 0)
-		return 0;
-
-	switch (setup->request) {
-	case USB_REQ_GET_DESCRIPTOR:
-	case USB_REQ_GET_CONFIGURATION:
-	case USB_REQ_GET_INTERFACE:
-	case USB_REQ_GET_STATUS:
-	case USB_MSC_BBB_GET_MAX_LUN:
-		/* control transfer in-data-phase */
-		if (ctrlreq_in_data_phase(dev, pipe, transfer_len, buffer) < 0)
-			return 0;
-		/* control transfer out-status-phase */
-		if (ctrlreq_in_status_phase(dev, pipe) < 0)
-			return 0;
-		break;
-
-	case USB_REQ_SET_CONFIGURATION:
-	case USB_REQ_SET_ADDRESS:
-	case USB_REQ_SET_FEATURE:
-	case USB_REQ_SET_INTERFACE:
-	case USB_REQ_CLEAR_FEATURE:
-	case USB_MSC_BBB_RESET:
-		/* control transfer in status phase */
-		if (ctrlreq_out_status_phase(dev, pipe) < 0)
-			return 0;
-		break;
-
-	case USB_REQ_SET_DESCRIPTOR:
-		/* control transfer out data phase */
-		if (ctrlreq_out_data_phase(dev, pipe, transfer_len, buffer) < 0)
-			return 0;
-		/* control transfer in status phase */
-		if (ctrlreq_out_status_phase(dev, pipe) < 0)
-			return 0;
-		break;
-
-	default:
-		/* unhandled control transfer */
 		return -1;
+
+	if (usb_pipein(pipe)) {
+		if (ctrlreq_in_data_phase(dev, pipe, transfer_len, buffer) < 0)
+			return -1;
+		if (ctrlreq_out_status_phase(dev, pipe) < 0)
+			return -1;
+	} else {
+		if (ctrlreq_out_data_phase(dev, pipe, transfer_len, buffer) < 0)
+			return -1;
+		if (ctrlreq_in_status_phase(dev, pipe) < 0)
+			return -1;
 	}
 
 	dev->status = 0;
@@ -872,3 +939,4 @@ int submit_control_msg(struct usb_device *dev, unsigned long pipe, void *buffer,
 
 	return transfer_len;
 }
+
