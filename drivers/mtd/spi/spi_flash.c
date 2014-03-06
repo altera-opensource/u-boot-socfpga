@@ -123,15 +123,15 @@ int spi_flash_cmd_write_multi(struct spi_flash *flash, u32 offset,
 			break;
 		}
 
+		ret = spi_flash_cmd_wait_ready(flash, SPI_FLASH_PROG_TIMEOUT);
+		if (ret)
+			break;
+
 		if (flash->poll_read_status) {
 			ret = flash->poll_read_status(flash);
 			if (ret)
 				break;
 		}
-
-		ret = spi_flash_cmd_wait_ready(flash, SPI_FLASH_PROG_TIMEOUT);
-		if (ret)
-			break;
 
 		page_addr++;
 		byte_addr = 0;
@@ -264,15 +264,16 @@ int spi_flash_cmd_erase(struct spi_flash *flash, u32 offset, size_t len)
 		if (ret)
 			goto out;
 
+		ret = spi_flash_cmd_wait_ready(flash,
+			SPI_FLASH_PAGE_ERASE_TIMEOUT);
+		if (ret)
+			goto out;
+
 		if (flash->poll_read_status) {
 			ret = flash->poll_read_status(flash);
 			if (ret)
 				goto out;
 		}
-
-		ret = spi_flash_cmd_wait_ready(flash, SPI_FLASH_PAGE_ERASE_TIMEOUT);
-		if (ret)
-			goto out;
 	}
 
 	debug("SF: Successfully erased %zu bytes @ %#x\n", len, start);
