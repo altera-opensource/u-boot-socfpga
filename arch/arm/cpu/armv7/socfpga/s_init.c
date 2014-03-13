@@ -45,13 +45,6 @@ void s_init(void)
 		writel(SYSMGR_ECC_OCRAM_DERR  | SYSMGR_ECC_OCRAM_EN,
 			CONFIG_SYSMGR_ECC_OCRAM);
 
-	/* Configure the L2 controller to nake SDRAM start at 0	*/
-#ifdef CONFIG_SOCFPGA_VIRTUAL_TARGET
-	writel(0x2, SOCFPGA_L3REGS_ADDRESS);
-#else
-	writel(0x1, (SOCFPGA_MPUL2_ADDRESS + SOCFPGA_MPUL2_ADRFLTR_START));
-#endif
-
 	/* re-setup watchdog */
 	DEBUG_MEMORY
 	if (!(is_wdt_in_reset())) {
@@ -92,4 +85,10 @@ void s_init(void)
 
 #endif	/* CONFIG_SPL_BUILD */
 
+	/* Configure the L2 controller to make SDRAM start at 0	*/
+#ifdef CONFIG_SOCFPGA_VIRTUAL_TARGET
+	writel(0x2, SOCFPGA_L3REGS_ADDRESS);
+#else
+	writel(0x1, (SOCFPGA_MPUL2_ADDRESS + SOCFPGA_MPUL2_ADRFLTR_START));
+#endif
 }
