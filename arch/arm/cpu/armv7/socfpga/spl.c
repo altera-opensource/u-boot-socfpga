@@ -531,6 +531,12 @@ void spl_board_init(void)
 #endif /* CONFIG_PRELOADER_WARMRST_SKIP_CFGIO */
 #endif /* CONFIG_SOCFPGA_VIRTUAL_TARGET */
 
+	/*
+	 * If SDMMC PWREN is used, we need to ensure BootROM always reconfigure
+	 * IOCSR and pinmux after warm reset. This is to cater the use case
+	 * of board design which is using SDMMC PWREN pins.
+	 */
+	sysmgr_sdmmc_pweren_mux_check();
 
 #ifdef CONFIG_HW_WATCHDOG
 	WATCHDOG_RESET();
