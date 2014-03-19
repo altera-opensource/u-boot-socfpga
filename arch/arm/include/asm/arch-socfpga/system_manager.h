@@ -22,6 +22,7 @@
 #ifndef __ASSEMBLY__
 /* declaration for system_manager.c */
 void sysmgr_pinmux_init(void);
+void sysmgr_sdmmc_pweren_mux_check(void);
 
 /* declaration for handoff table type */
 typedef unsigned long sys_mgr_pinmux_entry_t;
@@ -65,6 +66,7 @@ extern unsigned long sys_mgr_init_table[CONFIG_HPS_PINMUX_NUM];
 
 /* pin mux */
 #define SYSMGR_PINMUXGRP		(SOCFPGA_SYSMGR_ADDRESS + 0x400)
+#define SYSMGR_PINMUXGRP_FLASHIO1	(SYSMGR_PINMUXGRP + 0x54)
 #define SYSMGR_PINMUXGRP_NANDUSEFPGA	(SYSMGR_PINMUXGRP + 0x2F0)
 #define SYSMGR_PINMUXGRP_EMAC1USEFPGA	(SYSMGR_PINMUXGRP + 0x2F8)
 #define SYSMGR_PINMUXGRP_SDMMCUSEFPGA	(SYSMGR_PINMUXGRP + 0x308)

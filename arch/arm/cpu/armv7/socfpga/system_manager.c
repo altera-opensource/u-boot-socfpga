@@ -83,3 +83,16 @@ void sysmgr_pinmux_init(void)
 		writel(reg_value, SYSMGR_FPGAINTF_MODULE);
 	}
 }
+
+/*
+ * If SDMMC PWREN is used, we need to ensure BootROM always reconfigure
+ * IOCSR and pinmux after warm reset. This is to cater the use case
+ * of board design which is using SDMMC PWREN pins.
+ */
+void sysmgr_sdmmc_pweren_mux_check(void)
+{
+	if (readl(SYSMGR_PINMUXGRP_FLASHIO1) == 3)
+		writel(SYSMGR_ROMCODEGRP_CTRL_WARMRSTCFGPINMUX |
+		       SYSMGR_ROMCODEGRP_CTRL_WARMRSTCFGIO,
+		       CONFIG_SYSMGR_ROMCODEGRP_CTRL);
+}
