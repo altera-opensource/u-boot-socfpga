@@ -161,6 +161,8 @@
 #define CONFIG_ENV_OVERWRITE
 /* Enable auto completion of commands using TAB */
 #define CONFIG_AUTO_COMPLETE
+/* Enable editing and history functions for interactive CLI operations */
+#define CONFIG_CMDLINE_EDITING
 /* Additional help message */
 #define CONFIG_SYS_LONGHELP
 /* use "hush" command parser */
