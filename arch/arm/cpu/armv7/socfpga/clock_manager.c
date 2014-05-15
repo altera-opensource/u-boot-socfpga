@@ -46,10 +46,17 @@ unsigned long cm_qspi_clock;
 static inline void cm_wait_for_lock(uint32_t mask)
 {
 	register uint32_t inter_val;
+	uint32_t retry = 0;
 	do {
 		inter_val = readl(SOCFPGA_CLKMGR_ADDRESS +
 			CLKMGR_INTER_ADDRESS) & mask;
-	} while (inter_val != mask);
+		if (inter_val == mask)
+			retry++;
+		else
+			retry = 0;
+		if (retry >= 10)
+			break;
+	} while (1);
 }
 
 /* function to poll in the fsm busy bit */
@@ -173,8 +180,37 @@ int cm_basic_init(const cm_config_t *cfg)
 		CLKMGR_BYPASS_MAINPLL_SET(CLKMGR_BYPASS_ENUM_ENABLE));
 
 	/*
-	 * Put all plls VCO registers back to reset value.
-	 * Some code might have messed with them.
+	 * Reset the SDR VCO register twice to overcome SDR PLL
+	 * phase sync issue
+	 */
+	writel(CLKMGR_SDRPLLGRP_VCO_RESET_VALUE,
+		SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_VCO_ADDRESS);
+
+	/* delay 5us */
+	udelay(5);
+
+	/*
+	 * We made sure bgpwr down was assert for 5 us. Now deassert BG PWR DN
+	 * with numerator and denominator.
+	 */
+		writel(CLKMGR_SDRPLLGRP_VCO_OUTRESET_SET(0) |
+		CLKMGR_SDRPLLGRP_VCO_OUTRESETALL_SET(0) |
+		cfg->sdram_vco_base | CLEAR_BGP_EN_PWRDN |
+		CLKMGR_SDRPLLGRP_VCO_REGEXTSEL_MASK,
+		(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_VCO_ADDRESS));
+
+	/* delay 7us */
+	udelay(7);
+
+	/* Enable sdram pll vco */
+	writel(CLKMGR_SDRPLLGRP_VCO_OUTRESET_SET(0) |
+		CLKMGR_SDRPLLGRP_VCO_OUTRESETALL_SET(0) |
+		cfg->sdram_vco_base | VCO_EN_BASE,
+		(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_VCO_ADDRESS));
+
+	/*
+	 * Now we reset for VCO include SDR VCO again. Put all plls VCO
+	 * registers back to reset value.
 	 */
 	DEBUG_MEMORY
 	writel(CLKMGR_MAINPLLGRP_VCO_RESET_VALUE,
