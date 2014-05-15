@@ -149,7 +149,8 @@ struct usb_device {
 	defined(CONFIG_USB_OMAP3) || defined(CONFIG_USB_DA8XX) || \
 	defined(CONFIG_USB_BLACKFIN) || defined(CONFIG_USB_AM35X) || \
 	defined(CONFIG_USB_MUSB_DSPS) || defined(CONFIG_USB_MUSB_AM35X) || \
-	defined(CONFIG_USB_MUSB_OMAP2PLUS) || defined(CONFIG_USB_DWC_OTG_HCD)
+	defined(CONFIG_USB_MUSB_OMAP2PLUS) || defined(CONFIG_USB_DWC_OTG_HCD) || \
+	defined(CONFIG_USB_DWC2_OTG)
 
 int usb_lowlevel_init(int index, void **controller);
 int usb_lowlevel_stop(int index);
