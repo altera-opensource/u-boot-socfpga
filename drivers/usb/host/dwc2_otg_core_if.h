@@ -569,7 +569,7 @@ extern int32_t dwc_otg_get_param_dev_perio_tx_fifo_size(dwc_otg_core_if_t *
 extern int dwc_otg_set_param_host_rx_fifo_size(dwc_otg_core_if_t *core_if,
 					       int32_t val);
 extern int32_t dwc_otg_get_param_host_rx_fifo_size(dwc_otg_core_if_t *core_if);
-#define dwc_param_host_rx_fifo_size_default 774 /* Broadcom BCM2708 */
+#define dwc_param_host_rx_fifo_size_default (516 + dwc_param_host_channels_default)
 
 /** Number of 4-byte words in the non-periodic Tx FIFO in host mode
  * when Dynamic FIFO sizing is enabled in the core.
@@ -579,7 +579,7 @@ extern int dwc_otg_set_param_host_nperio_tx_fifo_size(dwc_otg_core_if_t *
 						      core_if, int32_t val);
 extern int32_t dwc_otg_get_param_host_nperio_tx_fifo_size(dwc_otg_core_if_t *
 							  core_if);
-#define dwc_param_host_nperio_tx_fifo_size_default 0x100 /* Broadcom BCM2708 */
+#define dwc_param_host_nperio_tx_fifo_size_default 0x100
 
 /** Number of 4-byte words in the host periodic Tx FIFO when dynamic
  * FIFO sizing is enabled.
@@ -614,7 +614,7 @@ extern int32_t dwc_otg_get_param_max_packet_count(dwc_otg_core_if_t *core_if);
 extern int dwc_otg_set_param_host_channels(dwc_otg_core_if_t *core_if,
 					   int32_t val);
 extern int32_t dwc_otg_get_param_host_channels(dwc_otg_core_if_t *core_if);
-#define dwc_param_host_channels_default 12
+#define dwc_param_host_channels_default 16
 
 /** The number of endpoints in addition to EP0 available for device
  * mode operations.

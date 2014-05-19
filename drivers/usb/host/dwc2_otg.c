@@ -1541,7 +1541,6 @@ void dwc_otg_cil_init(dwc_otg_core_if_t *core_if, const uint32_t *reg_base_addr)
 	    dwc_read_reg32(&core_if->host_if->host_global_regs->hcfg);
 
 	PDEBUG("hcfg=%08x\n", core_if->hcfg.d32);
-	PDEBUG("dcfg=%08x\n", core_if->dcfg.d32);
 
 	PDEBUG("op_mode=%0x\n", core_if->hwcfg2.b.op_mode);
 	PDEBUG("arch=%0x\n", core_if->hwcfg2.b.architecture);
@@ -2024,7 +2023,7 @@ void dwc_otg_core_init(dwc_otg_core_if_t *core_if)
 	case DWC_INT_DMA_ARCH:
 		PDEBUG("Internal DMA Mode\n");
 		/*ahbcfg.b.hburstlen = DWC_GAHBCFG_INT_DMA_BURST_INCR; */
-		ahbcfg.b.hburstlen = (1<<3)|(0<<0); /* WRESP=1, max 4 beats */
+		ahbcfg.b.hburstlen = DWC_GAHBCFG_INT_DMA_BURST_INCR4;
 		core_if->dma_enable = (core_if->core_params->dma_enable != 0);
 		core_if->dma_desc_enable =
 		    (core_if->core_params->dma_desc_enable != 0);

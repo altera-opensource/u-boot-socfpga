@@ -26,7 +26,7 @@ static uint8_t *status_buffer;
 static dwc_otg_core_if_t g_core_if;
 
 #define MAX_DEVICE 16
-#define MAX_ENDPOINT 8
+#define MAX_ENDPOINT 16
 int bulk_data_toggle[MAX_DEVICE][MAX_ENDPOINT];
 int control_data_toggle[MAX_DEVICE][MAX_ENDPOINT];
 
@@ -77,7 +77,7 @@ int usb_lowlevel_init(int index, void **controller)
 
 	root_hub_devnum = 0;
 	memset(&g_core_if, 0, sizeof(g_core_if));
-	dwc_otg_cil_init(&g_core_if, (uint32_t *)0x20980000);
+	dwc_otg_cil_init(&g_core_if, (uint32_t *)CONFIG_SYS_USB_ADDRESS);
 
 	if ((g_core_if.snpsid & 0xFFFFF000) !=
 		0x4F542000) {
@@ -91,12 +91,9 @@ int usb_lowlevel_init(int index, void **controller)
 	hprt0.d32 = dwc_otg_read_hprt0(&g_core_if);
 	hprt0.b.prtrst = 1;
 	dwc_write_reg32(g_core_if.host_if->hprt0, hprt0.d32);
-	udelay(50000);
+	mdelay(50);
 	hprt0.b.prtrst = 0;
 	dwc_write_reg32(g_core_if.host_if->hprt0, hprt0.d32);
-
-	udelay(50000);
-	hprt0.d32 = dwc_read_reg32(g_core_if.host_if->hprt0);
 
 	for (i = 0; i < MAX_DEVICE; i++) {
 		for (j = 0; j < MAX_ENDPOINT; j++) {
@@ -314,12 +311,9 @@ static int dwc_otg_submit_rh_msg(struct usb_device *dev, unsigned long pipe,
 			hprt0.d32 = dwc_otg_read_hprt0(&g_core_if);
 			hprt0.b.prtrst = 1;
 			dwc_write_reg32(g_core_if.host_if->hprt0, hprt0.d32);
-			udelay(500);
+			mdelay(50);
 			hprt0.b.prtrst = 0;
 			dwc_write_reg32(g_core_if.host_if->hprt0, hprt0.d32);
-
-			udelay(500);
-			hprt0.d32 = dwc_read_reg32(g_core_if.host_if->hprt0);
 
 			break;
 
@@ -514,15 +508,6 @@ int submit_bulk_msg(struct usb_device *dev, unsigned long pipe, void *buffer,
 				hcint.d32 = hcint_new.d32;
 			}
 
-			if (hcint_new.b.ack) {
-				hctsiz.d32 = dwc_read_reg32(&hc_regs->hctsiz);
-
-				if (hctsiz.b.pid == DWC_OTG_HC_PID_DATA1)
-					bulk_data_toggle[devnum][ep] = DWC_OTG_HC_PID_DATA1;
-				else
-					bulk_data_toggle[devnum][ep] = DWC_OTG_HC_PID_DATA0;
-			}
-
 			if (hcint_new.b.chhltd) {
 				if (hcint_new.b.xfercomp) {
 					hctsiz.d32 = dwc_read_reg32(&hc_regs->hctsiz);
@@ -534,11 +519,12 @@ int submit_bulk_msg(struct usb_device *dev, unsigned long pipe, void *buffer,
 						done += xfer_len;
 					}
 
-					if (hcint_new.d32 != STATUS_ACK_HLT_COMPL) {
-						handle_error(__LINE__, hcint_new.d32);
-						goto out;
-					}
-
+					if (hctsiz.b.pid == DWC_OTG_HC_PID_DATA1)
+						bulk_data_toggle[devnum][ep] =
+							DWC_OTG_HC_PID_DATA1;
+					else
+						bulk_data_toggle[devnum][ep] =
+							DWC_OTG_HC_PID_DATA0;
 					break;
 				} else if (hcint_new.b.stall) {
 					printf("DWC OTG: Channel halted\n");
@@ -556,7 +542,7 @@ int submit_bulk_msg(struct usb_device *dev, unsigned long pipe, void *buffer,
 
 	dwc_write_reg32(&hc_regs->hcintmsk, 0);
 	dwc_write_reg32(&hc_regs->hcint, 0xFFFFFFFF);
-out:
+
 	dev->status = 0;
 	dev->act_len = done;
 
