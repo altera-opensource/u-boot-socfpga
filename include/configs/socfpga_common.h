@@ -185,7 +185,7 @@
 	"bootimage=zImage\0" \
 	"bootimagesize=0x600000\0" \
 	"fdtimage=socfpga.dtb\0" \
-	"fdtimagesize=0x5000\0" \
+	"fdtimagesize=0x7000\0" \
 	"mmcloadcmd=fatload\0" \
 	"mmcloadpart=1\0" \
 	"mmcroot=/dev/mmcblk0p2\0" \
