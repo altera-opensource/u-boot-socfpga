@@ -796,7 +796,7 @@
 
 /* ensure FAT is defined if CONFIG_SPL_FPGA_LOAD is defined */
 #ifdef CONFIG_SPL_FPGA_LOAD
-#ifndef CONFIG_SPL_FAT_SUPPORT
+#if (CONFIG_PRELOADER_BOOT_FROM_SDMMC == 1 && !defined(CONFIG_SPL_FAT_SUPPORT))
 #error "CONFIG_SPL_FAT_SUPPORT required for  CONFIG_SPL_FPGA_LOAD"
 #endif	/* CONFIG_SPL_FAT_SUPPORT */
 #endif	/* CONFIG_SPL_FPGA_LOAD */
