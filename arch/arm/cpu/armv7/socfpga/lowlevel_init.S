@@ -94,11 +94,11 @@ ENTRY(relocate_stack_to_sdram)
 	sub	r1, r4, r3		/* [r1] target address */
 	mov	r5, r1			/* [r5] new sp within SDRAM */
 
-relocate_loop:
+relocate_loop1:
 	ldmia	r0!, {r3}
 	stmia	r1!, {r3}
 	cmp	r0, r2
-	blo	relocate_loop
+	blo	relocate_loop1
 
 	/* assign SP to new address within SDRAM now */
 	mov	sp, r5

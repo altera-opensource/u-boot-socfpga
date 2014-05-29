@@ -549,10 +549,7 @@ void spl_board_init(void)
 #else
 	reset_deassert_all_peripherals();
 #endif
-#if (CONFIG_PRELOADER_EXE_ON_FPGA == 0)
 	reset_deassert_bridges_handoff();
-#endif
-
 
 #ifndef CONFIG_SOCFPGA_VIRTUAL_TARGET
 #ifdef CONFIG_HW_WATCHDOG
