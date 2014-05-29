@@ -268,7 +268,7 @@ void reset_deassert_bridges_handoff(void)
 	unsigned brgmodrst = 0;
 	unsigned remap_val = L3REGS_REMAP_OCRAM_MASK;
 
-#if (CONFIG_HPS_RESET_ASSERT_HPS2FPGA == 1)
+#if (CONFIG_HPS_RESET_ASSERT_HPS2FPGA == 1 && CONFIG_PRELOADER_EXE_ON_FPGA == 0)
 	brgmodrst |= RSTMGR_BRGMODRST_HPS2FPGA_MASK;
 #else
 	remap_val |= L3REGS_REMAP_HPS2FPGA_MASK;
@@ -281,6 +281,7 @@ void reset_deassert_bridges_handoff(void)
 #if (CONFIG_HPS_RESET_ASSERT_FPGA2HPS == 1)
 	brgmodrst |= RSTMGR_BRGMODRST_FPGA2HPS_MASK;
 #endif
+
 	writel(brgmodrst, ISWGRP_HANDOFF_AXIBRIDGE);
 	writel(remap_val, ISWGRP_HANDOFF_L3REMAP);
 
