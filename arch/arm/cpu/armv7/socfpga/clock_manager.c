@@ -583,7 +583,7 @@ unsigned long cm_get_l4_sp_clk_hz(void)
 	/* get the L4 SP clock which supplied to UART */
 	reg = readl(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_MAINPLLGRP_MAINDIV_ADDRESS);
 	reg = CLKMGR_MAINPLLGRP_MAINDIV_L4SPCLK_GET(reg);
-	clock = clock / (reg + 1);
+	clock = clock / (1 << reg);
 
 	return clock;
 }
