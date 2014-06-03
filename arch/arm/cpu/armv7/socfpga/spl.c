@@ -454,6 +454,9 @@ void spl_board_init(void)
 	WATCHDOG_RESET();
 #endif
 	DEBUG_MEMORY
+	debug("RAM boot setup if CSEL 0\n");
+	ram_boot_setup();
+
 	debug("Reconfigure Clock Manager\n");
 	/* reconfigure the PLLs */
 	cm_basic_init(&cm_default_cfg);

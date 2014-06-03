@@ -65,6 +65,8 @@ unsigned long cm_get_qspi_controller_clk_hz(void);
 void cm_print_clock_quick_summary(void);
 void cm_derive_clocks_for_drivers(void);
 
+#endif /* __ASSEMBLY__ */
+
 #define CLKMGR_CTRL_ADDRESS 0x0
 #define CLKMGR_BYPASS_ADDRESS 0x4
 #define CLKMGR_INTER_ADDRESS 0x8
@@ -252,11 +254,20 @@ void cm_derive_clocks_for_drivers(void);
 #define CLKMGR_QSPI_CLK_SRC_MAIN	0x1
 #define CLKMGR_QSPI_CLK_SRC_PER		0x2
 
+#ifndef __ASSEMBLY__
 /* global variable which consume by drivers */
 extern unsigned long cm_l4_sp_clock;
 extern unsigned long cm_sdmmc_clock;
 extern unsigned long cm_qspi_clock;
-
 #endif /* __ASSEMBLY__ */
+
+/* Bypass Main and Per PLL, bypass source per input mux */
+#define CLKMGR_BYPASS_MAIN_PER_PLL_MASK		0x19
+
+#define CLKMGR_MAINQSPICLK_RESET_VALUE		0x3
+#define CLKMGR_MAINNANDSDMMCCLK_RESET_VALUE	0x3
+#define CLKMGR_PERQSPICLK_RESET_VALUE		0x1
+#define CLKMGR_PERNANDSDMMCCLK_RESET_VALUE	0x1
+
 
 #endif /* _CLOCK_MANAGER_H_ */

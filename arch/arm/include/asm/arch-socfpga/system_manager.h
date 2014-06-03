@@ -23,6 +23,7 @@
 /* declaration for system_manager.c */
 void sysmgr_pinmux_init(void);
 void sysmgr_sdmmc_pweren_mux_check(void);
+void ram_boot_setup(void);
 
 /* declaration for handoff table type */
 typedef unsigned long sys_mgr_pinmux_entry_t;
@@ -96,5 +97,16 @@ extern unsigned long sys_mgr_init_table[CONFIG_HPS_PINMUX_NUM];
 #define SYSMGR_EMACGRP_CTRL_PHYSEL0_LSB 0
 #define SYSMGR_EMACGRP_CTRL_PHYSEL1_LSB 2
 #define SYSMGR_EMACGRP_CTRL_PHYSEL_MASK 0x00000003
+
+/* CSEL */
+#define SYSMGR_BOOTINFO			(SOCFPGA_SYSMGR_ADDRESS + 0x14)
+#define SYSMGR_BOOTINFO_CSEL_LSB 	3
+#define SYSMGR_BOOTINFO_CSEL_MASK	0x18
+
+/* Warm RAM group */
+#define CONFIG_SYSMGR_WARMRAMGRP_ENABLE		(SOCFPGA_SYSMGR_ADDRESS + 0xe0)
+#define CONFIG_SYSMGR_WARMRAMGRP_EXECUTION	(SOCFPGA_SYSMGR_ADDRESS + 0xec)
+#define CONFIG_SYSMGR_WARMRAMGRP_ENABLE_MAGIC		0xae9efebc
+#define CONFIG_SYSMGR_WARMRAMGRP_EXECUTION_OFFSET_MASK	0xffff
 
 #endif /* _SYSTEM_MANAGER_H_ */
