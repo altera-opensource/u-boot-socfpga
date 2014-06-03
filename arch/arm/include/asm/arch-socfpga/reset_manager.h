@@ -18,6 +18,7 @@
 #ifndef	_RESET_MANAGER_H_
 #define	_RESET_MANAGER_H_
 
+#ifndef __ASSEMBLY__
 void watchdog_disable(void);
 int is_wdt_in_reset(void);
 void reset_cpu(ulong addr);
@@ -35,6 +36,8 @@ void reset_deassert_bridges_handoff(void);
 #endif
 void emac0_reset_enable(uint state);
 void emac1_reset_enable(uint state);
+void reset_clock_manager(void);
+extern unsigned reset_clock_manager_size;
 
 #if defined(CONFIG_SOCFPGA_VIRTUAL_TARGET)
 struct socfpga_reset_manager {
@@ -57,6 +60,7 @@ struct socfpga_reset_manager {
 	u32	brg_mod_reset;
 };
 #endif
+#endif /* __ASSEMBLY__ */
 
 #if defined(CONFIG_SOCFPGA_VIRTUAL_TARGET)
 #define RSTMGR_CTRL_SWWARMRSTREQ_LSB 2
@@ -73,6 +77,10 @@ struct socfpga_reset_manager {
 #define RSTMGR_BRGMODRST_HPS2FPGA_MASK		0x00000001
 #define RSTMGR_BRGMODRST_LWHPS2FPGA_MASK	0x00000002
 #define RSTMGR_BRGMODRST_FPGA2HPS_MASK		0x00000004
+
+#define RSTMGR_CTRL_OFFSET			0x00000004
+#define RSTMGR_MISCMODRST_OFFSET		0x00000020
+#define RSTMGR_MISCMODRST_CLKMGRCOLD_MASK	0x00000400
 
 /* Warm Reset mask */
 #if defined(CONFIG_SOCFPGA_VIRTUAL_TARGET)

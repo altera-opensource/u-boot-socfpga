@@ -29,7 +29,7 @@
 #include <netdev.h>
 #include <phy.h>
 #endif
-
+#include <spl.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -149,3 +149,37 @@ void enable_caches(void)
 }
 #endif
 
+#ifdef CONFIG_SPL_BUILD
+/*
+ * Setup RAM boot to ensure the clock are reset under CSEL = 0
+ */
+void ram_boot_setup(void)
+{
+	unsigned csel, ramboot_addr;
+
+	csel = (readl(SYSMGR_BOOTINFO) & SYSMGR_BOOTINFO_CSEL_MASK) >>
+		SYSMGR_BOOTINFO_CSEL_LSB;
+	if (!csel) {
+		/*
+		 * Copy the ramboot program at end of Preloader or offset 60kB
+		 * which is bigger. With that, customer can modify any content
+		 * within first 60kB of OCRAM at any boot stage
+		 */
+		ramboot_addr = CONFIG_SYS_INIT_RAM_ADDR + 0xf000;
+		if ((unsigned)&__ecc_padding_end > ramboot_addr)
+			ramboot_addr = (unsigned)&__ecc_padding_end;
+
+		memcpy((void *)ramboot_addr, reset_clock_manager,
+		       reset_clock_manager_size);
+
+		/* tell BootROM where the RAM boot code start */
+		writel(ramboot_addr &
+		       CONFIG_SYSMGR_WARMRAMGRP_EXECUTION_OFFSET_MASK,
+		       CONFIG_SYSMGR_WARMRAMGRP_EXECUTION);
+
+		/* Enable the RAM boot */
+		writel(CONFIG_SYSMGR_WARMRAMGRP_ENABLE_MAGIC,
+		       CONFIG_SYSMGR_WARMRAMGRP_ENABLE);
+	}
+}
+#endif
