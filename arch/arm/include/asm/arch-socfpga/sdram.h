@@ -94,6 +94,8 @@ void sdram_scrub_remain_region_finish(void);
 #define SDR_CTRLGRP_DROPCOUNT_ADDRESS 0x504c
 /* Register: sdr.ctrlgrp.dropaddr                                          */
 #define SDR_CTRLGRP_DROPADDR_ADDRESS 0x5050
+/* Register: sdr.ctrlgrp.lowpwreq                                          */
+#define SDR_CTRLGRP_LOWPWREQ_ADDRESS 0x5054
 /* Register: sdr.ctrlgrp.staticcfg                                         */
 #define SDR_CTRLGRP_STATICCFG_ADDRESS 0x505c
 /* Register: sdr.ctrlgrp.ctrlwidth                                         */
@@ -270,6 +272,15 @@ void sdram_scrub_remain_region_finish(void);
 /* Register template: sdr::ctrlgrp::dbecount                               */
 #define SDR_CTRLGRP_DBECOUNT_COUNT_LSB 0
 #define SDR_CTRLGRP_DBECOUNT_COUNT_MASK 0x000000ff
+/* Register template: sdr.ctrlgrp.lowpwreq                                 */
+#define SDR_CTRLGRP_LOWPWREQ_DEEPPWRDNREQ_LSB 0
+#define SDR_CTRLGRP_LOWPWREQ_DEEPPWRDNREQ_MASK 0x00000001
+#define SDR_CTRLGRP_LOWPWREQ_DEEPPWRDNMASK_LSB 1
+#define SDR_CTRLGRP_LOWPWREQ_DEEPPWRDNMASK_MASK 0x00000006
+#define SDR_CTRLGRP_LOWPWREQ_SELFRSHREQ_LSB 3
+#define SDR_CTRLGRP_LOWPWREQ_SELFRSHREQ_MASK 0x00000008
+#define SDR_CTRLGRP_LOWPWREQ_SELFRFSHMASK_LSB 4
+#define SDR_CTRLGRP_LOWPWREQ_SELFRFSHMASK_MASK 0x00000030
 /* Register template: sdr::ctrlgrp::staticcfg                              */
 #define SDR_CTRLGRP_STATICCFG_APPLYCFG_LSB 3
 #define SDR_CTRLGRP_STATICCFG_APPLYCFG_MASK 0x00000008

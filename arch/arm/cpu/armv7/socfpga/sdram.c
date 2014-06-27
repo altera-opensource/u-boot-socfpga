@@ -419,15 +419,24 @@ defined(CONFIG_HPS_SDR_CTRLCFG_DRAMTIMING4_PWRDOWNEXIT)
 
 
 	/***** LOWPWRTIMING *****/
-#ifdef CONFIG_HPS_SDR_CTRLCFG_LOWPWRTIMING_AUTOPDCYCLES
+#if defined(CONFIG_HPS_SDR_CTRLCFG_LOWPWRTIMING_AUTOPDCYCLES) || \
+defined(CONFIG_HPS_SDR_CTRLCFG_LOWPWRTIMING_CLKDISABLECYCLES)
 	debug("Configuring LOWPWRTIMING\n");
 	register_offset = SDR_CTRLGRP_LOWPWRTIMING_ADDRESS;
 	/* Read original register value */
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
+#ifdef CONFIG_HPS_SDR_CTRLCFG_LOWPWRTIMING_AUTOPDCYCLES
 	reg_value = sdram_write_register_field(reg_value,
 			CONFIG_HPS_SDR_CTRLCFG_LOWPWRTIMING_AUTOPDCYCLES,
 			SDR_CTRLGRP_LOWPWRTIMING_AUTOPDCYCLES_LSB,
 			SDR_CTRLGRP_LOWPWRTIMING_AUTOPDCYCLES_MASK);
+#endif
+#ifdef CONFIG_HPS_SDR_CTRLCFG_LOWPWRTIMING_CLKDISABLECYCLES
+	reg_value = sdram_write_register_field(reg_value,
+			CONFIG_HPS_SDR_CTRLCFG_LOWPWRTIMING_CLKDISABLECYCLES,
+			SDR_CTRLGRP_LOWPWRTIMING_CLKDISABLECYCLES_LSB,
+			SDR_CTRLGRP_LOWPWRTIMING_CLKDISABLECYCLES_MASK);
+#endif
 	if (sdram_write_verify(register_offset,	reg_value) == 1) {
 		status = 1;
 		COMPARE_FAIL_ACTION
@@ -500,6 +509,23 @@ defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_CSBITS)
 			CONFIG_HPS_SDR_CTRLCFG_DRAMDEVWIDTH_DEVWIDTH,
 			SDR_CTRLGRP_DRAMDEVWIDTH_DEVWIDTH_LSB,
 			SDR_CTRLGRP_DRAMDEVWIDTH_DEVWIDTH_MASK);
+	if (sdram_write_verify(register_offset,	reg_value) == 1) {
+		status = 1;
+		COMPARE_FAIL_ACTION
+	}
+#endif
+
+
+	/***** LOWPWREQ *****/
+#ifdef CONFIG_HPS_SDR_CTRLCFG_LOWPWREQ_SELFRFSHMASK
+	debug("Configuring LOWPWREQ\n");
+	register_offset = SDR_CTRLGRP_LOWPWREQ_ADDRESS;
+	/* Read original register value */
+	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
+	reg_value = sdram_write_register_field(reg_value,
+			CONFIG_HPS_SDR_CTRLCFG_LOWPWREQ_SELFRFSHMASK,
+			SDR_CTRLGRP_LOWPWREQ_SELFRFSHMASK_LSB,
+			SDR_CTRLGRP_LOWPWREQ_SELFRFSHMASK_MASK);
 	if (sdram_write_verify(register_offset,	reg_value) == 1) {
 		status = 1;
 		COMPARE_FAIL_ACTION
