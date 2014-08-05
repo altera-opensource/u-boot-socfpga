@@ -288,7 +288,6 @@ static void dw_eth_halt(struct eth_device *dev)
 {
 	struct dw_eth_dev *priv = dev->priv;
 
-	mac_reset(dev);
 	priv->tx_currdescnum = priv->rx_currdescnum = 0;
 }
 
