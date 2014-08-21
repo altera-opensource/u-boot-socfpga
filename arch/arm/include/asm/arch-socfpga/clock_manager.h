@@ -56,7 +56,7 @@ typedef struct {
 	uint32_t	s2fuser2clk;
 } cm_config_t;
 
-extern int cm_basic_init(const cm_config_t *cfg);
+extern int cm_basic_init(const cm_config_t *cfg, uint32_t skip_sdram_pll);
 unsigned long cm_get_mpu_clk_hz(void);
 unsigned long cm_get_sdram_clk_hz(void);
 unsigned long cm_get_l4_sp_clk_hz(void);

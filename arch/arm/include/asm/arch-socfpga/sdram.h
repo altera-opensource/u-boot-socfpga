@@ -39,8 +39,9 @@ int hps_emif_diag_test(int complexity, unsigned int addr_bgn,
 	unsigned int addr_end);
 unsigned long sdram_calculate_size(void);
 #ifdef CONFIG_SPL_BUILD
-unsigned sdram_mmr_init_full(void);
+unsigned sdram_mmr_init_full(unsigned int sdr_phy_reg);
 unsigned sdram_calibration_full(void);
+unsigned sdram_check_self_refresh_seq(void);
 #endif /* CONFIG_SPL_BUILD */
 void sdram_scrub_boot_region(void);
 void sdram_scrub_remain_region_trigger(void);
@@ -96,6 +97,8 @@ void sdram_scrub_remain_region_finish(void);
 #define SDR_CTRLGRP_DROPADDR_ADDRESS 0x5050
 /* Register: sdr.ctrlgrp.lowpwreq                                          */
 #define SDR_CTRLGRP_LOWPWREQ_ADDRESS 0x5054
+/* Register: sdr.ctrlgrp.lowpwrack                                         */
+#define SDR_CTRLGRP_LOWPWRACK_ADDRESS 0x5058
 /* Register: sdr.ctrlgrp.staticcfg                                         */
 #define SDR_CTRLGRP_STATICCFG_ADDRESS 0x505c
 /* Register: sdr.ctrlgrp.ctrlwidth                                         */
@@ -279,8 +282,14 @@ void sdram_scrub_remain_region_finish(void);
 #define SDR_CTRLGRP_LOWPWREQ_DEEPPWRDNMASK_MASK 0x00000006
 #define SDR_CTRLGRP_LOWPWREQ_SELFRSHREQ_LSB 3
 #define SDR_CTRLGRP_LOWPWREQ_SELFRSHREQ_MASK 0x00000008
+#define SDR_CTRLGRP_LOWPWREQ_SELFRSHREQ_ENABLED 0x1
+#define SDR_CTRLGRP_LOWPWREQ_SELFRSHREQ_DISABLED 0x0
 #define SDR_CTRLGRP_LOWPWREQ_SELFRFSHMASK_LSB 4
 #define SDR_CTRLGRP_LOWPWREQ_SELFRFSHMASK_MASK 0x00000030
+#define SDR_CTRLGRP_LOWPWREQ_SELFRFSHMASK_BOTH_CHIPS 0x3
+/* Register template: sdr::ctrlgrp::lowpwrack                              */
+#define SDR_CTRLGRP_LOWPWRACK_SELFRFSHACK_LSB 1
+#define SDR_CTRLGRP_LOWPWRACK_SELFRFSHACK_MASK 0x00000002
 /* Register template: sdr::ctrlgrp::staticcfg                              */
 #define SDR_CTRLGRP_STATICCFG_APPLYCFG_LSB 3
 #define SDR_CTRLGRP_STATICCFG_APPLYCFG_MASK 0x00000008

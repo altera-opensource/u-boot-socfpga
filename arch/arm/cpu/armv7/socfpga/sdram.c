@@ -163,7 +163,7 @@ unsigned sdram_write_verify (unsigned register_offset, unsigned reg_value)
 
 
 /* Function to initialize SDRAM MMR */
-unsigned sdram_mmr_init_full(void)
+unsigned sdram_mmr_init_full(unsigned int sdr_phy_reg)
 {
 	unsigned long register_offset, reg_value;
 	unsigned long status = 0;
@@ -1034,6 +1034,11 @@ defined(CONFIG_HPS_SDR_CTRLCFG_DRAMODT_WRITE)
 	}
 #endif
 
+	/* Restore the SDR PHY Register if valid */
+	if (sdr_phy_reg != 0xffffffff)
+		writel(sdr_phy_reg, SOCFPGA_SDR_ADDRESS +
+			SDR_CTRLGRP_PHYCTRL_PHYCTRL_0_ADDRESS);
+
 	DEBUG_MEMORY
 /***** Final step - apply configuration changes *****/
 	debug("Configuring STATICCFG_\n");
@@ -1058,6 +1063,97 @@ defined(CONFIG_HPS_SDR_CTRLCFG_DRAMODT_WRITE)
 unsigned sdram_calibration_full(void)
 {
 	return sdram_calibration();
+}
+
+/* Checks if the controller can enter then exit self-refresh correctly */
+unsigned sdram_check_self_refresh_seq(void)
+{
+#define MAX_POLLS 10
+	unsigned int counter;
+	unsigned register_offset;
+	unsigned reg_value;
+
+	/*****************************/
+	/* Try to go to self-refresh */
+	/*****************************/
+	debug("Checks if the controller can enter then exit self-refresh correctly\n");
+
+	/* Set sdr.ctrlgrp.lowpwreq.selfrfshmask = 3 */
+	register_offset = SDR_CTRLGRP_LOWPWREQ_ADDRESS;
+	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
+	reg_value = sdram_write_register_field(reg_value,
+			SDR_CTRLGRP_LOWPWREQ_SELFRFSHMASK_BOTH_CHIPS,
+			SDR_CTRLGRP_LOWPWREQ_SELFRFSHMASK_LSB,
+			SDR_CTRLGRP_LOWPWREQ_SELFRFSHMASK_MASK);
+	if (sdram_write_verify(register_offset,	reg_value) == 1) {
+		COMPARE_FAIL_ACTION
+	}
+
+	/* Set sdr.ctrlgrp.lowpwreq.selfrshreq = 1 */
+	register_offset = SDR_CTRLGRP_LOWPWREQ_ADDRESS;
+	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
+	reg_value = sdram_write_register_field(reg_value,
+			SDR_CTRLGRP_LOWPWREQ_SELFRSHREQ_ENABLED,
+			SDR_CTRLGRP_LOWPWREQ_SELFRSHREQ_LSB,
+			SDR_CTRLGRP_LOWPWREQ_SELFRSHREQ_MASK);
+	if (sdram_write_verify(register_offset,	reg_value) == 1) {
+		COMPARE_FAIL_ACTION
+	}
+
+	/* Poll until sdr.ctrlgrp.lowpwrack.selfrfshack = 1, with timeout */
+	for (counter = 0; counter < MAX_POLLS; counter++)
+		if (readl(SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_LOWPWRACK_ADDRESS)
+			& SDR_CTRLGRP_LOWPWRACK_SELFRFSHACK_MASK)
+			break;
+
+	/* Check if succeeded getting sdr.ctrlgrp.lowpwrack.selfrfshack = 1*/
+	if (!(readl(SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_LOWPWRACK_ADDRESS)
+		& SDR_CTRLGRP_LOWPWRACK_SELFRFSHACK_MASK)) {
+		/* Set back sdr.ctrlgrp.lowpwreq.selfrshreq = 0 */
+		register_offset = SDR_CTRLGRP_LOWPWREQ_ADDRESS;
+		reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
+		reg_value = sdram_write_register_field(reg_value,
+				SDR_CTRLGRP_LOWPWREQ_SELFRSHREQ_DISABLED,
+				SDR_CTRLGRP_LOWPWREQ_SELFRSHREQ_LSB,
+				SDR_CTRLGRP_LOWPWREQ_SELFRSHREQ_MASK);
+		if (sdram_write_verify(register_offset,	reg_value) == 1) {
+			COMPARE_FAIL_ACTION
+		}
+
+		/* Failure */
+		return 1;
+	}
+
+	/*****************************/
+	/* Try to exit self-refresh */
+	/*****************************/
+
+	/* Set sdr.ctrlgrp.lowpwreq.selfrshreq = 0 */
+	register_offset = SDR_CTRLGRP_LOWPWREQ_ADDRESS;
+	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
+	reg_value = sdram_write_register_field(reg_value,
+			SDR_CTRLGRP_LOWPWREQ_SELFRSHREQ_DISABLED,
+			SDR_CTRLGRP_LOWPWREQ_SELFRSHREQ_LSB,
+			SDR_CTRLGRP_LOWPWREQ_SELFRSHREQ_MASK);
+	if (sdram_write_verify(register_offset,	reg_value) == 1) {
+		COMPARE_FAIL_ACTION
+	}
+
+	/* Poll until sdr.ctrlgrp.lowpwrack.selfrfshack = 0, with timeout */
+	for (counter = 0; counter < MAX_POLLS; counter++)
+		if (!(readl(SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_LOWPWRACK_ADDRESS)
+			& SDR_CTRLGRP_LOWPWRACK_SELFRFSHACK_MASK))
+			break;
+
+	/* Check if we succeeded */
+	if (readl(SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_LOWPWRACK_ADDRESS)
+		& SDR_CTRLGRP_LOWPWRACK_SELFRFSHACK_MASK) {
+		/* Failure */
+		return 1;
+	}
+
+	/* Success */
+	return 0;
 }
 
 #endif	/* CONFIG_SPL_BUILD */

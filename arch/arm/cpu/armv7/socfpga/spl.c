@@ -44,7 +44,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#if (CONFIG_PRELOADER_WARMRST_SKIP_CFGIO == 1)
+#if (CONFIG_PRELOADER_WARMRST_SKIP_CFGIO == 1) || \
+(CONFIG_PRELOADER_WARMRST_PRESERVE_SDRAM == 1)
 u32 rst_mgr_status;
 #endif
 
@@ -312,6 +313,12 @@ void spl_program_fpga_sd_fat(void)
  */
 void spl_board_init(void)
 {
+#if (CONFIG_PRELOADER_WARMRST_PRESERVE_SDRAM == 1)
+	const int warmrst_preserve_sdram = 1;
+#else
+	const int warmrst_preserve_sdram = 0;
+#endif
+
 #if (CONFIG_PRELOADER_SKIP_SDRAM == 0)
 	unsigned long sdram_size;
 #endif
@@ -416,8 +423,10 @@ void spl_board_init(void)
 		FREEZE_CONTROLLER_FSM_SW);
 	sys_mgr_frzctrl_freeze_req(FREEZE_CHANNEL_2,
 		FREEZE_CONTROLLER_FSM_SW);
-	sys_mgr_frzctrl_freeze_req(FREEZE_CHANNEL_3,
-		FREEZE_CONTROLLER_FSM_SW);
+	if ((warmrst_preserve_sdram == 0) ||
+		(rst_mgr_status & RSTMGR_COLDRST_MASK) != 0)
+			sys_mgr_frzctrl_freeze_req(FREEZE_CHANNEL_3,
+				FREEZE_CONTROLLER_FSM_SW);
 #endif /* CONFIG_SOCFPGA_VIRTUAL_TARGET */
 
 
@@ -425,12 +434,18 @@ void spl_board_init(void)
 	WATCHDOG_RESET();
 #endif
 	DEBUG_MEMORY
-	debug("Asserting reset to all except L4WD and SDRAM\n");
 	/*
 	 * assert all peripherals and bridges to reset. This is
 	 * to ensure no glitch happen during PLL re-configuration
 	 */
-	reset_assert_all_peripherals_except_l4wd0();
+	if ((warmrst_preserve_sdram == 0) ||
+		(rst_mgr_status & RSTMGR_COLDRST_MASK) != 0) {
+		debug("Asserting reset to all except L4WD\n");
+		reset_assert_all_peripherals_except_l4wd0();
+	} else if ((rst_mgr_status & RSTMGR_COLDRST_MASK) == 0) {
+		debug("Asserting reset to all except L4WD and SDRAM\n");
+		reset_assert_all_peripherals_except_l4wd0_and_sdr();
+	}
 #if (CONFIG_PRELOADER_EXE_ON_FPGA == 0)
 	reset_assert_all_bridges();
 #endif
@@ -459,7 +474,13 @@ void spl_board_init(void)
 
 	debug("Reconfigure Clock Manager\n");
 	/* reconfigure the PLLs */
-	cm_basic_init(&cm_default_cfg);
+	if ((warmrst_preserve_sdram == 0) ||
+		(rst_mgr_status & RSTMGR_COLDRST_MASK) != 0) {
+		cm_basic_init(&cm_default_cfg, 0);
+	} else if ((rst_mgr_status & RSTMGR_COLDRST_MASK) == 0) {
+		cm_basic_init(&cm_default_cfg, 1);
+	}
+
 	/* calculate the clock frequencies required for drivers */
 	cm_derive_clocks_for_drivers();
 
@@ -471,7 +492,7 @@ void spl_board_init(void)
 #if (CONFIG_PRELOADER_WARMRST_SKIP_CFGIO == 1)
 	if (((readl(CONFIG_SYSMGR_ROMCODEGRP_CTRL) &
 	SYSMGR_ROMCODEGRP_CTRL_WARMRSTCFGIO) == 0) ||
-	((rst_mgr_status & RSTMGR_WARMRST_MASK) == 0)) {
+	((rst_mgr_status & RSTMGR_COLDRST_MASK) != 0)) {
 #endif /* CONFIG_PRELOADER_WARMRST_SKIP_CFGIO */
 #if (CONFIG_PRELOADER_BOOTROM_HANDSHAKE_CFGIO == 1)
 		/* Enable handshake bit with BootROM */
@@ -492,10 +513,11 @@ void spl_board_init(void)
 			IO_SCAN_CHAIN_2,
 			CONFIG_HPS_IOCSR_SCANCHAIN2_LENGTH,
 			iocsr_scan_chain2_table);
-		scan_mgr_io_scan_chain_prg(
-			IO_SCAN_CHAIN_3,
-			CONFIG_HPS_IOCSR_SCANCHAIN3_LENGTH,
-			iocsr_scan_chain3_table);
+		if ((warmrst_preserve_sdram == 0) ||
+			(rst_mgr_status & RSTMGR_COLDRST_MASK) != 0)
+			scan_mgr_io_scan_chain_prg(IO_SCAN_CHAIN_3,
+				CONFIG_HPS_IOCSR_SCANCHAIN3_LENGTH,
+				iocsr_scan_chain3_table);
 #if (CONFIG_PRELOADER_BOOTROM_HANDSHAKE_CFGIO == 1)
 		/* Clear handshake bit with BootROM */
 		DEBUG_MEMORY
@@ -514,7 +536,7 @@ void spl_board_init(void)
 	/* Skip configuration is warm reset happen and WARMRSTCFGPINMUX set */
 	if (((readl(CONFIG_SYSMGR_ROMCODEGRP_CTRL) &
 	SYSMGR_ROMCODEGRP_CTRL_WARMRSTCFGPINMUX) == 0) ||
-	((rst_mgr_status & RSTMGR_WARMRST_MASK) == 0)) {
+	((rst_mgr_status & RSTMGR_COLDRST_MASK) != 0)) {
 #endif /* CONFIG_PRELOADER_WARMRST_SKIP_CFGIO */
 #if (CONFIG_PRELOADER_BOOTROM_HANDSHAKE_CFGIO == 1)
 		/* Enable handshake bit with BootROM */
@@ -567,8 +589,10 @@ void spl_board_init(void)
 		FREEZE_CONTROLLER_FSM_SW);
 	sys_mgr_frzctrl_thaw_req(FREEZE_CHANNEL_2,
 		FREEZE_CONTROLLER_FSM_SW);
-	sys_mgr_frzctrl_thaw_req(FREEZE_CHANNEL_3,
-		FREEZE_CONTROLLER_FSM_SW);
+	if ((warmrst_preserve_sdram == 0) ||
+		(rst_mgr_status & RSTMGR_COLDRST_MASK) != 0)
+		sys_mgr_frzctrl_thaw_req(FREEZE_CHANNEL_3,
+					 FREEZE_CONTROLLER_FSM_SW);
 #endif	/* CONFIG_SOCFPGA_VIRTUAL_TARGET */
 
 
@@ -586,6 +610,11 @@ void spl_board_init(void)
 	cm_print_clock_quick_summary();
 #endif
 
+	if ((rst_mgr_status & RSTMGR_COLDRST_MASK) != 0)
+		puts("RESET: COLD\n");
+	else
+		puts("RESET: WARM\n");
+
 #ifdef CONFIG_HW_WATCHDOG
 	puts("INFO : Watchdog enabled\n");
 #endif
@@ -599,19 +628,44 @@ void spl_board_init(void)
 	WATCHDOG_RESET();
 #endif
 	DEBUG_MEMORY
-	puts("SDRAM: Initializing MMR registers\n");
-	/* SDRAM MMR initialization */
-	if (sdram_mmr_init_full() != 0)
-		hang();
+	if ((warmrst_preserve_sdram == 0) ||
+		(rst_mgr_status & RSTMGR_COLDRST_MASK) != 0) {
+		puts("SDRAM: Initializing MMR registers\n");
+		/* SDRAM MMR initialization */
+		if (sdram_mmr_init_full(0xffffffff) != 0)
+			hang();
 
 #ifdef CONFIG_HW_WATCHDOG
-	WATCHDOG_RESET();
+		WATCHDOG_RESET();
 #endif
-	DEBUG_MEMORY
-	puts("SDRAM: Calibrating PHY\n");
-	/* SDRAM calibration */
-	if (sdram_calibration_full() == 0)
-		hang();
+		DEBUG_MEMORY
+		puts("SDRAM: Calibrating PHY\n");
+		/* SDRAM calibration */
+		if (sdram_calibration_full() == 0)
+			hang();
+
+	} else if ((rst_mgr_status & RSTMGR_COLDRST_MASK) == 0) {
+		unsigned int sdr_phy_reg;
+
+		/* Save SDR PHY register value */
+		sdr_phy_reg = readl(SOCFPGA_SDR_ADDRESS +
+				    SDR_CTRLGRP_PHYCTRL_PHYCTRL_0_ADDRESS);
+
+		puts("SDRAM: Initializing MMR registers\n");
+		if (sdram_mmr_init_full(sdr_phy_reg) != 0)
+			hang();
+
+		puts("SDRAM: Skipping calibrating PHY\n");
+
+		/* Check if the self-refresh can be entered */
+		if (sdram_check_self_refresh_seq() != 0) {
+			printf("SDRAM: Self refresh issue detected. Performing Warm reset ...\n");
+			reset_cpu(0);
+		}
+
+		/* Perform dummy read/writes to clear calibration data */
+		readl(0x100010);
+	}
 
 	/* detect the SDRAM size */
 #ifdef CONFIG_SDRAM_CALCULATE_SIZE

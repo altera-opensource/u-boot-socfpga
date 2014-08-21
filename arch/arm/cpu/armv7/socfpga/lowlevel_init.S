@@ -50,7 +50,7 @@ save_boot_params:
 #endif	/* CONFIG_PRELOADER_DEBUG_MEMORY_WRITE */
 #if (CONFIG_PRELOADER_WARMRST_SKIP_CFGIO == 1)
 	/* get the reset manager status register passed by BootROM */
-	add	r5, r0,#0x34
+	add	r5, r0,#0x38
 	ldr	r4, =rst_mgr_status
 	ldr	r5, [r5]
 	str	r5, [r4]
@@ -252,7 +252,9 @@ ENTRY(reset_clock_manager)
 	add	r2, r0, r1
 	mov	r3, #1
 	mov	r3, r3, LSL #RSTMGR_CTRL_SWWARMRSTREQ_LSB
-	str	r3, [r2]
+	ldr	r4, [r2]
+	orr	r4, r3, r4
+	str	r4, [r2]
 
 reset_clock_manager_loop:
 	dsb

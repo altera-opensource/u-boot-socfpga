@@ -137,7 +137,7 @@ static inline void cm_write_with_phase(uint32_t value,
  * Ungate clocks
  */
 
-int cm_basic_init(const cm_config_t *cfg)
+int cm_basic_init(const cm_config_t *cfg, uint32_t skip_sdram_pll)
 {
 	uint32_t start, timeout;
 
@@ -162,7 +162,8 @@ int cm_basic_init(const cm_config_t *cfg)
 		CLKMGR_MAINPLLGRP_EN_L4MPCLK_MASK,
 		SOCFPGA_CLKMGR_ADDRESS + CLKMGR_MAINPLLGRP_EN_ADDRESS);
 
-	writel(0, SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_EN_ADDRESS);
+	if (!skip_sdram_pll)
+		writel(0, SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_EN_ADDRESS);
 
 	/* now we can gate off the rest of the peripheral clocks */
 	DEBUG_MEMORY
@@ -170,16 +171,31 @@ int cm_basic_init(const cm_config_t *cfg)
 
 	/* Put all plls in bypass */
 	DEBUG_MEMORY
-	cm_write_bypass(
-		CLKMGR_BYPASS_PERPLLSRC_SET(
-		CLKMGR_BYPASS_PERPLLSRC_ENUM_SELECT_EOSC1) |
-		CLKMGR_BYPASS_SDRPLLSRC_SET(
-		CLKMGR_BYPASS_SDRPLLSRC_ENUM_SELECT_EOSC1) |
-		CLKMGR_BYPASS_PERPLL_SET(CLKMGR_BYPASS_ENUM_ENABLE) |
-		CLKMGR_BYPASS_SDRPLL_SET(CLKMGR_BYPASS_ENUM_ENABLE) |
-		CLKMGR_BYPASS_MAINPLL_SET(CLKMGR_BYPASS_ENUM_ENABLE));
+	if (!skip_sdram_pll)
+		cm_write_bypass(
+			CLKMGR_BYPASS_PERPLLSRC_SET(
+				CLKMGR_BYPASS_PERPLLSRC_ENUM_SELECT_EOSC1) |
+			CLKMGR_BYPASS_SDRPLLSRC_SET(
+				CLKMGR_BYPASS_SDRPLLSRC_ENUM_SELECT_EOSC1) |
+			CLKMGR_BYPASS_PERPLL_SET(
+				CLKMGR_BYPASS_ENUM_ENABLE) |
+			CLKMGR_BYPASS_SDRPLL_SET(
+				CLKMGR_BYPASS_ENUM_ENABLE) |
+			CLKMGR_BYPASS_MAINPLL_SET(
+				CLKMGR_BYPASS_ENUM_ENABLE));
+	else
+		cm_write_bypass(
+			CLKMGR_BYPASS_PERPLLSRC_SET(
+				CLKMGR_BYPASS_PERPLLSRC_ENUM_SELECT_EOSC1) |
+			CLKMGR_BYPASS_PERPLL_SET(
+				CLKMGR_BYPASS_ENUM_ENABLE) |
+			CLKMGR_BYPASS_MAINPLL_SET(
+				CLKMGR_BYPASS_ENUM_ENABLE));
 
-	/* Put all plls VCO registers back to reset value */
+	/*
+	 * Put all plls VCO registers back to reset value.
+	 * Some code might have messed with them.
+	 */
 	DEBUG_MEMORY
 	writel((CLKMGR_MAINPLLGRP_VCO_RESET_VALUE &
 		~CLKMGR_MAINPLLGRP_VCO_REGEXTSEL_MASK),
@@ -187,9 +203,10 @@ int cm_basic_init(const cm_config_t *cfg)
 	writel((CLKMGR_PERPLLGRP_VCO_RESET_VALUE &
 		~CLKMGR_PERPLLGRP_VCO_REGEXTSEL_MASK),
 		SOCFPGA_CLKMGR_ADDRESS + CLKMGR_PERPLLGRP_VCO_ADDRESS);
-	writel((CLKMGR_SDRPLLGRP_VCO_RESET_VALUE &
-		~CLKMGR_SDRPLLGRP_VCO_REGEXTSEL_MASK),
-		SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_VCO_ADDRESS);
+	if (!skip_sdram_pll)
+		writel((CLKMGR_SDRPLLGRP_VCO_RESET_VALUE &
+			~CLKMGR_SDRPLLGRP_VCO_REGEXTSEL_MASK),
+			SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_VCO_ADDRESS);
 
 	/*
 	 * The clocks to the flash devices and the L4_MAIN clocks can
@@ -220,10 +237,11 @@ int cm_basic_init(const cm_config_t *cfg)
 	writel(cfg->peri_vco_base | CLEAR_BGP_EN_PWRDN,
 		(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_PERPLLGRP_VCO_ADDRESS));
 
-	writel(CLKMGR_SDRPLLGRP_VCO_OUTRESET_SET(0) |
-		CLKMGR_SDRPLLGRP_VCO_OUTRESETALL_SET(0) |
-		cfg->sdram_vco_base | CLEAR_BGP_EN_PWRDN,
-		(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_VCO_ADDRESS));
+	if (!skip_sdram_pll)
+		writel(CLKMGR_SDRPLLGRP_VCO_OUTRESET_SET(0) |
+		       CLKMGR_SDRPLLGRP_VCO_OUTRESETALL_SET(0) |
+		       cfg->sdram_vco_base | CLEAR_BGP_EN_PWRDN,
+		       (SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_VCO_ADDRESS));
 
 	/*
 	 * Time starts here
@@ -308,10 +326,11 @@ int cm_basic_init(const cm_config_t *cfg)
 		(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_PERPLLGRP_VCO_ADDRESS));
 
 	/* sdram pll vco */
-	writel(CLKMGR_SDRPLLGRP_VCO_OUTRESET_SET(0) |
-		CLKMGR_SDRPLLGRP_VCO_OUTRESETALL_SET(0) |
-		cfg->sdram_vco_base | VCO_EN_BASE,
-		(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_VCO_ADDRESS));
+	if (!skip_sdram_pll)
+		writel(CLKMGR_SDRPLLGRP_VCO_OUTRESET_SET(0) |
+		       CLKMGR_SDRPLLGRP_VCO_OUTRESETALL_SET(0) |
+		       cfg->sdram_vco_base | VCO_EN_BASE,
+		       (SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_VCO_ADDRESS));
 
 	/* setup dividers while plls are locking */
 	DEBUG_MEMORY
@@ -342,18 +361,24 @@ int cm_basic_init(const cm_config_t *cfg)
 	cm_wait_for_lock(LOCKED_MASK);
 
 	/* write the sdram clock counters before toggling outreset all */
-	DEBUG_MEMORY
-	writel(cfg->ddrdqsclk & CLKMGR_SDRPLLGRP_DDRDQSCLK_CNT_MASK,
-		SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_DDRDQSCLK_ADDRESS);
+	if (!skip_sdram_pll) {
+		DEBUG_MEMORY
+		writel(cfg->ddrdqsclk & CLKMGR_SDRPLLGRP_DDRDQSCLK_CNT_MASK,
+		       SOCFPGA_CLKMGR_ADDRESS +
+		       CLKMGR_SDRPLLGRP_DDRDQSCLK_ADDRESS);
 
-	writel(cfg->ddr2xdqsclk & CLKMGR_SDRPLLGRP_DDR2XDQSCLK_CNT_MASK,
-		SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_DDR2XDQSCLK_ADDRESS);
+		writel(cfg->ddr2xdqsclk & CLKMGR_SDRPLLGRP_DDR2XDQSCLK_CNT_MASK,
+		       SOCFPGA_CLKMGR_ADDRESS +
+		       CLKMGR_SDRPLLGRP_DDR2XDQSCLK_ADDRESS);
 
-	writel(cfg->ddrdqclk & CLKMGR_SDRPLLGRP_DDRDQCLK_CNT_MASK,
-		SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_DDRDQCLK_ADDRESS);
+		writel(cfg->ddrdqclk & CLKMGR_SDRPLLGRP_DDRDQCLK_CNT_MASK,
+		       SOCFPGA_CLKMGR_ADDRESS +
+		       CLKMGR_SDRPLLGRP_DDRDQCLK_ADDRESS);
 
-	writel(cfg->s2fuser2clk & CLKMGR_SDRPLLGRP_S2FUSER2CLK_CNT_MASK,
-		SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_S2FUSER2CLK_ADDRESS);
+		writel(cfg->s2fuser2clk & CLKMGR_SDRPLLGRP_S2FUSER2CLK_CNT_MASK,
+		       SOCFPGA_CLKMGR_ADDRESS +
+		       CLKMGR_SDRPLLGRP_S2FUSER2CLK_ADDRESS);
+	}
 
 	/*
 	 * after locking, but before taking out of bypass
@@ -375,9 +400,10 @@ int cm_basic_init(const cm_config_t *cfg)
 		(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_PERPLLGRP_VCO_ADDRESS));
 
 	/* assert sdram outresetall */
-	writel(cfg->sdram_vco_base | VCO_EN_BASE|
-		CLKMGR_SDRPLLGRP_VCO_OUTRESETALL_SET(1),
-		SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_VCO_ADDRESS);
+	if (!skip_sdram_pll)
+		writel(cfg->sdram_vco_base | VCO_EN_BASE|
+		       CLKMGR_SDRPLLGRP_VCO_OUTRESETALL_SET(1),
+		       SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_VCO_ADDRESS);
 
 	/* deassert main outresetall */
 	writel(mainvco & ~CLKMGR_MAINPLLGRP_VCO_OUTRESETALL_MASK,
@@ -388,31 +414,37 @@ int cm_basic_init(const cm_config_t *cfg)
 		(SOCFPGA_CLKMGR_ADDRESS + CLKMGR_PERPLLGRP_VCO_ADDRESS));
 
 	/* deassert sdram outresetall */
-	writel(CLKMGR_SDRPLLGRP_VCO_OUTRESETALL_SET(0) |
+	if (!skip_sdram_pll) {
+		writel(CLKMGR_SDRPLLGRP_VCO_OUTRESETALL_SET(0) |
 		       cfg->sdram_vco_base | VCO_EN_BASE,
-		SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_VCO_ADDRESS);
+		       SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_VCO_ADDRESS);
 
-	/*
-	 * now that we've toggled outreset all, all the clocks
-	 * are aligned nicely; so we can change any phase.
-	 */
-	DEBUG_MEMORY
-	cm_write_with_phase(cfg->ddrdqsclk,
-		SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_DDRDQSCLK_ADDRESS,
-		CLKMGR_SDRPLLGRP_DDRDQSCLK_PHASE_MASK);
+		/*
+		 * now that we've toggled outreset all, all the clocks
+		 * are aligned nicely; so we can change any phase.
+		 */
+		DEBUG_MEMORY
+		cm_write_with_phase(cfg->ddrdqsclk,
+				    SOCFPGA_CLKMGR_ADDRESS +
+				    CLKMGR_SDRPLLGRP_DDRDQSCLK_ADDRESS,
+				    CLKMGR_SDRPLLGRP_DDRDQSCLK_PHASE_MASK);
 
-	/* SDRAM DDR2XDQSCLK */
-	cm_write_with_phase(cfg->ddr2xdqsclk,
-		SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_DDR2XDQSCLK_ADDRESS,
-		CLKMGR_SDRPLLGRP_DDR2XDQSCLK_PHASE_MASK);
+		/* SDRAM DDR2XDQSCLK */
+		cm_write_with_phase(cfg->ddr2xdqsclk,
+				    SOCFPGA_CLKMGR_ADDRESS +
+				    CLKMGR_SDRPLLGRP_DDR2XDQSCLK_ADDRESS,
+				    CLKMGR_SDRPLLGRP_DDR2XDQSCLK_PHASE_MASK);
 
-	cm_write_with_phase(cfg->ddrdqclk,
-		SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_DDRDQCLK_ADDRESS,
-		CLKMGR_SDRPLLGRP_DDRDQCLK_PHASE_MASK);
+		cm_write_with_phase(cfg->ddrdqclk,
+				    SOCFPGA_CLKMGR_ADDRESS +
+				    CLKMGR_SDRPLLGRP_DDRDQCLK_ADDRESS,
+				    CLKMGR_SDRPLLGRP_DDRDQCLK_PHASE_MASK);
 
-	cm_write_with_phase(cfg->s2fuser2clk,
-		SOCFPGA_CLKMGR_ADDRESS + CLKMGR_SDRPLLGRP_S2FUSER2CLK_ADDRESS,
-		CLKMGR_SDRPLLGRP_S2FUSER2CLK_PHASE_MASK);
+		cm_write_with_phase(cfg->s2fuser2clk,
+				    SOCFPGA_CLKMGR_ADDRESS +
+				    CLKMGR_SDRPLLGRP_S2FUSER2CLK_ADDRESS,
+				    CLKMGR_SDRPLLGRP_S2FUSER2CLK_PHASE_MASK);
+	}
 
 	/* Take all three PLLs out of bypass when safe mode is cleared. */
 	DEBUG_MEMORY

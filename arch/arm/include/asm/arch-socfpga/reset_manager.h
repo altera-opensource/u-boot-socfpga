@@ -29,8 +29,10 @@ void reset_deassert_osc1timer0(void);
 void reset_deassert_osc1wd0(void);
 void reset_assert_all_peripherals(void);
 void reset_assert_all_peripherals_except_l4wd0(void);
+void reset_assert_all_peripherals_except_l4wd0_and_sdr(void);
 void reset_assert_all_bridges(void);
 #ifdef CONFIG_SPL_BUILD
+void disable_sdr_warm_reset(void);
 void reset_deassert_peripherals_handoff(void);
 void reset_deassert_bridges_handoff(void);
 #endif
@@ -58,6 +60,13 @@ struct socfpga_reset_manager {
 	u32	per_mod_reset;
 	u32	per2_mod_reset;
 	u32	brg_mod_reset;
+	u32	misc_mod_reset;
+	u32	padding2;
+	u32	padding3;
+	u32	padding4;
+	u32	mpu_warm_reset;
+	u32	per_warm_reset;
+	u32	per2_warm_reset;
 };
 #endif
 #endif /* __ASSEMBLY__ */
@@ -81,6 +90,8 @@ struct socfpga_reset_manager {
 #define RSTMGR_CTRL_OFFSET			0x00000004
 #define RSTMGR_MISCMODRST_OFFSET		0x00000020
 #define RSTMGR_MISCMODRST_CLKMGRCOLD_MASK	0x00000400
+#define RSTMGR_PERMODRST_OFFSET				0x00000014
+#define RSTMGR_PERMODRST_SDR_MASK			0x20000000
 
 /* Warm Reset mask */
 #if defined(CONFIG_SOCFPGA_VIRTUAL_TARGET)
@@ -110,6 +121,11 @@ struct socfpga_reset_manager {
 #define RSTMGR_STAT_SWWARMRST_MASK 0x00000400
 #define RSTMGR_STAT_FPGAWARMRST_MASK 0x00000200
 #define RSTMGR_STAT_NRSTPINRST_MASK 0x00000100
+#define RSTMGR_STAT_SWCOLDRST_MASK 0x00000010
+#define RSTMGR_STAT_CONFIGIOCOLDRST_MASK 0x00000008
+#define RSTMGR_STAT_FPGACOLDRST_MASK 0x00000004
+#define RSTMGR_STAT_NPORPINRST_MASK 0x00000002
+#define RSTMGR_STAT_PORVOLTRST_MASK 0x00000001
 #define RSTMGR_WARMRST_MASK	(\
 	RSTMGR_STAT_L4WD1RST_MASK | \
 	RSTMGR_STAT_L4WD0RST_MASK | \
@@ -118,10 +134,17 @@ struct socfpga_reset_manager {
 	RSTMGR_STAT_SWWARMRST_MASK | \
 	RSTMGR_STAT_FPGAWARMRST_MASK | \
 	RSTMGR_STAT_NRSTPINRST_MASK)
+#define RSTMGR_COLDRST_MASK	(\
+	RSTMGR_STAT_SWCOLDRST_MASK | \
+	RSTMGR_STAT_CONFIGIOCOLDRST_MASK | \
+	RSTMGR_STAT_FPGACOLDRST_MASK | \
+	RSTMGR_STAT_NPORPINRST_MASK | \
+	RSTMGR_STAT_PORVOLTRST_MASK)
 #define RSTMGR_CTRL_SDRSELFREFEN_MASK 0x00000010
 #define RSTMGR_CTRL_FPGAHSEN_MASK 0x00010000
 #define RSTMGR_CTRL_ETRSTALLEN_MASK 0x00100000
 #endif
+#define RSTMGR_PERWARMMASK_SDR_MASK	0x20000000
 
 #if defined(CONFIG_SOCFPGA_VIRTUAL_TARGET)
 

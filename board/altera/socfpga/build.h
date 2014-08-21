@@ -141,6 +141,11 @@
 #define CONFIG_PRELOADER_SKIP_SDRAM		(0)
 
 /*
+ * If enabled, Preloader will preserve SDRAM on WARM reset
+ */
+#define CONFIG_PRELOADER_WARMRST_PRESERVE_SDRAM  (0)
+
+/*
  * To configure whether to scrub the SDRAM to initialize the ECC bits
  */
 #define CONFIG_PRELOADER_SDRAM_SCRUBBING	(0)
