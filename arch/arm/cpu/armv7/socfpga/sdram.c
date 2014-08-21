@@ -34,6 +34,10 @@
 /*#define COMPARE_FAIL_ACTION	;*/
 #define COMPARE_FAIL_ACTION	return 1;
 
+#define ADDRORDER2_INFO \
+	"INFO: Changing address order to 2 (row, chip, bank, column)\n"
+#define ADDRORDER0_INFO \
+	"INFO: Changing address order to 0 (chip, row, bank, column)\n"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -46,7 +50,7 @@ u8 pl330_buf0[100];
 u8 pl330_buf1[1500];
 #endif
 
-/* Initialise the DRAM by telling the DRAM Size */
+/* Initialise the DRAM by telling the DRAM Size. */
 int dram_init(void)
 {
 	unsigned long sdram_size;
@@ -167,6 +171,8 @@ unsigned sdram_mmr_init_full(unsigned int sdr_phy_reg)
 {
 	unsigned long register_offset, reg_value;
 	unsigned long status = 0;
+	int addrorder;
+	char *paddrorderinfo = NULL;
 
 	DEBUG_MEMORY
 	/***** CTRLCFG *****/
@@ -196,8 +202,32 @@ defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_NODMPINS)
 			SDR_CTRLGRP_CTRLCFG_MEMBL_MASK);
 #endif
 #ifdef CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ADDRORDER
+
+	/* SDRAM Failure When Accessing Non-Existent Memory
+	 * Set the addrorder field of the SDRAM control register
+	 * based on the CSBITs setting.
+	 */
+
+	switch (CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_CSBITS) {
+	case 1:
+		addrorder = 0; /* chip, row, bank, column */
+		if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ADDRORDER != 0)
+			paddrorderinfo = ADDRORDER0_INFO;
+		break;
+	case 2:
+		addrorder = 2; /* row, chip, bank, column */
+		if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ADDRORDER != 2)
+			paddrorderinfo = ADDRORDER2_INFO;
+		break;
+	default:
+		addrorder = CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ADDRORDER;
+		break;
+	}
+	if (paddrorderinfo)
+		printf(paddrorderinfo);
+
 	reg_value = sdram_write_register_field(reg_value,
-			CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ADDRORDER,
+			addrorder,
 			SDR_CTRLGRP_CTRLCFG_ADDRORDER_LSB,
 			SDR_CTRLGRP_CTRLCFG_ADDRORDER_MASK);
 #endif
@@ -459,8 +489,12 @@ defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_CSBITS)
 			SDR_CTRLGRP_DRAMADDRW_COLBITS_MASK);
 #endif
 #ifdef CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_ROWBITS
+	/* SDRAM Failure When Accessing Non-Existent Memory
+	 * Update Preloader to artificially increase the number of rows so
+	 * that the memory thinks it has 4GB of RAM.
+	 */
 	reg_value = sdram_write_register_field(reg_value,
-			CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_ROWBITS,
+			CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_ROWBITS + 1,
 			SDR_CTRLGRP_DRAMADDRW_ROWBITS_LSB,
 			SDR_CTRLGRP_DRAMADDRW_ROWBITS_MASK);
 #endif
@@ -471,8 +505,14 @@ defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_CSBITS)
 			SDR_CTRLGRP_DRAMADDRW_BANKBITS_MASK);
 #endif
 #ifdef CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_CSBITS
+	/* SDRAM Failure When Accessing Non-Existent Memory
+	 * Set SDR_CTRLGRP_DRAMADDRW_CSBITS_LSB to
+	 * log2(number of chip select bits). Since there's only
+	 * 1 or 2 chip selects, log2(1) => 0, and log2(2) => 1,
+	 * which is the same as "chip selects" - 1.
+	 */
 	reg_value = sdram_write_register_field(reg_value,
-			CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_CSBITS,
+			CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_CSBITS - 1,
 			SDR_CTRLGRP_DRAMADDRW_CSBITS_LSB,
 			SDR_CTRLGRP_DRAMADDRW_CSBITS_MASK);
 #endif
@@ -1158,8 +1198,13 @@ unsigned sdram_check_self_refresh_seq(void)
 
 #endif	/* CONFIG_SPL_BUILD */
 
-/* To calculate SDRAM device size based on SDRAM controller parameters
- * Size is specified in bytes
+/* To calculate SDRAM device size based on SDRAM controller parameters.
+ * Size is specified in bytes.
+ *
+ * NOTE!!!!
+ * This function is compiled and linked into the preloader and
+ * Uboot (there may be others). So if this function changes, the Preloader
+ * and UBoot must be updated simultaneously.
  */
 unsigned long sdram_calculate_size(void)
 {
@@ -1170,12 +1215,29 @@ unsigned long sdram_calculate_size(void)
 		SDR_CTRLGRP_DRAMADDRW_ADDRESS);
 	col = (temp & SDR_CTRLGRP_DRAMADDRW_COLBITS_MASK) >>
 		SDR_CTRLGRP_DRAMADDRW_COLBITS_LSB;
+
+	/* SDRAM Failure When Accessing Non-Existent Memory
+	 * Use ROWBITS from Quartus/QSys to calculate SDRAM size
+	 * since the FB specifies we modify ROWBITs to work around SDRAM
+	 * controller issue.
+	 */
 	row = (temp & SDR_CTRLGRP_DRAMADDRW_ROWBITS_MASK) >>
-		SDR_CTRLGRP_DRAMADDRW_ROWBITS_LSB;
+	       SDR_CTRLGRP_DRAMADDRW_ROWBITS_LSB;
+	row -= 1;
+
 	bank = (temp & SDR_CTRLGRP_DRAMADDRW_BANKBITS_MASK) >>
 		SDR_CTRLGRP_DRAMADDRW_BANKBITS_LSB;
+
+	/* SDRAM Failure When Accessing Non-Existent Memory
+	 * Use CSBITs from Quartus/QSys to calculate SDRAM size
+	 * since the FB specifies we modify CSBITs to work around SDRAM
+	 * controller issue.
+	 */
 	cs = (temp & SDR_CTRLGRP_DRAMADDRW_CSBITS_MASK) >>
-		SDR_CTRLGRP_DRAMADDRW_CSBITS_LSB;
+	      SDR_CTRLGRP_DRAMADDRW_CSBITS_LSB;
+	cs += 1;
+
+	cs = CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_CSBITS;
 
 	width = readl(SOCFPGA_SDR_ADDRESS +
 		SDR_CTRLGRP_DRAMIFWIDTH_ADDRESS);
@@ -1188,6 +1250,9 @@ unsigned long sdram_calculate_size(void)
 	/* calculate the SDRAM size base on this info */
 	temp = 1 << (row + bank + col);
 	temp = temp * cs * (width  / 8);
+
+	debug("sdram_calculate_memory returns %ld\n", temp);
+
 	return temp;
 }
 
