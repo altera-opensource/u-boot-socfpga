@@ -39,9 +39,9 @@
 	CLKMGR_MAINPLLGRP_VCO_EN_SET(1)| \
 	CLKMGR_MAINPLLGRP_VCO_BGPWRDN_SET(0))
 
-unsigned long cm_l4_sp_clock;
-unsigned long cm_sdmmc_clock;
-unsigned long cm_qspi_clock;
+unsigned long cm_l4_sp_clock __attribute__((section(".data")));
+unsigned long cm_sdmmc_clock __attribute__((section(".data")));
+unsigned long cm_qspi_clock __attribute__((section(".data")));
 
 static inline void cm_wait_for_lock(uint32_t mask)
 {

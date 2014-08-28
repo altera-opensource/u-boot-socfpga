@@ -256,9 +256,9 @@ void cm_derive_clocks_for_drivers(void);
 
 #ifndef __ASSEMBLY__
 /* global variable which consume by drivers */
-extern unsigned long cm_l4_sp_clock;
-extern unsigned long cm_sdmmc_clock;
-extern unsigned long cm_qspi_clock;
+extern unsigned long cm_l4_sp_clock __attribute__((section(".data")));
+extern unsigned long cm_sdmmc_clock __attribute__((section(".data")));
+extern unsigned long cm_qspi_clock __attribute__((section(".data")));
 #endif /* __ASSEMBLY__ */
 
 /* Bypass Main and Per PLL, bypass source per input mux */
