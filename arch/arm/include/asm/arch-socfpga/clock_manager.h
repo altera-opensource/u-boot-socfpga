@@ -269,5 +269,9 @@ extern unsigned long cm_qspi_clock;
 #define CLKMGR_PERQSPICLK_RESET_VALUE		0x1
 #define CLKMGR_PERNANDSDMMCCLK_RESET_VALUE	0x1
 
+/* Bit masks for dbctrl register */
+#define CLKMGR_DBCTRL_ENSFMDWR_MASK 0x00000002
+#define CLKMGR_DBCTRL_STAYOSC1_MASK 0x00000001
+
 
 #endif /* _CLOCK_MANAGER_H_ */

@@ -31,6 +31,8 @@
 #ifndef _PRELOADER_PLL_CONFIG_H_
 #define _PRELOADER_PLL_CONFIG_H_
 
+#define CONFIG_HPS_DBCTRL_STAYOSC1 (1)
+
 /* PLL configuration data */
 /* Main PLL */
 #define CONFIG_HPS_MAINPLLGRP_VCO_DENOM			(0)
