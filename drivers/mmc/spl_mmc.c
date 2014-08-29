@@ -79,7 +79,7 @@ static void mmc_load_image_mbr(struct mmc *mmc)
 
 	u32 i;
 	u32 part_type;
-	u32 offset;
+	u32 offset = 0;
 	u16 sign;
 	u8 *p_entry;
 	u32 image_size_sectors, err;
