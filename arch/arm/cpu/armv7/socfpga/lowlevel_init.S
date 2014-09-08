@@ -36,6 +36,21 @@
 save_boot_params:
 
 #ifdef CONFIG_SPL_BUILD
+	/*
+	 * If BSEL is zero, then the bootrom has not
+         * handed any information to preloader.
+         */
+	ldr	r9,=SYSMGR_BOOTINFO
+	ldr 	r9, [r9]
+	and	r9, r9, #SYSMGR_BOOTINFO_BSEL_MASK
+	cmp	r9, #0
+	bne	bsel_non_zero
+	ldr	r4, =rst_mgr_status
+	ldr	r5, =RSTMGR_COLDRST_MASK
+	str	r5, [r4]
+	b	bsel_zero
+
+bsel_non_zero:
 #if (CONFIG_PRELOADER_DEBUG_MEMORY_WRITE == 1)
 	/*
 	 * write the debug memory header and value of R0 - R3 (which passed
@@ -56,6 +71,7 @@ save_boot_params:
 	str	r5, [r4]
 #endif /* CONFIG_PRELOADER_WARMRST_SKIP_CFGIO */
 
+bsel_zero:
 #if (CONFIG_PRELOADER_EXE_ON_FPGA == 1)
 	/* relocate the .data section to supprt preloader execute on FPGA */
 	ldr	r0, =__data_start
