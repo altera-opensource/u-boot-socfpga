@@ -45,7 +45,7 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 #if (CONFIG_PRELOADER_WARMRST_SKIP_CFGIO == 1) || \
-(CONFIG_PRELOADER_WARMRST_PRESERVE_SDRAM == 1)
+(CONFIG_HPS_RESET_WARMRST_HANDSHAKE_SDRAM == 1)
 u32 rst_mgr_status;
 #endif
 
@@ -313,7 +313,7 @@ void spl_program_fpga_sd_fat(void)
  */
 void spl_board_init(void)
 {
-#if (CONFIG_PRELOADER_WARMRST_PRESERVE_SDRAM == 1)
+#if (CONFIG_HPS_RESET_WARMRST_HANDSHAKE_SDRAM == 1)
 	const int warmrst_preserve_sdram = 1;
 #else
 	const int warmrst_preserve_sdram = 0;

@@ -32,7 +32,7 @@ extern char __irq_stack_start;
 #endif /* CONFIG_USE_IRQ */
 
 #if (CONFIG_PRELOADER_WARMRST_SKIP_CFGIO == 1) || \
-(CONFIG_PRELOADER_WARMRST_PRESERVE_SDRAM == 1)
+(CONFIG_HPS_RESET_WARMRST_HANDSHAKE_SDRAM == 1)
 extern u32 rst_mgr_status __attribute__ ((section(".data")));
 #endif
 
