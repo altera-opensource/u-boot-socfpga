@@ -121,6 +121,16 @@ void sdram_scrub_remain_region_finish(void);
 #define SDR_CTRLGRP_FPGAPORTRST_ADDRESS 0x5080
 /* Register: sdr.ctrlgrp.fifocfg                                           */
 #define SDR_CTRLGRP_FIFOCFG_ADDRESS 0x5088
+/* Register: sdr.ctrlgrp.protportdefault				   */
+#define SDR_CTRLGRP_PROTPORTDEFAULT_ADDRESS 0x508c
+/* Register: sdr.ctrlgrp.protruleaddr					   */
+#define SDR_CTRLGRP_PROTRULEADDR_ADDRESS 0x5090
+/* Register: sdr.ctrlgrp.protruleid					   */
+#define SDR_CTRLGRP_PROTRULEID_ADDRESS 0x5094
+/* Register: sdr.ctrlgrp.protruledata					   */
+#define SDR_CTRLGRP_PROTRULEDATA_ADDRESS 0x5098
+/* Register: sdr.ctrlgrp.protrulerdwr					   */
+#define SDR_CTRLGRP_PROTRULERDWR_ADDRESS 0x509c
 /* Register: sdr.ctrlgrp.mppriority                                        */
 #define SDR_CTRLGRP_MPPRIORITY_ADDRESS 0x50ac
 /* Wide Register: sdr.ctrlgrp.mpweight                                     */

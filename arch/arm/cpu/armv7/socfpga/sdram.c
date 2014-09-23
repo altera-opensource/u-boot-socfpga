@@ -21,8 +21,11 @@
 #include <asm/arch/debug_memory.h>
 #include <asm/arch/fpga_manager.h>
 #include <asm/arch/system_manager.h>
+#include <div64.h>
 #include <pl330.h>
 #include <watchdog.h>
+
+#include "altlimits.h"
 
 /*
  * SDRAM MMR init skip read back/verify steps
@@ -38,6 +41,9 @@
 	"INFO: Changing address order to 2 (row, chip, bank, column)\n"
 #define ADDRORDER0_INFO \
 	"INFO: Changing address order to 0 (chip, row, bank, column)\n"
+
+/* define constant for 4G memory - used for SDRAM errata workaround */
+#define MEMSIZE_4G (4ULL * 1024ULL * 1024ULL * 1024ULL)
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -129,6 +135,226 @@ void irq_handler_ecc_sdram(void *arg)
 /* Below function only applicable for SPL */
 #ifdef CONFIG_SPL_BUILD
 
+int
+compute_errata_rows(unsigned long long memsize, int cs, int width,
+		    int rows, int banks, int cols)
+{
+	unsigned long long newrows;
+	int inewrowslog2;
+	int bits;
+
+	debug("workaround rows - memsize %lld\n", memsize);
+	debug("workaround rows - cs        %d\n", cs);
+	debug("workaround rows - width     %d\n", width);
+	debug("workaround rows - rows      %d\n", rows);
+	debug("workaround rows - banks     %d\n", banks);
+	debug("workaround rows - cols      %d\n", cols);
+
+	newrows = lldiv(memsize, (cs * (width / 8)));
+	debug("rows workaround - term1 %lld\n", newrows);
+
+	newrows = lldiv(newrows, ((1 << banks) * (1 << cols)));
+	debug("rows workaround - term2 %lld\n", newrows);
+
+	/* Compute the hamming weight - same as number of bits set.
+	 * Need to see if result is ordinal power of 2 before
+	 * attempting log2 of result.
+	 */
+	bits = hweight32(newrows);
+
+	debug("rows workaround - bits %d\n", bits);
+
+	if (bits != 1) {
+		printf("SDRAM workaround failed, bits set %d\n", bits);
+		return rows;
+	}
+
+	if (newrows > UINT_MAX) {
+		printf("SDRAM workaround rangecheck failed, %lld\n", newrows);
+		return rows;
+	}
+
+	inewrowslog2 = __ilog2((unsigned int)newrows);
+
+	debug("rows workaround - ilog2 %d, %d\n", inewrowslog2,
+	       (int)newrows);
+
+	if (inewrowslog2 == -1) {
+		printf("SDRAM workaround failed, newrows %d\n", (int)newrows);
+		return rows;
+	}
+
+	return inewrowslog2;
+}
+
+typedef struct _sdram_prot_rule {
+	uint32_t	rule;		/* SDRAM protection rule number: 0-19 */
+	uint64_t	sdram_start;	/* SDRAM start address */
+	uint64_t	sdram_end;	/* SDRAM end address */
+	int		valid;		/* Rule valid or not? 1 - valid, 0 not*/
+
+	uint32_t	security;
+	uint32_t	portmask;
+	uint32_t	result;
+	uint32_t	lo_prot_id;
+	uint32_t	hi_prot_id;
+} sdram_prot_rule, *psdram_prot_rule;
+
+/* SDRAM protection rules vary from 0-19, a total of 20 rules. */
+
+void sdram_set_rule(psdram_prot_rule prule)
+{
+	int regoffs;
+	uint32_t lo_addr_bits;
+	uint32_t hi_addr_bits;
+	int ruleno = prule->rule;
+
+	/* Select the rule */
+	regoffs = SDR_CTRLGRP_PROTRULERDWR_ADDRESS;
+	writel(ruleno, (SOCFPGA_SDR_ADDRESS + regoffs));
+
+	/* Obtain the address bits */
+	lo_addr_bits = (uint32_t)(((prule->sdram_start) >> 20ULL) & 0xFFF);
+	hi_addr_bits = (uint32_t)((((prule->sdram_end-1) >> 20ULL)) & 0xFFF);
+
+	debug("sdram set rule start %x, %lld\n", lo_addr_bits,
+	      prule->sdram_start);
+	debug("sdram set rule end   %x, %lld\n", hi_addr_bits,
+	      prule->sdram_end);
+
+	/* Set rule addresses */
+	regoffs = SDR_CTRLGRP_PROTRULEADDR_ADDRESS;
+	writel(lo_addr_bits | (hi_addr_bits << 12),
+	       (SOCFPGA_SDR_ADDRESS + regoffs));
+
+	/* Set rule protection ids */
+	regoffs = SDR_CTRLGRP_PROTRULEID_ADDRESS;
+	writel(prule->lo_prot_id | (prule->hi_prot_id << 12),
+	       (SOCFPGA_SDR_ADDRESS + regoffs));
+
+	/* Set the rule data */
+	regoffs = SDR_CTRLGRP_PROTRULEDATA_ADDRESS;
+	writel(prule->security | (prule->valid << 2) |
+	       (prule->portmask << 3) | (prule->result << 13),
+	       (SOCFPGA_SDR_ADDRESS + regoffs));
+
+	/* write the rule */
+	regoffs = SDR_CTRLGRP_PROTRULERDWR_ADDRESS;
+	writel(ruleno | (1L << 5),
+	       (SOCFPGA_SDR_ADDRESS + regoffs));
+
+	/* Set rule number to 0 by default */
+	writel(0, (SOCFPGA_SDR_ADDRESS + regoffs));
+}
+
+void sdram_get_rule(psdram_prot_rule prule)
+{
+	int regoffs;
+	uint32_t protruleaddr;
+	uint32_t protruleid;
+	uint32_t protruledata;
+	int ruleno = prule->rule;
+
+	/* Read the rule */
+	regoffs = SDR_CTRLGRP_PROTRULERDWR_ADDRESS;
+	writel(ruleno, (SOCFPGA_SDR_ADDRESS + regoffs));
+	writel(ruleno | (1L << 6),
+	       (SOCFPGA_SDR_ADDRESS + regoffs));
+
+	/* Get the addresses */
+	regoffs = SDR_CTRLGRP_PROTRULEADDR_ADDRESS;
+	protruleaddr = readl(SOCFPGA_SDR_ADDRESS + regoffs);
+	prule->sdram_start = (protruleaddr & 0xFFF) << 20;
+	prule->sdram_end = ((protruleaddr >> 12) & 0xFFF) << 20;
+
+	/* Get the configured protection IDs */
+	regoffs = SDR_CTRLGRP_PROTRULEID_ADDRESS;
+	protruleid = readl(SOCFPGA_SDR_ADDRESS + regoffs);
+	prule->lo_prot_id = protruleid & 0xFFF;
+	prule->hi_prot_id = (protruleid >> 12) & 0xFFF;
+
+	/* Get protection data */
+	regoffs = SDR_CTRLGRP_PROTRULEDATA_ADDRESS;
+	protruledata = readl(SOCFPGA_SDR_ADDRESS + regoffs);
+
+	prule->security = protruledata & 0x3;
+	prule->valid = (protruledata >> 2) & 0x1;
+	prule->portmask = (protruledata >> 3) & 0x3FF;
+	prule->result = (protruledata >> 13) & 0x1;
+}
+
+
+void sdram_set_protection_config(uint64_t sdram_start, uint64_t sdram_end)
+{
+	sdram_prot_rule rule;
+	int rules;
+	int regoffs = SDR_CTRLGRP_PROTPORTDEFAULT_ADDRESS;
+
+	/* Start with accepting all SDRAM transaction */
+	writel(0x0, (SOCFPGA_SDR_ADDRESS + regoffs));
+
+	/* Clear all protection rules for warm boot case */
+
+	rule.sdram_start = 0;
+	rule.sdram_end = 0;
+	rule.lo_prot_id = 0;
+	rule.hi_prot_id = 0;
+	rule.portmask = 0;
+	rule.security = 0;
+	rule.result = 0;
+	rule.valid = 0;
+	rule.rule = 0;
+
+	for (rules = 0; rules < 20; rules++) {
+		rule.rule = rules;
+		sdram_set_rule(&rule);
+	}
+
+	/* new rule: accept SDRAM */
+	rule.sdram_start = sdram_start;
+	rule.sdram_end = sdram_end;
+	rule.lo_prot_id = 0x0;
+	rule.hi_prot_id = 0xFFF;
+	rule.portmask = 0x3FF;
+	rule.security = 0x3;
+	rule.result = 0;
+	rule.valid = 1;
+	rule.rule = 0;
+
+	/* set new rule */
+	sdram_set_rule(&rule);
+
+	/* default rule: reject everything */
+	writel(0x3ff, (SOCFPGA_SDR_ADDRESS + regoffs));
+}
+
+void sdram_dump_protection_config(void)
+{
+	sdram_prot_rule rule;
+	int rules;
+	int regoffs = SDR_CTRLGRP_PROTPORTDEFAULT_ADDRESS;
+
+	debug("SDRAM Prot rule, default %x\n",
+	      readl(SOCFPGA_SDR_ADDRESS + regoffs));
+
+	for (rules = 0; rules < 20; rules++) {
+		sdram_get_rule(&rule);
+		debug("Rule %d, rules ...\n", rules);
+		debug("    sdram start %llx\n", rule.sdram_start);
+		debug("    sdram end   %llx\n", rule.sdram_end);
+		debug("    low prot id %d, hi prot id %d\n",
+		      rule.lo_prot_id,
+		      rule.hi_prot_id);
+		debug("    portmask %x\n", rule.portmask);
+		debug("    security %d\n", rule.security);
+		debug("    result %d\n", rule.result);
+		debug("    valid %d\n", rule.valid);
+	}
+}
+
+
+
+
 /* Function to update the field within variable */
 unsigned sdram_write_register_field (unsigned masked_value,
 	unsigned data, unsigned shift, unsigned mask)
@@ -173,6 +399,23 @@ unsigned sdram_mmr_init_full(unsigned int sdr_phy_reg)
 	unsigned long status = 0;
 	int addrorder;
 	char *paddrorderinfo = NULL;
+
+#if defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_CSBITS) && \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_ROWBITS) && \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_BANKBITS) && \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_COLBITS) && \
+defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_ROWBITS)
+
+	int cs = CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_CSBITS;
+	int width = 8;
+	int rows = CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_ROWBITS;
+	int banks = CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_BANKBITS;
+	int cols = CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_COLBITS;
+	unsigned long long workaround_memsize = MEMSIZE_4G;
+
+	writel(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_ROWBITS,
+	       ISWGRP_HANDOFF_ROWBITS);
+#endif
 
 	DEBUG_MEMORY
 	/***** CTRLCFG *****/
@@ -493,8 +736,11 @@ defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_CSBITS)
 	 * Update Preloader to artificially increase the number of rows so
 	 * that the memory thinks it has 4GB of RAM.
 	 */
+	rows = compute_errata_rows(workaround_memsize, cs, width, rows, banks,
+				   cols);
+
 	reg_value = sdram_write_register_field(reg_value,
-			CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_ROWBITS + 1,
+			rows,
 			SDR_CTRLGRP_DRAMADDRW_ROWBITS_LSB,
 			SDR_CTRLGRP_DRAMADDRW_ROWBITS_MASK);
 #endif
@@ -1096,6 +1342,10 @@ defined(CONFIG_HPS_SDR_CTRLCFG_DRAMODT_WRITE)
 	reg_value = readl(SOCFPGA_SDR_ADDRESS + register_offset);
 	debug("   Read value without verify 0x%08x\n", (unsigned)reg_value);
 
+	sdram_set_protection_config(0, sdram_calculate_size());
+
+	sdram_dump_protection_config();
+
 	DEBUG_MEMORY
 	return status;
 }
@@ -1220,10 +1470,26 @@ unsigned long sdram_calculate_size(void)
 	 * Use ROWBITS from Quartus/QSys to calculate SDRAM size
 	 * since the FB specifies we modify ROWBITs to work around SDRAM
 	 * controller issue.
+	 *
+	 * If the stored handoff value for rows is 0, it probably means
+	 * the preloader is older than UBoot. Use the
+	 * #define from the SOCEDS Tools per Crucible review
+	 * uboot-socfpga-204. Note that this is not a supported
+	 * configuration and is not tested. The customer
+	 * should be using preloader and uboot built from the
+	 * same tag.
 	 */
-	row = (temp & SDR_CTRLGRP_DRAMADDRW_ROWBITS_MASK) >>
-	       SDR_CTRLGRP_DRAMADDRW_ROWBITS_LSB;
-	row -= 1;
+	row = readl(ISWGRP_HANDOFF_ROWBITS);
+	if (row == 0)
+		row = CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_ROWBITS;
+	/* If the stored handoff value for rows is greater than
+	 * the field width in the sdr.dramaddrw register then
+	 * something is very wrong. Revert to using the the #define
+	 * value handed off by the SOCEDS tool chain instead of
+	 * using a broken value.
+	 */
+	if (row > 31)
+		row = CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_ROWBITS;
 
 	bank = (temp & SDR_CTRLGRP_DRAMADDRW_BANKBITS_MASK) >>
 		SDR_CTRLGRP_DRAMADDRW_BANKBITS_LSB;
