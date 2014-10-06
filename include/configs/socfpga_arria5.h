@@ -40,4 +40,7 @@
 #define CONFIG_EPHY_PHY_ADDR		CONFIG_EPHY1_PHY_ADDR
 #define CONFIG_PHY_INTERFACE_MODE	SOCFPGA_PHYSEL_ENUM_RGMII
 
+/* Define machine type for Arria 5 */
+#define CONFIG_MACH_TYPE 4970
+
 #endif	/* __CONFIG_H */
