@@ -8,4 +8,5 @@ ALL-y	+= u-boot.img
 endif
 
 # Added for handoff support
-PLATFORM_RELFLAGS += -Iboard/$(VENDOR)/$(BOARD)
+PLATFORM_RELFLAGS += -Iboard/$(VENDOR)/$(BOARD) \
+-Iboard/$(VENDOR)/$(BOARD)/sdram
