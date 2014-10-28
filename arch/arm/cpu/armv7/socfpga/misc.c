@@ -31,6 +31,13 @@ static struct scu_registers *scu_regs =
 
 int dram_init(void)
 {
+	unsigned long sdram_size;
+
+#ifdef CONFIG_SDRAM_CALCULATE_SIZE
+	sdram_size = sdram_calculate_size();
+#else
+	sdram_size = PHYS_SDRAM_1_SIZE;
+#endif
 	gd->ram_size = get_ram_size((long *)PHYS_SDRAM_1, PHYS_SDRAM_1_SIZE);
 	return 0;
 }

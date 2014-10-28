@@ -10,6 +10,7 @@
 #include "../../board/altera/socfpga/pinmux_config.h"
 #include "../../board/altera/socfpga/iocsr_config.h"
 #include "../../board/altera/socfpga/pll_config.h"
+#include "../../board/altera/socfpga/sdram/sdram_config.h"
 
 /* U-Boot Commands */
 #define CONFIG_SYS_NO_FLASH

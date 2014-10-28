@@ -49,26 +49,15 @@ DECLARE_GLOBAL_DATA_PTR;
 
 unsigned long irq_cnt_ecc_sdram;
 
+static struct socfpga_system_manager *sysmgr_regs =
+	(struct socfpga_system_manager *)SOCFPGA_SYSMGR_ADDRESS;
+
 #if (CONFIG_PRELOADER_SDRAM_SCRUB_REMAIN_REGION == 1)
 struct pl330_transfer_struct pl330_0;
 struct pl330_transfer_struct pl330_1;
 u8 pl330_buf0[100];
 u8 pl330_buf1[1500];
 #endif
-
-/* Initialise the DRAM by telling the DRAM Size. */
-int dram_init(void)
-{
-	unsigned long sdram_size;
-
-#ifdef CONFIG_SDRAM_CALCULATE_SIZE
-	sdram_size = sdram_calculate_size();
-#else
-	sdram_size = PHYS_SDRAM_1_SIZE;
-#endif
-	gd->ram_size = get_ram_size(0, sdram_size);
-	return 0;
-}
 
 /* Enable and disable SDRAM interrupt */
 void sdram_enable_interrupt(unsigned enable)
@@ -414,7 +403,7 @@ defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_ROWBITS)
 	unsigned long long workaround_memsize = MEMSIZE_4G;
 
 	writel(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_ROWBITS,
-	       ISWGRP_HANDOFF_ROWBITS);
+	       &sysmgr_regs->iswgrp_handoff[4]);
 #endif
 
 	DEBUG_MEMORY
@@ -1305,7 +1294,7 @@ defined(CONFIG_HPS_SDR_CTRLCFG_DRAMODT_WRITE)
 	reg_value = CONFIG_HPS_SDR_CTRLCFG_FPGAPORTRST;
 
 	/* saving this value to SYSMGR.ISWGRP.HANDOFF.FPGA2SDR */
-	writel(reg_value, ISWGRP_HANDOFF_FPGA2SDR);
+	writel(reg_value, &sysmgr_regs->iswgrp_handoff[3]);
 
 	/* only enable if the FPGA is programmed */
 	if (is_fpgamgr_fpga_ready()) {
@@ -1479,7 +1468,7 @@ unsigned long sdram_calculate_size(void)
 	 * should be using preloader and uboot built from the
 	 * same tag.
 	 */
-	row = readl(ISWGRP_HANDOFF_ROWBITS);
+	row = readl(&sysmgr_regs->iswgrp_handoff[4]);
 	if (row == 0)
 		row = CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_ROWBITS;
 	/* If the stored handoff value for rows is greater than
