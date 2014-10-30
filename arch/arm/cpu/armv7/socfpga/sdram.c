@@ -27,6 +27,24 @@
 
 #include "altlimits.h"
 
+#if !defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN)
+	#error ECCEN is not defined
+#endif
+
+#if !defined(CONFIG_PRELOADER_SDRAM_SCRUBBING)
+	#error SDRAM Scrubbing is not defined
+#endif
+
+#if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN == 1)
+	#if (CONFIG_PRELOADER_SDRAM_SCRUBBING == 0)
+		#error If ECC is enabled, Scrubbing should also be enabled.
+	#endif
+#elif (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN == 0)
+	#if (CONFIG_PRELOADER_SDRAM_SCRUBBING == 1)
+		#error If ECC is disabled, Scrubbing should also be disabled.
+	#endif
+#endif
+
 /*
  * SDRAM MMR init skip read back/verify steps
  * Define to speed up the MMR init process by just write without verifying
@@ -480,12 +498,13 @@ defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_NODMPINS)
 			SDR_CTRLGRP_CTRLCFG_ECCEN_LSB,
 			SDR_CTRLGRP_CTRLCFG_ECCEN_MASK);
 #endif
-#ifdef CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCCORREN
+
+	/* Always set ECCCORREN to disabled */
 	reg_value = sdram_write_register_field(reg_value,
-			CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCCORREN,
+			0,
 			SDR_CTRLGRP_CTRLCFG_ECCCORREN_LSB,
 			SDR_CTRLGRP_CTRLCFG_ECCCORREN_MASK);
-#endif
+
 #ifdef CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_REORDEREN
 	reg_value = sdram_write_register_field(reg_value,
 			CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_REORDEREN,
@@ -837,8 +856,6 @@ defined(CONFIG_HPS_SDR_CTRLCFG_DRAMADDRW_CSBITS)
 
 
 	/***** STATICCFG *****/
-#if defined(CONFIG_HPS_SDR_CTRLCFG_STATICCFG_MEMBL) || \
-defined(CONFIG_HPS_SDR_CTRLCFG_STATICCFG_USEECCASDATA)
 	debug("Configuring STATICCFG\n");
 	register_offset = SDR_CTRLGRP_STATICCFG_ADDRESS;
 	/* Read original register value */
@@ -849,17 +866,16 @@ defined(CONFIG_HPS_SDR_CTRLCFG_STATICCFG_USEECCASDATA)
 			SDR_CTRLGRP_STATICCFG_MEMBL_LSB,
 			SDR_CTRLGRP_STATICCFG_MEMBL_MASK);
 #endif
-#ifdef CONFIG_HPS_SDR_CTRLCFG_STATICCFG_USEECCASDATA
+	/* Always set USEECCASDATA to 0 */
 	reg_value = sdram_write_register_field(reg_value,
-			CONFIG_HPS_SDR_CTRLCFG_STATICCFG_USEECCASDATA,
+			0,
 			SDR_CTRLGRP_STATICCFG_USEECCASDATA_LSB,
 			SDR_CTRLGRP_STATICCFG_USEECCASDATA_MASK);
-#endif
+
 	if (sdram_write_verify(register_offset,	reg_value) == 1) {
 		status = 1;
 		COMPARE_FAIL_ACTION
 	}
-#endif
 
 
 	/***** CTRLWIDTH *****/
