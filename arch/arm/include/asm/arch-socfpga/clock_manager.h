@@ -14,7 +14,6 @@ unsigned long cm_get_sdram_clk_hz(void);
 unsigned int cm_get_l4_sp_clk_hz(void);
 unsigned int cm_get_mmc_controller_clk_hz(void);
 unsigned int cm_get_qspi_controller_clk_hz(void);
-#endif
 
 typedef struct {
 	/* main group */
@@ -117,6 +116,7 @@ struct socfpga_clock_manager {
 	struct socfpga_clock_manager_altera altera;
 	u32	_pad_0xe8_0x200[70];
 };
+#endif /* __ASSEMBLY__ */
 
 #define CLKMGR_CTRL_SAFEMODE				(1 << 0)
 #define CLKMGR_CTRL_SAFEMODE_OFFSET			0
@@ -131,6 +131,10 @@ struct socfpga_clock_manager {
 #define CLKMGR_BYPASS_SDRPLL_OFFSET			1
 #define CLKMGR_BYPASS_MAINPLL				(1 << 0)
 #define CLKMGR_BYPASS_MAINPLL_OFFSET			0
+
+#define CLKMGR_BYPASS_ADDRESS 0x4
+/* Bypass Main and Per PLL, bypass source per input mux */
+#define CLKMGR_BYPASS_MAIN_PER_PLL_MASK		0x19
 
 #define CLKMGR_INTER_SDRPLLLOCKED_MASK			0x00000100
 #define CLKMGR_INTER_PERPLLLOCKED_MASK			0x00000080
@@ -168,8 +172,14 @@ struct socfpga_clock_manager {
 #define CLKMGR_MAINPLLGRP_MAINQSPICLK_CNT_OFFSET	0
 #define CLKMGR_MAINPLLGRP_MAINQSPICLK_CNT_MASK		0x000001ff
 
+#define CLKMGR_MAINPLLGRP_MAINQSPICLK_ADDRESS	0x54
+#define CLKMGR_MAINQSPICLK_RESET_VALUE		0x3
+
 #define CLKMGR_MAINPLLGRP_MAINNANDSDMMCCLK_CNT_OFFSET	0
 #define CLKMGR_MAINPLLGRP_MAINNANDSDMMCCLK_CNT_MASK	0x000001ff
+
+#define CLKMGR_MAINPLLGRP_MAINNANDSDMMCCLK_ADDRESS	0x58
+#define CLKMGR_MAINNANDSDMMCCLK_RESET_VALUE		0x3
 
 #define CLKMGR_MAINPLLGRP_CFGS2FUSER0CLK_CNT_OFFSET	0
 #define CLKMGR_MAINPLLGRP_CFGS2FUSER0CLK_CNT_MASK	0x000001ff
@@ -219,6 +229,9 @@ struct socfpga_clock_manager {
 #define CLKMGR_PERPLLGRP_VCO_SSRC_OFFSET		22
 #define CLKMGR_PERPLLGRP_VCO_SSRC_MASK			0x00c00000
 
+#define CLKMGR_PERPLLGRP_PERQSPICLK_ADDRESS		0x90
+#define CLKMGR_PERQSPICLK_RESET_VALUE			0x1
+
 #define CLKMGR_VCO_SSRC_EOSC1				0x0
 #define CLKMGR_VCO_SSRC_EOSC2				0x1
 #define CLKMGR_VCO_SSRC_F2S				0x2
@@ -234,6 +247,9 @@ struct socfpga_clock_manager {
 
 #define CLKMGR_PERPLLGRP_PERNANDSDMMCCLK_CNT_OFFSET	0
 #define CLKMGR_PERPLLGRP_PERNANDSDMMCCLK_CNT_MASK	0x000001ff
+
+#define CLKMGR_PERPLLGRP_PERNANDSDMMCCLK_ADDRESS	0x94
+#define CLKMGR_PERNANDSDMMCCLK_RESET_VALUE		0x1
 
 #define CLKMGR_PERPLLGRP_PERBASECLK_CNT_OFFSET		0
 #define CLKMGR_PERPLLGRP_PERBASECLK_CNT_MASK		0x000001ff
