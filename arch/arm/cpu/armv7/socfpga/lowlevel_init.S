@@ -12,6 +12,7 @@
 #include <asm-offsets.h>
 #include <asm/arch/clock_manager.h>
 #include <asm/arch/system_manager.h>
+#include <asm/arch/reset_manager.h>
 
 #define RSTMGR_CTRL_OFFSET	0x00000004
 #define RSTMGR_CTRL_SWWARMRSTREQ_LSB 1
