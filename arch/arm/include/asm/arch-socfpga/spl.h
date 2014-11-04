@@ -9,6 +9,7 @@
 
 /* Symbols from linker script */
 extern char __malloc_start, __malloc_end, __stack_start;
+extern u32 rst_mgr_status __attribute__ ((section(".data")));
 
 #define BOOT_DEVICE_RAM 1
 
