@@ -14,8 +14,6 @@ void sysmgr_pinmux_init(void);
 /* declaration for handoff table type */
 extern unsigned long sys_mgr_init_table[CONFIG_HPS_PINMUX_NUM];
 
-#endif
-
 struct socfpga_system_manager {
 	/* System Manager Module */
 	u32	siliconid1;			/* 0x00 */
@@ -117,6 +115,8 @@ struct socfpga_system_manager {
 	u32	spim0usefpga;			/* 0x738 */
 };
 
+#endif /* ASSEMBLY */
+
 #define SYSMGR_ROMCODEGRP_CTRL_WARMRSTCFGPINMUX	(1 << 0)
 #define SYSMGR_ROMCODEGRP_CTRL_WARMRSTCFGIO	(1 << 1)
 #define SYSMGR_ECC_OCRAM_EN	(1 << 0)
@@ -142,5 +142,8 @@ struct socfpga_system_manager {
 #define SYSMGR_EMACGRP_CTRL_PHYSEL0_LSB			0
 #define SYSMGR_EMACGRP_CTRL_PHYSEL1_LSB			2
 #define SYSMGR_EMACGRP_CTRL_PHYSEL_MASK			0x3
+
+#define CONFIG_SYSMGR_WARMRAMGRP_ENABLE	(SOCFPGA_SYSMGR_ADDRESS + 0xe0)
+#define SYSMGR_BOOTINFO_BSEL_MASK	0x7
 
 #endif /* _SYSTEM_MANAGER_H_ */
