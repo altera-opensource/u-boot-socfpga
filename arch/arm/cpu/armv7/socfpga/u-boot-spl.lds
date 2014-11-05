@@ -51,7 +51,7 @@ SECTIONS
 		. = ALIGN(CONFIG_SPL_SDRAM_ECC_PADDING);
 #endif
 		__bss_fat_start = .;
-		fs/fat/libfat.o (.bss*)
+/*		fs/fat/libfat.o (.bss*) */
 #if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN == 1)
 		. = ALIGN(CONFIG_SPL_SDRAM_ECC_PADDING);
 #endif
