@@ -174,7 +174,6 @@
 #define CONFIG_SPL_RAM_DEVICE
 #define CONFIG_SPL_TEXT_BASE		0xFFFF0000
 #define CONFIG_SPL_STACK		CONFIG_SYS_INIT_SP_ADDR
-#define CONFIG_SPL_STACK_SIZE		(4 * 1024)
 #define CONFIG_SPL_MALLOC_SIZE		(5 * 1024)	/* FIXME */
 #define CONFIG_SYS_SPL_MALLOC_START	((unsigned long) (&__malloc_start))
 #define CONFIG_SYS_SPL_MALLOC_SIZE	(&__malloc_end - &__malloc_start)
@@ -205,6 +204,24 @@
 #define CONFIG_FS_FAT
 #endif
 
+/*
+ * Enable memory padding if SDRAM ECC is enabled
+ */
+#if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN == 1)
+#define CONFIG_SPL_SDRAM_ECC_PADDING	32
+#endif
+
+/* Stack size for SPL */
+#ifdef CONFIG_SPL_FAT_SUPPORT
+#define CONFIG_SPL_STACK_SIZE		(5 * 1024)
+/*
+ * New stack size which located within SDRAM after SDRAM is available.
+ * FYI, 128kB stack can support fatload up to 7MB bootloader image
+ */
+#define CONFIG_SPL_SDRAM_STACK_SIZE	(128 * 1024)
+#else
+#define CONFIG_SPL_STACK_SIZ		(4 * 1024)
+#endif
 
 
 #endif	/* __CONFIG_SOCFPGA_CYCLONE5_COMMON_H__ */
