@@ -27,6 +27,8 @@
 .global save_boot_params
 save_boot_params:
 
+.globl lowlevel_init
+lowlevel_init:
 #ifdef CONFIG_SPL_BUILD
 	/*
 	 * If BSEL is zero, then the bootrom has not
