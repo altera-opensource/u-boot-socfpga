@@ -202,6 +202,7 @@
 #if (CONFIG_PRELOADER_BOOT_FROM_SDMMC == 1 && CONFIG_PRELOADER_FAT_SUPPORT == 1)
 /* MMC with FAT partition support */
 #define CONFIG_SPL_FAT_SUPPORT
+#define CONFIG_FS_FAT
 #endif
 
 
