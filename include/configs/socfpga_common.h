@@ -178,6 +178,8 @@
 #define CONFIG_SPL_MALLOC_SIZE		(5 * 1024)	/* FIXME */
 #define CONFIG_SYS_SPL_MALLOC_START	((unsigned long) (&__malloc_start))
 #define CONFIG_SYS_SPL_MALLOC_SIZE	(&__malloc_end - &__malloc_start)
+/* SPL max size */
+#define CONFIG_SPL_MAX_SIZE		(64 * 1024)
 
 #define CHUNKSZ_CRC32			(1 * 1024)	/* FIXME: ewww */
 #define CONFIG_CRC32_VERIFY
@@ -193,5 +195,15 @@
 #ifdef CONFIG_SPL_BUILD
 #undef CONFIG_PARTITIONS
 #endif
+
+/*
+ * Support for FAT partition if boot from SDMMC
+ */
+#if (CONFIG_PRELOADER_BOOT_FROM_SDMMC == 1 && CONFIG_PRELOADER_FAT_SUPPORT == 1)
+/* MMC with FAT partition support */
+#define CONFIG_SPL_FAT_SUPPORT
+#endif
+
+
 
 #endif	/* __CONFIG_SOCFPGA_CYCLONE5_COMMON_H__ */
