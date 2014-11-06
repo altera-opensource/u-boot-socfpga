@@ -811,4 +811,6 @@
 /* ARM Errata */
 #define CONFIG_ARM_ERRATA_761320
 
+#define CONFIG_CMD_SETEXPR
+
 #endif	/* __CONFIG_COMMON_H */
