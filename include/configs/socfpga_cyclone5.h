@@ -39,7 +39,7 @@
 #define CONFIG_REGEX			/* Enable regular expression support */
 
 /* Memory configurations */
-#define PHYS_SDRAM_1_SIZE		0x02000000	/* 1GiB on SoCDK */
+#define PHYS_SDRAM_1_SIZE		0x40000000	/* 1GiB on SoCDK */
 
 /* Booting Linux */
 #define CONFIG_BOOTDELAY	3
