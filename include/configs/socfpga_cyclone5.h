@@ -85,7 +85,7 @@
 	"bootm ${loadaddr} - ${fdt_addr}\0" \
 	"mmcroot=/dev/mmcblk0p2\0" \
 	"mmcboot=setenv bootargs " CONFIG_BOOTARGS \
-		" root=${mmcroot} rw rootwait;" \
+		" root=${mmcroot} rw rootwait ip=dhcp;" \
 		"bootz ${loadaddr} - ${fdt_addr}\0" \
 	"mmcload=mmc rescan;" \
 		"load mmc 0:1 ${loadaddr} ${bootimage};" \
