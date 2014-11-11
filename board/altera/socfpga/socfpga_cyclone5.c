@@ -8,7 +8,9 @@
 #include <asm/arch/reset_manager.h>
 #include <asm/io.h>
 
+#include <micrel.h>
 #include <netdev.h>
+#include <phy.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -38,4 +40,14 @@ int board_init(void)
 	gd->bd->bi_boot_params = CONFIG_SYS_SDRAM_BASE + 0x100;
 
 	return 0;
+}
+
+int board_phy_config(struct phy_device *phydev)
+{
+	ksz9021_phy_extended_write(phydev, MII_KSZ9021_EXT_RGMII_RX_DATA_SKEW,
+				   0x0);
+	ksz9021_phy_extended_write(phydev, MII_KSZ9021_EXT_RGMII_TX_DATA_SKEW,
+				   0x0);
+	ksz9021_phy_extended_write(phydev, MII_KSZ9021_EXT_RGMII_CLOCK_SKEW,
+				   0xf0f0);
 }
