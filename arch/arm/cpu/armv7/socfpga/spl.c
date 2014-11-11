@@ -469,8 +469,11 @@ void spl_board_init(void)
 	WATCHDOG_RESET();
 #endif
 	DEBUG_MEMORY
+
+#if (CONFIG_PRELOADER_EXE_ON_FPGA == 0) && (CONFIG_PRELOADER_RAMBOOT_PLLRESET == 1)
 	debug("RAM boot setup if CSEL 0\n");
 	ram_boot_setup();
+#endif
 
 	debug("Reconfigure Clock Manager\n");
 	/* reconfigure the PLLs */

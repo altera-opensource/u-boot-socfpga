@@ -117,6 +117,11 @@
 #endif
 
 /*
+ * Add new option to force ramboot pll reset
+ */
+#define CONFIG_PRELOADER_RAMBOOT_PLLRESET	(1)
+
+/*
  * Enabled write STATE_VALID value to STATE_REG register to
  * tell BootROM that Preloader run successfully.
  */

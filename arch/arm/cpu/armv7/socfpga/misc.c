@@ -31,6 +31,16 @@
 #endif
 #include <spl.h>
 
+/*
+ * Check consistently of preloader handoffs. Do this here
+ * since errors will be caught in both the SPL and the uBoot builds.
+ */
+#if (CONFIG_PRELOADER_EXE_ON_FPGA == 1)
+	#if (CONFIG_PRELOADER_FAT_SUPPORT == 1)
+		#error Cannot enable EXE on FPGA and Preloader FAT support
+	#endif
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static const struct socfpga_reset_manager *reset_manager_base =
@@ -149,7 +159,9 @@ void enable_caches(void)
 }
 #endif
 
-#ifdef CONFIG_SPL_BUILD
+#if defined(CONFIG_SPL_BUILD) && \
+((CONFIG_PRELOADER_EXE_ON_FPGA == 0) && \
+(CONFIG_PRELOADER_RAMBOOT_PLLRESET == 1))
 /*
  * Setup RAM boot to ensure the clock are reset under CSEL = 0
  */
