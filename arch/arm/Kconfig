@@ -438,6 +438,9 @@ config TARGET_CM_FX6
 config TARGET_SOCFPGA_CYCLONE5
 	bool "Support socfpga_cyclone5"
 
+config TARGET_SOCFPGA_ARRIA10
+	bool "Support socfpga_arria10"
+
 config TARGET_SUN4I
 	bool "Support sun4i"
 
@@ -571,6 +574,7 @@ source "board/Marvell/dkb/Kconfig"
 source "board/Marvell/gplugd/Kconfig"
 source "board/afeb9260/Kconfig"
 source "board/altera/socfpga/Kconfig"
+source "board/altera/socfpga_arria10/Kconfig"
 source "board/armadeus/apf27/Kconfig"
 source "board/armltd/integrator/Kconfig"
 source "board/armltd/vexpress/Kconfig"

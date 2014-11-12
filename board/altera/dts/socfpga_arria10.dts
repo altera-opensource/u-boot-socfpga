@@ -1,0 +1,204 @@
+/*
+ * Copyright (C) 2014 Altera Corporation <www.altera.com>
+ *
+ * SPDX-License-Identifier:	GPL-2.0+
+ */
+
+/dts-v1/;
+/include/ "socfpga_arria10.dtsi"
+
+/ {
+	model = "SOCFPGA Arria10 Dev Kit";
+
+
+	chosen {
+		bootargs = "fatload mmc 0:1 $fpgadata u-boot-rsa.fit; \
+			echo Checking image; \
+			iminfo $fpgadata; \
+			echo Boot the image; \
+			bootm $fpgadata";
+	};
+
+	pinmux@0xffd07000 {
+		compatible = "socfpga_arria10,pinmux";
+		shared {
+			reg = <0xffd07000>;
+			dataset-count = <48>;
+			pinmux-data = <0xF 0xF 0xF 0xF 0xF 0xF 0xF 0xF 0xF 0xF
+				       0xF 0xF 0xF 0xF 0xF 0xF 0xF 0xF 0xF 0xF
+				       0xD 0xD 0xD 0xD 0xD 0xD 0xD 0xD 0xF 0xF
+				       0xF 0xF 0xF 0xF 0xF 0xF 0xF 0xF 0xF 0xF
+				       0xF 0xF 0xF 0xF 0xF 0xF 0xF 0xF>;
+		};
+		dedicated {
+			reg = <0xffd07200>;
+			dataset-count = <17>;
+			pinmux-data = <0x0 0x0 0x0 0x8 0x8 0x8 0x8 0x8 0x8 0x8
+				       0xF 0xF 0xF 0xF 0xF 0xD 0xD>;
+		};
+		dedicated_cfg {
+			reg = <0xffd07300>;
+			dataset-count = <18>;
+			pinmux-data = <0x00000 0x51010 0x51010 0x51010 0x40605
+				       0x40605 0x00605 0x40605 0x40605 0x40605
+				       0x10605 0x51010 0x51010 0x51010 0x51010
+				       0x51010 0x03030 0x23030>;
+		};
+		fpga {
+			reg = <0xffd07400>;
+			dataset-count = <17>;
+			pinmux-data = <0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0
+				       0x0 0x0 0x0 0x0 0x0 0x0 0x0>;
+		};
+	};
+
+	clock_manager@0xffd04000 {
+		compatible = "socfpga_arria10,clock_manager";
+		mainpll {
+			vco-psrc = <0>;
+			vco-denom = <1>;
+			vco-numer = <191>;
+			emaca-cnt = <0>;
+			emacb-cnt = <0>;
+			emac-ptp_cnt = <0>;
+			gpio-db-cnt = <0>;
+			sdmmc-cnt = <0>;
+			s2f-user0-cnt = <0>;
+			s2f-user1-cnt = <0>;
+			hmc-pll-ref-cnt = <23>;
+			periph-ref-cnt = <23>;
+		};
+		perpll {
+			vco-psrc = <0>;
+			vco-denom = <1>;
+			vco-numer = <79>;
+			emaca-cnt = <3>;
+			emacb-cnt = <3>;
+			emac-ptp_cnt = <9>;
+			gpio-db-cnt = <9>;
+			sdmmc-cnt = <4>;
+			s2f-user0-cnt = <0>;
+			s2f-user1-cnt = <9>;
+			hmc-pll-ref-cnt = <0>;
+		};
+		clock-source {
+			mpu = <0>;
+			noc = <0>;
+			emaca = <1>;
+			emacb = <1>;
+			emac-ptp = <1>;
+			gpio-db = <1>;
+			sdmmc = <1>;
+			s2f_user0 = <0>;
+			s2f_user1 = <1>;
+			hmc-pll-ref = <0>;
+		};
+		noc-div {
+			l4mainclk = <0>;
+			l4mpclk = <1>;
+			l4spclk = <2>;
+			cs-atclk = <0>;
+			cs-traceclk = <0>;
+			cs-pdbgclk = <1>;
+		};
+		misc {
+			div-mpu = <0>;
+			div-noc = <0>;
+			div-gpio = <3124>;
+			emac0sel = <0>;
+			emac1sel = <0>;
+			emac2sel = <0>;
+		};
+		/*
+		Info for clock frequency
+		CLK_OSC1_HZ		(25000000)
+		CLK_INTOSC_HZ		(50000000)
+		CLK_F2SOSC_HZ		(200000000)
+		CLK_MAINVCO_HZ		(2400000000)
+		CLK_PERVCO_HZ		(1000000000)
+		CLK_MPU_HZ		(1200000000)
+		CLK_EMAC0_HZ		(250000000)
+		CLK_EMAC1_HZ		(250000000)
+		CLK_EMAC2_HZ		(250000000)
+		CLK_EMAC_PTP_HZ		(100000000)
+		CLK_SDMMC_HZ		(200000000)
+		CLK_GPIODB_HZ		(32000)
+		CLK_L3_MAIN_HZ		(400000000)
+		CLK_L4_MAIN_HZ		(400000000)
+		CLK_L4_MP_HZ		(200000000)
+		CLK_L4_SP_HZ		(100000000)
+		CLK_HMC_PLL_REF_HZ	(100000000)
+		CLK_S2F_USER0_HZ	(100000000)
+		CLK_S2F_USER1_HZ	(100000000)
+		CLK_CS_AT_HZ		(400000000)
+		CLK_CS_TRACE_HZ		(400000000)
+		CLK_CS_PDBG_HZ		(100000000)
+		*/
+	};
+
+	reset_manager@0xffd05000 {
+		compatible = "socfpga_arria10,reset_manager";
+		/* 1 mean particular IP need to be kept under reset state */
+		noc-mask = <0xdeadbeef>;
+		bridge-mod-mask = <0xdeadbeef>;
+		peripheral-mod-mask = <0xdeadbeef 0xdeadbeef>;
+		hdsken-mask = <0xdeadbeef>;
+	};
+
+	sdram@0xffcfb000 {
+		compatible = "socfpga_arria10,sdram";
+		skip-handoff = <0>;
+		sdram-skip = <0>;
+		sdram-ecc-init = <0>;
+		serrcnt = <8>;
+		io-size = <1>;
+		ecc-en = <0>;
+		ddrconf = <0>;
+		ddrtiming-acttoact = <0x1c>;
+		ddrtiming-rdtomiss = <0x13>;
+		ddrtiming-wrtomiss = <0x21>;
+		ddrtiming-burstlen = <0x2>;
+		ddrtiming-rdtowr = <0x1>;
+		ddrtiming-wrtord = <0xb>;
+		ddrtiming-bwratio = <0>;
+		ddrmode-autoprecharge = <0>;
+		ddrmode-bwratioextended = <0>;
+		readlatency = <0x13>;
+		activate-rrd = <0x2>;
+		activate-faw = <0xd>;
+		activate-fawbank = <0x1>;
+		devtodev-busrdtord = <0x1>;
+		devtodev-busrdtowr = <0x1>;
+		devtodev-buswrtord = <0x1>;
+		firewall {
+			/* existance of property implies it is enabled */
+			/* values are <start end> */
+			mpu0-start = <0 0xffff>;
+			/* mpu1 disabled */
+			/* mpu2 disabled */
+			/* mpu3 disabled */
+			l3-0 = <0 0xffff>;
+			/* l3-1 disabled */
+			/* l3-2 disabled */
+			/* l3-3 disabled */
+			/* l3-4 disabled */
+			/* l3-5 disabled */
+			/* l3-6 disabled */
+			/* l3-7 disabled */
+			fpga2sdram0-0 = <0 0xffff>;
+			/* fpga2sdram0-1 disabled */
+			/* fpga2sdram0-2 disabled */
+			/* fpga2sdram0-3 disabled */
+			fpga2sdram1-0 = <0 0xffff>;
+			/* fpga2sdram1-1 disabled */
+			/* fpga2sdram1-2 disabled */
+			/* fpga2sdram1-3 disabled */
+			fpga2sdram2-0 = <0 0xffff>;
+			/* fpga2sdram2-1 disabled */
+			/* fpga2sdram2-2 disabled */
+			/* fpga2sdram2-3 disabled */
+		};
+	};
+
+
+};

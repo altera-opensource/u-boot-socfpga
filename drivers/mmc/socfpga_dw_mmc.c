@@ -19,6 +19,7 @@ static const struct socfpga_system_manager *system_manager_base =
 
 static void socfpga_dwmci_clksel(struct dwmci_host *host)
 {
+#ifdef FIXME
 	unsigned int drvsel;
 	unsigned int smplsel;
 
@@ -40,6 +41,7 @@ static void socfpga_dwmci_clksel(struct dwmci_host *host)
 	/* Enable SDMMC clock */
 	setbits_le32(&clock_manager_base->per_pll.en,
 		CLKMGR_PERPLLGRP_EN_SDMMCCLK_MASK);
+#endif
 }
 
 int socfpga_dwmmc_init(u32 regbase, int bus_width, int index)

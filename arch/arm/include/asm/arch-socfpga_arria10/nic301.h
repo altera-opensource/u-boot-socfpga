@@ -1,0 +1,25 @@
+/*
+ * Copyright (C) 2014 Altera Corporation <www.altera.com>
+ *
+ * SPDX-License-Identifier:	GPL-2.0+
+ */
+
+#ifndef	_SOCFPGA_NIC301_H_
+#define	_SOCFPGA_NIC301_H_
+
+#define L3REGS_SECGRP_LWHPS2FPGAREGS_ADDRESS 0x20
+#define L3REGS_SECGRP_HPS2FPGAREGS_ADDRESS 0x90
+#define L3REGS_SECGRP_ACP_ADDRESS 0x94
+#define L3REGS_SECGRP_ROM_ADDRESS 0x98
+#define L3REGS_SECGRP_OCRAM_ADDRESS 0x9c
+#define L3REGS_SECGRP_SDRDATA_ADDRESS 0xa0
+
+#define L3REGS_REMAP_LWHPS2FPGA_MASK 0x00000010
+#define L3REGS_REMAP_HPS2FPGA_MASK 0x00000008
+#define L3REGS_REMAP_OCRAM_MASK 0x00000001
+
+#ifndef __ASSEMBLY__
+void nic301_slave_ns(void);
+#endif /* __ASSEMBLY__ */
+
+#endif /* _SOCFPGA_NIC301_H_ */

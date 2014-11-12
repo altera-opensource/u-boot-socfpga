@@ -571,9 +571,7 @@ static __u8 mkcksum(const char name[8], const char ext[3])
  * Get the directory entry associated with 'filename' from the directory
  * starting at 'startsect'
  */
-__u8 get_dentfromdir_block[MAX_CLUSTSIZE]
-	__aligned(ARCH_DMA_MINALIGN);
-
+__u8 *get_dentfromdir_block = get_contents_vfatname_block;
 static dir_entry *get_dentfromdir(fsdata *mydata, int startsect,
 				  char *filename, dir_entry *retdent,
 				  int dols)
@@ -803,9 +801,7 @@ exit:
 	return ret;
 }
 
-__u8 do_fat_read_at_block[MAX_CLUSTSIZE]
-	__aligned(ARCH_DMA_MINALIGN);
-
+__u8 *do_fat_read_at_block = get_contents_vfatname_block;
 long
 do_fat_read_at(const char *filename, unsigned long pos, void *buffer,
 	       unsigned long maxsize, int dols, int dogetsize)

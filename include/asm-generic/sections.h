@@ -74,6 +74,8 @@ extern char __image_copy_end[];
 extern char __rel_dyn_start[];
 extern char __rel_dyn_end[];
 
+extern ulong _end_ofs;
+
 #else /* don't use offsets: */
 
 /* Exports from the Linker Script */
