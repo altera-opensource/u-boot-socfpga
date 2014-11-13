@@ -20,6 +20,7 @@ SECTIONS
 	.text :
 	{
 		start = .;
+		*(.vectors)
 		*(.__image_copy_start)
 		CPUDIR/start.o (.text*)
 		*(.text*)
