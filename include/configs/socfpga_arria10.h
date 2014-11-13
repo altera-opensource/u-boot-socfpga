@@ -99,6 +99,7 @@
 /* Initial Memory map size for Linux, minus 4k alignment for DFT blob */
 #define CONFIG_SYS_BOOTMAPSZ		(32 * 1024 * 1024)
 
+
 /*
  * Memory allocation (MALLOC)
  */
@@ -177,8 +178,6 @@
 #define CONFIG_FIT_SIGNATURE
 /* enable fit_format_{error,warning}() */
 #define CONFIG_FIT_VERBOSE
-#define CONFIG_OF_CONTROL
-#define CONFIG_OF_SEPARATE
 
 /*
  * Hash command support
