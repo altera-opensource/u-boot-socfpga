@@ -76,7 +76,7 @@
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_INIT_RAM_ADDR + \
 					 CONFIG_SYS_INIT_RAM_SIZE  - 0x4000)
 /* size of stack and malloc in ocram */
-#define CONFIG_OCRAM_MALLOC_SIZE	(18 * 1024)
+#define CONFIG_OCRAM_MALLOC_SIZE	(24 * 1024)
 #define CONFIG_OCRAM_STACK_SIZE		(20 * 1024)
 
 /* Default load address */
@@ -414,7 +414,8 @@
  */
 #define CONFIG_DESIGNWARE_ETH		1
 #ifdef CONFIG_DESIGNWARE_ETH
-
+#define CONFIG_TX_DESCR_NUM		2
+#define CONFIG_RX_DESCR_NUM		2
 #define CONFIG_EMAC0_BASE		SOCFPGA_EMAC0_ADDRESS
 #define CONFIG_EMAC1_BASE		SOCFPGA_EMAC1_ADDRESS
 /* console support for network */
@@ -534,5 +535,7 @@
  * DMA support
  */
 #undef CONFIG_PL330_DMA
+
+#define CONFIG_SYS_GENERIC_BOARD
 
 #endif	/* __CONFIG_H */
