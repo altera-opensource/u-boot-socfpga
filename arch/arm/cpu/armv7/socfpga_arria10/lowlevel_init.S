@@ -76,10 +76,6 @@ clrsp:	cmp	r0, r1			/* while not at end of stack */
 
 	bx	lr
 
-/* to get rid of link error */
-.globl lowlevel_init
-lowlevel_init:
-	mov	pc,lr
 
 
 /*

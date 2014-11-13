@@ -66,6 +66,7 @@ SECTIONS
 	}
 	_bss_start_ofs = __bss_base - start;
 	_bss_end_ofs = __bss_limit - start;
+	_end_ofs = _end - start;
 
 	/DISCARD/ : { *(.dynsym) }
 	/DISCARD/ : { *(.dynstr*) }

@@ -19,7 +19,6 @@ DECLARE_GLOBAL_DATA_PTR;
 /*
  * First C function to initialize the critical hardware early
  */
-static struct socfpga_clock_manager cm_cfg;
 void s_init(void)
 {
 #ifdef CONFIG_OF_CONTROL
@@ -105,29 +104,8 @@ void s_init(void)
 #else
 	/* DTB pinmux test area at Asimov */
 #ifdef CONFIG_OF_CONTROL
-	node = fdtdec_next_compatible(gd->fdt_blob, 0,
-				      COMPAT_SOCPFGA_ARRIA10_PINMUX);
-	if (node < 0)
-		panic("Could not find pinmux node\n");
-
-	/* get the number of pinmux data set */
-	loop_count = fdtdec_get_int(gd->fdt_blob, node, "dataset-count", 0);
-	printf("dataset-count %08x\n", loop_count);
-	depth = 0;
-	while (loop_count--) {
-		/* checking for subnode */
-		node = fdt_next_node(gd->fdt_blob, node, &depth);
-		if (depth < 0)
-			panic("Could not find pinmux subnode\n");
-
-		/* read the start register for the subnode data array */
-		address = fdtdec_get_int(gd->fdt_blob, node, "reg", 0);
-		/* read the data count for the subnode data array */
-		data_count = fdtdec_get_int(gd->fdt_blob, node,
-					    "dataset-count", 0);
-		printf("reg %08x\n", address);
-		data_count++;
-	}
+	node = fdtdec_prepare_fdt();
+	printf("fdtdec_prepare_fdt() returned %d\n", node);
 #endif /* CONFIG_OF_CONTROL */
 
 #endif /* TEST_AT_ASIMOV */
