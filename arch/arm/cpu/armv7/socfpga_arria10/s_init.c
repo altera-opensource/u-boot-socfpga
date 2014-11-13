@@ -55,7 +55,7 @@ void s_init(void)
 	/* We need to access to FDT as this stage */
 	memset((void *)gd, 0, sizeof(gd_t));
 	/* FDT is at end of image */
-	gd->fdt_blob = (void *)(_end_ofs + CONFIG_SYS_TEXT_BASE);
+	gd->fdt_blob = (void *)(_end);
 	/* Check whether we have a valid FDT or not. */
 	if (fdtdec_prepare_fdt()) {
 		panic("** CONFIG_OF_CONTROL defined but no FDT - please see "

@@ -11,7 +11,7 @@
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
-ENTRY(_start)
+ENTRY(reset)
 SECTIONS
 {
 	. = 0x00000000;
@@ -64,9 +64,6 @@ SECTIONS
 	.bss_end __bss_limit (OVERLAY) : {
 		KEEP(*(.__bss_end));
 	}
-	_bss_start_ofs = __bss_base - start;
-	_bss_end_ofs = __bss_limit - start;
-	_end_ofs = _end - start;
 
 	/DISCARD/ : { *(.dynsym) }
 	/DISCARD/ : { *(.dynstr*) }

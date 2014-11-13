@@ -51,13 +51,9 @@ relocate_loop:
 	 * Clearing BSS as we need to execute C code before relocation.
 	 * There might possible these C file would call global variable
 	 */
-	ldr	r2, =_start
-	ldr	r0, =_bss_start_ofs
-	ldr	r1, =_bss_end_ofs
-	ldr	r0, [r0]
-	add	r0, r0, r2		/* start of bss */
-	ldr	r1, [r1]
-	add	r1, r1, r2		/* end of bss */
+	ldr	r2, =reset
+	ldr	r0, =__bss_start
+	ldr	r1, =__bss_end
 	mov	r2, #0x00000000		/* prepare zero to clear BSS */
 clrbss:	cmp	r0, r1			/* while not at end of BSS */
 	strlo	r2, [r0]		/* clear 32-bit BSS word */
