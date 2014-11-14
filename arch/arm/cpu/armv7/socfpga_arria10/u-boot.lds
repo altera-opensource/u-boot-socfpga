@@ -76,16 +76,17 @@ SECTIONS
 
 /*
  * This compile time check to ensure all binary files generated doesn't
- * exceed the memory size set by BootROM
+ * exceed the memory size set by BootROM.  The check includes, 
+ * .vectors, .text, .data, and room for dtb.
  */
-ASSERT((__bss_start - __image_copy_start) < CONFIG_U_BOOT_BINARY_MAX_SIZE, \
+ASSERT((__bss_start - start) < CONFIG_U_BOOT_BINARY_MAX_SIZE, \
 "*** [size check error] U-Boot binary image bigger than 200KB");
 
 /*
  * This compile time check to ensure all the memory region used during
  * run time doesn't exceed the total memory space available in OCRAM
  */
-ASSERT(((__bss_end - __image_copy_start) + 0x4000 + CONFIG_OCRAM_STACK_SIZE + \
+ASSERT(((__bss_end - start) + 0x4000 + CONFIG_OCRAM_STACK_SIZE + \
 CONFIG_OCRAM_MALLOC_SIZE + 0xC0 + CONFIG_STACKSIZE_IRQ + \
 CONFIG_STACKSIZE_FIQ) < CONFIG_SYS_INIT_RAM_SIZE, \
 "*** [size check error] U-Boot run time consume more than OCRAM size");
