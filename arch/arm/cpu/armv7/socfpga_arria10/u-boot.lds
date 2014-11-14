@@ -78,7 +78,7 @@ SECTIONS
  * This compile time check to ensure all binary files generated doesn't
  * exceed the memory size set by BootROM
  */
-ASSERT((_end - __image_copy_start) < CONFIG_U_BOOT_BINARY_MAX_SIZE, \
+ASSERT((__bss_start - __image_copy_start) < CONFIG_U_BOOT_BINARY_MAX_SIZE, \
 "*** [size check error] U-Boot binary image bigger than 200KB");
 
 /*
