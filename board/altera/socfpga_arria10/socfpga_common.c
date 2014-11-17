@@ -45,7 +45,7 @@ int board_late_init(void)
 
 /* EMAC related setup and only supported in U-Boot */
 #if !defined(CONFIG_SOCFPGA_VIRTUAL_TARGET) && \
-!defined(CONFIG_SPL_BUILD)
+!defined(CONFIG_SPL_BUILD) && defined(CONFIG_DESIGNWARE_ETH)
 
 /*
  * DesignWare Ethernet initialization
@@ -105,7 +105,7 @@ int designware_board_phy_init(struct eth_device *dev, int phy_addr,
 int board_eth_init(bd_t *bis)
 {
 #if !defined(CONFIG_SOCFPGA_VIRTUAL_TARGET) && \
-!defined(CONFIG_SPL_BUILD)
+!defined(CONFIG_SPL_BUILD) && defined(CONFIG_DESIGNWARE_ETH)
 
 	/* Initialize EMAC */
 

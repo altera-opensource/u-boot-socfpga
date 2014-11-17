@@ -75,10 +75,6 @@
 /* Stack pointer at on-chip RAM, leave 16kB behind for page table */
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_INIT_RAM_ADDR + \
 					 CONFIG_SYS_INIT_RAM_SIZE  - 0x4000)
-/* size of stack and malloc in ocram */
-#define CONFIG_OCRAM_MALLOC_SIZE	(24 * 1024)
-#define CONFIG_OCRAM_STACK_SIZE		(20 * 1024)
-
 /* Default load address */
 #define CONFIG_SYS_LOAD_ADDR		0x7FC0
 
@@ -100,14 +96,6 @@
 #define CONFIG_SYS_BOOTMAPSZ		(32 * 1024 * 1024)
 
 
-/*
- * Memory allocation (MALLOC)
- */
-/* Room required on the stack for the environment data */
-#define CONFIG_ENV_SIZE			4096
-/* Size of DRAM reserved for malloc() use */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_OCRAM_MALLOC_SIZE - \
-					CONFIG_ENV_SIZE)
 
 /*
  * Console setup
@@ -131,14 +119,7 @@
  */
 /* #define CONFIG_SYS_NO_FLASH */
 /* FAT file system support */
-#define CONFIG_CMD_FAT
-/* Enable FAT write support */
-#define CONFIG_FAT_WRITE
 
-/* configure a clustsize smaller than the default 64k */
-#define CONFIG_FS_FAT_MAX_CLUSTSIZE 16384
-/* MMC support */
-#define CONFIG_CMD_MMC
 
 /*
  * Remove the U-Boot unused feature so can make U-Boot smaller
@@ -173,6 +154,7 @@
 /*
  * Security support
  */
+#if 0
 #define CONFIG_RSA
 #define CONFIG_FIT
 #define CONFIG_FIT_SIGNATURE
@@ -186,6 +168,7 @@
 #define CONFIG_CMD_SHA1SUM
 #define CONFIG_HASH_VERIFY
 #define CONFIG_SHA1
+#endif
 
 /*
  * Misc
@@ -412,7 +395,6 @@
 /*
  * network support
  */
-#define CONFIG_DESIGNWARE_ETH		1
 #ifdef CONFIG_DESIGNWARE_ETH
 #define CONFIG_TX_DESCR_NUM		2
 #define CONFIG_RX_DESCR_NUM		2
@@ -435,10 +417,6 @@
 /* phy */
 #define CONFIG_EPHY0_PHY_ADDR		0
 #define CONFIG_EPHY1_PHY_ADDR		4
-#define CONFIG_KSZ9021_CLK_SKEW_ENV	"micrel-ksz9021-clk-skew"
-#define CONFIG_KSZ9021_CLK_SKEW_VAL	0xf0f0
-#define CONFIG_KSZ9021_DATA_SKEW_ENV	"micrel-ksz9021-data-skew"
-#define CONFIG_KSZ9021_DATA_SKEW_VAL	0x0
 /* Type of PHY available */
 #define SOCFPGA_PHYSEL_ENUM_GMII	0x0
 #define SOCFPGA_PHYSEL_ENUM_MII		0x1
@@ -446,11 +424,24 @@
 #define SOCFPGA_PHYSEL_ENUM_RMII	0x3
 #endif	/* CONFIG_DESIGNWARE_ETH */
 
+/* these are in devault environment so they must be always defined */
+#define CONFIG_KSZ9021_CLK_SKEW_ENV	"micrel-ksz9021-clk-skew"
+#define CONFIG_KSZ9021_CLK_SKEW_VAL	0xf0f0
+#define CONFIG_KSZ9021_DATA_SKEW_ENV	"micrel-ksz9021-data-skew"
+#define CONFIG_KSZ9021_DATA_SKEW_VAL	0x0
+
 /*
  * MMC support
  */
-#define CONFIG_MMC
+#undef CONFIG_MMC
 #ifdef CONFIG_MMC
+#define CONFIG_CMD_FAT
+/* Enable FAT write support */
+#define CONFIG_FAT_WRITE
+
+/* configure a clustsize smaller than the default 64k */
+#define CONFIG_FS_FAT_MAX_CLUSTSIZE 16384
+/* MMC support */
 #define CONFIG_SDMMC_BASE		(SOCFPGA_SDMMC_ADDRESS)
 #define CONFIG_GENERIC_MMC
 #define CONFIG_SYS_MMC_MAX_BLK_COUNT    256
@@ -502,7 +493,6 @@
 /*
  * NAND
  */
-#undef CONFIG_NAND_DENALI
 #ifdef CONFIG_NAND_DENALI
 #define CONFIG_CMD_NAND
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
@@ -511,8 +501,6 @@
 #define CONFIG_SYS_NAND_DATA_BASE	0xff300000
 #define CONFIG_SYS_NAND_BASE		0xff400000
 #define CONFIG_SYS_NAND_ONFI_DETECTION
-/* How many bytes need to be skipped at the start of spare area */
-#define CONFIG_NAND_DENALI_SPARE_AREA_SKIP_BYTES	(2)
 /* The ECC size which either 512 or 1024 */
 #define CONFIG_NAND_DENALI_ECC_SIZE			(512)
 #endif /* CONFIG_NAND_DENALI */
@@ -530,6 +518,25 @@
 #define CONFIG_FPGA_COUNT		(1)
 /* Enable FPGA command at console */
 #define CONFIG_CMD_FPGA
+
+/*
+ * Memory allocation (MALLOC)
+ */
+
+/* size of stack and malloc in ocram */
+#ifdef CONFIG_DESIGNWARE_ETH
+#define CONFIG_OCRAM_MALLOC_SIZE	(24 * 1024)
+#else
+#define CONFIG_OCRAM_MALLOC_SIZE	(16 * 1024)
+#endif
+
+#define CONFIG_OCRAM_STACK_SIZE		(20 * 1024)
+
+/* Room required on the stack for the environment data */
+#define CONFIG_ENV_SIZE			4096
+/* Size of DRAM reserved for malloc() use */
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_OCRAM_MALLOC_SIZE - \
+					CONFIG_ENV_SIZE)
 
 /*
  * DMA support
