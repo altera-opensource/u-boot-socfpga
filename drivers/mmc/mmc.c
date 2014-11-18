@@ -1010,6 +1010,9 @@ static int mmc_startup(struct mmc *mmc)
 		case 6:
 			mmc->version = MMC_VERSION_4_5;
 			break;
+		case 7:
+			mmc->version = MMC_VERSION_5_0;
+			break;
 		}
 
 		/*
