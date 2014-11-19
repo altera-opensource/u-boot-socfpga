@@ -395,6 +395,7 @@
 /*
  * network support
  */
+#define CONFIG_DESIGNWARE_ETH
 #ifdef CONFIG_DESIGNWARE_ETH
 #define CONFIG_TX_DESCR_NUM		2
 #define CONFIG_RX_DESCR_NUM		2
@@ -433,7 +434,7 @@
 /*
  * MMC support
  */
-#undef CONFIG_MMC
+#define CONFIG_MMC
 #ifdef CONFIG_MMC
 #define CONFIG_CMD_FAT
 /* Enable FAT write support */
