@@ -434,7 +434,10 @@
 /*
  * MMC support
  */
+#ifndef CONFIG_NAND_DENALI
 #define CONFIG_MMC
+#endif
+
 #ifdef CONFIG_MMC
 #define CONFIG_CMD_FAT
 /* Enable FAT write support */
