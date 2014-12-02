@@ -12,10 +12,12 @@
 #include <asm/arch/clock_manager.h>
 #include <asm/arch/system_manager.h>
 
+#ifdef FIXME
 static const struct socfpga_clock_manager *clock_manager_base =
 		(void *)SOCFPGA_CLKMGR_ADDRESS;
 static const struct socfpga_system_manager *system_manager_base =
 		(void *)SOCFPGA_SYSMGR_ADDRESS;
+#endif
 
 static void socfpga_dwmci_clksel(struct dwmci_host *host)
 {

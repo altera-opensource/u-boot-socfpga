@@ -22,7 +22,7 @@ DECLARE_GLOBAL_DATA_PTR;
 void s_init(void)
 {
 #ifdef CONFIG_OF_CONTROL
-	int node, loop_count, depth, address, data_count;
+       int node;
 #endif
 
 #ifndef TEST_AT_ASIMOV

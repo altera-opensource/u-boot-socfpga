@@ -15,8 +15,10 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static const struct socfpga_fpga_manager *fpga_manager_base =
 		(void *)SOCFPGA_FPGAMGRREGS_ADDRESS;
+#ifdef TEST_AT_ASIMOV
 static const struct socfpga_system_manager *system_manager_base =
 		(void *)SOCFPGA_SYSMGR_ADDRESS;
+#endif
 
 /* Check whether FPGA Init_Done signal is high */
 static int is_fpgamgr_initdone_high(void)
@@ -44,6 +46,8 @@ static int fpgamgr_get_mode(void)
 	val = readl(&fpga_manager_base->stat);
 	val = val & FPGAMGRREGS_STAT_MODE_MASK;
 	return val;
+#else
+	return ~0;
 #endif
 }
 
@@ -326,5 +330,7 @@ int fpgamgr_program_fpga(const unsigned long *rbf_data,	unsigned long rbf_size)
 
 	/* Ensure the FPGA entering user mode */
 	return fpgamgr_program_poll_usermode();
+#else
+	return ~0;
 #endif
 }

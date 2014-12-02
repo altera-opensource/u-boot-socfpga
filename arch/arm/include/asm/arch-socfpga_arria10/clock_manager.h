@@ -75,6 +75,7 @@ struct socfpga_clock_manager {
 
 extern int cm_of_get_cfg(void *blob, struct socfpga_clock_manager *cm_cfg);
 extern int cm_basic_init(void);
+extern unsigned int cm_get_mmc_controller_clk_hz(void);
 #endif /* __ASSEMBLY__ */
 
 /* value */
