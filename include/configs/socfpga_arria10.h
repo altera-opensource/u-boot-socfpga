@@ -18,6 +18,7 @@
 #include <config_cmd_default.h>
 
 #define CONFIG_SOCFPGA_ARRIA10
+#define CONFIG_SOCFPGA_COMMON 1
 /*
  * Device tree info
  */
