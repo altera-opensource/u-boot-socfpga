@@ -1,0 +1,3 @@
+config CADENCE_QSPI
+	bool "Include Cadence QSPI driver"
+	default n

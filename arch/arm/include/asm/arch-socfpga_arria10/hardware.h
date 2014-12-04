@@ -12,7 +12,7 @@
 #include "socal/hps.h"
 /********************************************************************/
 
-#undef TEST_AT_ASIMOV
+#define TEST_AT_ASIMOV
 
 #ifdef TEST_AT_ASIMOV
 

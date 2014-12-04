@@ -373,9 +373,13 @@
 #define TIMER_LOAD_VAL			0xFFFFFFFF
 /* Clocks source frequency to timer */
 #ifdef TEST_AT_ASIMOV
+/* Preloader and U-Boot need to know the clock source frequency from handoff*/
+#define CONFIG_TIMER_CLOCK_KHZ		(CONFIG_HPS_CLK_OSC1_HZ / 1000)
 #define CONFIG_SYS_TIMER_RATE		(CONFIG_HPS_CLK_OSC1_HZ)
 #else
-#define CONFIG_SYS_TIMER_RATE		(1000)
+#define CONFIG_TIMER_CLOCK_HZ		(100000000)
+#define CONFIG_TIMER_CLOCK_KHZ		(CONFIG_TIMER_CLOCK_HZ/1000)
+#define CONFIG_SYS_TIMER_RATE		(100000000)
 #endif
 /* DesignWare timer is a countdown timer */
 #define CONFIG_SYS_TIMER_COUNTS_DOWN
@@ -432,12 +436,11 @@
 #define CONFIG_KSZ9021_DATA_SKEW_ENV	"micrel-ksz9021-data-skew"
 #define CONFIG_KSZ9021_DATA_SKEW_VAL	0x0
 
+#define CONFIG_MMC
+
 /*
  * MMC support
  */
-#ifndef CONFIG_NAND_DENALI
-#define CONFIG_MMC
-#endif
 
 #ifdef CONFIG_MMC
 #define CONFIG_CMD_FAT
@@ -469,7 +472,6 @@
 /*
  * QSPI support
  */
-#undef CONFIG_CADENCE_QSPI
 #define CONFIG_CQSPI_BASE		(SOCFPGA_QSPIREGS_ADDRESS)
 #define CONFIG_CQSPI_AHB_BASE		(SOCFPGA_QSPIDATA_ADDRESS)
 #ifdef CONFIG_CADENCE_QSPI
