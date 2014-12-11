@@ -15,15 +15,66 @@
 #include <fdtdec.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+int get_pinmux_cfg(const void *blob)
+{
+	int node, child, len, j;
+	const char *node_name;
+	fdt_addr_t base_addr;
+	fdt_size_t size;
+	const u32 *cell;
+	u32 offset, value;
+
+
+	node = fdtdec_next_compatible(blob, 0, COMPAT_PINCTRL_SINGLE);
+
+	if (node < 0)
+		return 1;
+
+	child = fdt_first_subnode(blob, node);
+
+	if (child < 0)
+		return 2;
+
+	node_name = fdt_get_name(blob, child, &len);
+
+	while (node_name) {
+		base_addr = fdtdec_get_addr_size(blob, child, "reg", &size);
+		if (base_addr != FDT_ADDR_T_NONE) {
+#ifdef TEST_AT_ASIMOV
+			base_addr &= 0xffff;
+#endif
+			printf("subnode %s %x:%x\n", 
+				node_name, base_addr, size);
+
+			cell = fdt_getprop(blob, child, "pinctrl-single,pins",
+				&len);
+			if (cell != NULL) {
+				printf("%p %d\n", cell, len);
+				for (j=0;len > 0; len -= (2*sizeof(u32))) {
+					offset = fdt32_to_cpu(*cell++);
+					value = fdt32_to_cpu(*cell++);
+					printf("<0x%x 0x%x>\n", offset, value);
+					writel(value, base_addr + offset);
+				}
+			}
+		}
+
+		child = fdt_next_subnode(blob, child);
+
+		if (child < 0)
+			break;
+
+		node_name = fdt_get_name(blob, child, &len);
+	}
+
+	return 0;
+}
 
 /*
  * First C function to initialize the critical hardware early
  */
 void s_init(void)
 {
-#ifdef CONFIG_OF_CONTROL
-       int node;
-#endif
 
 #ifndef TEST_AT_ASIMOV
 	/* Clear fake OCRAM ECC first as might triggered during power on */
@@ -75,7 +126,9 @@ void s_init(void)
 	cm_basic_init();
 	WATCHDOG_RESET();
 
-#ifndef TEST_AT_ASIMOV
+#ifdef TEST_AT_ASIMOV
+	get_pinmux_cfg(gd->fdt_blob);
+#else
 	/* configure the pin muxing */
 #if (CONFIG_PRELOADER_OVERWRITE_DEDICATED == 1)
 	sysmgr_pinmux_init_dedicated(SOCFPGA_PINMUX_DEDICATED_IO_ADDRESS,
@@ -100,13 +153,6 @@ void s_init(void)
 	/* configure the Reset Manager */
 	reset_deassert_peripherals_handoff();
 	reset_deassert_bridges_handoff();
-
-#else
-	/* DTB pinmux test area at Asimov */
-#ifdef CONFIG_OF_CONTROL
-	node = fdtdec_prepare_fdt();
-	printf("fdtdec_prepare_fdt() returned %d\n", node);
-#endif /* CONFIG_OF_CONTROL */
 
 #endif /* TEST_AT_ASIMOV */
 }

@@ -22,9 +22,9 @@
 		#address-cells = <1>;
 		#size-cells = <1>;
 		compatible = "pinctrl-single";
-		pinctrl-single,register-width = <32>;
-		pinctrl-single,function-mask = <0xf>;
 		shared {
+			pinctrl-single,register-width = <32>;
+			pinctrl-single,function-mask = <0xf>;
 			reg = <0xffd07000 0x000000c0>;
 			pinctrl-single,pins = 
 				<0x00 0xf>,
@@ -78,6 +78,8 @@
 
 		};
 		dedicated {
+			pinctrl-single,register-width = <32>;
+			pinctrl-single,function-mask = <0xf>;
 			reg = <0xffd07200 0x00000044>;
 			pinctrl-single,pins =
 				<0x0c 0xf>,
@@ -98,6 +100,7 @@
 		};
 		dedicated_cfg {
 			reg = <0xffd07300 0x00000048>;
+			pinctrl-single,register-width = <32>;
 			pinctrl-single,function-mask = <0x3f3f3f>;
 			pinctrl-single,pins =
 				<0x04 0xf>,
@@ -121,6 +124,7 @@
 		};
 		fpga {
 			reg = <0xffd07400 0x00000044>;
+			pinctrl-single,register-width = <32>;
 			pinctrl-single,function-mask = <0x1>;
 			pinctrl-single,pins =
 				<0x00 0x0>,
