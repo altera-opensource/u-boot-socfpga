@@ -11,6 +11,7 @@
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/sdram.h>
 #include <watchdog.h>
+#include <fdtdec.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -26,6 +27,64 @@ static const struct socfpga_noc_fw_ddr_l3 *socfpga_noc_fw_ddr_l3_base =
 
 unsigned long irq_cnt_ecc_sdram;
 
+struct sdr_cfg {
+	u32 ecc_en;
+	u32 serrcnt;
+	u32 io_size;
+	u32 ddrconf;
+	u32 ddrtiming;
+	u32 ddrmode;
+	u32 readlatency;
+	u32 activate;
+	u32 devtodev;
+};
+struct of_sdr_cfg {
+	const char *prop_name;
+	const u32 offset;
+};
+const struct of_sdr_cfg sdr_cfg_tab[] = {
+	{ "serrcnt", offsetof(struct sdr_cfg, serrcnt) },
+	{ "io-size", offsetof(struct sdr_cfg, io_size) },
+	{ "ddrconf", offsetof(struct sdr_cfg, ddrconf) },
+	{ "ddrtiming", offsetof(struct sdr_cfg, ddrtiming) },
+	{ "ddrmode", offsetof(struct sdr_cfg, ddrmode) },
+	{ "readlatency", offsetof(struct sdr_cfg, readlatency) },
+	{ "activate", offsetof(struct sdr_cfg, activate) },
+	{ "devtodev", offsetof(struct sdr_cfg, devtodev) },
+};
+
+static int of_get_sdr_cfg(const void *blob, struct sdr_cfg *cfg) {
+	int node, err, i;
+	u32 val;
+	void *vcfg = cfg;
+
+	memset(cfg, 0, sizeof(*cfg));
+
+	node = fdtdec_next_compatible(blob, 0, COMPAT_ARRIA10_SDR_CTL);
+
+	if (node < 0) {
+		printf("failed to find %s compatible field\n",
+			fdtdec_get_compatible(COMPAT_ARRIA10_SDR_CTL));
+		return 1;
+	}
+
+	if (fdt_getprop(blob, node, "ecc-en", NULL)) {
+		cfg->ecc_en = 1;
+	} else {
+		cfg->ecc_en = 0;
+	}
+	for (i = 0; i < ARRAY_SIZE(sdr_cfg_tab); i++) {
+		err = fdtdec_get_int_array(blob, node,
+			sdr_cfg_tab[i].prop_name, &val, 1);
+		if (err) {
+			printf("failed to find %s %d\n", 
+				sdr_cfg_tab[i].prop_name, err);
+			continue;
+		}
+		*(u32*)(vcfg +  sdr_cfg_tab[i].offset) = val;
+	}
+	return 0;
+}
 /* Enable and disable SDRAM interrupt */
 void sdram_enable_interrupt(unsigned enable)
 {
@@ -476,7 +535,9 @@ int dram_init(void)
 {
 	bd_t *bd;
 	unsigned long addr;
+	struct sdr_cfg cfg;
 
+	puts("dram_init matt\n");
 	WATCHDOG_RESET();
 	/* assigning the SDRAM size */
 	gd->ram_size = PHYS_SDRAM_1_SIZE;
@@ -518,6 +579,8 @@ int dram_init(void)
 #endif
 
 	WATCHDOG_RESET();
+
+	of_get_sdr_cfg(gd->fdt_blob, &cfg);
 #ifndef TEST_AT_ASIMOV
 	/* initialize the MMR register */
 	sdram_mmr_init();

@@ -241,34 +241,19 @@
 	};
 
 	sdram@0xffcfb000 {
-		compatible = "socfpga_arria10,sdram";
-		skip-handoff = <0>;
-		sdram-skip = <0>;
-		sdram-ecc-init = <0>;
+		compatible = "altr,arria10-sdr-ctl";
 		serrcnt = <8>;
 		io-size = <1>;
-		ecc-en = <0>;
 		ddrconf = <0>;
-		ddrtiming-acttoact = <0x1c>;
-		ddrtiming-rdtomiss = <0x13>;
-		ddrtiming-wrtomiss = <0x21>;
-		ddrtiming-burstlen = <0x2>;
-		ddrtiming-rdtowr = <0x1>;
-		ddrtiming-wrtord = <0xb>;
-		ddrtiming-bwratio = <0>;
-		ddrmode-autoprecharge = <0>;
-		ddrmode-bwratioextended = <0>;
+		ddrtiming = <0xbeefcafe>;
+		ddrmode = <0>;
 		readlatency = <0x13>;
-		activate-rrd = <0x2>;
-		activate-faw = <0xd>;
-		activate-fawbank = <0x1>;
-		devtodev-busrdtord = <0x1>;
-		devtodev-busrdtowr = <0x1>;
-		devtodev-buswrtord = <0x1>;
+		activate = <0x1>;
+		devtodev = <0xdeadbeef>;
 		firewall {
 			/* existance of property implies it is enabled */
 			/* values are <start end> */
-			mpu0-start = <0 0xffff>;
+			mpu0 = <0 0xffff>;
 			/* mpu1 disabled */
 			/* mpu2 disabled */
 			/* mpu3 disabled */
@@ -294,6 +279,4 @@
 			/* fpga2sdram2-3 disabled */
 		};
 	};
-
-
 };

@@ -17,7 +17,7 @@
 DECLARE_GLOBAL_DATA_PTR;
 int get_pinmux_cfg(const void *blob)
 {
-	int node, child, len, j;
+	int node, child, len;
 	const char *node_name;
 	fdt_addr_t base_addr;
 	fdt_size_t size;
@@ -50,7 +50,7 @@ int get_pinmux_cfg(const void *blob)
 				&len);
 			if (cell != NULL) {
 				printf("%p %d\n", cell, len);
-				for (j=0;len > 0; len -= (2*sizeof(u32))) {
+				for (;len > 0; len -= (2*sizeof(u32))) {
 					offset = fdt32_to_cpu(*cell++);
 					value = fdt32_to_cpu(*cell++);
 					printf("<0x%x 0x%x>\n", offset, value);
