@@ -65,7 +65,7 @@ static int of_get_sdr_cfg(const void *blob, struct sdr_cfg *cfg) {
 	if (node < 0) {
 		printf("failed to find %s compatible field\n",
 			fdtdec_get_compatible(COMPAT_ARRIA10_SDR_CTL));
-		return 1;
+		return -1;
 	}
 
 	if (fdt_getprop(blob, node, "ecc-en", NULL)) {
@@ -83,7 +83,7 @@ static int of_get_sdr_cfg(const void *blob, struct sdr_cfg *cfg) {
 		}
 		*(u32*)(vcfg +  sdr_cfg_tab[i].offset) = val;
 	}
-	return 0;
+	return node;
 }
 /* Enable and disable SDRAM interrupt */
 void sdram_enable_interrupt(unsigned enable)
@@ -314,7 +314,268 @@ void sdram_mmr_init(void)
 (CONFIG_HPS_SDR_FPGA2SDRAM2_3_START > CONFIG_HPS_SDR_FPGA2SDRAM2_3_END)
 #error "sdram_config.h handoff file contain invalid DDR firewall value"
 #endif
+struct firewall_entry {
+	const char *prop_name;
+	const u32 cfg_addr;
+	const u32 en_addr;
+	const u32 en_bit;
+};
+#define FW_MPU_FPGA_ADDRESS \
+	((const struct socfpga_noc_fw_ddr_mpu_fpga2sdram*)\
+	SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS)
+const struct firewall_entry firewall_table[] = {
+	{
+		"mpu0",
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS + 
+		offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+			mpuregion0addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS + 
+		offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+			enable),
+		ALT_NOC_FW_DDR_SCR_EN_MPUREG0EN_SET_MSK
+	},
+	{
+		"mpu1",
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS + 
+		offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+			mpuregion1addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS + 
+		offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+			enable),
+		ALT_NOC_FW_DDR_SCR_EN_MPUREG1EN_SET_MSK
+	},
+	{
+		"mpu2",
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS + 
+		offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+			mpuregion2addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS + 
+		offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+			enable),
+		ALT_NOC_FW_DDR_SCR_EN_MPUREG2EN_SET_MSK
+	},
+	{
+		"mpu3",
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS + 
+		offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+			mpuregion3addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS + 
+		offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+			enable),
+		ALT_NOC_FW_DDR_SCR_EN_MPUREG3EN_SET_MSK
+	},
+	{
+		"l3-0",
+		SOCFPGA_SDR_FIREWALL_L3_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_l3, hpsregion0addr),
+		SOCFPGA_SDR_FIREWALL_L3_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_l3, enable),
+		ALT_NOC_FW_DDR_SCR_EN_HPSREG0EN_SET_MSK
+	},
+	{
+		"l3-1",
+		SOCFPGA_SDR_FIREWALL_L3_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_l3, hpsregion1addr),
+		SOCFPGA_SDR_FIREWALL_L3_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_l3, enable),
+		ALT_NOC_FW_DDR_SCR_EN_HPSREG1EN_SET_MSK
+	},
+	{
+		"l3-2",
+		SOCFPGA_SDR_FIREWALL_L3_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_l3, hpsregion2addr),
+		SOCFPGA_SDR_FIREWALL_L3_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_l3, enable),
+		ALT_NOC_FW_DDR_SCR_EN_HPSREG2EN_SET_MSK
+	},
+	{
+		"l3-3",
+		SOCFPGA_SDR_FIREWALL_L3_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_l3, hpsregion3addr),
+		SOCFPGA_SDR_FIREWALL_L3_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_l3, enable),
+		ALT_NOC_FW_DDR_SCR_EN_HPSREG3EN_SET_MSK
+	},
+	{
+		"l3-4",
+		SOCFPGA_SDR_FIREWALL_L3_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_l3, hpsregion4addr),
+		SOCFPGA_SDR_FIREWALL_L3_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_l3, enable),
+		ALT_NOC_FW_DDR_SCR_EN_HPSREG4EN_SET_MSK
+	},
+	{
+		"l3-5",
+		SOCFPGA_SDR_FIREWALL_L3_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_l3, hpsregion5addr),
+		SOCFPGA_SDR_FIREWALL_L3_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_l3, enable),
+		ALT_NOC_FW_DDR_SCR_EN_HPSREG5EN_SET_MSK
+	},
+	{
+		"l3-6",
+		SOCFPGA_SDR_FIREWALL_L3_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_l3, hpsregion6addr),
+		SOCFPGA_SDR_FIREWALL_L3_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_l3, enable),
+		ALT_NOC_FW_DDR_SCR_EN_HPSREG6EN_SET_MSK
+	},
+	{
+		"l3-7",
+		SOCFPGA_SDR_FIREWALL_L3_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_l3, hpsregion7addr),
+		SOCFPGA_SDR_FIREWALL_L3_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_l3, enable),
+		ALT_NOC_FW_DDR_SCR_EN_HPSREG7EN_SET_MSK
+	},
+	{
+		"fpga2sdram0-0",
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			fpga2sdram0region0addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			enable),
+		ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG0EN_SET_MSK
+	},
+	{
+		"fpga2sdram0-1",
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			fpga2sdram0region1addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			enable),
+		ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG1EN_SET_MSK
+	},
+	{
+		"fpga2sdram0-2",
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			fpga2sdram0region2addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			enable),
+		ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG2EN_SET_MSK
+	},
+	{
+		"fpga2sdram0-3",
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			fpga2sdram0region3addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			enable),
+		ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG3EN_SET_MSK
+	},
+	{
+		"fpga2sdram1-0",
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			fpga2sdram1region0addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			enable),
+		ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG0EN_SET_MSK
+	},
+	{
+		"fpga2sdram1-1",
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			fpga2sdram1region1addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			enable),
+		ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG1EN_SET_MSK
+	},
+	{
+		"fpga2sdram1-2",
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			fpga2sdram1region2addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			enable),
+		ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG2EN_SET_MSK
+	},
+	{
+		"fpga2sdram1-3",
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			fpga2sdram1region3addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			enable),
+		ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG3EN_SET_MSK
+	},	{
+		"fpga2sdram2-0",
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			fpga2sdram2region0addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			enable),
+		ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG0EN_SET_MSK
+	},
+	{
+		"fpga2sdram2-1",
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			fpga2sdram2region1addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			enable),
+		ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG1EN_SET_MSK
+	},
+	{
+		"fpga2sdram2-2",
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			fpga2sdram2region2addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			enable),
+		ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG2EN_SET_MSK
+	},
+	{
+		"fpga2sdram2-3",
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			fpga2sdram2region3addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
+			enable),
+		ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG3EN_SET_MSK
+	},
 
+};
+int of_sdram_firewall_setup(void *blob, int node)
+{
+	int child, i;
+	u32 start_end[2];
+
+	child = fdt_first_subnode(blob, node);
+	if (child < 0)
+		return 1;
+
+	/* set to default state */
+	writel(0, &socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable);
+	writel(0, &socfpga_noc_fw_ddr_l3_base->enable);
+
+
+	for (i = 0; i < ARRAY_SIZE(firewall_table); i++) {
+		if (!fdtdec_get_int_array(blob, child,
+			firewall_table[i].prop_name, start_end, 2)) {
+			writel((start_end[0] & ALT_NOC_FW_DDR_ADDR_MASK) |
+				(start_end[1] << ALT_NOC_FW_DDR_END_ADDR_LSB),
+				firewall_table[i].cfg_addr);
+			setbits_le32(firewall_table[i].en_addr,
+					firewall_table[i].en_bit);
+		}
+	}
+
+	return 0;
+}
 /* Function to initialize SDRAM MMR and NOC DDR scheduler*/
 void sdram_firewall_setup(void)
 {
@@ -536,6 +797,7 @@ int dram_init(void)
 	bd_t *bd;
 	unsigned long addr;
 	struct sdr_cfg cfg;
+	int node;
 
 	puts("dram_init matt\n");
 	WATCHDOG_RESET();
@@ -580,7 +842,7 @@ int dram_init(void)
 
 	WATCHDOG_RESET();
 
-	of_get_sdr_cfg(gd->fdt_blob, &cfg);
+	node = of_get_sdr_cfg(gd->fdt_blob, &cfg);
 #ifndef TEST_AT_ASIMOV
 	/* initialize the MMR register */
 	sdram_mmr_init();
