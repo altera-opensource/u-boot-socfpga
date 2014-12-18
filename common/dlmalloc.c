@@ -1529,6 +1529,8 @@ void *sbrk(ptrdiff_t increment)
 
 void mem_malloc_init(ulong start, ulong size)
 {
+	if (mem_malloc_start)
+		return;
 	mem_malloc_start = start;
 	mem_malloc_end = start + size;
 	mem_malloc_brk = start;

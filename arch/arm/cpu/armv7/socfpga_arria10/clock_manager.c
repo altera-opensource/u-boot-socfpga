@@ -35,8 +35,11 @@ static inline void cm_wait4fsm(void)
 }
 unsigned int cm_get_mmc_controller_clk_hz(void)
 {
-	/* FIXME */
+#ifdef TEST_AT_ASIMOV
+	return 50000000;
+#else	
 	return CONFIG_HPS_CLK_SDMMC_HZ;
+#endif
 }
 
 

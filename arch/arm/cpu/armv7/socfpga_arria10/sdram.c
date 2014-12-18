@@ -833,12 +833,10 @@ int dram_init(void)
 	enable_caches();
 #endif
 
-#ifndef TEST_AT_ASIMOV
 	WATCHDOG_RESET();
 	puts("CFF   : Configuring all flip-flops\n");
 	if (cff_from_fat())
 		puts("CFF   : failed\n");
-#endif
 
 	WATCHDOG_RESET();
 
