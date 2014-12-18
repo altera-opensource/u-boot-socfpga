@@ -36,7 +36,7 @@ static inline void cm_wait4fsm(void)
 unsigned int cm_get_mmc_controller_clk_hz(void)
 {
 	/* FIXME */
-	return 50000000;
+	return CONFIG_HPS_CLK_SDMMC_HZ;
 }
 
 
