@@ -37,7 +37,7 @@ static const struct altera_fpga {
 	{ Altera_StratixII, "StratixII", StratixII_load,
 	  StratixII_dump, StratixII_info },
 #endif
-#if defined(CONFIG_FPGA_SOCFPGA)
+#if (defined(CONFIG_FPGA_SOCFPGA) || defined(TEST_AT_ASIMOV))
 	{ Altera_SoCFPGA, "SoC FPGA", socfpga_load, NULL, NULL },
 #endif
 };

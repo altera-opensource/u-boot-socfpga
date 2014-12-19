@@ -93,7 +93,7 @@ typedef struct {
 	Altera_post_fn post;
 } altera_board_specific_func;
 
-#ifdef CONFIG_FPGA_SOCFPGA
+#if (defined(CONFIG_FPGA_SOCFPGA) || defined(TEST_AT_ASIMOV))
 int socfpga_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size);
 #endif
 

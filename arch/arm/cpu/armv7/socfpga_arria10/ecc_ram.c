@@ -16,8 +16,10 @@ unsigned long irq_cnt_ecc_ocram_uncorrected;
 
 static const struct socfpga_ecc *ecc_ocram_base =
 		(void *)SOCFPGA_ECC_OCRAM_ADDRESS;
+#ifndef TEST_AT_ASIMOV
 static const struct socfpga_system_manager *system_manager_base =
 		(void *)SOCFPGA_SYSMGR_ADDRESS;
+
 
 static void irq_handler_ecc_ocram_corrected(void)
 {
@@ -37,25 +39,30 @@ static void irq_handler_ecc_ocram_uncorrected(void)
 	writel(ALT_ECC_INTSTAT_DERRPENA_SET_MSK, &ecc_ocram_base->intstat);
 	hang();
 }
-
+#endif
 void irq_handler_ecc_ram_serr(void)
 {
+#ifndef TEST_AT_ASIMOV
 	unsigned reg;
 	reg = readl(&system_manager_base->ecc_intstatus_serr);
 
 	/* is it OCRAM SERR? */
 	if (reg & ALT_SYSMGR_ECC_INTSTAT_SERR_OCRAM_SET_MSK)
 		irq_handler_ecc_ocram_corrected();
+#endif
 }
 
 void irq_handler_ecc_ram_derr(void)
 {
+
+#ifndef TEST_AT_ASIMOV
 	unsigned reg;
 	reg = readl(&system_manager_base->ecc_intstatus_derr);
 
 	/* is it OCRAM SERR? */
 	if (reg & ALT_SYSMGR_ECC_INTSTAT_DERR_OCRAM_SET_MSK)
 		irq_handler_ecc_ocram_uncorrected();
+#endif
 }
 
 void enable_ecc_ram_serr_int(void)

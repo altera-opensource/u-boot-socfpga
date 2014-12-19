@@ -8,6 +8,18 @@
 #define	_SOCFPGA_RESET_MANAGER_H_
 
 #ifndef __ASSEMBLY__
+#ifdef TEST_AT_ASIMOV
+struct socfpga_reset_manager {
+	u32	status;
+	u32	ctrl;
+	u32	counts;
+	u32	padding1;
+	u32	mpu_mod_reset;
+	u32	per_mod_reset;
+	u32	per2_mod_reset;
+	u32	brg_mod_reset;
+};
+#else
 struct socfpga_reset_manager {
 	volatile uint32_t  stat;
 	volatile uint32_t  ramstat;
@@ -42,6 +54,7 @@ struct socfpga_reset_manager {
 	volatile uint32_t  hmcgpout;
 	volatile uint32_t  hmcgpin;
 };
+#endif
 #endif /* __ASSEMBLY__ */
 
 #define ALT_RSTMGR_CTL_SWWARMRSTREQ_SET_MSK	0x00000002

@@ -19,7 +19,7 @@ int cff_from_fat(void)
 {
 	u32 temp[4096] __aligned(ARCH_DMA_MINALIGN);
 	u32 malloc_start, filesize, readsize, status, offset = 0;
-	char *filename = "altr_cff.sys";
+	char *filename = "soc_system.rbf";
 
 	malloc_start = CONFIG_SYS_INIT_SP_ADDR
 		- CONFIG_OCRAM_STACK_SIZE - CONFIG_OCRAM_MALLOC_SIZE;
@@ -34,12 +34,11 @@ int cff_from_fat(void)
 		return 1;
 
 	/* checking the size of the file */
-	filesize = file_fat_read_at(filename, 0, (void *)~0, 0);
+	filesize = file_fat_read_at(filename, 0, NULL, 0);
 	if (filesize == -1) {
-		puts("Error - altr_cff.sys not found within SDMMC\n");
+		printf("Error - %s not found within SDMMC\n", filename);
 		return 1;
 	}
-	printf("file size %d\n", filesize);
 
 	/* initialize the FPGA Manager */
 	WATCHDOG_RESET();
@@ -50,6 +49,7 @@ int cff_from_fat(void)
 	}
 
 	while (filesize) {
+		printf("bytes left %d\n", filesize);
 		/*
 		 * Read the data by small chunk by chunk. At this stage,
 		 * use the temp as temporary buffer.

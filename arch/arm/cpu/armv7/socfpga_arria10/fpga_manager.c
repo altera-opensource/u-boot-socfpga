@@ -10,6 +10,8 @@
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/system_manager.h>
 #include <asm/arch/sdram.h>
+#include <altera.h>
+#include <errno.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -21,7 +23,7 @@ static const struct socfpga_system_manager *system_manager_base =
 #endif
 
 /* Check whether FPGA Init_Done signal is high */
-static int is_fpgamgr_initdone_high(void)
+int is_fpgamgr_initdone_high(void)
 {
 	unsigned long val;
 
@@ -302,10 +304,10 @@ int fpgamgr_program_fpga(const unsigned long *rbf_data,	unsigned long rbf_size)
 
 	/* prior programming the FPGA, all bridges need to be shut off */
 
+#ifndef TEST_AT_ASIMOV
 	/* disable all signals from hps peripheral controller to fpga */
 	writel(0, &system_manager_base->fpgaintf_en_global);
 
-#ifndef TEST_AT_ASIMOV
 	/* disable all axi bridge (hps2fpga, lwhps2fpga & fpga2hps) */
 	reset_assert_all_bridges();
 #endif
@@ -332,5 +334,58 @@ int fpgamgr_program_fpga(const unsigned long *rbf_data,	unsigned long rbf_size)
 	return fpgamgr_program_poll_usermode();
 #else
 	return ~0;
+#endif
+}
+/*
+ * FPGA Manager to program the FPGA. This is the interface used by FPGA driver.
+ * Return 0 for sucess, non-zero for error.
+ */
+int socfpga_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size)
+{
+#ifdef TEST_AT_ASIMOV
+	unsigned long status;
+
+	if ((uint32_t)rbf_data & 0x3) {
+		puts("FPGA: Unaligned data, realign to 32bit boundary.\n");
+		return -EINVAL;
+	}
+
+	/* Prior programming the FPGA, all bridges need to be shut off */
+
+	/* Disable all signals from hps peripheral controller to fpga */
+	writel(0, &system_manager_base->fpgaintfgrp_module);
+
+	/* Disable all signals from FPGA to HPS SDRAM */
+#define SDR_CTRLGRP_FPGAPORTRST_ADDRESS	0x5080
+	writel(0, SOCFPGA_SDR_ADDRESS + SDR_CTRLGRP_FPGAPORTRST_ADDRESS);
+
+	/* Disable all axi bridge (hps2fpga, lwhps2fpga & fpga2hps) */
+	socfpga_bridges_reset(1);
+
+	/* Unmap the bridges from NIC-301 */
+	writel(0x1, SOCFPGA_L3REGS_ADDRESS);
+
+	/* Initialize the FPGA Manager */
+	status = fpgamgr_program_init();
+	if (status)
+		return status;
+
+	/* Write the RBF data to FPGA Manager */
+	fpgamgr_program_write(rbf_data, rbf_size);
+
+	/* Ensure the FPGA entering config done */
+	status = fpgamgr_program_poll_cd();
+	if (status)
+		return status;
+
+	/* Ensure the FPGA entering init phase */
+	status = fpgamgr_program_poll_initphase();
+	if (status)
+		return status;
+
+	/* Ensure the FPGA entering user mode */
+	return fpgamgr_program_poll_usermode();
+#else
+	return 1; /* FIXME */
 #endif
 }
