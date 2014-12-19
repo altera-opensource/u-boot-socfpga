@@ -12,14 +12,35 @@
 #include <mmc.h>
 #include <malloc.h>
 #include <watchdog.h>
+#include <fdtdec.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+static const char *get_cff_filename(const void *fdt)
+{
+	const char *cff_filename = "soc_system.rbf";
+	const char *cell;
+	int nodeoffset, len;
+	nodeoffset = fdt_subnode_offset(fdt, 0, "chosen");
+
+	if (nodeoffset >= 0) {
+		cell = fdt_getprop(fdt, nodeoffset, "cff-file", &len);
+		printf("get_cff_filename %d\n", len);
+		if (cell) {
+			cff_filename = cell;
+			printf("using cff-filename %s\n", cff_filename);
+		} else {
+			printf("using default cff-filename %s\n", cff_filename);
+		}
+	}
+	return cff_filename;
+}
 
 int cff_from_fat(void)
 {
 	u32 temp[4096] __aligned(ARCH_DMA_MINALIGN);
 	u32 malloc_start, filesize, readsize, status, offset = 0;
-	char *filename = "soc_system.rbf";
+	const char *filename = get_cff_filename(gd->fdt_blob);
 
 	malloc_start = CONFIG_SYS_INIT_SP_ADDR
 		- CONFIG_OCRAM_STACK_SIZE - CONFIG_OCRAM_MALLOC_SIZE;
@@ -49,7 +70,7 @@ int cff_from_fat(void)
 	}
 
 	while (filesize) {
-		printf("bytes left %d\n", filesize);
+		//printf("bytes left %d\n", filesize);
 		/*
 		 * Read the data by small chunk by chunk. At this stage,
 		 * use the temp as temporary buffer.

@@ -16,6 +16,7 @@
 			iminfo $fpgadata; \
 			echo Boot the image; \
 			bootm $fpgadata";
+		cff-file = "soc_system.rbf", "foobar.rbf";
 	};
 
 	pinmux@0xffd07000 {
