@@ -493,8 +493,12 @@ include/config/%.conf: $(KCONFIG_CONFIG) include/config/auto.conf.cmd
 # is up-to-date. When we switch to a different board configuration, old CONFIG
 # macros are still remaining in include/config/auto.conf. Without the following
 # gimmick, wrong config.mk would be included leading nasty warnings/errors.
-autoconf_is_current := $(if $(wildcard $(KCONFIG_CONFIG)),$(shell find . \
-		-path ./include/config/auto.conf -newer $(KCONFIG_CONFIG)))
+# We use if not (not -newer) so that we include config.mk in the event that the
+# file timestamps are exacty equal which can happen on EXT3 filesystems.
+autoconf_is_current := $(if $(wildcard $(KCONFIG_CONFIG)),\
+		$(if $(shell find . -path ./include/config/auto.conf \
+		\! -newer $(KCONFIG_CONFIG)),,./include/config/auto.conf))
+
 ifneq ($(autoconf_is_current),)
 include $(srctree)/config.mk
 endif
