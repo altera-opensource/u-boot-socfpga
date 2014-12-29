@@ -48,11 +48,6 @@ struct socfpga_fpga_manager {
 #define FPGAMGRREGS_MODE_USERMODE	0x4
 #define FPGAMGRREGS_MODE_UNKNOWN	0x5
 
-/* FPGA CD Ratio Value */
-#define CDRATIO_x1	0x0
-#define CDRATIO_x2	0x1
-#define CDRATIO_x4	0x2
-#define CDRATIO_x8	0x3
 
 #else /***************** TEST_AT_ASIMOV *****************/
 
@@ -95,12 +90,37 @@ struct socfpga_fpga_manager {
 
 #define ALT_FPGAMGR_IMGCFG_STAT_F2S_USERMOD_SET_MSK 		0x00000004
 #define ALT_FPGAMGR_IMGCFG_STAT_F2S_INITDONE_OE_SET_MSK 	0x00000008
+#define ALT_FPGAMGR_IMGCFG_STAT_F2S_MSEL0_SET_MSK    		0x00010000
+#define ALT_FPGAMGR_IMGCFG_STAT_F2S_MSEL1_SET_MSK    		0x00020000
+#define ALT_FPGAMGR_IMGCFG_STAT_F2S_MSEL2_SET_MSK    		0x00040000
+#define ALT_FPGAMGR_IMGCFG_STAT_F2S_MSEL_SET_MSD (\
+	ALT_FPGAMGR_IMGCFG_STAT_F2S_MSEL0_SET_MSK |\
+	ALT_FPGAMGR_IMGCFG_STAT_F2S_MSEL1_SET_MSK |\
+	ALT_FPGAMGR_IMGCFG_STAT_F2S_MSEL2_SET_MSK)
+
+#define ALT_FPGAMGR_IMGCFG_STAT_F2S_MSEL0_LSB        16
+
+#define ALT_FPGAMGR_IMGCFG_CTL_02_CDRATIO_SET_MSK    		0x00030000
+#define ALT_FPGAMGR_IMGCFG_CTL_02_CFGWIDTH_SET_MSK    		0x01000000
+#define ALT_FPGAMGR_IMGCFG_CTL_02_CDRATIO_LSB        16
+	
+
+
 
 
 #endif /***************** TEST_AT_ASIMOV *****************/
 
 /* Timeout counter */
 #define FPGA_TIMEOUT_CNT		0x1000000
+
+/* FPGA CD Ratio Value */
+#define CDRATIO_x1	0x0
+#define CDRATIO_x2	0x1
+#define CDRATIO_x4	0x2
+#define CDRATIO_x8	0x3
+
+#define CFGWDTH_32 	1
+#define CFGWDTH_16 	0
 
 #ifndef __ASSEMBLY__
 /* Functions */

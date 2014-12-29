@@ -53,6 +53,39 @@ static int fpgamgr_get_mode(void)
 #endif
 }
 
+static uint32_t fpgamgr_get_msel(void)
+{
+	uint32_t reg;
+#ifdef TEST_AT_ASIMOV
+	reg = readl(&fpga_manager_base->stat);
+	reg = ((reg & FPGAMGRREGS_STAT_MSEL_MASK) >> FPGAMGRREGS_STAT_MSEL_LSB);
+#else
+	reg = readl(&fpga_manager_base->imgcfg_ctrl_02);
+	reg = ((reg & ALT_FPGAMGR_IMGCFG_STAT_F2S_MSEL_SET_MSD) >>
+		ALT_FPGAMGR_IMGCFG_STAT_F2S_MSEL0_LSB);
+#endif
+	return reg;
+}
+
+static void fpgamgr_set_cfgwdth(int width)
+{
+#ifdef TEST_AT_ASIMOV
+	if (width)
+		setbits_le32(&fpga_manager_base->ctrl,
+			FPGAMGRREGS_CTRL_CFGWDTH_MASK);
+	else
+		clrbits_le32(&fpga_manager_base->ctrl,
+			FPGAMGRREGS_CTRL_CFGWDTH_MASK);
+#else
+	if (width)
+		setbits_le32(&fpga_manager_base->imgcfg_ctrl_02,
+			ALT_FPGAMGR_IMGCFG_CTL_02_CFGWIDTH_SET_MSK);
+	else
+		clrbits_le32(&fpga_manager_base->imgcfg_ctrl_02,
+			ALT_FPGAMGR_IMGCFG_CTL_02_CFGWIDTH_SET_MSK);
+#endif
+}
+
 static int is_fpgamgr_user_mode(void)
 {
 	int rval = 0;
@@ -109,6 +142,12 @@ static void fpgamgr_set_cd_ratio(unsigned long ratio)
 	reg = (reg & ~(0x3 << FPGAMGRREGS_CTRL_CDRATIO_LSB)) |
 		((ratio & 0x3) << FPGAMGRREGS_CTRL_CDRATIO_LSB);
 	writel(reg, &fpga_manager_base->ctrl);
+#else
+	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_02,
+		ALT_FPGAMGR_IMGCFG_CTL_02_CDRATIO_SET_MSK);
+	setbits_le32(&fpga_manager_base->imgcfg_ctrl_02,
+		(ratio << ALT_FPGAMGR_IMGCFG_CTL_02_CDRATIO_LSB) &
+		ALT_FPGAMGR_IMGCFG_CTL_02_CDRATIO_SET_MSK);
 #endif
 }
 
@@ -138,23 +177,22 @@ static int fpgamgr_dclkcnt_set(unsigned long cnt)
 /* Start the FPGA programming by initialize the FPGA Manager */
 int fpgamgr_program_init(void)
 {
-#ifdef TEST_AT_ASIMOV
-	unsigned long reg, i;
+	unsigned long reg;
 
 	/* get the MSEL value */
-	reg = readl(&fpga_manager_base->stat);
-	reg = ((reg & FPGAMGRREGS_STAT_MSEL_MASK) >> FPGAMGRREGS_STAT_MSEL_LSB);
-
+	reg = fpgamgr_get_msel();
+#ifdef TEST_AT_ASIMOV
 	/*
 	 * Set the cfg width
 	 * If MSEL[3] = 1, cfg width = 32 bit
 	 */
-	if (reg & 0x8)
-		setbits_le32(&fpga_manager_base->ctrl,
-			FPGAMGRREGS_CTRL_CFGWDTH_MASK);
-	else
-		clrbits_le32(&fpga_manager_base->ctrl,
-			FPGAMGRREGS_CTRL_CFGWDTH_MASK);
+	fpgamgr_set_cfgwdth(reg & 0x8);
+#else
+	fpgamgr_set_cfgwdth(CFGWDTH_32);
+#endif
+			
+#ifdef TEST_AT_ASIMOV
+	unsigned long i;
 
 	/* To determine the CD ratio */
 	/* MSEL[3] = 1 & MSEL[1:0] = 0, CD Ratio = 1 */
