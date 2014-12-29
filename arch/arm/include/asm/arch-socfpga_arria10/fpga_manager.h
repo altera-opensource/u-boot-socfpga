@@ -40,9 +40,6 @@ struct socfpga_fpga_manager {
 #define FPGAMGRREGS_MON_GPIO_EXT_PORTA_CD_MASK	0x2
 #define FPGAMGRREGS_MON_GPIO_EXT_PORTA_NS_MASK	0x1
 
-/* Timeout counter */
-#define FPGA_TIMEOUT_CNT		0x1000000
-
 /* FPGA Mode */
 #define FPGAMGRREGS_MODE_FPGAOFF	0x0
 #define FPGAMGRREGS_MODE_RESETPHASE	0x1
@@ -96,9 +93,14 @@ struct socfpga_fpga_manager {
 };
 #endif /* __ASSEMBLY__ */
 
-#define ALT_FPGAMGR_IMGCFG_STAT_F2S_INITDONE_OE_SET_MSK    0x00000008
+#define ALT_FPGAMGR_IMGCFG_STAT_F2S_USERMOD_SET_MSK 		0x00000004
+#define ALT_FPGAMGR_IMGCFG_STAT_F2S_INITDONE_OE_SET_MSK 	0x00000008
+
 
 #endif /***************** TEST_AT_ASIMOV *****************/
+
+/* Timeout counter */
+#define FPGA_TIMEOUT_CNT		0x1000000
 
 #ifndef __ASSEMBLY__
 /* Functions */

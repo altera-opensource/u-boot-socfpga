@@ -53,26 +53,39 @@ static int fpgamgr_get_mode(void)
 #endif
 }
 
+static int is_fpgamgr_user_mode(void)
+{
+	int rval = 0;
+#ifdef TEST_AT_ASIMOV
+	if (fpgamgr_get_mode() == FPGAMGRREGS_MODE_USERMODE)
+		rval = 1;
+#else
+	if (readl(&fpga_manager_base->imgcfg_stat) &
+		ALT_FPGAMGR_IMGCFG_STAT_F2S_USERMOD_SET_MSK)
+		rval = 1;
+		
+#endif
+	return rval;
+}
+
+
 /* Check whether FPGA is ready to be accessed */
 int is_fpgamgr_fpga_ready(void)
 {
-#ifdef TEST_AT_ASIMOV
 	/* check for init done signal */
 	if (is_fpgamgr_initdone_high() == 0)
 		return 0;
 	/* check again to avoid false glitches */
 	if (is_fpgamgr_initdone_high() == 0)
 		return 0;
-	if (fpgamgr_get_mode() != FPGAMGRREGS_MODE_USERMODE)
+	if (!is_fpgamgr_user_mode())
 		return 0;
-#endif
 	return 1;
 }
 
 /* Poll until FPGA is ready to be accessed or timeout occurred */
 int poll_fpgamgr_fpga_ready(void)
 {
-#ifdef TEST_AT_ASIMOV
 	unsigned long i;
 	/* If FPGA is blank, wait till WD invoke warm reset */
 	for (i = 0; i < FPGA_TIMEOUT_CNT; i++) {
@@ -84,7 +97,6 @@ int poll_fpgamgr_fpga_ready(void)
 			continue;
 		return 1;
 	}
-#endif
 	return 0;
 }
 
