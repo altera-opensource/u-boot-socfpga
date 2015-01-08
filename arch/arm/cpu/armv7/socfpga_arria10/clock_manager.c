@@ -176,6 +176,8 @@ int cm_basic_init(void)
 		&clock_manager_base->per_pll_vco0);
 
 	/* setup all the main PLL counter and clock source */
+	writel(0x50005, SOCFPGA_CLKMGR_ADDRESS + 0x144);
+
 	/* main_emaca_clk divider */
 	writel(CONFIG_HPS_MAINPLLGRP_EMACA_CNT,
 		&clock_manager_base->main_pll_cntr2clk);
