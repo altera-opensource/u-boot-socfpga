@@ -104,66 +104,54 @@ int designware_board_phy_init(struct eth_device *dev, int phy_addr,
 /* We know all the init functions have been run now */
 int board_eth_init(bd_t *bis)
 {
-#if !defined(CONFIG_SOCFPGA_VIRTUAL_TARGET) && \
-!defined(CONFIG_SPL_BUILD) && defined(CONFIG_DESIGNWARE_ETH)
-
-	/* Initialize EMAC */
-
 	/*
 	 * Putting the EMAC controller to reset when configuring the PHY
 	 * interface select at System Manager
 	*/
+#if CONFIG_EMAC_BASE == SOCFPGA_EMAC0_ADDRESS
+	const int physhift = SYSMGR_EMACGRP_CTRL_PHYSEL0_LSB;
 	emac0_reset_enable(1);
+#elif CONFIG_EMAC_BASE == SOCFPGA_EMAC1_ADDRESS
+	const int physhift = SYSMGR_EMACGRP_CTRL_PHYSEL1_LSB;
 	emac1_reset_enable(1);
+#elif CONFIG_EMAC_BASE == SOCFPGA_EMAC2_ADDRESS
+	const int physhift = SYSMGR_EMACGRP_CTRL_PHYSEL2_LSB;
+	emac2_reset_enable(1);
+#else
+#error "Incorrect CONFIG_EMAC_BASE value!"
+#endif
 
 	/* Clearing emac0 PHY interface select to 0 */
 	clrbits_le32(CONFIG_SYSMGR_EMAC_CTRL,
-		(SYSMGR_EMACGRP_CTRL_PHYSEL_MASK <<
-#if (CONFIG_EMAC_BASE == CONFIG_EMAC0_BASE)
-		SYSMGR_EMACGRP_CTRL_PHYSEL0_LSB));
-#elif (CONFIG_EMAC_BASE == CONFIG_EMAC1_BASE)
-		SYSMGR_EMACGRP_CTRL_PHYSEL1_LSB));
-#endif
+		(SYSMGR_EMACGRP_CTRL_PHYSEL_MASK << physhift));
 
 	/* configure to PHY interface select choosed */
 	setbits_le32(CONFIG_SYSMGR_EMAC_CTRL,
-#if (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_GMII)
+#if (CONFIG_PHY_INTERFACE_MODE == PHY_INTERFACE_MODE_GMII)
 		(SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_GMII_MII <<
-#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_MII)
+#elif (CONFIG_PHY_INTERFACE_MODE == PHY_INTERFACE_MODE_MII)
 		(SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_GMII_MII <<
-#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_RGMII)
+#elif (CONFIG_PHY_INTERFACE_MODE == PHY_INTERFACE_MODE_RGMII)
 		(SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_RGMII <<
-#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_RMII)
+#elif (CONFIG_PHY_INTERFACE_MODE == PHY_INTERFACE_MODE_RGMII)
 		(SYSMGR_EMACGRP_CTRL_PHYSEL_ENUM_RMII <<
+#else
+#error "Incorrect CONFIG_PHY_INTERFACE_MODE value!"
 #endif
-#if (CONFIG_EMAC_BASE == CONFIG_EMAC0_BASE)
-		SYSMGR_EMACGRP_CTRL_PHYSEL0_LSB));
+		physhift));
+
 	/* Release the EMAC controller from reset */
+#if (CONFIG_EMAC_BASE == SOCFPGA_EMAC0_ADDRESS)
 	emac0_reset_enable(0);
-#elif (CONFIG_EMAC_BASE == CONFIG_EMAC1_BASE)
-		SYSMGR_EMACGRP_CTRL_PHYSEL1_LSB));
-	/* Release the EMAC controller from reset */
+#elif (CONFIG_EMAC_BASE == SOCFPGA_EMAC1_ADDRESS)
 	emac1_reset_enable(0);
+#elif (CONFIG_EMAC_BASE == CSOCFPGA_EMAC2_ADDRESS)
+	emac1_reset_enable(0);
+#else
+#error "Incorrect CONFIG_EMAC_BASE value!"
 #endif
 
 	/* initialize and register the emac */
-	int rval = designware_initialize(CONFIG_EMAC_BASE,
-		CONFIG_EPHY_PHY_ADDR);
-
-#if 0
-#if (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_GMII)
-		PHY_INTERFACE_MODE_GMII);
-#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_MII)
-		PHY_INTERFACE_MODE_MII);
-#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_RGMII)
-		PHY_INTERFACE_MODE_RGMII);
-#elif (CONFIG_PHY_INTERFACE_MODE == SOCFPGA_PHYSEL_ENUM_RMII)
-		PHY_INTERFACE_MODE_RMII);
-#endif
-#endif
-	debug("board_eth_init %d\n", rval);
-	return rval;
-#else
-	return 0;
-#endif
+	return designware_initialize(CONFIG_EMAC_BASE,
+					CONFIG_PHY_INTERFACE_MODE);
 }
