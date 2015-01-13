@@ -123,31 +123,10 @@ void s_init(void)
 	timer_init();
 
 	/* configuring the clock based on handoff */
-	cm_basic_init();
+	cm_basic_init(gd->fdt_blob);
 	WATCHDOG_RESET();
 
 	get_pinmux_cfg(gd->fdt_blob);
-#if 0
-	/* configure the pin muxing */
-#if (CONFIG_PRELOADER_OVERWRITE_DEDICATED == 1)
-	sysmgr_pinmux_init_dedicated(SOCFPGA_PINMUX_DEDICATED_IO_ADDRESS,
-		SOCFPGA_PINMUX_DEDICATED_IO_CFG_ADDRESS);
-#else
-	sysmgr_pinmux_init(SOCFPGA_PINMUX_DEDICATED_IO_ADDRESS,
-		sys_mgr_init_table_dedicated,
-		CONFIG_HPS_PINMUX_NUM_DEDICATED);
-	sysmgr_pinmux_init(SOCFPGA_PINMUX_DEDICATED_IO_CFG_ADDRESS,
-		sys_mgr_init_table_dedicated_cfg,
-		CONFIG_HPS_PINMUX_NUM_DEDICATED_CFG);
-#endif /* CONFIG_PRELOADER_OVERWRITE_DEDICATED */
-
-	sysmgr_pinmux_init(SOCFPGA_PINMUX_SHARED_3V_IO_ADDRESS,
-		sys_mgr_init_table_shared,
-		CONFIG_HPS_PINMUX_NUM_SHARED);
-	sysmgr_pinmux_init(SOCFPGA_PINMUX_FPGA_INTERFACE_ADDRESS,
-		sys_mgr_init_table_fpga,
-		CONFIG_HPS_PINMUX_NUM_FPGA);
-#endif
 	WATCHDOG_RESET();
 
 #ifndef TEST_AT_ASIMOV

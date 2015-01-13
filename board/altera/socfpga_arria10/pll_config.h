@@ -3,6 +3,7 @@
 
 #ifndef _PRELOADER_PLL_CONFIG_H_
 #define _PRELOADER_PLL_CONFIG_H_
+#if 0
 
 /*
  * PLL configuration data
@@ -103,6 +104,7 @@
 #define CONFIG_HPS_EMAC1SEL		(0)
 #define CONFIG_HPS_EMAC2SEL		(0)
 
+#endif
 
 /* Info for driver */
 #define CONFIG_HPS_CLK_OSC1_HZ			(25000000)
@@ -135,5 +137,4 @@
 #define CONFIG_HPS_CLK_UART_HZ			CONFIG_HPS_CLK_L4_SP_HZ
 
 #endif /* _PRELOADER_PLL_CONFIG_H_ */
-
 

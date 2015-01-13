@@ -73,10 +73,11 @@ struct socfpga_clock_manager {
 	volatile uint32_t  per_pll__pad_0x70_0x80[4];
 };
 
-extern int cm_of_get_cfg(void *blob, struct socfpga_clock_manager *cm_cfg);
-extern int cm_basic_init(void);
+extern int cm_basic_init(const void* blob);
 extern unsigned int cm_get_mmc_controller_clk_hz(void);
 #endif /* __ASSEMBLY__ */
+
+#define CLKMGR_MAINPLL_NOC_CLK_OFFSET			0x144
 
 /* value */
 #define CLKMGR_MAINPLL_BYPASS_RESET			0x0000003f

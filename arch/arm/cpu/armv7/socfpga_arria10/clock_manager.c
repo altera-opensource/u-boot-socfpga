@@ -42,6 +42,165 @@ unsigned int cm_get_mmc_controller_clk_hz(void)
 #endif
 }
 
+struct mainpll_cfg {
+	u32 vco0_psrc;
+	u32 vco1_denom;
+	u32 vco1_numer;
+	u32 mpuclk_cnt;
+	u32 mpuclk_src;
+	u32 nocclk;
+	u32 nocclk_cnt;
+	u32 nocclk_src;
+	u32 cntr2clk_cnt;
+	u32 cntr3clk_cnt;
+	u32 cntr4clk_cnt;
+	u32 cntr5clk_cnt;
+	u32 cntr6clk_cnt;
+	u32 cntr7clk_cnt;
+	u32 cntr7clk_src;
+	u32 cntr8clk_cnt;
+	u32 cntr9clk_cnt;
+	u32 cntr9clk_src;
+	u32 cntr15clk_cnt;
+	u32 nocdiv_l4mainclk;
+	u32 nocdiv_l4mpclk;
+	u32 nocdiv_l4spclk;
+	u32 nocdiv_csatclk;
+	u32 nocdiv_cstraceclk;
+	u32 nocdiv_cspdbclk;
+};
+struct perpll_cfg {
+	u32 vco0_psrc;
+	u32 vco1_denom;
+	u32 vco1_numer;
+	u32 cntr2clk_cnt;
+	u32 cntr2clk_src;
+	u32 cntr3clk_cnt;
+	u32 cntr3clk_src;
+	u32 cntr4clk_cnt;
+	u32 cntr4clk_src;
+	u32 cntr5clk_cnt;
+	u32 cntr5clk_src;
+	u32 cntr6clk_cnt;
+	u32 cntr6clk_src;
+	u32 cntr7clk_cnt;
+	u32 cntr8clk_cnt;
+	u32 cntr8clk_src;
+	u32 cntr9clk_cnt;
+	u32 cntr9clk_src;
+	u32 emacctl_emac0sel;
+	u32 emacctl_emac1sel;
+	u32 emacctl_emac2sel;
+	u32 gpiodiv_gpiodbclk;
+};
+
+struct strtou32 {
+	const char *str;
+	const u32 val;
+};
+static const struct strtou32 mailpll_cfg_tab[] = {
+	{ "vco0-psrc", offsetof(struct mainpll_cfg, vco0_psrc) },
+	{ "vco1-denom", offsetof(struct mainpll_cfg, vco1_denom) },
+	{ "vco1-numer", offsetof(struct mainpll_cfg, vco1_numer) },
+	{ "mpuclk-cnt", offsetof(struct mainpll_cfg, mpuclk_cnt) },
+	{ "mpuclk-src", offsetof(struct mainpll_cfg, mpuclk_src) },
+	{ "nocclk", offsetof(struct mainpll_cfg, nocclk) },
+	{ "nocclk-cnt", offsetof(struct mainpll_cfg, nocclk_cnt) },
+	{ "nocclk-src", offsetof(struct mainpll_cfg, nocclk_src) },
+	{ "cntr2clk-cnt", offsetof(struct mainpll_cfg, cntr2clk_cnt) },
+	{ "cntr3clk-cnt", offsetof(struct mainpll_cfg, cntr3clk_cnt) },
+	{ "cntr4clk-cnt", offsetof(struct mainpll_cfg, cntr4clk_cnt) },
+	{ "cntr5clk-cnt", offsetof(struct mainpll_cfg, cntr5clk_cnt) },
+	{ "cntr6clk-cnt", offsetof(struct mainpll_cfg, cntr6clk_cnt) },
+	{ "cntr7clk-cnt", offsetof(struct mainpll_cfg, cntr7clk_cnt) },
+	{ "cntr7clk-src", offsetof(struct mainpll_cfg, cntr7clk_src) },
+	{ "cntr8clk-cnt", offsetof(struct mainpll_cfg, cntr8clk_cnt) },
+	{ "cntr9clk-cnt", offsetof(struct mainpll_cfg, cntr9clk_cnt) },
+	{ "cntr9clk-src", offsetof(struct mainpll_cfg, cntr9clk_src) },
+	{ "cntr15clk-cnt", offsetof(struct mainpll_cfg, cntr15clk_cnt) },
+	{ "nocdiv-l4mainclk", offsetof(struct mainpll_cfg, nocdiv_l4mainclk) },
+	{ "nocdiv-l4mpclk", offsetof(struct mainpll_cfg, nocdiv_l4mpclk) },
+	{ "nocdiv-l4spclk", offsetof(struct mainpll_cfg, nocdiv_l4spclk) },
+	{ "nocdiv-csatclk", offsetof(struct mainpll_cfg, nocdiv_csatclk) },
+	{ "nocdiv-cstraceclk", offsetof(struct mainpll_cfg, nocdiv_cstraceclk) },
+	{ "nocdiv-cspdbclk", offsetof(struct mainpll_cfg, nocdiv_cspdbclk) },
+};
+static const struct strtou32 perpll_cfg_tab[] = {
+	{ "vco0-psrc", offsetof(struct perpll_cfg, vco0_psrc) },
+	{ "vco1-denom", offsetof(struct perpll_cfg, vco1_denom) },
+	{ "vco1-numer", offsetof(struct perpll_cfg, vco1_numer) },
+	{ "cntr2clk-cnt", offsetof(struct perpll_cfg, cntr2clk_cnt) },
+	{ "cntr2clk-src", offsetof(struct perpll_cfg, cntr2clk_src) },
+	{ "cntr3clk-cnt", offsetof(struct perpll_cfg, cntr3clk_cnt) },
+	{ "cntr3clk-src", offsetof(struct perpll_cfg, cntr3clk_src) },
+	{ "cntr4clk-cnt", offsetof(struct perpll_cfg, cntr4clk_cnt) },
+	{ "cntr4clk-src", offsetof(struct perpll_cfg, cntr4clk_src) },
+	{ "cntr5clk-cnt", offsetof(struct perpll_cfg, cntr5clk_cnt) },
+	{ "cntr5clk-src", offsetof(struct perpll_cfg, cntr5clk_src) },
+	{ "cntr6clk-cnt", offsetof(struct perpll_cfg, cntr6clk_cnt) },
+	{ "cntr6clk-src", offsetof(struct perpll_cfg, cntr6clk_src) },
+	{ "cntr7clk-cnt", offsetof(struct perpll_cfg, cntr7clk_cnt) },
+	{ "cntr8clk-cnt", offsetof(struct perpll_cfg, cntr8clk_cnt) },
+	{ "cntr8clk-src", offsetof(struct perpll_cfg, cntr8clk_src) },
+	{ "cntr9clk-cnt", offsetof(struct perpll_cfg, cntr9clk_cnt) },
+	{ "emacctl-emac0sel", offsetof(struct perpll_cfg, emacctl_emac0sel) },
+	{ "emacctl-emac1sel", offsetof(struct perpll_cfg, emacctl_emac1sel) },
+	{ "emacctl-emac2sel", offsetof(struct perpll_cfg, emacctl_emac2sel) },
+	{ "gpiodiv-gpiodbclk", offsetof(struct perpll_cfg, gpiodiv_gpiodbclk) },
+};
+
+int of_to_struct(const void *blob, int node, const struct strtou32* cfg_tab,
+	int cfg_tab_len, void *cfg)
+{
+	int i;
+	u32 val;
+	for (i = 0; i < cfg_tab_len; i++) {
+		if (fdtdec_get_int_array(blob, node, cfg_tab[i].str, &val, 1)) {
+			/* could not find required property */
+			return 100;
+		}
+		*(u32*)(cfg + cfg_tab[i].val) = val;
+	}
+	return 0;
+}
+int of_get_clk_cfg(const void *blob, struct mainpll_cfg* main_cfg,
+	struct perpll_cfg *per_cfg)
+{
+	int node, child, len;
+	const char *node_name;
+
+	node = fdtdec_next_compatible(blob, 0, COMPAT_ARRIA10_CLK_INIT);
+
+	if (node < 0)
+		return 1;
+
+	child = fdt_first_subnode(blob, node);
+
+	if (child < 0)
+		return 2;
+
+	node_name = fdt_get_name(blob, child, &len);
+
+	while (node_name) {
+		if (!strcmp(node_name, "mainpll")) {
+			if (of_to_struct(blob, child, mailpll_cfg_tab,
+				ARRAY_SIZE(mailpll_cfg_tab), main_cfg))
+				return 101;
+		} else if (!strcmp(node_name, "perpll")) {
+			if (of_to_struct(blob, child, perpll_cfg_tab,
+				ARRAY_SIZE(perpll_cfg_tab), per_cfg))
+				return 102;
+		}
+		child = fdt_next_subnode(blob, child);
+
+		if (child < 0)
+			break;
+
+		node_name = fdt_get_name(blob, child, &len);
+	}
+
+	return 0;
+}
 
 /*
  * Setup clocks while making no assumptions of the
@@ -82,7 +241,7 @@ unsigned int cm_get_mmc_controller_clk_hz(void)
  * Ungate clocks
  */
 
-int cm_basic_init(void)
+static int cm_full_cfg(struct mainpll_cfg *main_cfg, struct perpll_cfg *per_cfg)
 {
 #ifndef TEST_AT_ASIMOV
 	/* gate off all mainpll clock excpet HW managed clock */
@@ -108,7 +267,7 @@ int cm_basic_init(void)
 		CLKMGR_CLKMGR_STAT_BOOTCLKSRC_SET_MSK) == 0) {
 		/* non secure clock */
 		writel(CLKMGR_MAINPLL_VCO0_RESET |
-			(CONFIG_HPS_MAINPLLGRP_VCO_PSRC <<
+			(main_cfg->vco0_psrc <<
 				CLKMGR_MAINPLL_VCO0_PSRC_LSB),
 			&clock_manager_base->main_pll_vco0);
 	} else {
@@ -119,7 +278,7 @@ int cm_basic_init(void)
 			&clock_manager_base->main_pll_vco0);
 	}
 	writel(CLKMGR_PERPLL_VCO0_RESET |
-		(CONFIG_HPS_PERPLLGRP_VCO_PSRC <<
+		(per_cfg->vco0_psrc <<
 			CLKMGR_PERPLL_VCO0_PSRC_LSB),
 		&clock_manager_base->per_pll_vco0);
 
@@ -140,13 +299,13 @@ int cm_basic_init(void)
 		&clock_manager_base->intr);
 
 	/* Program VCO “Numerator” and “Denominator” */
-	writel((CONFIG_HPS_MAINPLLGRP_VCO_DENOM <<
+	writel((main_cfg->vco1_denom <<
 		CLKMGR_MAINPLL_VCO1_DENOM_LSB) |
-		CONFIG_HPS_MAINPLLGRP_VCO_NUMER,
+		main_cfg->vco1_numer,
 		&clock_manager_base->main_pll_vco1);
-	writel((CONFIG_HPS_PERPLLGRP_VCO_DENOM <<
+	writel((per_cfg->vco1_denom <<
 		CLKMGR_PERPLL_VCO1_DENOM_LSB) |
-		CONFIG_HPS_PERPLLGRP_VCO_NUMER,
+		per_cfg->vco1_numer,
 		&clock_manager_base->per_pll_vco1);
 
 	/* Wait for at least 5 us */
@@ -176,111 +335,98 @@ int cm_basic_init(void)
 		&clock_manager_base->per_pll_vco0);
 
 	/* setup all the main PLL counter and clock source */
-	writel(0x50005, SOCFPGA_CLKMGR_ADDRESS + 0x144);
+	writel(main_cfg->nocclk, 
+		SOCFPGA_CLKMGR_ADDRESS + CLKMGR_MAINPLL_NOC_CLK_OFFSET);
 
 	/* main_emaca_clk divider */
-	writel(CONFIG_HPS_MAINPLLGRP_EMACA_CNT,
-		&clock_manager_base->main_pll_cntr2clk);
+	writel(main_cfg->cntr2clk_cnt, &clock_manager_base->main_pll_cntr2clk);
 	/* main_emacb_clk divider */
-	writel(CONFIG_HPS_MAINPLLGRP_EMACB_CNT,
-		&clock_manager_base->main_pll_cntr3clk);
+	writel(main_cfg->cntr3clk_cnt, &clock_manager_base->main_pll_cntr3clk);
 	/* main_emac_ptp_clk divider */
-	writel(CONFIG_HPS_MAINPLLGRP_EMAC_PTP_CNT,
-		&clock_manager_base->main_pll_cntr4clk);
+	writel(main_cfg->cntr4clk_cnt, &clock_manager_base->main_pll_cntr4clk);
 	/* main_gpio_db_clk divider */
-	writel(CONFIG_HPS_MAINPLLGRP_GPIO_DB_CNT,
-		&clock_manager_base->main_pll_cntr5clk);
+	writel(main_cfg->cntr5clk_cnt, &clock_manager_base->main_pll_cntr5clk);
 	/* main_sdmmc_clk divider */
-	writel(CONFIG_HPS_MAINPLLGRP_SDMMC_CNT,
-		&clock_manager_base->main_pll_cntr6clk);
+	writel(main_cfg->cntr6clk_cnt, &clock_manager_base->main_pll_cntr6clk);
 	/* main_s2f_user0_clk divider */
-	writel(CONFIG_HPS_MAINPLLGRP_S2F_USER0_CNT |
-		(CONFIG_HPS_S2F_USER0_SRC <<
+	writel(main_cfg->cntr7clk_cnt |
+		(main_cfg->cntr7clk_src <<
 			CLKMGR_MAINPLL_CNTR7CLK_SRC_LSB),
 		&clock_manager_base->main_pll_cntr7clk);
 	/* main_s2f_user1_clk divider */
-	writel(CONFIG_HPS_MAINPLLGRP_S2F_USER1_CNT,
-		&clock_manager_base->main_pll_cntr8clk);
+	writel(main_cfg->cntr8clk_cnt, &clock_manager_base->main_pll_cntr8clk);
 	/* main_hmc_pll_clk divider */
-	writel(CONFIG_HPS_MAINPLLGRP_HMC_PLL_REF_CNT |
-		(CONFIG_HPS_HMC_PLL_REF_SRC <<
+	writel(main_cfg->cntr9clk_cnt |
+		(main_cfg->cntr9clk_src <<
 			CLKMGR_MAINPLL_CNTR9CLK_SRC_LSB),
 		&clock_manager_base->main_pll_cntr9clk);
 	/* main_periph_ref_clk divider */
-	writel(CONFIG_HPS_MAINPLLGRP_PERIPH_REF_CNT,
+	writel(main_cfg->cntr15clk_cnt,
 		&clock_manager_base->main_pll_cntr15clk);
 
 	/* setup all the peripheral PLL counter and clock source */
 	/* peri_emaca_clk divider */
-	writel(CONFIG_HPS_PERPLLGRP_EMACA_CNT |
-		(CONFIG_HPS_EMACA_SRC <<
-			CLKMGR_PERPLL_CNTR2CLK_SRC_LSB),
+	writel(per_cfg->cntr2clk_cnt |
+		(per_cfg->cntr2clk_src << CLKMGR_PERPLL_CNTR2CLK_SRC_LSB),
 		&clock_manager_base->per_pll_cntr2clk);
 	/* peri_emacb_clk divider */
-	writel(CONFIG_HPS_PERPLLGRP_EMACB_CNT |
-		(CONFIG_HPS_EMACB_SRC <<
-			CLKMGR_PERPLL_CNTR3CLK_SRC_LSB),
+	writel(per_cfg->cntr3clk_cnt |
+		(per_cfg->cntr3clk_src << CLKMGR_PERPLL_CNTR3CLK_SRC_LSB),
 		&clock_manager_base->per_pll_cntr3clk);
 	/* peri_emac_ptp_clk divider */
-	writel(CONFIG_HPS_PERPLLGRP_EMAC_PTP_CNT |
-		(CONFIG_HPS_EMAC_PTP_SRC <<
-			CLKMGR_PERPLL_CNTR4CLK_SRC_LSB),
+	writel(per_cfg->cntr4clk_cnt |
+		(per_cfg->cntr4clk_src << CLKMGR_PERPLL_CNTR4CLK_SRC_LSB),
 		&clock_manager_base->per_pll_cntr4clk);
 	/* peri_gpio_db_clk divider */
-	writel(CONFIG_HPS_PERPLLGRP_GPIO_DB_CNT |
-		(CONFIG_HPS_GPIO_DB_SRC <<
-			CLKMGR_PERPLL_CNTR5CLK_SRC_LSB),
+	writel(per_cfg->cntr5clk_cnt |
+		(per_cfg->cntr5clk_src << CLKMGR_PERPLL_CNTR5CLK_SRC_LSB),
 		&clock_manager_base->per_pll_cntr5clk);
 	/* peri_sdmmc_clk divider */
-	writel(CONFIG_HPS_PERPLLGRP_SDMMC_CNT |
-		(CONFIG_HPS_SDMMC_SRC <<
-			CLKMGR_PERPLL_CNTR6CLK_SRC_LSB),
+	writel(per_cfg->cntr6clk_cnt |
+		(per_cfg->cntr6clk_src << CLKMGR_PERPLL_CNTR6CLK_SRC_LSB),
 		&clock_manager_base->per_pll_cntr6clk);
 	/* peri_s2f_user0_clk divider */
-	writel(CONFIG_HPS_PERPLLGRP_S2F_USER0_CNT,
-		&clock_manager_base->per_pll_cntr7clk);
+	writel(per_cfg->cntr7clk_cnt, &clock_manager_base->per_pll_cntr7clk);
 	/* peri_s2f_user1_clk divider */
-	writel(CONFIG_HPS_PERPLLGRP_S2F_USER1_CNT |
-		(CONFIG_HPS_S2F_USER1_SRC <<
-			CLKMGR_PERPLL_CNTR8CLK_SRC_LSB),
+	writel(per_cfg->cntr8clk_cnt |
+		(per_cfg->cntr8clk_src << CLKMGR_PERPLL_CNTR8CLK_SRC_LSB),
 		&clock_manager_base->per_pll_cntr8clk);
 	/* peri_hmc_pll_clk divider */
-	writel(CONFIG_HPS_PERPLLGRP_HMC_PLL_REF_CNT,
+	writel(per_cfg->cntr9clk_cnt,
 		&clock_manager_base->per_pll_cntr9clk);
 
 	/* setup all the external PLL counter */
 	/* mpu wrapper / external divider */
-	writel(CONFIG_HPS_DIV_MPU |
-		(CONFIG_HPS_MPUCLK_SRC <<
+	writel(main_cfg->mpuclk_cnt |
+		(main_cfg->mpuclk_src <<
 			CLKMGR_MAINPLL_MPUCLK_SRC_LSB),
 		&clock_manager_base->main_pll_mpuclk);
 	/* NOC wrapper / external divider */
-	writel(CONFIG_HPS_DIV_NOC |
-		(CONFIG_HPS_NOCCLK_SRC <<
-			CLKMGR_MAINPLL_NOCCLK_SRC_LSB),
+	writel(main_cfg->nocclk_cnt |
+		(main_cfg->nocclk_src << CLKMGR_MAINPLL_NOCCLK_SRC_LSB),
 		&clock_manager_base->main_pll_nocclk);
 	/* NOC subclock divider such as l4 */
-	writel(CONFIG_HPS_NOCDIV_L4MAINCLK |
-		(CONFIG_HPS_NOCDIV_L4MPCLK <<
+	writel(main_cfg->nocdiv_l4mainclk |
+		(main_cfg->nocdiv_l4mpclk <<
 			CLKMGR_MAINPLL_NOCDIV_L4MPCLK_LSB) |
-		(CONFIG_HPS_NOCDIV_L4SPCLK <<
+		(main_cfg->nocdiv_l4spclk <<
 			CLKMGR_MAINPLL_NOCDIV_L4SPCLK_LSB) |
-		(CONFIG_HPS_NOCDIV_CS_ATCLK <<
+		(main_cfg->nocdiv_csatclk <<
 			CLKMGR_MAINPLL_NOCDIV_CSATCLK_LSB) |
-		(CONFIG_HPS_NOCDIV_CS_TRACECLK <<
+		(main_cfg->nocdiv_cstraceclk <<
 			CLKMGR_MAINPLL_NOCDIV_CSTRACECLK_LSB) |
-		(CONFIG_HPS_NOCDIV_CS_PDBGCLK <<
+		(main_cfg->nocdiv_cspdbclk <<
 			CLKMGR_MAINPLL_NOCDIV_CSPDBGCLK_LSB),
 		&clock_manager_base->main_pll_nocdiv);
 	/* gpio_db external divider */
-	writel(CONFIG_HPS_DIV_GPIO, &clock_manager_base->per_pll_gpiodiv);
+	writel(per_cfg->gpiodiv_gpiodbclk, &clock_manager_base->per_pll_gpiodiv);
 
 	/* setup the EMAC clock mux select */
-	writel((CONFIG_HPS_EMAC0SEL <<
+	writel((per_cfg->emacctl_emac0sel <<
 			CLKMGR_PERPLL_EMACCTL_EMAC0SEL_LSB) |
-		(CONFIG_HPS_EMAC1SEL <<
+		(per_cfg->emacctl_emac1sel <<
 			CLKMGR_PERPLL_EMACCTL_EMAC1SEL_LSB) |
-		(CONFIG_HPS_EMAC2SEL <<
+		(per_cfg->emacctl_emac2sel <<
 			CLKMGR_PERPLL_EMACCTL_EMAC2SEL_LSB),
 		&clock_manager_base->per_pll_emacctl);
 
@@ -342,3 +488,14 @@ int cm_basic_init(void)
 #endif /***************** TEST_AT_ASIMOV *****************/
 	return 0;
 }
+int cm_basic_init(const void *blob)
+{
+	struct mainpll_cfg main_cfg;
+	struct perpll_cfg per_cfg;
+	if (of_get_clk_cfg(blob, &main_cfg, &per_cfg)) {
+		return 1;
+	}
+
+	return cm_full_cfg(&main_cfg, &per_cfg);
+}
+

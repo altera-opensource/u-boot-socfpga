@@ -74,6 +74,7 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(PARADE_PS8625, "parade,ps8625"),
 	COMPAT(COMPAT_PINCTRL_SINGLE, "pinctrl-single"),
 	COMPAT(COMPAT_ARRIA10_SDR_CTL, "altr,arria10-sdr-ctl"),
+	COMPAT(COMPAT_ARRIA10_CLK_INIT, "altr,arria10-clk-init"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)

@@ -98,6 +98,7 @@ enum fdt_compat_id {
 	COMPAT_PARADE_PS8625,		/* Parade PS8622 EDP->LVDS bridge */
 	COMPAT_PINCTRL_SINGLE,		/* pinctrl-single */
 	COMPAT_ARRIA10_SDR_CTL,		/* Arria10 SDRAM controller */
+	COMPAT_ARRIA10_CLK_INIT,	/* Arria10 Clock initialization */
 
 	COMPAT_COUNT,
 };
