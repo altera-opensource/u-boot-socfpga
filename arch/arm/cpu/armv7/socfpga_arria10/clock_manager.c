@@ -499,3 +499,20 @@ int cm_basic_init(const void *blob)
 	return cm_full_cfg(&main_cfg, &per_cfg);
 }
 
+static void cm_print_clock_quick_summary(void)
+{
+	printf("EOSC1       %8d kHz\n", CONFIG_HPS_CLK_OSC1_HZ / 1000);
+	printf("MMC         %8d kHz\n", cm_get_mmc_controller_clk_hz() / 1000);
+}
+
+int do_showclocks(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	cm_print_clock_quick_summary();
+	return 0;
+}
+
+U_BOOT_CMD(
+	clocks, CONFIG_SYS_MAXARGS, 1, do_showclocks,
+	"display clocks",
+	""
+);
