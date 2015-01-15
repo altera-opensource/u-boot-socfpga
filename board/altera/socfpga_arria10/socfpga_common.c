@@ -101,6 +101,35 @@ int designware_board_phy_init(struct eth_device *dev, int phy_addr,
 }
 #endif
 
+int board_phy_config(struct phy_device *phydev)
+{
+	u32 ctl, rx, tx, clk;
+	ctl = ksz9031_phy_extended_read(phydev, 2,
+				   MII_KSZ9031_EXT_RGMII_CTRL_SIG_SKEW,
+				   MII_KSZ9031_MOD_DATA_NO_POST_INC);
+
+	rx = ksz9031_phy_extended_read(phydev, 2,
+				   MII_KSZ9031_EXT_RGMII_RX_DATA_SKEW,
+				   MII_KSZ9031_MOD_DATA_NO_POST_INC);
+
+        tx = ksz9031_phy_extended_read(phydev, 2,
+				   MII_KSZ9031_EXT_RGMII_TX_DATA_SKEW,
+				   MII_KSZ9031_MOD_DATA_NO_POST_INC);
+	ksz9031_phy_extended_write(phydev, 2,
+				   MII_KSZ9031_EXT_RGMII_CLOCK_SKEW,
+				   MII_KSZ9031_MOD_DATA_NO_POST_INC, 0x3ff);
+
+	clk = ksz9031_phy_extended_read(phydev, 2,
+				   MII_KSZ9031_EXT_RGMII_CLOCK_SKEW,
+				   MII_KSZ9031_MOD_DATA_NO_POST_INC);
+
+	printf("%s: %x %x %x %x\n", __func__, ctl, rx, tx, clk);
+
+	if (phydev->drv->config)
+		phydev->drv->config(phydev);
+
+	return 0;
+}
 /* We know all the init functions have been run now */
 int board_eth_init(bd_t *bis)
 {

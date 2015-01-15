@@ -11,7 +11,7 @@
 /* FPGA interface group */
 #define SYSMGR_FPGAINTF_MODULE		(SOCFPGA_SYSMGR_ADDRESS + 0x28)
 /* EMAC interface selection */
-#define CONFIG_SYSMGR_EMAC_CTRL		(SOCFPGA_SYSMGR_ADDRESS + 0x60)
+#define CONFIG_SYSMGR_EMAC_CTRL		(SOCFPGA_SYSMGR_ADDRESS + 0x44)
 
 /* Preloader handoff to bootloader register */
 #define SYSMGR_ISWGRP_HANDOFF0		(SOCFPGA_SYSMGR_ADDRESS + 0x80)
