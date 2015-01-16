@@ -17,10 +17,9 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static const struct socfpga_fpga_manager *fpga_manager_base =
 		(void *)SOCFPGA_FPGAMGRREGS_ADDRESS;
-#ifdef TEST_AT_ASIMOV
+
 static const struct socfpga_system_manager *system_manager_base =
 		(void *)SOCFPGA_SYSMGR_ADDRESS;
-#endif
 
 /* Check whether FPGA Init_Done signal is high */
 int is_fpgamgr_initdone_high(void)
@@ -40,18 +39,16 @@ int is_fpgamgr_initdone_high(void)
 		return 0;
 }
 
+#ifdef TEST_AT_ASIMOV
 /* Get the FPGA mode */
 static int fpgamgr_get_mode(void)
 {
-#ifdef TEST_AT_ASIMOV
 	unsigned long val;
 	val = readl(&fpga_manager_base->stat);
 	val = val & FPGAMGRREGS_STAT_MODE_MASK;
 	return val;
-#else
-	return ~0;
-#endif
 }
+#endif
 
 static uint32_t fpgamgr_get_msel(void)
 {
@@ -60,7 +57,7 @@ static uint32_t fpgamgr_get_msel(void)
 	reg = readl(&fpga_manager_base->stat);
 	reg = ((reg & FPGAMGRREGS_STAT_MSEL_MASK) >> FPGAMGRREGS_STAT_MSEL_LSB);
 #else
-	reg = readl(&fpga_manager_base->imgcfg_ctrl_02);
+	reg = readl(&fpga_manager_base->imgcfg_stat);
 	reg = ((reg & ALT_FPGAMGR_IMGCFG_STAT_F2S_MSEL_SET_MSD) >>
 		ALT_FPGAMGR_IMGCFG_STAT_F2S_MSEL0_LSB);
 #endif
@@ -94,13 +91,54 @@ static int is_fpgamgr_user_mode(void)
 		rval = 1;
 #else
 	if (readl(&fpga_manager_base->imgcfg_stat) &
-		ALT_FPGAMGR_IMGCFG_STAT_F2S_USERMOD_SET_MSK)
+		ALT_FPGAMGR_IMGCFG_STAT_F2S_USERMODE_SET_MSK)
 		rval = 1;
-		
 #endif
 	return rval;
 }
 
+#ifndef TEST_AT_ASIMOV
+static int wait_for_user_mode(void)
+{
+	unsigned long i;
+	for (i = 0; i < FPGA_TIMEOUT_CNT; i++) {
+		if (is_fpgamgr_user_mode())
+			break;
+	}
+	return i;
+}
+
+/*
+ * Poll imgcfg_stat register.  Waiting for all bits set in mask to be set.
+ *
+ * returns FPGA_TIMEOUT_CNT if timeout
+ */
+static int wait_for_imgcfg_stat(unsigned long mask)
+{
+	unsigned long reg, i;
+
+	for (i = 0; i < FPGA_TIMEOUT_CNT; i++) {
+		reg = readl(&fpga_manager_base->imgcfg_stat);
+		if ((reg & mask) == mask)
+			break;
+	}
+
+	return i;
+}
+
+static int wait_for_condone_pin(void)
+{
+	return wait_for_imgcfg_stat(
+		ALT_FPGAMGR_IMGCFG_STAT_F2S_CONDONE_PIN_SET_MSK);
+}
+
+static int wait_for_nconfig_pin_and_nstatus_pin(void)
+{
+	return wait_for_imgcfg_stat(
+		ALT_FPGAMGR_IMGCFG_STAT_F2S_NCONFIG_PIN_SET_MSK |
+		ALT_FPGAMGR_IMGCFG_STAT_F2S_NSTATUS_PIN_SET_MSK);
+}
+#endif /* ! TEST_AT_ASIMOV */
 
 /* Check whether FPGA is ready to be accessed */
 int is_fpgamgr_fpga_ready(void)
@@ -153,7 +191,6 @@ static void fpgamgr_set_cd_ratio(unsigned long ratio)
 
 static int fpgamgr_dclkcnt_set(unsigned long cnt)
 {
-#ifdef TEST_AT_ASIMOV
 	unsigned long i;
 
 	/* clear any existing done status */
@@ -170,29 +207,24 @@ static int fpgamgr_dclkcnt_set(unsigned long cnt)
 			return 0;
 		}
 	}
-#endif
+
 	return -1;
 }
 
 /* Start the FPGA programming by initialize the FPGA Manager */
 int fpgamgr_program_init(void)
 {
-	unsigned long reg;
+#ifdef TEST_AT_ASIMOV
+	unsigned long i, reg;
 
 	/* get the MSEL value */
 	reg = fpgamgr_get_msel();
-#ifdef TEST_AT_ASIMOV
+
 	/*
 	 * Set the cfg width
 	 * If MSEL[3] = 1, cfg width = 32 bit
 	 */
 	fpgamgr_set_cfgwdth(reg & 0x8);
-#else
-	fpgamgr_set_cfgwdth(CFGWDTH_32);
-#endif
-			
-#ifdef TEST_AT_ASIMOV
-	unsigned long i;
 
 	/* To determine the CD ratio */
 	/* MSEL[3] = 1 & MSEL[1:0] = 0, CD Ratio = 1 */
@@ -213,7 +245,20 @@ int fpgamgr_program_init(void)
 	/* MSEL[3] = 0 & MSEL[1:0] = 2, CD Ratio = 4 */
 	else if ((reg & 0xb) == 0x2)
 		fpgamgr_set_cd_ratio(CDRATIO_x4);
+#else
+	unsigned long msel;
 
+	/* get the MSEL value */
+	msel = fpgamgr_get_msel();
+	if ((msel != 0) && (msel != 1))
+		return -1;
+
+//todo cfgwidth and cd_ratio hardwired for now
+	fpgamgr_set_cfgwdth(CFGWDTH_32);
+	fpgamgr_set_cd_ratio(CDRATIO_x1);
+#endif
+
+#ifdef TEST_AT_ASIMOV
 	/* to enable FPGA Manager configuration */
 	clrbits_le32(&fpga_manager_base->ctrl, FPGAMGRREGS_CTRL_NCE_MASK);
 
@@ -252,7 +297,75 @@ int fpgamgr_program_init(void)
 
 	/* enable AXI configuration */
 	setbits_le32(&fpga_manager_base->ctrl, FPGAMGRREGS_CTRL_AXICFGEN_MASK);
+#else
+	/*
+	 * Read f2s_nconfig_pin and f2s_nstatus_pin, loop until
+	 * de-asserted at value 1.
+	 */
+	if (wait_for_nconfig_pin_and_nstatus_pin() == FPGA_TIMEOUT_CNT)
+		return -2;
+
+	/* Write S2F_NCE=1; S2F_PR_REQUEST=0; EN_CFG_DATA=0; (deasserted values). */
+	setbits_le32(&fpga_manager_base->imgcfg_ctrl_01,
+		ALT_FPGAMGR_IMGCFG_CTL_01_S2F_NCE_SET_MSK);
+
+	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_01,
+		ALT_FPGAMGR_IMGCFG_CTL_01_S2F_PR_REQUEST_SET_MSK);
+
+//todo register map says "en_cfg_data is an unused software bit"
+//so we are departing from the recommendationded steps in the spec here
+	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_02,
+		ALT_FPGAMGR_IMGCFG_CTL_02_EN_CFG_CTRL_SET_MSK);
+
+	/* Write S2F_NCONFIG=1, S2F_NSTATUS_OE=0, S2F_CONDONE_OE=0 (deasserted values). */
+	setbits_le32(&fpga_manager_base->imgcfg_ctrl_00,
+		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NCONFIG_SET_MSK);
+
+	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_00,
+		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NSTATUS_OE_SET_MSK |
+		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_CONDONE_OE_SET_MSK);
+
+	/*
+	 * Enable override for the above signals.
+	 * S2F_NENABLE_CONFIG=0
+	 * S2F_NENABLE_NCONFIG=0
+	 * S2F_NENABLE_NSTATUS=0 (optional).
+	 * S2F_NENABLE_CONDONE=0 (optional).
+	 */
+	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_00,
+		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NENABLE_NCONFIG_SET_MSK |
+		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NENABLE_NSTATUS_SET_MSK |
+		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NENABLE_CONDONE_SET_MSK);
+
+	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_01,
+		ALT_FPGAMGR_IMGCFG_CTL_01_S2F_NENABLE_CONFIG_SET_MSK);
+
+	/* Optionally wait for enough period of time for the CSS settle. */
+
+//todo register map says "en_cfg_data is an unused software bit"
+//so we are departing from the recommendationded steps in the spec here
+	/* Write EN_CFG_DATA=1 */
+	setbits_le32(&fpga_manager_base->imgcfg_ctrl_02,
+		ALT_FPGAMGR_IMGCFG_CTL_02_EN_CFG_CTRL_SET_MSK);
+												
+	if (fpgamgr_dclkcnt_set(0x7ff) != 0)
+		return -3;
+
+	/* Write S2F_NCONFIG=0 */
+	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_00,
+		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NCONFIG_SET_MSK);
+
+	if (fpgamgr_dclkcnt_set(10) != 0)
+		return -4;
+
+	/* Write S2F_NCONFIG=1 */
+	setbits_le32(&fpga_manager_base->imgcfg_ctrl_00,
+		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NCONFIG_SET_MSK);
+
+	if (fpgamgr_dclkcnt_set(10) != 0)
+		return -5;
 #endif
+
 	return 0;
 }
 
@@ -261,6 +374,9 @@ void fpgamgr_program_write(const unsigned long *rbf_data,
 	unsigned long rbf_size)
 {
 #ifdef TEST_AT_ASIMOV
+	fpgamgr_axi_write(rbf_data, SOCFPGA_FPGAMGRDATA_ADDRESS, rbf_size);
+#else
+	/* Write sof/pof data to img_data_w */
 	fpgamgr_axi_write(rbf_data, SOCFPGA_FPGAMGRDATA_ADDRESS, rbf_size);
 #endif
 }
@@ -290,6 +406,9 @@ int fpgamgr_program_poll_cd(void)
 
 	/* disable AXI configuration */
 	clrbits_le32(&fpga_manager_base->ctrl, FPGAMGRREGS_CTRL_AXICFGEN_MASK);
+#else
+	if (wait_for_condone_pin() == FPGA_TIMEOUT_CNT)
+		return -3;
 #endif
 	return 0;
 }
@@ -339,6 +458,12 @@ int fpgamgr_program_poll_usermode(void)
 
 	/* to release FPGA Manager drive over configuration line */
 	clrbits_le32(&fpga_manager_base->ctrl, FPGAMGRREGS_CTRL_EN_MASK);
+#else
+	if (fpgamgr_dclkcnt_set(0xf) != 0)
+		return -7;
+
+	if (wait_for_user_mode() == FPGA_TIMEOUT_CNT)
+		return -8;
 #endif
 	return 0;
 }
@@ -349,7 +474,6 @@ int fpgamgr_program_poll_usermode(void)
  */
 int fpgamgr_program_fpga(const unsigned long *rbf_data,	unsigned long rbf_size)
 {
-#ifdef TEST_AT_ASIMOV
 	unsigned long status;
 
 	/* prior programming the FPGA, all bridges need to be shut off */
@@ -382,9 +506,6 @@ int fpgamgr_program_fpga(const unsigned long *rbf_data,	unsigned long rbf_size)
 
 	/* Ensure the FPGA entering user mode */
 	return fpgamgr_program_poll_usermode();
-#else
-	return ~0;
-#endif
 }
 /*
  * FPGA Manager to program the FPGA. This is the interface used by FPGA driver.
@@ -392,9 +513,9 @@ int fpgamgr_program_fpga(const unsigned long *rbf_data,	unsigned long rbf_size)
  */
 int socfpga_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size)
 {
-#ifdef TEST_AT_ASIMOV
 	unsigned long status;
 
+#ifdef TEST_AT_ASIMOV
 	if ((uint32_t)rbf_data & 0x3) {
 		puts("FPGA: Unaligned data, realign to 32bit boundary.\n");
 		return -EINVAL;
@@ -414,7 +535,13 @@ int socfpga_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size)
 
 	/* Unmap the bridges from NIC-301 */
 	writel(0x1, SOCFPGA_L3REGS_ADDRESS);
+#else
+	/* disable all signals from hps peripheral controller to fpga */
+	writel(0, &system_manager_base->fpgaintf_en_global);
 
+	/* disable all axi bridge (hps2fpga, lwhps2fpga & fpga2hps) */
+	reset_assert_all_bridges();
+#endif
 	/* Initialize the FPGA Manager */
 	status = fpgamgr_program_init();
 	if (status)
@@ -435,7 +562,4 @@ int socfpga_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size)
 
 	/* Ensure the FPGA entering user mode */
 	return fpgamgr_program_poll_usermode();
-#else
-	return 1; /* FIXME */
-#endif
 }
