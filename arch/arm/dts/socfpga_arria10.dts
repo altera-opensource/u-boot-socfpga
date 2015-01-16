@@ -106,6 +106,7 @@
 			pinctrl-single,register-width = <32>;
 			pinctrl-single,function-mask = <0x003f3f3f>;
 			pinctrl-single,pins =
+				<0x00000100 0x00000101>,
 				<0x00000104 0x000d0000>,
 				<0x00000108 0x000d0000>,
 				<0x0000010c 0x000c0008>,
