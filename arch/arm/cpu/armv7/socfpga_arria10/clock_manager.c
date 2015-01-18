@@ -38,7 +38,7 @@ unsigned int cm_get_mmc_controller_clk_hz(void)
 #ifdef TEST_AT_ASIMOV
 	return 50000000;
 #else	
-	return CONFIG_HPS_CLK_SDMMC_HZ;
+	return CONFIG_HPS_CLK_SDMMC_HZ/4;
 #endif
 }
 
