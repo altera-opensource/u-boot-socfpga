@@ -77,64 +77,42 @@ void reset_cpu(ulong addr)
 		;
 }
 
-/* Change the reset state for EMAC0 */
-void emac0_reset_enable(uint state)
-{
-#ifndef TEST_AT_ASIMOV
-	if (state) {
-		/* enable ECC OCP first */
-		setbits_le32(&reset_manager_base->per0modrst,
-			ALT_RSTMGR_PER0MODRST_EMACECC0_SET_MSK);
-		setbits_le32(&reset_manager_base->per0modrst,
-			ALT_RSTMGR_PER0MODRST_EMAC0_SET_MSK);
-	} else {
-		clrbits_le32(&reset_manager_base->per0modrst,
-			ALT_RSTMGR_PER0MODRST_EMAC0_SET_MSK);
-		/* disable ECC OCP last */
-		clrbits_le32(&reset_manager_base->per0modrst,
-			ALT_RSTMGR_PER0MODRST_EMACECC0_SET_MSK);
-	}
-#endif
-}
 
-/* Change the reset state for EMAC1 */
-void emac1_reset_enable(uint state)
+/* emacbase: base address of emac to enable/disable reset
+ * state: 0 - disable reset, !0 - enable reset
+ */
+void emac_manage_reset(ulong emacbase, uint state)
 {
-#ifndef TEST_AT_ASIMOV
-	if (state) {
-		/* enable ECC OCP first */
-		setbits_le32(&reset_manager_base->per0modrst,
-			ALT_RSTMGR_PER0MODRST_EMACECC1_SET_MSK);
-		setbits_le32(&reset_manager_base->per0modrst,
-			ALT_RSTMGR_PER0MODRST_EMAC1_SET_MSK);
-	} else {
-		clrbits_le32(&reset_manager_base->per0modrst,
-			ALT_RSTMGR_PER0MODRST_EMAC1_SET_MSK);
-		/* disable ECC OCP last */
-		clrbits_le32(&reset_manager_base->per0modrst,
-			ALT_RSTMGR_PER0MODRST_EMACECC1_SET_MSK);
+	ulong eccmask;
+	ulong emacmask;
+	switch (emacbase) {
+		case SOCFPGA_EMAC0_ADDRESS:
+			eccmask = ALT_RSTMGR_PER0MODRST_EMACECC0_SET_MSK;
+			emacmask = ALT_RSTMGR_PER0MODRST_EMAC0_SET_MSK;
+			break;
+		case SOCFPGA_EMAC1_ADDRESS:
+			eccmask = ALT_RSTMGR_PER0MODRST_EMACECC1_SET_MSK;
+			emacmask = ALT_RSTMGR_PER0MODRST_EMAC1_SET_MSK;
+			break;
+		case SOCFPGA_EMAC2_ADDRESS:
+			eccmask = ALT_RSTMGR_PER0MODRST_EMACECC2_SET_MSK;
+			emacmask = ALT_RSTMGR_PER0MODRST_EMAC2_SET_MSK;
+			break;
+		default:
+			error("emac base address unexpected! %lx", emacbase);
+			hang();
+			break;
 	}
-#endif
-}
 
-/* Change the reset state for EMAC2 */
-void emac2_reset_enable(uint state)
-{
-#ifndef TEST_AT_ASIMOV
 	if (state) {
-		/* enable ECC OCP first */
-		setbits_le32(&reset_manager_base->per0modrst,
-			ALT_RSTMGR_PER0MODRST_EMACECC2_SET_MSK);
-		setbits_le32(&reset_manager_base->per0modrst,
-			ALT_RSTMGR_PER0MODRST_EMAC2_SET_MSK);
+		/* Enable ECC OCP first */
+		setbits_le32(&reset_manager_base->per0modrst, eccmask);
+		setbits_le32(&reset_manager_base->per0modrst, emacmask);
 	} else {
-		clrbits_le32(&reset_manager_base->per0modrst,
-			ALT_RSTMGR_PER0MODRST_EMAC2_SET_MSK);
-		/* disable ECC OCP last */
-		clrbits_le32(&reset_manager_base->per0modrst,
-			ALT_RSTMGR_PER0MODRST_EMACECC2_SET_MSK);
+		/* Disable ECC OCP first */
+		clrbits_le32(&reset_manager_base->per0modrst, emacmask);
+		clrbits_le32(&reset_manager_base->per0modrst, eccmask);
 	}
-#endif
 }
 
 /* Disable all the bridges (hps2fpga, lwhps2fpga, fpga2hps, fpga2sdram) */

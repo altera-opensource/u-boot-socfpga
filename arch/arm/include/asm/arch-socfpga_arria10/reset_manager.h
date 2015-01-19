@@ -125,9 +125,7 @@ struct socfpga_reset_manager {
 void reset_deassert_noc_ddr_scheduler(void);
 void watchdog_disable(void);
 int is_wdt_in_reset(void);
-void emac0_reset_enable(uint state);
-void emac1_reset_enable(uint state);
-void emac2_reset_enable(uint state);
+void emac_manage_reset(ulong emacbase, uint state);
 void reset_assert_all_bridges(void);
 void reset_deassert_bridges_handoff(void);
 void reset_assert_all_peripherals_except_l4wd0_l4timer0(void);
