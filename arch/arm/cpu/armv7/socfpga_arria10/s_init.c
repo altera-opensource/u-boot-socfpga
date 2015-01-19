@@ -70,11 +70,35 @@ int get_pinmux_cfg(const void *blob)
 	return 0;
 }
 
+/* This function initializes security policies to be consistent across
+ * all logic units in the Arria 10. 
+ *
+ * The idea is to set all security policies to be normal, nonsecure
+ * for all units. 
+ *
+ * Reality is, we're just hacking stuff in here so things will *work*
+ * and we'll fix it as we go. 
+ */
+void
+arria10_initialize_security_policies(void)
+{
+
+	/* Temp HACK to put OCRAM in non-secure */
+	writel(0x003f0000, 0xffd1320c);
+	writel(0x1, 0xffd13200);
+
+	/* Temp HACK to put DDR in non-secure */
+	writel(0xffff0000, 0xffd1340c);
+	writel(0x1, 0xffd13400);
+}
+
 /*
  * First C function to initialize the critical hardware early
  */
 void s_init(void)
 {
+
+	arria10_initialize_security_policies();
 
 #ifndef TEST_AT_ASIMOV
 	/* Clear fake OCRAM ECC first as might triggered during power on */
