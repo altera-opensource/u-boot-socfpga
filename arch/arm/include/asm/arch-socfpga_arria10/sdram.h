@@ -190,6 +190,19 @@ struct socfpga_io48_mmr {
 	volatile uint32_t niosreserve1;
 	volatile uint32_t niosreserve2;
 };
+
+union dramaddrw_reg {
+	struct {
+		u32 cfg_col_addr_width:5;
+		u32 cfg_row_addr_width:5;
+		u32 cfg_bank_addr_width:4;
+		u32 cfg_bank_group_addr_width:2;
+		u32 cfg_cs_addr_width:3;
+		u32 reserved:13;
+	};
+	u32 word;
+};
+
 #endif /* __ASSEMBLY__ */
 
 #define ALT_ECC_HMC_OCP_INTSTAT_SERRPENA_SET_MSK	0x00000001
