@@ -352,6 +352,7 @@ int	envmatch     (uchar *, int);
 char	*getenv	     (const char *);
 int	getenv_f     (const char *name, char *buf, unsigned len);
 ulong getenv_ulong(const char *name, int base, ulong default_val);
+long getenv_long(const char *name, int base, long default_val);
 
 /**
  * getenv_hex() - Return an environment variable as a hex value

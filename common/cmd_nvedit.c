@@ -673,6 +673,26 @@ int getenv_f(const char *name, char *buf, unsigned len)
  *			found
  * @return the decoded value, or default_val if not found
  */
+long getenv_long(const char *name, int base, long default_val)
+{
+	/*
+	 * We can use getenv() here, even before relocation, since the
+	 * environment variable value is an integer and thus short.
+	 */
+	const char *str = getenv(name);
+
+	return str ? simple_strtol(str, NULL, base) : default_val;
+}
+
+/**
+ * Decode the integer value of an environment variable and return it.
+ *
+ * @param name		Name of environemnt variable
+ * @param base		Number base to use (normally 10, or 16 for hex)
+ * @param default_val	Default value to return if the variable is not
+ *			found
+ * @return the decoded value, or default_val if not found
+ */
 ulong getenv_ulong(const char *name, int base, ulong default_val)
 {
 	/*
