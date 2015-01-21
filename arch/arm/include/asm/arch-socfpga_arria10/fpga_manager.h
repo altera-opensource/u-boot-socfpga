@@ -155,6 +155,8 @@ void fpgamgr_program_write(const unsigned long *rbf_data,
 	unsigned long rbf_size);
 int fpgamgr_program_poll_cd(void);
 int fpgamgr_program_poll_initphase(void);
+int is_fpgamgr_user_mode(void);
+int fpgamgr_program_poll_usermode(void);
 int fpgamgr_program_poll_usermode(void);
 int fpgamgr_program_fpga(const unsigned long *rbf_data,
 	unsigned long rbf_size);

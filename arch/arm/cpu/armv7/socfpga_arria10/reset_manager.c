@@ -40,8 +40,8 @@ void watchdog_disable(void)
 	setbits_le32(&reset_manager_base->per1modrst,
 		ALT_RSTMGR_PER1MODRST_WD0_SET_MSK);
 	/* deassert watchdog from reset (watchdog in not running state) */
-	clrbits_le32(&reset_manager_base->per1modrst,
-		ALT_RSTMGR_PER1MODRST_WD0_SET_MSK);
+//	clrbits_le32(&reset_manager_base->per1modrst,
+//		ALT_RSTMGR_PER1MODRST_WD0_SET_MSK);
 #else
 	setbits_le32(0xFFD05014, 1<<6);
 	clrbits_le32(0xFFD05014, 1<<6);

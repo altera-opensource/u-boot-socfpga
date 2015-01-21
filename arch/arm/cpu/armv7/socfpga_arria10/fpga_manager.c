@@ -83,7 +83,7 @@ static void fpgamgr_set_cfgwdth(int width)
 #endif
 }
 
-static int is_fpgamgr_user_mode(void)
+int is_fpgamgr_user_mode(void)
 {
 	int rval = 0;
 #ifdef TEST_AT_ASIMOV

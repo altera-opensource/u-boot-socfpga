@@ -16,27 +16,23 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static const char *get_cff_filename(const void *fdt)
+static const char *get_cff_filename(const void *fdt, int *len)
 {
-	const char *cff_filename = "soc_system.rbf";
+	const char *cff_filename = NULL;
 	const char *cell;
-	int nodeoffset, len;
+	int nodeoffset;
 	nodeoffset = fdt_subnode_offset(fdt, 0, "chosen");
 
 	if (nodeoffset >= 0) {
-		cell = fdt_getprop(fdt, nodeoffset, "cff-file", &len);
-		printf("get_cff_filename %d\n", len);
+		cell = fdt_getprop(fdt, nodeoffset, "cff-file", len);
 		if (cell) {
 			cff_filename = cell;
-			printf("using cff-filename %s\n", cff_filename);
-		} else {
-			printf("using default cff-filename %s\n", cff_filename);
 		}
 	}
 	return cff_filename;
 }
 
-int cff_from_fat(void)
+static int to_fpga_from_fat(const char *filename)
 {
 	u32 temp[4096] __aligned(ARCH_DMA_MINALIGN);
 	u32 malloc_start, filesize, readsize, status, offset = 0;
@@ -51,26 +47,21 @@ int cff_from_fat(void)
 	mmc_initialize(gd->bd);
 
 	/* we are looking at the FAT partition */
-	if (fs_set_blk_dev("mmc", "0:1", FS_TYPE_FAT))
+	if (fs_set_blk_dev("mmc", "0:1", FS_TYPE_FAT)) {
+		printf("failed to set filesystem to FAT\n");
 		return 1;
+	}
 
 	/* checking the size of the file */
-	filesize = file_fat_read_at(filename, 0, NULL, 0);
+	filesize = fs_size(filename);
 	if (filesize == -1) {
 		printf("Error - %s not found within SDMMC\n", filename);
 		return 1;
 	}
 
-	/* initialize the FPGA Manager */
 	WATCHDOG_RESET();
-	status = fpgamgr_program_init();
-	if (status) {
-		printf("FPGA: Init failed with error code %d\n", status);
-		hang();
-	}
 
 	while (filesize) {
-		//printf("bytes left %d\n", filesize);
 		/*
 		 * Read the data by small chunk by chunk. At this stage,
 		 * use the temp as temporary buffer.
@@ -80,26 +71,65 @@ int cff_from_fat(void)
 		else
 			readsize = sizeof(temp);
 
-		if (file_fat_read_at(filename, offset, temp, readsize)
-			!= readsize) {
-			puts("Error - altr_cff.sys read error\n");
+		bytesread = file_fat_read_at(filename, offset, temp, readsize);
+		if (bytesread != readsize) {
+			printf("failed to read %s at offset %d %d != %d\n",
+				filename, offset, bytesread, readsize);
 			return 1;
 		}
 
 		filesize -= readsize;
 		offset += readsize;
 
+#ifdef FIXME_ALAN
+
 		/* transfer data to FPGA Manager */
 		fpgamgr_program_write((const long unsigned int *)temp,
 			sizeof(temp));
+#endif
 		WATCHDOG_RESET();
 	}
 
+	return 0;
+}
+
+int cff_from_fat(void)
+{
+	int slen;
+	int len = 0;
+	int num_files = 0;
+	const char *filename = get_cff_filename(gd->fdt_blob, &len);
+
+	if (NULL == filename) {
+		printf("no cff-filename specified\n");
+		return 0;
+	}
+
+	/* initialize the FPGA Manager */
+	WATCHDOG_RESET();
+#ifdef FIXME_ALAN
+	status = fpgamgr_program_init();
+	if (status) {
+		printf("FPGA: Init failed with error code %d\n", status);
+		return -1;
+	}
+#endif
+	while (len > 0) {
+		printf("writing %s to fpga\n", filename);
+		if (to_fpga_from_fat(filename))
+			return -10;
+		num_files++;
+		slen = strlen(filename) + 1;
+		len -= slen;
+		filename += slen;
+	}
+
 	/* Ensure the FPGA entering config done */
+#ifdef FIXME_ALAN
 	status = fpgamgr_program_poll_cd();
 	if (status) {
 		printf("FPGA: Poll CD failed with error code %d\n", status);
-		return 1;
+		return -2;
 	}
 	WATCHDOG_RESET();
 
@@ -108,7 +138,7 @@ int cff_from_fat(void)
 	if (status) {
 		printf("FPGA: Poll initphase failed with error code %d\n",
 			status);
-		return 1;
+		return -3;
 	}
 	WATCHDOG_RESET();
 
@@ -117,10 +147,11 @@ int cff_from_fat(void)
 	if (status) {
 		printf("FPGA: Poll usermode failed with error code %d\n",
 			status);
-		return 1;
+		return -4;
 	}
+#endif
 	WATCHDOG_RESET();
-	return 0;
+	return num_files;
 }
 
 
@@ -216,6 +247,5 @@ void cff_from_qspi(unsigned long flash_offset)
 #endif
 #endif
 }
-
 
 
