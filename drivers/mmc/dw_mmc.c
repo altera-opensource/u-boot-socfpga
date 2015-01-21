@@ -336,7 +336,7 @@ static int dwmci_init(struct mmc *mmc)
 	if (host->board_init)
 		host->board_init(host);
 
-	dwmci_writel(host, DWMCI_PWREN, 1);
+	dwmci_writel(host, DWMCI_PWREN, 0);
 
 	if (!dwmci_wait_reset(host, DWMCI_RESET_ALL)) {
 		printf("%s[%d] Fail-reset!!\n", __func__, __LINE__);
