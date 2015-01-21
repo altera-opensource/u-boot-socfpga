@@ -452,6 +452,7 @@
 
 #ifdef CONFIG_MMC
 #define CONFIG_CMD_FAT
+#define CONFIG_CMD_MMC
 /* Enable FAT write support */
 #define CONFIG_FAT_WRITE
 
