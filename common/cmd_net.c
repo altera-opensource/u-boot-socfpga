@@ -284,6 +284,26 @@ U_BOOT_CMD(
 );
 #endif
 
+static int do_txloop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	if (argc < 2)
+		return -1;
+
+	if (NetLoop(TXBLAST) < 0) {
+		printf("ping failed; host %s is not alive\n", argv[1]);
+		return 1;
+	}
+
+	printf("host %s is alive\n", argv[1]);
+
+	return 0;
+}
+
+U_BOOT_CMD(
+	txloop,	2,	1,	do_txloop,
+	"blast a packet!",
+	"pingAddress"
+);
 #if defined(CONFIG_CMD_CDP)
 
 static void cdp_update_env(void)

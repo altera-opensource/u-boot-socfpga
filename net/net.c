@@ -317,6 +317,13 @@ void net_init(void)
 	NetInitLoop();
 }
 
+
+unsigned char testpacket[64] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,	// DA 
+				 0x00, 0x01, 0x02, 0x03, 0x04, 0x5, 	// SA
+				 0x80, 0x81, 				// Ethtype
+				};
+
+
 /**********************************************************************/
 /*
  *	Main network processing loop.
@@ -372,6 +379,9 @@ restart:
 		NetDevExists = 1;
 		NetBootFileXferSize = 0;
 		switch (protocol) {
+		case TXBLAST:
+			printf("starting tx blast\n");
+			break;
 		case TFTPGET:
 #ifdef CONFIG_CMD_TFTPPUT
 		case TFTPPUT:
@@ -469,6 +479,11 @@ restart:
 	 *	someone sets `net_state' to a state that terminates.
 	 */
 	for (;;) {
+
+		if (protocol == TXBLAST) {
+			NetSendPacket(testpacket, 64);
+		}
+
 		WATCHDOG_RESET();
 #ifdef CONFIG_SHOW_ACTIVITY
 		show_activity(1);
