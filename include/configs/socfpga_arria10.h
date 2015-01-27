@@ -77,7 +77,7 @@
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_INIT_RAM_ADDR + \
 					 CONFIG_SYS_INIT_RAM_SIZE  - 0x4000)
 /* Default load address */
-#define CONFIG_SYS_LOAD_ADDR		0x7FC0
+#define CONFIG_SYS_LOAD_ADDR		0x8000
 
 /*
  * Display CPU and Board Info
