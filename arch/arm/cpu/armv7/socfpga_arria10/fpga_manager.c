@@ -246,16 +246,56 @@ int fpgamgr_program_init(void)
 	else if ((reg & 0xb) == 0x2)
 		fpgamgr_set_cd_ratio(CDRATIO_x4);
 #else
-	unsigned long msel;
+	unsigned int msel, cfg_width, cd_ratio;
+	bool encrypt, compress;
 
-	/* get the MSEL value */
+	/* get the MSEL value, verify we are set for FPP configuration mode */
 	msel = fpgamgr_get_msel();
 	if ((msel != 0) && (msel != 1))
 		return -1;
 
-//todo cfgwidth and cd_ratio hardwired for now
-	fpgamgr_set_cfgwdth(CFGWDTH_32);
-	fpgamgr_set_cd_ratio(CDRATIO_x1);
+//todo hardcoded for now
+	encrypt = 0;
+	compress = 0;
+
+	/*
+	 * from the register map description of cdratio in imgcfg_ctrl_02:
+	 *  Normal Configuration    : 32bit Passive Parallel
+	 *  Partial Reconfiguration : 16bit Passive Parallel
+	 */
+//todo hardcoded for now
+	cfg_width = CFGWDTH_32;
+
+	/*
+	 * cd ratio is dependent on cfg width and whether the bitstream
+	 * is encrypted and/or compressed.
+	 *
+	 * | width | encr. | compr. | cd ratio |
+	 * |  16   |   0   |   0    |     1    |
+	 * |  16   |   0   |   1    |     4    |
+	 * |  16   |   1   |   0    |     2    |
+	 * |  16   |   1   |   1    |     4    |
+	 * |  32   |   0   |   0    |     1    |
+	 * |  32   |   0   |   1    |     8    |
+	 * |  32   |   1   |   0    |     4    |
+	 * |  32   |   1   |   1    |     8    |
+	 */
+	if (!compress && !encrypt) {
+		cd_ratio = CDRATIO_x1;
+	} else {
+		if (compress)
+			cd_ratio = CDRATIO_x4;
+		else
+			cd_ratio = CDRATIO_x2;
+
+		/* if 32 bit, double the cd ratio (so register
+		   field setting is incremented) */
+		if (cfg_width == CFGWDTH_32)
+			cd_ratio += 1;
+	}		
+
+	fpgamgr_set_cfgwdth(cfg_width);
+	fpgamgr_set_cd_ratio(cd_ratio);
 #endif
 
 #ifdef TEST_AT_ASIMOV
