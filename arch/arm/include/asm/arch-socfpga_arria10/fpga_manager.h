@@ -150,7 +150,7 @@ struct socfpga_fpga_manager {
 /* Functions */
 int is_fpgamgr_fpga_ready(void);
 int poll_fpgamgr_fpga_ready(void);
-int fpgamgr_program_init(void);
+int fpgamgr_program_init(u32 * rbf_data, u32 rbf_size);
 void fpgamgr_program_write(const unsigned long *rbf_data,
 	unsigned long rbf_size);
 int fpgamgr_program_poll_cd(void);

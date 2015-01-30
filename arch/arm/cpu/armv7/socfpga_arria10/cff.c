@@ -32,19 +32,46 @@ static const char *get_cff_filename(const void *fdt, int *len)
 	return cff_filename;
 }
 
-static int to_fpga_from_fat(const char *filename)
+/* read the first chunk of the file off the fat */
+static int read_rbf_header_from_fat(const char *filename, u32 *temp, u32 size_of_temp)
 {
-	u32 temp[4096] __aligned(ARCH_DMA_MINALIGN);
-	u32 malloc_start, filesize, readsize, status, offset = 0;
-	const char *filename = get_cff_filename(gd->fdt_blob);
+	u32 filesize, bytesread, readsize;
 
-	malloc_start = CONFIG_SYS_INIT_SP_ADDR
-		- CONFIG_OCRAM_STACK_SIZE - CONFIG_OCRAM_MALLOC_SIZE;
-	mem_malloc_init (malloc_start, CONFIG_OCRAM_MALLOC_SIZE);
+	/* we are looking at the FAT partition */
+	if (fs_set_blk_dev("mmc", "0:1", FS_TYPE_FAT)) {
+		printf("failed to set filesystem to FAT\n");
+		return -1;
+	}
 
-	/* initialize the MMC controller */
-	puts("MMC:   ");
-	mmc_initialize(gd->bd);
+	/* checking the size of the file */
+	filesize = fs_size(filename);
+	if (filesize == -1) {
+		printf("Error - %s not found within SDMMC\n", filename);
+		return -2;
+	}
+
+	WATCHDOG_RESET();
+
+	if (filesize < size_of_temp)
+		readsize = filesize;
+	else
+		readsize = size_of_temp;
+
+	bytesread = file_fat_read_at(filename, 0, temp, readsize);
+	if (bytesread != readsize) {
+		printf("read_rbf_header_from_fat: failed to read %s %d != %d\n",
+			filename, bytesread, readsize);
+		return -3;
+	}
+
+	WATCHDOG_RESET();
+
+	return 0;
+}
+
+static int to_fpga_from_fat(const char *filename, u32 *temp, u32 size_of_temp)
+{
+	u32 filesize, readsize, bytesread, offset = 0;
 
 	/* we are looking at the FAT partition */
 	if (fs_set_blk_dev("mmc", "0:1", FS_TYPE_FAT)) {
@@ -66,10 +93,10 @@ static int to_fpga_from_fat(const char *filename)
 		 * Read the data by small chunk by chunk. At this stage,
 		 * use the temp as temporary buffer.
 		 */
-		if (filesize < sizeof(temp))
+		if (filesize < size_of_temp)
 			readsize = filesize;
 		else
-			readsize = sizeof(temp);
+			readsize = size_of_temp;
 
 		bytesread = file_fat_read_at(filename, offset, temp, readsize);
 		if (bytesread != readsize) {
@@ -81,12 +108,9 @@ static int to_fpga_from_fat(const char *filename)
 		filesize -= readsize;
 		offset += readsize;
 
-#ifdef FIXME_ALAN
-
 		/* transfer data to FPGA Manager */
-		fpgamgr_program_write((const long unsigned int *)temp,
-			sizeof(temp));
-#endif
+		fpgamgr_program_write((const long unsigned int *)temp, readsize);
+
 		WATCHDOG_RESET();
 	}
 
@@ -95,9 +119,8 @@ static int to_fpga_from_fat(const char *filename)
 
 int cff_from_fat(void)
 {
-	int slen;
-	int len = 0;
-	int num_files = 0;
+	u32 temp[4096] __aligned(ARCH_DMA_MINALIGN);
+	int slen, status, len = 0, num_files = 0, ret;
 	const char *filename = get_cff_filename(gd->fdt_blob, &len);
 
 	if (NULL == filename) {
@@ -105,18 +128,26 @@ int cff_from_fat(void)
 		return 0;
 	}
 
-	/* initialize the FPGA Manager */
 	WATCHDOG_RESET();
-#ifdef FIXME_ALAN
-	status = fpgamgr_program_init();
+
+	ret = read_rbf_header_from_fat(filename, temp, sizeof(temp));
+	if (ret) {
+		printf("cff_from_fat: error reading rbf header\n");
+		return ret;
+	}
+
+	WATCHDOG_RESET();
+
+	/* initialize the FPGA Manager */
+	status = fpgamgr_program_init(temp, sizeof(temp));
 	if (status) {
 		printf("FPGA: Init failed with error code %d\n", status);
 		return -1;
 	}
-#endif
+
 	while (len > 0) {
-		printf("writing %s to fpga\n", filename);
-		if (to_fpga_from_fat(filename))
+		printf("FPGA: writing %s\n", filename);
+		if (to_fpga_from_fat(filename, temp, sizeof(temp)))
 			return -10;
 		num_files++;
 		slen = strlen(filename) + 1;
@@ -125,7 +156,6 @@ int cff_from_fat(void)
 	}
 
 	/* Ensure the FPGA entering config done */
-#ifdef FIXME_ALAN
 	status = fpgamgr_program_poll_cd();
 	if (status) {
 		printf("FPGA: Poll CD failed with error code %d\n", status);
@@ -149,8 +179,10 @@ int cff_from_fat(void)
 			status);
 		return -4;
 	}
-#endif
+
+	printf("FPGA: Success.\n");
 	WATCHDOG_RESET();
+
 	return num_files;
 }
 
