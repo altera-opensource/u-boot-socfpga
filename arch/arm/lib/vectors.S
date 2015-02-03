@@ -114,6 +114,33 @@ fiq:
 
 #else	/* !CONFIG_SPL_BUILD */
 
+#ifdef CONFIG_SOCFPGA_ARRIA10
+.global _end_vect
+_end_vect:
+/*
+//  If we are starting the baremetal_fw as an ISW then reset is the entry point as well just jumped there via 0xFFFF004C rather than 0xFFFF0000
+*/
+/*
+//  Ox0040 Program header.
+*/
+_ph_start:
+  .word   0x31305341                /* Magic        */
+  .byte   0x01                      /* Version      */
+  .byte   0x00                      /* Flags        */
+  .hword  (_prog_start)-(_ph_start) /* PH Length    */
+  .word   0x23d00              /* Length       */
+  /*.hword  __crc_check_length         Old Length   */
+  .word   (_prog_start)-(_ph_start) /* Start Offset */
+  .hword  0x0000                    /* Spare        */
+  .hword  0x2311                    /* Checksum     */
+/*
+//  Entry point
+*/
+_prog_start:
+  b reset
+
+#endif
+
 /* IRQ stack memory (calculated at run-time) + 8 bytes */
 .globl IRQ_STACK_START_IN
 IRQ_STACK_START_IN:
