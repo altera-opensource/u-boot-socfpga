@@ -8,7 +8,7 @@
 #define CONFIG_HPS_EMAC0	(0)
 #define CONFIG_HPS_EMAC1	(0)
 #define CONFIG_HPS_EMAC2	(0)
-#define CONFIG_HPS_USB0		(0)
+#define CONFIG_HPS_USB0		(1)
 #define CONFIG_HPS_USB1		(0)
 #define CONFIG_HPS_NAND		(0)
 #define CONFIG_HPS_SDMMC	(1)
