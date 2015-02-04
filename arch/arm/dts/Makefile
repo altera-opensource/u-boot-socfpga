@@ -38,7 +38,7 @@ dtb-$(CONFIG_ZYNQ) += zynq-zc702.dtb \
 	zynq-zc770-xm013.dtb
 dtb-$(CONFIG_AM33XX) += am335x-boneblack.dtb
 
-dtb-$(CONFIG_SOCFPGA_ARRIA10) += socfpga_arria10.dtb
+dtb-$(CONFIG_SOCFPGA_ARRIA10) += socfpga_arria10.dtb socfpga_arria10_dedicated_uart.dtb
 
 targets += $(dtb-y)
 
