@@ -25,6 +25,7 @@ static const struct altera_fpga {
 	int			(*load)(Altera_desc *, const void *, size_t);
 	int			(*dump)(Altera_desc *, const void *, size_t);
 	int			(*info)(Altera_desc *);
+	int			(*loadfs)(Altera_desc *, const void *, size_t, fpga_fs_info *);
 } altera_fpga[] = {
 #if defined(CONFIG_FPGA_ACEX1K)
 	{ Altera_ACEX1K, "ACEX1K", ACEX1K_load, ACEX1K_dump, ACEX1K_info },
@@ -37,8 +38,12 @@ static const struct altera_fpga {
 	{ Altera_StratixII, "StratixII", StratixII_load,
 	  StratixII_dump, StratixII_info },
 #endif
+#if defined(CONFIG_FPGA_SOCFPGA_ARRIA10)
+	{ Altera_SoCFPGA, "SoC FPGA", NULL, NULL, NULL, socfpga_loadfs },
+#else
 #if (defined(CONFIG_FPGA_SOCFPGA) || defined(TEST_AT_ASIMOV))
-	{ Altera_SoCFPGA, "SoC FPGA", socfpga_load, NULL, NULL },
+	{ Altera_SoCFPGA, "SoC FPGA", socfpga_load, NULL, NULL, NULL },
+#endif
 #endif
 };
 
@@ -105,6 +110,22 @@ int altera_load(Altera_desc *desc, const void *buf, size_t bsize)
 		return fpga->load(desc, buf, bsize);
 	return 0;
 }
+
+#if defined(CONFIG_CMD_FPGA_LOADFS)
+int altera_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
+		   fpga_fs_info *fpga_fsinfo)
+{
+	const struct altera_fpga *fpga = altera_desc_to_fpga(desc, __func__);
+
+	if (!fpga)
+		return FPGA_FAIL;
+
+	if (!fpga->loadfs)
+		return FPGA_FAIL;
+
+	return fpga->loadfs(desc, buf, bsize, fpga_fsinfo);
+}
+#endif
 
 int altera_dump(Altera_desc *desc, const void *buf, size_t bsize)
 {

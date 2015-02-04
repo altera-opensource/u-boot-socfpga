@@ -534,6 +534,7 @@
 #define CONFIG_FPGA_COUNT		(1)
 /* Enable FPGA command at console */
 #define CONFIG_CMD_FPGA
+#define CONFIG_CMD_FPGA_LOADFS
 
 /*
  * Memory allocation (MALLOC)

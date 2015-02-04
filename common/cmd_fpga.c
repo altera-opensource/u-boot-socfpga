@@ -54,6 +54,14 @@ int do_fpga(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	fpga_fsinfo.fstype = FS_TYPE_ANY;
 #endif
 
+	/* fpga <op> */
+	if (argc >= 2) {
+		op = (int)fpga_get_op(argv[1]);
+	} else {
+		debug("%s: Too many or too few args (%d)\n", __func__, argc);
+		op = FPGA_NONE;	/* force usage display */
+	}
+
 	if (devstr)
 		dev = (int) simple_strtoul(devstr, NULL, 16);
 	if (datastr)
@@ -88,6 +96,17 @@ int do_fpga(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		}
 		debug("%s: fpga_data = 0x%x\n", __func__, (uint)fpga_data);
 
+#if defined(CONFIG_CMD_FPGA_LOADFS)
+	case 6:
+		/* this is uuuuugly */
+		if (op == FPGA_LOADFS) {
+			fpga_fsinfo.interface = argv[3];
+			fpga_fsinfo.dev_part = argv[4];
+			fpga_fsinfo.filename = argv[5];
+			data_size = 1; /* don't need data_size in this case */
+		}
+#endif
+
 	case 3:		/* fpga <op> <dev | data addr> */
 		dev = (int)simple_strtoul(argv[2], NULL, 16);
 		debug("%s: device = %d\n", __func__, dev);
@@ -116,11 +135,8 @@ int do_fpga(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 			      __func__, (uint)fpga_data);
 			dev = FPGA_INVALID_DEVICE;	/* reset device num */
 		}
-
-	case 2:		/* fpga <op> */
-		op = (int)fpga_get_op(argv[1]);
 		break;
-
+	
 	default:
 		debug("%s: Too many or too few args (%d)\n", __func__, argc);
 		op = FPGA_NONE;	/* force usage display */
@@ -182,9 +198,12 @@ int do_fpga(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		break;
 #endif
 
+
+#if defined(CONFIG_FPGA_XILINX)
 	case FPGA_LOADB:
 		rc = fpga_loadbitstream(dev, fpga_data, data_size, BIT_FULL);
 		break;
+#endif
 
 #if defined(CONFIG_CMD_FPGA_LOADBP)
 	case FPGA_LOADBP:
@@ -283,9 +302,11 @@ int do_fpga(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		break;
 #endif
 
+#if defined(CONFIG_CMD_FPGA_DUMP)
 	case FPGA_DUMP:
 		rc = fpga_dump(dev, fpga_data, data_size);
 		break;
+#endif
 
 	default:
 		printf("Unknown operation\n");
@@ -304,8 +325,10 @@ static int fpga_get_op(char *opstr)
 
 	if (!strcmp("info", opstr))
 		op = FPGA_INFO;
+#if defined(CONFIG_FPGA_XILINX)
 	else if (!strcmp("loadb", opstr))
 		op = FPGA_LOADB;
+#endif
 	else if (!strcmp("load", opstr))
 		op = FPGA_LOAD;
 #if defined(CONFIG_CMD_FPGA_LOADP)
@@ -324,9 +347,10 @@ static int fpga_get_op(char *opstr)
 	else if (!strcmp("loadmk", opstr))
 		op = FPGA_LOADMK;
 #endif
+#if defined(CONFIG_CMD_FPGA_DUMP)
 	else if (!strcmp("dump", opstr))
 		op = FPGA_DUMP;
-
+#endif
 	if (op == FPGA_NONE)
 		printf("Unknown fpga operation \"%s\"\n", opstr);
 
@@ -341,24 +365,32 @@ U_BOOT_CMD(fpga, 6, 1, do_fpga,
 	   "loadable FPGA image support",
 	   "[operation type] [device number] [image address] [image size]\n"
 	   "fpga operations:\n"
+#if defined(CONFIG_CMD_FPGA_DUMP)
 	   "  dump\t[dev]\t\t\tLoad device to memory buffer\n"
+#endif
 	   "  info\t[dev]\t\t\tlist known device information\n"
 	   "  load\t[dev] [address] [size]\tLoad device from memory buffer\n"
 #if defined(CONFIG_CMD_FPGA_LOADP)
 	   "  loadp\t[dev] [address] [size]\t"
 	   "Load device from memory buffer with partial bitstream\n"
 #endif
+#if defined(CONFIG_FPGA_XILINX)
 	   "  loadb\t[dev] [address] [size]\t"
 	   "Load device from bitstream buffer (Xilinx only)\n"
+#endif
 #if defined(CONFIG_CMD_FPGA_LOADBP)
 	   "  loadbp\t[dev] [address] [size]\t"
 	   "Load device from bitstream buffer with partial bitstream"
 	   "(Xilinx only)\n"
 #endif
 #if defined(CONFIG_CMD_FPGA_LOADFS)
-	   "Load device from filesystem (FAT by default) (Xilinx only)\n"
+	   "Load device from filesystem (FAT by default)\n"
+#if defined(CONFIG_FPGA_XILINX)
 	   "  loadfs [dev] [address] [image size] [blocksize] <interface>\n"
 	   "        [<dev[:part]>] <filename>\n"
+#else
+	   "  loadfs [dev] [interface] [<dev[:part]>] <filename>\n"
+#endif
 #endif
 #if defined(CONFIG_CMD_FPGA_LOADMK)
 	   "  loadmk [dev] [address]\tLoad device generated with mkimage"

@@ -69,6 +69,8 @@ typedef struct {
 extern int altera_load(Altera_desc *desc, const void *image, size_t size);
 extern int altera_dump(Altera_desc *desc, const void *buf, size_t bsize);
 extern int altera_info(Altera_desc *desc);
+extern int altera_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
+			fpga_fs_info *fpga_fsinfo);
 
 /* Board specific implementation specific function types
  *********************************************************************/
@@ -95,6 +97,11 @@ typedef struct {
 
 #if (defined(CONFIG_FPGA_SOCFPGA) || defined(TEST_AT_ASIMOV))
 int socfpga_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size);
+#endif
+
+#if defined(CONFIG_CMD_FPGA_LOADFS)
+int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
+		fpga_fs_info *fsinfo);
 #endif
 
 #endif /* _ALTERA_H_ */

@@ -197,6 +197,14 @@ int fpga_fsload(int devnum, const void *buf, size_t size,
 #else
 			fpga_no_sup((char *)__func__, "Xilinx devices");
 #endif
+		case fpga_altera:
+#if defined(CONFIG_FPGA_ALTERA)
+			ret_val = altera_loadfs(desc->devdesc, buf, size,
+						fpga_fsinfo);
+#else
+			fpga_no_sup((char *)__func__, "Altera devices");
+#endif
+			break;
 			break;
 		default:
 			printf("%s: Invalid or unsupported device type %d\n",
