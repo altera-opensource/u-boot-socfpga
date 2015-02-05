@@ -4,6 +4,7 @@
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
+#include <altera.h>
 #include <common.h>
 #include <asm/io.h>
 #include <asm/arch/fpga_manager.h>
@@ -33,12 +34,12 @@ static const char *get_cff_filename(const void *fdt, int *len)
 }
 
 /* read the first chunk of the file off the fat */
-static int read_rbf_header_from_fat(const char *filename, u32 *temp, u32 size_of_temp)
+static int read_rbf_header_from_fat(char *dev_part, const char *filename, u32 *temp, u32 size_of_temp)
 {
 	u32 filesize, bytesread, readsize;
 
 	/* we are looking at the FAT partition */
-	if (fs_set_blk_dev("mmc", "0:1", FS_TYPE_FAT)) {
+	if (fs_set_blk_dev("mmc", dev_part, FS_TYPE_FAT)) {
 		printf("failed to set filesystem to FAT\n");
 		return -1;
 	}
@@ -69,12 +70,12 @@ static int read_rbf_header_from_fat(const char *filename, u32 *temp, u32 size_of
 	return 0;
 }
 
-static int to_fpga_from_fat(const char *filename, u32 *temp, u32 size_of_temp)
+static int to_fpga_from_fat(char *dev_part, const char *filename, u32 *temp, u32 size_of_temp)
 {
 	u32 filesize, readsize, bytesread, offset = 0;
 
 	/* we are looking at the FAT partition */
-	if (fs_set_blk_dev("mmc", "0:1", FS_TYPE_FAT)) {
+	if (fs_set_blk_dev("mmc", dev_part, FS_TYPE_FAT)) {
 		printf("failed to set filesystem to FAT\n");
 		return 1;
 	}
@@ -117,22 +118,21 @@ static int to_fpga_from_fat(const char *filename, u32 *temp, u32 size_of_temp)
 	return 0;
 }
 
-int cff_from_fat(void)
+int cff_from_mmc_fat(char *dev_part, const char *filename, int len)
 {
 	u32 temp[4096] __aligned(ARCH_DMA_MINALIGN);
-	int slen, status, len = 0, num_files = 0, ret;
-	const char *filename = get_cff_filename(gd->fdt_blob, &len);
+	int slen, status, num_files = 0, ret;
 
-	if (NULL == filename) {
-		printf("no cff-filename specified\n");
+	if (filename == NULL) {
+		printf("no filename specified\n");
 		return 0;
 	}
 
 	WATCHDOG_RESET();
 
-	ret = read_rbf_header_from_fat(filename, temp, sizeof(temp));
+	ret = read_rbf_header_from_fat(dev_part, filename, temp, sizeof(temp));
 	if (ret) {
-		printf("cff_from_fat: error reading rbf header\n");
+		printf("cff_from_mmc_fat: error reading rbf header\n");
 		return ret;
 	}
 
@@ -147,7 +147,7 @@ int cff_from_fat(void)
 
 	while (len > 0) {
 		printf("FPGA: writing %s\n", filename);
-		if (to_fpga_from_fat(filename, temp, sizeof(temp)))
+		if (to_fpga_from_fat(dev_part, filename, temp, sizeof(temp)))
 			return -10;
 		num_files++;
 		slen = strlen(filename) + 1;
@@ -186,6 +186,40 @@ int cff_from_fat(void)
 	return num_files;
 }
 
+/* Get filename from DT, load it to fpga */
+int cff_from_mmc_fat_dt(void)
+{
+	int len = 0;
+	const char *filename = get_cff_filename(gd->fdt_blob, &len);
+
+	return cff_from_mmc_fat("0:1", filename, len);
+}
+
+
+#if defined(CONFIG_CMD_FPGA_LOADFS)
+int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
+		fpga_fs_info *fsinfo)
+{
+	char *interface, *dev_part, *filename;
+	int ret;
+
+	interface = fsinfo->interface;
+	dev_part = fsinfo->dev_part;
+	filename = fsinfo->filename;
+
+	if (!strcmp(interface, "mmc")) {
+		ret = cff_from_mmc_fat(dev_part, filename, 1);
+		if (ret > 0)
+			return FPGA_SUCCESS;
+		else
+			return FPGA_FAIL;
+	}
+
+	printf("unsupported interface: %s\n", interface);
+
+	return FPGA_FAIL;
+}
+#endif
 
 void cff_from_qspi(unsigned long flash_offset)
 {

@@ -8,7 +8,7 @@
 #define	_SOCFPGA_CFF_H_
 
 #ifndef __ASSEMBLY__
-int cff_from_fat(void);
+int cff_from_mmc_fat_dt(void);
 #endif /* __ASSEMBLY__ */
 
 #endif /* _SOCFPGA_CFF_H_ */
