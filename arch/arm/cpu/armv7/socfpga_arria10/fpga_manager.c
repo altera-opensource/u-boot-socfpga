@@ -68,11 +68,6 @@ static int wait_for_user_mode(void)
 	return i;
 }
 
-/*
- * Poll imgcfg_stat register.  Waiting for all bits set in mask to be set.
- *
- * returns FPGA_TIMEOUT_CNT if timeout
- */
 static int wait_for_imgcfg_stat(unsigned long mask)
 {
 	unsigned long reg, i;
@@ -86,11 +81,31 @@ static int wait_for_imgcfg_stat(unsigned long mask)
 	return i;
 }
 
+/* Read f2s_nconfig_pin and f2s_nstatus_pin; loop until de-asserted */
 static int wait_for_nconfig_pin_and_nstatus_pin(void)
 {
 	return wait_for_imgcfg_stat(
 		ALT_FPGAMGR_IMGCFG_STAT_F2S_NCONFIG_PIN_SET_MSK |
 		ALT_FPGAMGR_IMGCFG_STAT_F2S_NSTATUS_PIN_SET_MSK);
+}
+
+static int wait_for_f2s_nstatus_pin(unsigned long value)
+{
+	unsigned long reg, i, desired;
+	unsigned long mask = ALT_FPGAMGR_IMGCFG_STAT_F2S_NSTATUS_PIN_SET_MSK;
+
+	if (value == 0)
+		desired = 0;
+	else
+		desired = mask;
+
+	for (i = 0; i < FPGA_TIMEOUT_CNT; i++) {
+		reg = readl(&fpga_manager_base->imgcfg_stat);
+		if ((reg & mask) == desired)
+			break;
+	}
+
+	return i;
 }
 
 /* Check whether FPGA is ready to be accessed */
@@ -161,21 +176,30 @@ static int fpgamgr_dclkcnt_set(unsigned long cnt)
 		}
 	}
 
-	return -1;
+	return FPGA_TIMEOUT_CNT;
 }
 
-/* Start the FPGA programming by initialize the FPGA Manager */
-int fpgamgr_program_init(u32 * rbf_data, u32 rbf_size)
+/* get the MSEL value, verify we are set for FPP configuration mode */
+unsigned int fpgamgr_verify_msel(void)
 {
-	unsigned int msel, cfg_width, cd_ratio;
-	bool encrypt, compress;
+	unsigned int msel = fpgamgr_get_msel();
 
-	/* get the MSEL value, verify we are set for FPP configuration mode */
-	msel = fpgamgr_get_msel();
 	if ((msel != 0) && (msel != 1)) {
 		printf("Fail: read msel=%d\n", msel);
 		return -1;
 	}
+
+	return 0;
+}
+
+/*
+ * Write cdratio and cdwidth based on whether the bitstream is compressed
+ * and/or encoded
+ */
+void fpgamgr_set_cdratio_cdwidth(unsigned int cfg_width, u32 *rbf_data, u32 rbf_size)
+{
+	unsigned int cd_ratio;
+	bool encrypt, compress;
 
 	encrypt = (rbf_data[69] >> 2) & 3;
 	encrypt = encrypt != 0;
@@ -194,8 +218,6 @@ int fpgamgr_program_init(u32 * rbf_data, u32 rbf_size)
 	 *  Normal Configuration    : 32bit Passive Parallel
 	 *  Partial Reconfiguration : 16bit Passive Parallel
 	 */
-//todo hardcoded for now
-	cfg_width = CFGWDTH_32;
 
 	/*
 	 * cd ratio is dependent on cfg width and whether the bitstream
@@ -227,64 +249,131 @@ int fpgamgr_program_init(u32 * rbf_data, u32 rbf_size)
 
 	fpgamgr_set_cfgwdth(cfg_width);
 	fpgamgr_set_cd_ratio(cd_ratio);
+}
 
-	/*
-	 * Read f2s_nconfig_pin and f2s_nstatus_pin, loop until
-	 * de-asserted at value 1.
-	 */
-	if (wait_for_nconfig_pin_and_nstatus_pin() == FPGA_TIMEOUT_CNT)
-		return -2;
-
-	/* S2F_NCE = 0 */
-	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_01,
-		ALT_FPGAMGR_IMGCFG_CTL_01_S2F_NCE_SET_MSK);
-
-	/* S2F_PR_REQUEST = 1 */
-	setbits_le32(&fpga_manager_base->imgcfg_ctrl_01,
-		ALT_FPGAMGR_IMGCFG_CTL_01_S2F_PR_REQUEST_SET_MSK);
-
-	/* EN_CFG_CTRL = 1 */
-	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_02,
-		ALT_FPGAMGR_IMGCFG_CTL_02_EN_CFG_CTRL_SET_MSK);
-
-	/* Write S2F_NCONFIG = 1 */
-	setbits_le32(&fpga_manager_base->imgcfg_ctrl_00,
-		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NCONFIG_SET_MSK);
-
-	/* S2F_NSTATUS_OE = 0, S2F_CONDONE_OE = 0 */
-	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_00,
-		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NSTATUS_OE_SET_MSK |
-		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_CONDONE_OE_SET_MSK);
-
-	/*
-	 * Enable override for the above signals.
-	 * S2F_NENABLE_CONFIG=0
-	 * S2F_NENABLE_NCONFIG=0
-	 * S2F_NENABLE_NSTATUS=0 (optional).
-	 * S2F_NENABLE_CONDONE=0 (optional).
-	 */
-	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_00,
-		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NENABLE_NCONFIG_SET_MSK |
-		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NENABLE_NSTATUS_SET_MSK |
-		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NENABLE_CONDONE_SET_MSK);
-
-	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_01,
-		ALT_FPGAMGR_IMGCFG_CTL_01_S2F_NENABLE_CONFIG_SET_MSK);
-
-	/* EN_CFG_CTRL = 1 */
-	setbits_le32(&fpga_manager_base->imgcfg_ctrl_02,
-		ALT_FPGAMGR_IMGCFG_CTL_02_EN_CFG_CTRL_SET_MSK);
-												
-	if (fpgamgr_dclkcnt_set(0x7ff) != 0)
-		return -3;
+int fpgamgr_reset(void)
+{
+	unsigned long reg;
 
 	/* S2F_NCONFIG = 0 */
 	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_00,
 		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NCONFIG_SET_MSK);
 
+	/* Wait for f2s_nstatus == 0 */
+	if (wait_for_f2s_nstatus_pin(0) == FPGA_TIMEOUT_CNT)
+		return -4;
+
 	/* S2F_NCONFIG = 1 */
 	setbits_le32(&fpga_manager_base->imgcfg_ctrl_00,
 		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NCONFIG_SET_MSK);
+
+	/* Wait for f2s_nstatus == 1 */
+	if (wait_for_f2s_nstatus_pin(1) == FPGA_TIMEOUT_CNT)
+		return -5;
+
+	/* read and confirm f2s_condone_pin = 0 and f2s_condone_oe = 1 */
+	reg = readl(&fpga_manager_base->imgcfg_stat);
+	if ((reg & ALT_FPGAMGR_IMGCFG_STAT_F2S_CONDONE_PIN_SET_MSK) != 0)
+		return -6;
+
+	if ((reg & ALT_FPGAMGR_IMGCFG_STAT_F2S_CONDONE_OE_SET_MSK) == 0)
+		return -7;
+
+	return 0;
+}
+
+/* Start the FPGA programming by initialize the FPGA Manager */
+int fpgamgr_program_init(u32 * rbf_data, u32 rbf_size)
+{
+	int ret;
+
+	/* Step 1 */
+	if (fpgamgr_verify_msel())
+		return -1;
+
+	/* Step 2 */
+	fpgamgr_set_cdratio_cdwidth(CFGWDTH_32, rbf_data, rbf_size);
+
+	/*
+	 * Step 3:
+	 * Make sure no other external devices are trying to interfere with
+	 * programming:
+	 */
+	if (wait_for_nconfig_pin_and_nstatus_pin() == FPGA_TIMEOUT_CNT)
+		return -2;
+
+	/*
+	 * Step 4:
+	 * Deassert the signal drives from HPS
+	 *
+	 * S2F_NCE = 1
+	 * S2F_PR_REQUEST = 0
+	 * EN_CFG_CTRL = 0
+	 * EN_CFG_DATA = 0
+	 * S2F_NCONFIG = 1
+	 * S2F_NSTATUS_OE = 0
+	 * S2F_CONDONE_OE = 0
+	 */
+	setbits_le32(&fpga_manager_base->imgcfg_ctrl_01,
+		ALT_FPGAMGR_IMGCFG_CTL_01_S2F_NCE_SET_MSK);
+
+	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_01,
+		ALT_FPGAMGR_IMGCFG_CTL_01_S2F_PR_REQUEST_SET_MSK);
+
+	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_02,
+		ALT_FPGAMGR_IMGCFG_CTL_02_EN_CFG_DATA_SET_MSK |
+		ALT_FPGAMGR_IMGCFG_CTL_02_EN_CFG_CTRL_SET_MSK);
+
+	setbits_le32(&fpga_manager_base->imgcfg_ctrl_00,
+		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NCONFIG_SET_MSK);
+
+	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_00,
+		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NSTATUS_OE_SET_MSK |
+		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_CONDONE_OE_SET_MSK);
+
+	/*
+	 * Step 5:
+	 * Enable overrides
+	 * S2F_NENABLE_CONFIG = 0
+	 * S2F_NENABLE_NCONFIG = 0
+	 */
+	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_01,
+		ALT_FPGAMGR_IMGCFG_CTL_01_S2F_NENABLE_CONFIG_SET_MSK);
+	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_00,
+		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NENABLE_NCONFIG_SET_MSK);
+
+	/*
+	 * Disable driving signals that HPS doesn't need to drive.
+	 * S2F_NENABLE_NSTATUS = 1
+	 * S2F_NENABLE_CONDONE = 1
+	 */
+	setbits_le32(&fpga_manager_base->imgcfg_ctrl_00,
+		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NENABLE_NSTATUS_SET_MSK |
+		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NENABLE_CONDONE_SET_MSK);
+
+	/*
+	 * Step 6:
+	 * Drive chip select S2F_NCE = 0
+	 */
+	 clrbits_le32(&fpga_manager_base->imgcfg_ctrl_01,
+		ALT_FPGAMGR_IMGCFG_CTL_01_S2F_NCE_SET_MSK);
+
+	/* Step 7 */
+	if (wait_for_nconfig_pin_and_nstatus_pin() == FPGA_TIMEOUT_CNT)
+		return -3;
+
+	/* Step 8 */
+	ret = fpgamgr_reset();
+	if (ret)
+		return ret;
+
+	/*
+	 * Step 9:
+	 * EN_CFG_CTRL and EN_CFG_DATA = 1
+	 */
+	setbits_le32(&fpga_manager_base->imgcfg_ctrl_02,
+		ALT_FPGAMGR_IMGCFG_CTL_02_EN_CFG_DATA_SET_MSK |
+		ALT_FPGAMGR_IMGCFG_CTL_02_EN_CFG_CTRL_SET_MSK);
 
 	return 0;
 }
@@ -305,16 +394,16 @@ int fpgamgr_program_poll_cd(void)
 	for (i = 0; i < FPGA_TIMEOUT_CNT; i++) {
 		reg = readl(&fpga_manager_base->imgcfg_stat);
 		if (reg & ALT_FPGAMGR_IMGCFG_STAT_F2S_CONDONE_PIN_SET_MSK)
-			break;
+			return 0;
 
 		if ((reg & ALT_FPGAMGR_IMGCFG_STAT_F2S_NSTATUS_PIN_SET_MSK) == 0) {
 			printf("nstatus == 0 while waiting for condone\n");
-			return -4;
+			return -8;
 		}
 	}
 
 	if (i == FPGA_TIMEOUT_CNT)
-		return -5;
+		return -9;
 
 	return 0;
 }
@@ -328,8 +417,47 @@ int fpgamgr_program_poll_initphase(void)
 /* Ensure the FPGA entering user mode */
 int fpgamgr_program_poll_usermode(void)
 {
+	unsigned long reg;
+
+	if (fpgamgr_dclkcnt_set(0xf) == FPGA_TIMEOUT_CNT)
+		return -10;
+
 	if (wait_for_user_mode() == FPGA_TIMEOUT_CNT)
-		return -6;
+		return -11;
+
+	/*
+	 * Step 14:
+	 * Stop DATA path and Dclk
+	 * EN_CFG_CTRL and EN_CFG_DATA = 0
+	 */
+	clrbits_le32(&fpga_manager_base->imgcfg_ctrl_02,
+		ALT_FPGAMGR_IMGCFG_CTL_02_EN_CFG_DATA_SET_MSK |
+		ALT_FPGAMGR_IMGCFG_CTL_02_EN_CFG_CTRL_SET_MSK);
+
+	/*
+	 * Step 15:
+	 * Disable overrides
+	 * S2F_NENABLE_CONFIG = 1
+	 * S2F_NENABLE_NCONFIG = 1
+	 */
+	setbits_le32(&fpga_manager_base->imgcfg_ctrl_01,
+		ALT_FPGAMGR_IMGCFG_CTL_01_S2F_NENABLE_CONFIG_SET_MSK);
+	setbits_le32(&fpga_manager_base->imgcfg_ctrl_00,
+		ALT_FPGAMGR_IMGCFG_CTL_00_S2F_NENABLE_NCONFIG_SET_MSK);
+
+	/* Disable chip select S2F_NCE = 1 */
+	setbits_le32(&fpga_manager_base->imgcfg_ctrl_01,
+		ALT_FPGAMGR_IMGCFG_CTL_01_S2F_NCE_SET_MSK);
+
+	/*
+	 * Step 16:
+	 * Final check
+	 */
+	reg = readl(&fpga_manager_base->imgcfg_stat);
+	if (((reg & ALT_FPGAMGR_IMGCFG_STAT_F2S_USERMODE_SET_MSK) == 0) ||
+	    ((reg & ALT_FPGAMGR_IMGCFG_STAT_F2S_CONDONE_PIN_SET_MSK) == 0) ||
+	    ((reg & ALT_FPGAMGR_IMGCFG_STAT_F2S_NSTATUS_PIN_SET_MSK) == 0))
+		return -12;
 
 	return 0;
 }
