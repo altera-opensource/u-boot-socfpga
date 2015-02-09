@@ -12,21 +12,18 @@
 #include <asm/arch/clock_manager.h>
 #include <asm/arch/system_manager.h>
 
-#ifdef FIXME
 static const struct socfpga_clock_manager *clock_manager_base =
 		(void *)SOCFPGA_CLKMGR_ADDRESS;
 static const struct socfpga_system_manager *system_manager_base =
 		(void *)SOCFPGA_SYSMGR_ADDRESS;
-#endif
 
 static void socfpga_dwmci_clksel(struct dwmci_host *host)
 {
-#ifdef FIXME
 	unsigned int drvsel;
 	unsigned int smplsel;
 
 	/* Disable SDMMC clock. */
-	clrbits_le32(&clock_manager_base->per_pll.en,
+	clrbits_le32(&clock_manager_base->per_pll_en,
 		CLKMGR_PERPLLGRP_EN_SDMMCCLK_MASK);
 
 	/* Configures drv_sel and smpl_sel */
@@ -41,9 +38,8 @@ static void socfpga_dwmci_clksel(struct dwmci_host *host)
 		readl(&system_manager_base->sdmmcgrp_ctrl));
 
 	/* Enable SDMMC clock */
-	setbits_le32(&clock_manager_base->per_pll.en,
+	setbits_le32(&clock_manager_base->per_pll_en,
 		CLKMGR_PERPLLGRP_EN_SDMMCCLK_MASK);
-#endif
 }
 
 int socfpga_dwmmc_init(u32 regbase, int bus_width, int index)
