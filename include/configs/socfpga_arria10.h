@@ -445,6 +445,7 @@
 #define CONFIG_KSZ9021_DATA_SKEW_VAL	0x0
 
 #define CONFIG_MMC
+#undef CONFIG_MMC
 
 /*
  * MMC support

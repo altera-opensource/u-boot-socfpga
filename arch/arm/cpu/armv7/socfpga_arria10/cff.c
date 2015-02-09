@@ -17,6 +17,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#ifdef CONFIG_MMC
 static const char *get_cff_filename(const void *fdt, int *len)
 {
 	const char *cff_filename = NULL;
@@ -194,28 +195,24 @@ int cff_from_mmc_fat_dt(void)
 
 	return cff_from_mmc_fat("0:1", filename, len);
 }
+#endif /* #ifdef CONFIG_MMC */
 
 
 #if defined(CONFIG_CMD_FPGA_LOADFS)
 int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 		fpga_fs_info *fsinfo)
 {
-	char *interface, *dev_part, *filename;
-	int ret;
-
-	interface = fsinfo->interface;
-	dev_part = fsinfo->dev_part;
-	filename = fsinfo->filename;
-
-	if (!strcmp(interface, "mmc")) {
-		ret = cff_from_mmc_fat(dev_part, filename, 1);
+#ifdef CONFIG_MMC
+	if (!strcmp(fsinfo->interface, "mmc")) {
+		int ret;
+		ret = cff_from_mmc_fat(fsinfo->dev_part, fsinfo->filename, 1);
 		if (ret > 0)
 			return FPGA_SUCCESS;
 		else
 			return FPGA_FAIL;
 	}
-
-	printf("unsupported interface: %s\n", interface);
+#endif
+	printf("unsupported interface: %s\n", fsinfo->interface);
 
 	return FPGA_FAIL;
 }

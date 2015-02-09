@@ -1075,9 +1075,11 @@ int dram_init(void)
 		- CONFIG_OCRAM_STACK_SIZE - CONFIG_OCRAM_MALLOC_SIZE;
 	mem_malloc_init (malloc_start, CONFIG_OCRAM_MALLOC_SIZE);
 
+#ifdef CONFIG_MMC
 	mmc_initialize(gd->bd);
 
 	cff_from_mmc_fat_dt();
+#endif
 
 	if (is_fpgamgr_user_mode()) {
 		WATCHDOG_RESET();
