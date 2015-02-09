@@ -74,7 +74,7 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	if (!spi_cs_is_valid(bus, cs))
 		return NULL;
 
-	cadence_qspi = malloc(sizeof(struct cadence_qspi_slave));
+	cadence_qspi = calloc(1, sizeof(struct cadence_qspi_slave));
 	if (!cadence_qspi) {
 		printf("QSPI: Can't allocate struct cadence_qspi_slave. "
 			"Bus %d cs %d\n", bus, cs);
