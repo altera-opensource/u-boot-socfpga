@@ -88,7 +88,7 @@ ulong get_timer_masked(void)
 	} else {
 		/* we have overflow of the count down timer */
 		gd->arch.tbl += (TIMER_LOAD_VAL / (CONFIG_TIMER_CLOCK_KHZ * 1000
-			/ CONFIG_SYS_HZ)) - gd->arch.lastinc + now;
+			/ CONFIG_SYS_HZ)) - now + gd->arch.lastinc;
 	}
 	gd->arch.lastinc = now;
 	return gd->arch.tbl;
