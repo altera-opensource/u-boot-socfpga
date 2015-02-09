@@ -242,8 +242,6 @@ struct socfpga_system_manager {
 /* declaration for system_manager.c */
 void sysmgr_pinmux_init(unsigned long base_address,
 	unsigned long *handoff_data, unsigned long length);
-void sysmgr_pinmux_init_dedicated(unsigned long base_address_dedicated,
-	unsigned long base_address_dedicated_cfg);
 
 /* declaration for handoff array */
 extern unsigned long sys_mgr_init_table_shared
