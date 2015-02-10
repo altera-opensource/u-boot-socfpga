@@ -345,7 +345,6 @@ static unsigned int cadence_qspi_wait_idle(void *reg_base)
 	/* timeout in unit of ms */
 	unsigned int timeout = 5000;
 
-	reset_timer();
 	start = get_timer(0);
 	for ( ; get_timer(start) < timeout ; ) {
 		if (CQSPI_REG_IS_IDLE(reg_base))
