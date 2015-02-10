@@ -11,11 +11,6 @@
 
 
 	chosen {
-		bootargs = "fatload mmc 0:1 $fpgadata u-boot-rsa.fit; \
-			echo Checking image; \
-			iminfo $fpgadata; \
-			echo Boot the image; \
-			bootm $fpgadata";
 		cff-file = "ghrd_10as066n2.rbf";
 	};
 
