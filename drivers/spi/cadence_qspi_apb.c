@@ -709,6 +709,7 @@ int cadence_qspi_apb_indirect_read_setup(void *reg_base,
 	rd_reg = cmdbuf[0] << CQSPI_REG_RD_INSTR_OPCODE_LSB;
 
 #if (CONFIG_SPI_FLASH_QUAD == 1)
+#warning CONFIG_SPI_FLASH_QUAD defined!
 	/* Instruction and address at DQ0, data at DQ0-3. */
 	rd_reg |= CQSPI_INST_TYPE_QUAD << CQSPI_REG_RD_INSTR_TYPE_DATA_LSB;
 #endif
