@@ -137,7 +137,6 @@
 #undef CONFIG_CMD_ITEST
 #undef CONFIG_CMD_EXT2
 #undef CONFIG_CMD_MTDPARTS
-#undef CONFIG_CMD_MII
 #undef CONFIG_CMD_BOOTD
 #undef CONFIG_CMD_IMLS
 #undef CONFIG_CMD_SDRAM
@@ -151,6 +150,8 @@
 #undef CONFIG_CMD_CONSOLE
 #undef CONFIG_CMD_EXPORTENV
 #undef CONFIG_MD5
+
+#define CONFIG_CMD_MII
 
 /*
  * Security support
@@ -421,7 +422,7 @@
 #define CONFIG_PHY_MICREL_KSZ9021
 #endif
 /* phy */
-#define CONFIG_EPHY0_PHY_ADDR		4
+#define CONFIG_EPHY0_PHY_ADDR		7
 #endif	/* CONFIG_DESIGNWARE_ETH */
 
 /* these are in devault environment so they must be always defined */
