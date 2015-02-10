@@ -444,12 +444,12 @@
 #define CONFIG_KSZ9021_DATA_SKEW_ENV	"micrel-ksz9021-data-skew"
 #define CONFIG_KSZ9021_DATA_SKEW_VAL	0x0
 
-#define CONFIG_MMC
-#undef CONFIG_MMC
-
 /*
  * MMC support
  */
+#if !defined(CONFIG_CADENCE_QSPI)  &&  !defined(CONFIG_NAND_DENALI)
+#define CONFIG_MMC
+#endif
 
 #ifdef CONFIG_MMC
 #define CONFIG_CMD_FAT
