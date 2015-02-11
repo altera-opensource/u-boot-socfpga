@@ -39,8 +39,8 @@ typedef enum ddr_regs {
 
 static const struct socfpga_ecc_hmc *socfpga_ecc_hmc_base =
 		(void *)SOCFPGA_SDR_ADDRESS;
-/* static const struct socfpga_noc_ddr_scheduler *socfpga_noc_ddr_scheduler_base =
-		(void *)SOCFPGA_SDR_SCHEDULER_ADDRESS; */
+static const struct socfpga_noc_ddr_scheduler *socfpga_noc_ddr_scheduler_base =
+		(void *)SOCFPGA_SDR_SCHEDULER_ADDRESS;
 static const struct socfpga_noc_fw_ddr_mpu_fpga2sdram
 		*socfpga_noc_fw_ddr_mpu_fpga2sdram_base =
 		(void *)SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS;
@@ -51,7 +51,58 @@ static const struct socfpga_system_manager *socfpga_system_mgr =
 static const struct socfpga_io48_mmr *socfpga_io48_mmr_base =
 		(void *)SOCFPGA_HMC_MMR_IO48_ADDRESS;
 
-/* Check whether SDRAM is CAL success */
+#define ARRIA_DDR_CONFIG(A,B,C,R)	((A<<24)|(B<<16)|(C<<8)|R)
+u32 ddr_config[] = {
+	0,	/* Dummy element to simplify indexing */
+	/* Chip - Row - Bank - Column Style */
+	/* All Types */
+	ARRIA_DDR_CONFIG(0,3,10,12),
+	ARRIA_DDR_CONFIG(0,3,10,13),
+	ARRIA_DDR_CONFIG(0,3,10,14),
+	ARRIA_DDR_CONFIG(0,3,10,15),
+	ARRIA_DDR_CONFIG(0,3,10,16),
+	ARRIA_DDR_CONFIG(0,3,10,17),
+	/* LPDDR x16 */
+	ARRIA_DDR_CONFIG(0,3,11,14),
+	ARRIA_DDR_CONFIG(0,3,11,15),
+	ARRIA_DDR_CONFIG(0,3,11,16),
+	ARRIA_DDR_CONFIG(0,3,12,15),
+	/* DDR4 Only */
+	ARRIA_DDR_CONFIG(0,4,10,14),
+	ARRIA_DDR_CONFIG(0,4,10,15),
+	ARRIA_DDR_CONFIG(0,4,10,16),
+	ARRIA_DDR_CONFIG(0,4,10,17),	/* 14 */
+	/* Chip - Bank - Row - Column Style */
+	ARRIA_DDR_CONFIG(1,3,10,12),
+	ARRIA_DDR_CONFIG(1,3,10,13),
+	ARRIA_DDR_CONFIG(1,3,10,14),
+	ARRIA_DDR_CONFIG(1,3,10,15),
+	ARRIA_DDR_CONFIG(1,3,10,16),
+	ARRIA_DDR_CONFIG(1,3,10,17),
+	ARRIA_DDR_CONFIG(1,3,11,14),
+	ARRIA_DDR_CONFIG(1,3,11,15),
+	ARRIA_DDR_CONFIG(1,3,11,16),
+	ARRIA_DDR_CONFIG(1,3,12,15),
+	/* DDR4 Only */
+	ARRIA_DDR_CONFIG(1,4,10,14),
+	ARRIA_DDR_CONFIG(1,4,10,15),
+	ARRIA_DDR_CONFIG(1,4,10,16),
+	ARRIA_DDR_CONFIG(1,4,10,17),
+};
+#define DDR_CONFIG_ELEMENTS	(sizeof(ddr_config)/sizeof(u32))
+
+int match_ddr_conf(u32 ddr_conf)
+{
+	int i;
+
+	for (i=0; i < DDR_CONFIG_ELEMENTS; i++) {
+		if (ddr_conf == ddr_config[i])
+			return i;
+	}
+	return 0;
+}
+
+/* Check whether SDRAM is successfully Calibrated */
 int is_sdram_cal_success(void)
 {
         return readl(&socfpga_ecc_hmc_base->ddrcalstat);
@@ -69,8 +120,7 @@ unsigned char ddr_wait_bit(ddr_regs_t reg, unsigned int bit,
 {
 	unsigned int tmr;
 
-	for (tmr = 0; tmr < timeout_usec; tmr += 100)
-	{
+	for (tmr = 0; tmr < timeout_usec; tmr += 100) {
 		udelay(100);
 		WATCHDOG_RESET();
 		if (ddr_get_bit(reg, bit) == expected)
@@ -103,8 +153,7 @@ void ddr_clr_bit(ddr_regs_t reg, unsigned char bit)
 void ddr_delay(int delay) {
 	int tmr;
 
-	for (tmr = 0; tmr < delay; tmr++)
-	{
+	for (tmr = 0; tmr < delay; tmr++) {
 		udelay(1000);
 		WATCHDOG_RESET();
    	}	
@@ -390,136 +439,131 @@ u32 sdram_size_calc(void)
 /* Function to initialize SDRAM MMR and NOC DDR scheduler*/
 void sdram_mmr_init(void)
 {
-	/* configuring the DDR IO size [0x1 to 0xffcfb008] */
+	u32 update_value, io48_value;
+	volatile union ctrlcfg0_reg ctrlcfg0 =
+		(union ctrlcfg0_reg)readl(&socfpga_io48_mmr_base->ctrlcfg0);
+	volatile union ctrlcfg1_reg ctrlcfg1 =
+		(union ctrlcfg1_reg)readl(&socfpga_io48_mmr_base->ctrlcfg1);
+	volatile union dramaddrw_reg dramaddrw = 
+		(union dramaddrw_reg)readl(&socfpga_io48_mmr_base->dramaddrw);
+	volatile union caltiming0_reg caltim0 = 
+		(union caltiming0_reg)readl(&socfpga_io48_mmr_base->caltiming0);
+	volatile union caltiming1_reg caltim1 = 
+		(union caltiming1_reg)readl(&socfpga_io48_mmr_base->caltiming1);
+	volatile union caltiming2_reg caltim2 = 
+		(union caltiming2_reg)readl(&socfpga_io48_mmr_base->caltiming2);
+	volatile union caltiming3_reg caltim3 = 
+		(union caltiming3_reg)readl(&socfpga_io48_mmr_base->caltiming3);
+	volatile union caltiming4_reg caltim4 = 
+		(union caltiming4_reg)readl(&socfpga_io48_mmr_base->caltiming4);
+	volatile union caltiming9_reg caltim9 = 
+		(union caltiming9_reg)readl(&socfpga_io48_mmr_base->caltiming9);
+	u32 ddrioctl;
+
+	/* Configure the DDR IO size [0xFFCFB008] */
 	writel(CONFIG_HPS_SDR_IO_SIZE,	&socfpga_ecc_hmc_base->ddrioctrl);
+	ddrioctl = readl(&socfpga_ecc_hmc_base->ddrioctrl);
 
-#if 0
-	/* enable or disable the SDRAM ECC 
-	   [0x0 or 0x1 to 0xffcfb100] 
-	   [0x000 or 0x100 to 0xffcfb104]*/
+	/* Enable or disable the SDRAM ECC */
+	if (ctrlcfg1.cfg_ctrl_enable_ecc) {
+		setbits_le32(&socfpga_ecc_hmc_base->eccctrl,
+			(ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK |
+			 ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK |
+			 ALT_ECC_HMC_OCP_ECCCTL_ECC_EN_SET_MSK));
+		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl,
+			(ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK |
+			 ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK));
+		setbits_le32(&socfpga_ecc_hmc_base->eccctrl2,
+			(ALT_ECC_HMC_OCP_ECCCTL2_RMW_EN_SET_MSK |
+			 ALT_ECC_HMC_OCP_ECCCTL2_AWB_EN_SET_MSK));
+	}
+	else {
+		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl,
+			(ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK |
+			 ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK |
+			 ALT_ECC_HMC_OCP_ECCCTL_ECC_EN_SET_MSK));
+		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl2,
+			(ALT_ECC_HMC_OCP_ECCCTL2_RMW_EN_SET_MSK |
+			 ALT_ECC_HMC_OCP_ECCCTL2_AWB_EN_SET_MSK));
+	}
 
-#if (CONFIG_HPS_SDR_ECC_EN == 1)
-	setbits_le32(&socfpga_ecc_hmc_base->eccctrl,
-		ALT_ECC_HMC_OCP_ECCCTL_ECC_EN_SET_MSK);
-	setbits_le32(&socfpga_ecc_hmc_base->eccctrl2,
-		ALT_ECC_HMC_OCP_ECCCTL2_RMW_EN_SET_MSK);
-#else
-	clrbits_le32(&socfpga_ecc_hmc_base->eccctrl,
-		ALT_ECC_HMC_OCP_ECCCTL_ECC_EN_SET_MSK);
-	clrbits_le32(&socfpga_ecc_hmc_base->eccctrl2,
-		ALT_ECC_HMC_OCP_ECCCTL2_RMW_EN_SET_MSK);
-#endif
+	/* Set the DDR Configuration [0xFFD12400] */
+	io48_value = ARRIA_DDR_CONFIG(ctrlcfg1.cfg_addr_order,
+				      (dramaddrw.cfg_bank_addr_width +
+				      dramaddrw.cfg_bank_group_addr_width),
+				      dramaddrw.cfg_col_addr_width,
+				      dramaddrw.cfg_row_addr_width);
 
-#ifndef CONFIG_HPS_SDR_SKIP_HANDOFF
-	/* Function to grab settings from handoff */
-
-	/* configuring the DDR configuration [0x0 to 0xffd12408] */
-	writel(CONFIG_HPS_SDR_DDRCONF,
+	update_value = match_ddr_conf(io48_value);
+	if (update_value)
+		writel(update_value,
 		&socfpga_noc_ddr_scheduler_base->ddr_t_main_scheduler_ddrconf);
 
-	/* configuring DDR timing [0x2c2a14dc to 0xffd1240c] */
-	writel(((CONFIG_HPS_SDR_DDRTIMING_ACTTOACT <<
+	/* Configure DDR timing [0xFFD1240C]
+	   RDTOMISS = tRTP + tRP + tRCD - BL/2
+	   WRTOMISS = WL + tWR + tRP + tRCD and
+	     WL = RL + BL/2 + 2 - rd-to-wr ; tWR = 15ns  so...
+	   First part of equation is in memory clock units so divide by 2
+	   for HMC clock units. 1066MHz is close to 1ns so use 15 directly.
+	   WRTOMISS = ((RL + BL/2 + 2 + tWR) >> 1)- rd-to-wr + tRP + tRCD */
+	update_value = (caltim2.cfg_rd_to_pch +  caltim4.cfg_pch_to_valid + 
+		        caltim0.cfg_act_to_rdwr - 
+		        (ctrlcfg0.cfg_ctrl_burst_len >> 2));
+	io48_value = ((((socfpga_io48_mmr_base->dramtiming0 &
+		      ALT_IO48_DRAMTIME_MEM_READ_LATENCY_MASK) + 2 + 15 +
+		      (ctrlcfg0.cfg_ctrl_burst_len >> 1)) >> 1) - 
+		      /* Up to here was in memory cycles so divide by 2 */
+		      caltim1.cfg_rd_to_wr + caltim0.cfg_act_to_rdwr +
+		      caltim4.cfg_pch_to_valid);
+
+	writel(((caltim0.cfg_act_to_act <<
 			ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_ACTTOACT_LSB) |
-		(CONFIG_HPS_SDR_DDRTIMING_RDTOMISS <<
+		(update_value <<
 			ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_RDTOMISS_LSB) |
-		(CONFIG_HPS_SDR_DDRTIMING_WRTOMISS <<
+		(io48_value <<
 			ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_WRTOMISS_LSB) |
-		(CONFIG_HPS_SDR_DDRTIMING_BURSTLEN <<
+		((ctrlcfg0.cfg_ctrl_burst_len >> 2) <<
 			ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_BURSTLEN_LSB) |
-		(CONFIG_HPS_SDR_DDRTIMING_RDTOWR <<
+		(caltim1.cfg_rd_to_wr <<
 			ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_RDTOWR_LSB) |
-		(CONFIG_HPS_SDR_DDRTIMING_WRTORD <<
+		(caltim3.cfg_wr_to_rd <<
 			ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_WRTORD_LSB) |
-		(CONFIG_HPS_SDR_DDRTIMING_BWRATIO <<
+		(((ddrioctl == 1) ? 1 : 0) <<
 			ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_BWRATIO_LSB)),
 		&socfpga_noc_ddr_scheduler_base->
 			ddr_t_main_scheduler_ddrtiming);
 
-	/* configuring DDR mode [0x0 to 0xffd12410] */
-	writel(((CONFIG_HPS_SDR_DDRMODE_AUTOPRECHARGE <<
-			ALT_NOC_MPU_DDR_T_SCHED_DDRMOD_AUTOPRECHARGE_LSB) |
-		(CONFIG_HPS_SDR_DDRMODE_BWRATIOEXTENDED <<
-			ALT_NOC_MPU_DDR_T_SCHED_DDRMOD_BWRATIOEXTENDED_LSB)),
+	/* Configure DDR mode [0xFFD12410] [precharge = 0] */
+	writel(((ddrioctl ? 0 : 1) <<
+		ALT_NOC_MPU_DDR_T_SCHED_DDRMOD_BWRATIOEXTENDED_LSB),
 		&socfpga_noc_ddr_scheduler_base->ddr_t_main_scheduler_ddrmode);
 
-	/* configuring the read latency [0x13 to 0xffd12414] */
-	writel(CONFIG_HPS_SDR_READLATENCY,
+	/* Configure the read latency [0xFFD12414] */
+	writel(((socfpga_io48_mmr_base->dramtiming0 &
+		ALT_IO48_DRAMTIME_MEM_READ_LATENCY_MASK) >> 1),
 		&socfpga_noc_ddr_scheduler_base->
 			ddr_t_main_scheduler_readlatency);
 
 	/* configuring timing values concerning activate commands 
-	   [0x4d2 to 0xffd12438] */
-	writel(((CONFIG_HPS_SDR_ACTIVATE_RRD <<
+	   [0xFFD12438] [FAWBANK alway 1 because always 4 bank DDR] */
+	writel(((caltim0.cfg_act_to_act_db <<
 			ALT_NOC_MPU_DDR_T_SCHED_ACTIVATE_RRD_LSB) |
-		(CONFIG_HPS_SDR_ACTIVATE_FAW <<
+		(caltim9.cfg_4_act_to_act <<
 			ALT_NOC_MPU_DDR_T_SCHED_ACTIVATE_FAW_LSB) |
 		(CONFIG_HPS_SDR_ACTIVATE_FAWBANK <<
 			ALT_NOC_MPU_DDR_T_SCHED_ACTIVATE_FAWBANK_LSB)),
 		&socfpga_noc_ddr_scheduler_base->ddr_t_main_scheduler_activate);
 
 	/* configuring timing values concerning device to device data bus
-	ownership change [0x15 to 0xffd1243c] */
-	writel(((CONFIG_HPS_SDR_DEVTODEV_BUSRDTORD <<
+	ownership change [0xFFD1243C] */
+	writel(((caltim1.cfg_rd_to_rd_dc <<
 			ALT_NOC_MPU_DDR_T_SCHED_DEVTODEV_BUSRDTORD_LSB) |
-		(CONFIG_HPS_SDR_DEVTODEV_BUSRDTOWR <<
+		(caltim1.cfg_rd_to_wr_dc <<
 			ALT_NOC_MPU_DDR_T_SCHED_DEVTODEV_BUSRDTOWR_LSB) |
-		(CONFIG_HPS_SDR_DEVTODEV_BUSWRTORD <<
-			ALT_NOC_MPU_DDR_T_SCHED_DEVTODEV_BUSWRTORD_LSB)),
-		&socfpga_noc_ddr_scheduler_base->ddr_t_main_scheduler_devtodev);
-#else
-	/* Function to grab settings from IOCSR, skipping the need of handoff */
-
-	/* configuring DDR timing */
-	writel(((CONFIG_HPS_SDR_DDRTIMING_ACTTOACT <<
-			ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_ACTTOACT_LSB) |
-		(CONFIG_HPS_SDR_DDRTIMING_RDTOMISS <<
-			ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_RDTOMISS_LSB) |
-		(CONFIG_HPS_SDR_DDRTIMING_WRTOMISS <<
-			ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_WRTOMISS_LSB) |
-		(CONFIG_HPS_SDR_DDRTIMING_BURSTLEN <<
-			ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_BURSTLEN_LSB) |
-		(CONFIG_HPS_SDR_DDRTIMING_RDTOWR <<
-			ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_RDTOWR_LSB) |
-		(CONFIG_HPS_SDR_DDRTIMING_WRTORD <<
-			ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_WRTORD_LSB) |
-		(CONFIG_HPS_SDR_DDRTIMING_BWRATIO <<
-			ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_BWRATIO_LSB)),
-		&socfpga_noc_ddr_scheduler_base->
-			ddr_t_main_scheduler_ddrtiming);
-
-	/* configuring DDR mode */
-	writel(((CONFIG_HPS_SDR_DDRMODE_AUTOPRECHARGE <<
-			ALT_NOC_MPU_DDR_T_SCHED_DDRMOD_AUTOPRECHARGE_LSB) |
-		(CONFIG_HPS_SDR_DDRMODE_BWRATIOEXTENDED <<
-			ALT_NOC_MPU_DDR_T_SCHED_DDRMOD_BWRATIOEXTENDED_LSB)),
-		&socfpga_noc_ddr_scheduler_base->ddr_t_main_scheduler_ddrmode);
-
-	/* configuring the read latency */
-	writel(CONFIG_HPS_SDR_READLATENCY,
-		&socfpga_noc_ddr_scheduler_base->
-			ddr_t_main_scheduler_readlatency);
-
-	/* configuring timing values concerning activate commands */
-	writel(((CONFIG_HPS_SDR_ACTIVATE_RRD <<
-			ALT_NOC_MPU_DDR_T_SCHED_ACTIVATE_RRD_LSB) |
-		(CONFIG_HPS_SDR_ACTIVATE_FAW <<
-			ALT_NOC_MPU_DDR_T_SCHED_ACTIVATE_FAW_LSB) |
-		(CONFIG_HPS_SDR_ACTIVATE_FAWBANK <<
-			ALT_NOC_MPU_DDR_T_SCHED_ACTIVATE_FAWBANK_LSB)),
-		&socfpga_noc_ddr_scheduler_base->ddr_t_main_scheduler_activate);
-
-	/* configuring timing values concerning device to device data bus
-	ownership change */
-	writel(((CONFIG_HPS_SDR_DEVTODEV_BUSRDTORD <<
-			ALT_NOC_MPU_DDR_T_SCHED_DEVTODEV_BUSRDTORD_LSB) |
-		(CONFIG_HPS_SDR_DEVTODEV_BUSRDTOWR <<
-			ALT_NOC_MPU_DDR_T_SCHED_DEVTODEV_BUSRDTOWR_LSB) |
-		(CONFIG_HPS_SDR_DEVTODEV_BUSWRTORD <<
+		(caltim3.cfg_wr_to_rd_dc <<
 			ALT_NOC_MPU_DDR_T_SCHED_DEVTODEV_BUSWRTORD_LSB)),
 		&socfpga_noc_ddr_scheduler_base->ddr_t_main_scheduler_devtodev);
 
-#endif	/* CONFIG_HPS_SDR_SKIP_HANDOFF */
-#endif /* if 0 to disable all ECC and SDRAM config */
 }
 
 /* quick check for firewall value */

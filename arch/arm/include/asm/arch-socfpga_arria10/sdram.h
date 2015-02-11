@@ -73,6 +73,7 @@ struct socfpga_noc_ddr_scheduler {
 	volatile uint32_t ddr_t_main_scheduler_ddrtiming;
 	volatile uint32_t ddr_t_main_scheduler_ddrmode;
 	volatile uint32_t ddr_t_main_scheduler_readlatency;
+	volatile uint32_t _pad_0x20_0x34[8];
 	volatile uint32_t ddr_t_main_scheduler_activate;
 	volatile uint32_t ddr_t_main_scheduler_devtodev;
 };
@@ -203,6 +204,92 @@ union dramaddrw_reg {
 	u32 word;
 };
 
+union ctrlcfg0_reg {
+	struct {
+		u32 cfg_mem_type:4;
+		u32 cfg_dimm_type:3;
+		u32 cfg_ac_pos:2;
+		u32 cfg_ctrl_burst_len:5;
+		u32 reserved:18;  /* Other fields unused */
+	};
+	u32 word;
+};
+
+union ctrlcfg1_reg {
+	struct {
+		u32 cfg_dbc3_burst_len:5;
+		u32 cfg_addr_order:2;
+		u32 cfg_ctrl_enable_ecc:1;
+		u32 reserved:24;  /* Other fields unused */
+	};
+	u32 word;
+};
+
+union caltiming0_reg {
+	struct {
+		u32 cfg_act_to_rdwr:6;
+		u32 cfg_act_to_pch:6;
+		u32 cfg_act_to_act:6;
+		u32 cfg_act_to_act_db:6;
+		u32 reserved:8;  /* Other fields unused */
+	};
+	u32 word;
+};
+
+union caltiming1_reg {
+	struct {
+		u32 cfg_rd_to_rd:6;
+		u32 cfg_rd_to_rd_dc:6;
+		u32 cfg_rd_to_rd_db:6;
+		u32 cfg_rd_to_wr:6;
+		u32 cfg_rd_to_wr_dc:6;
+		u32 reserved:2;
+	};
+	u32 word;
+};
+
+union caltiming2_reg {
+	struct {
+		u32 cfg_rd_to_wr_db:6;
+		u32 cfg_rd_to_pch:6;
+		u32 cfg_rd_ap_to_valid:6;
+		u32 cfg_wr_to_wr:6;
+		u32 cfg_wr_to_wr_dc:6;
+		u32 reserved:2;
+	};
+	u32 word;
+};
+
+union caltiming3_reg {
+	struct {
+		u32 cfg_wr_to_wr_db:6;
+		u32 cfg_wr_to_rd:6;
+		u32 cfg_wr_to_rd_dc:6;
+		u32 cfg_wr_to_rd_db:6;
+		u32 cfg_wr_to_pch:6;
+		u32 reserved:2;
+	};
+	u32 word;
+};
+
+union caltiming4_reg {
+	struct {
+		u32 cfg_wr_ap_to_valid:6;
+		u32 cfg_pch_to_valid:6;
+		u32 cfg_pch_all_to_valid:6;
+		u32 cfg_arf_to_valid:8;
+		u32 cfg_pdn_to_valid:6;
+	};
+	u32 word;
+};
+
+union caltiming9_reg {
+	struct {
+		u32 cfg_4_act_to_act:8;
+		u32 reserved:24;
+	};
+	u32 word;
+};
 #endif /* __ASSEMBLY__ */
 
 #define ALT_ECC_HMC_OCP_INTSTAT_SERRPENA_SET_MSK	0x00000001
@@ -210,9 +297,11 @@ union dramaddrw_reg {
 #define ALT_ECC_HMC_OCP_ERRINTEN_SERRINTEN_SET_MSK	0x00000001
 #define ALT_ECC_HMC_OCP_ERRINTEN_DERRINTEN_SET_MSK	0x00000002
 #define ALT_ECC_HMC_OCP_INTMOD_INTONCMP_SET_MSK		0x00010000
+#define ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK	0x00010000
 #define ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK		0x00000100
 #define ALT_ECC_HMC_OCP_ECCCTL_ECC_EN_SET_MSK		0x00000001
 #define ALT_ECC_HMC_OCP_ECCCTL2_RMW_EN_SET_MSK		0x00000100
+#define ALT_ECC_HMC_OCP_ECCCTL2_AWB_EN_SET_MSK		0x00000001
 
 #define ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_ACTTOACT_LSB	0
 #define ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_RDTOMISS_LSB	6
@@ -259,6 +348,8 @@ union dramaddrw_reg {
 #define ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG1EN_SET_MSK	0x00002000
 #define ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG2EN_SET_MSK	0x00004000
 #define ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG3EN_SET_MSK	0x00008000
+
+#define ALT_IO48_DRAMTIME_MEM_READ_LATENCY_MASK		0x0000003F
 
 #ifndef __ASSEMBLY__
 /* function declaration */
