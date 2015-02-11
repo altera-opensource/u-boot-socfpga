@@ -22,7 +22,7 @@
 #define CONFIG_HPS_I2CEMAC1	(0)
 #define CONFIG_HPS_I2CEMAC2	(0)
 #define CONFIG_HPS_SPIM0	(0)
-#define CONFIG_HPS_SPIM1	(0)
+#define CONFIG_HPS_SPIM1	(1)
 #define CONFIG_HPS_SPIS0	(0)
 #define CONFIG_HPS_SPIS1	(0)
 #define CONFIG_HPS_MDIO0	(0)
@@ -51,7 +51,7 @@
 
 #define CONFIG_HPS_SPIM0_SS0	(0)
 #define CONFIG_HPS_SPIM0_SS1	(0)
-#define CONFIG_HPS_SPIM1_SS0	(0)
+#define CONFIG_HPS_SPIM1_SS0	(1)
 #define CONFIG_HPS_SPIM1_SS1	(0)
 
 /* Pin MUX data */
