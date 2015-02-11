@@ -1067,7 +1067,11 @@ int dram_init(void)
 
 	cff_from_mmc_fat_dt();
 #endif
-
+#ifdef CONFIG_CADENCE_QSPI
+	/* do I need this if, or just superflous? */
+	if (!is_fpgamgr_user_mode())
+		cff_from_qspi_env();
+#endif
 	if (is_fpgamgr_user_mode()) {
 		WATCHDOG_RESET();
 

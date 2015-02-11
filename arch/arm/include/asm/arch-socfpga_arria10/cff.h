@@ -9,6 +9,7 @@
 
 #ifndef __ASSEMBLY__
 int cff_from_mmc_fat_dt(void);
+int cff_from_qspi_env(void);
 #endif /* __ASSEMBLY__ */
 
 #endif /* _SOCFPGA_CFF_H_ */
