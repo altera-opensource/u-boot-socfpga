@@ -198,7 +198,11 @@
 #define CONFIG_SYS_HUSH_PARSER
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 
-#ifdef TEST_AT_ASIMOV
+#if !defined(CONFIG_CADENCE_QSPI)  &&  !defined(CONFIG_NAND_DENALI)
+#define CONFIG_MMC
+#endif
+
+#ifdef CONFIG_MMC
 #define CONFIG_BOOTCOMMAND "run callscript; run mmcload; run mmcboot"
 #else
 /* #define CONFIG_BOOTCOMMAND "run ramboot" */
@@ -220,7 +224,7 @@
 	"fdtaddr=0x00000100\0" \
 	"bootimage=zImage\0" \
 	"bootimagesize=0x600000\0" \
-	"fdtimage=socfpga.dtb\0" \
+	"fdtimage=socfpga_arria10_socdk.dtb\0" \
 	"fdtimagesize=0x5000\0" \
 	"fdt_high=0x2000000\0" \
 	"mmcloadcmd=fatload\0" \
@@ -257,6 +261,7 @@
 	"nandboot=setenv bootargs " CONFIG_BOOTARGS \
 		" root=${nandroot} rw rootfstype=${nandrootfstype};"\
 		"bootz ${loadaddr} - ${fdtaddr}\0" \
+	"bootcmd=" CONFIG_BOOTCOMMAND "\0" \
 	"fpga=0\0" \
 	"ipaddr=192.199.1.2\0" \
 	"txen-skew-ps=0\0" \
@@ -447,9 +452,6 @@
 /*
  * MMC support
  */
-#if !defined(CONFIG_CADENCE_QSPI)  &&  !defined(CONFIG_NAND_DENALI)
-#define CONFIG_MMC
-#endif
 
 #ifdef CONFIG_MMC
 #define CONFIG_CMD_FAT
