@@ -231,8 +231,9 @@
 	"mmcloadpart=1\0" \
 	"mmcroot=/dev/mmcblk0p2\0" \
 	"qspiloadcs=0\0" \
-	"qspibootimageaddr=0xa0000\0" \
-	"qspifdtaddr=0x50000\0" \
+	"qspibootimageaddr=0x120000\0" \
+	"qspifdtaddr=0x100000\0" \
+	"qspirbfaddr=" __stringify(CONFIG_QSPI_RBF_ADDR) "\0" \
 	"qspiroot=/dev/mtdblock1\0" \
 	"qspirootfstype=jffs2\0" \
 	"nandbootimageaddr=0x120000\0" \
@@ -487,6 +488,7 @@
 #define CONFIG_CQSPI_BASE		(SOCFPGA_QSPIREGS_ADDRESS)
 #define CONFIG_CQSPI_AHB_BASE		(SOCFPGA_QSPIDATA_ADDRESS)
 #ifdef CONFIG_CADENCE_QSPI
+#define CONFIG_QSPI_RBF_ADDR 		0x720000
 #define CONFIG_SPI_FLASH		/* SPI flash subsystem */
 #define CONFIG_SPI_FLASH_STMICRO	/* Micron/Numonyx flash */
 #define CONFIG_SPI_FLASH_SPANSION	/* Spansion flash */
