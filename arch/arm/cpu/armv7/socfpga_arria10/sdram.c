@@ -362,13 +362,13 @@ void irq_handler_ecc_sdram(void *arg)
 }
 
 /* Function to startup the SDRAM*/
-void sdram_startup(void)
+int sdram_startup(void)
 {
 	/* Release NOC ddr scheduler from reset */
 	reset_deassert_noc_ddr_scheduler();
 	
 	/* Bringup Workaround */
-	ddr_setup_workaround();
+	return ddr_setup_workaround();
 }
 
 u32 sdram_size_calc(void)
@@ -1030,7 +1030,6 @@ int dram_init(void)
 	int node;
 #endif
 
-
 	WATCHDOG_RESET();
 
 	/* enable cache as we want to speed up CFF process */
@@ -1053,9 +1052,6 @@ int dram_init(void)
 	addr -= sizeof (bd_t);
 	bd = (bd_t *) addr;
 	gd->bd = bd;
-
-	/* setup the dram info within bd */
-	dram_init_banksize();
 
 	/* enable the cache */
 	enable_caches();
@@ -1080,17 +1076,22 @@ int dram_init(void)
 #ifdef CONFIG_OF_OVERRIDE
 		node = of_get_sdr_cfg(gd->fdt_blob, &cfg);
 #endif
-		sdram_startup();
 
 		/* Check to see if SDRAM cal was success */
-		if ( is_sdram_cal_success() ) {
+		if ( sdram_startup() == 0 ) {
 			puts("DDRCAL: Success\n");
 
 			WATCHDOG_RESET();
 
-
 			/* assigning the SDRAM size */
 			gd->ram_size = sdram_size_calc();
+			
+			/* If a weird value, use default Config size */
+			if (gd->ram_size <= 0)
+				gd->ram_size = PHYS_SDRAM_1_SIZE;
+
+			/* setup the dram info within bd */
+			dram_init_banksize();
 
 			/* initialize the MMR register */
 			sdram_mmr_init();
@@ -1102,10 +1103,6 @@ int dram_init(void)
 			puts("DDRCAL: Failed\n");
 		}
 	}
-
-	/* If we get a weird value, use passed in Config size */
-	if (gd->ram_size <= 0)
-		gd->ram_size = PHYS_SDRAM_1_SIZE;
 
 	/* Skip relocation as U-Boot cannot run on SDRAM for secure boot */
 	skip_relocation();
