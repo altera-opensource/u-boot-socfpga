@@ -204,11 +204,11 @@
 
 #ifdef CONFIG_MMC
 #define CONFIG_BOOTCOMMAND "run callscript; run mmcload; run mmcboot"
+#elif defined(CONFIG_CADENCE_QSPI)
+/*#define CONFIG_BOOTCOMMAND "fdt print; printenv; sf probe;"*/
+#define CONFIG_BOOTCOMMAND "fdt print; printenv; sf probe;"
 #else
-/* #define CONFIG_BOOTCOMMAND "run ramboot" */
-/* #define CONFIG_BOOTCOMMAND "sf nothing" */
-/* #define CONFIG_BOOTCOMMAND "fdt addr 100; fdt print; printenv; sf probe; run ramboot" */
-#define CONFIG_BOOTCOMMAND "fdt addr 100; fdt print; printenv; sf probe;"
+#error "unsported configuration"
 #endif
 
 /*
