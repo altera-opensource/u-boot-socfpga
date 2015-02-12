@@ -1030,15 +1030,6 @@ int dram_init(void)
 	int node;
 #endif
 
-	WATCHDOG_RESET();
-
-	sdram_startup();
-
-	/* assigning the SDRAM size */
-	gd->ram_size = sdram_size_calc();
-	/* If we get a weird value, use passed in Config size */
-	if (gd->ram_size <= 0)
-		gd->ram_size = PHYS_SDRAM_1_SIZE;
 
 	WATCHDOG_RESET();
 
@@ -1089,17 +1080,32 @@ int dram_init(void)
 #ifdef CONFIG_OF_OVERRIDE
 		node = of_get_sdr_cfg(gd->fdt_blob, &cfg);
 #endif
-		/* initialize the MMR register */
-		sdram_mmr_init();
+		sdram_startup();
 
-		/* setup the firewall for DDR */
-		sdram_firewall_setup();
 		/* Check to see if SDRAM cal was success */
-		if ( is_sdram_cal_success() )
+		if ( is_sdram_cal_success() ) {
 			puts("DDRCAL: Success\n");
-		else
+
+			WATCHDOG_RESET();
+
+
+			/* assigning the SDRAM size */
+			gd->ram_size = sdram_size_calc();
+
+			/* initialize the MMR register */
+			sdram_mmr_init();
+
+			/* setup the firewall for DDR */
+			sdram_firewall_setup();
+
+		} else {
 			puts("DDRCAL: Failed\n");
+		}
 	}
+
+	/* If we get a weird value, use passed in Config size */
+	if (gd->ram_size <= 0)
+		gd->ram_size = PHYS_SDRAM_1_SIZE;
 
 	/* Skip relocation as U-Boot cannot run on SDRAM for secure boot */
 	skip_relocation();
