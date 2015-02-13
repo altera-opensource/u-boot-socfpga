@@ -50,4 +50,6 @@ int board_phy_config(struct phy_device *phydev)
 				   0x0);
 	ksz9021_phy_extended_write(phydev, MII_KSZ9021_EXT_RGMII_CLOCK_SKEW,
 				   0xf0f0);
+
+	return 0;
 }
