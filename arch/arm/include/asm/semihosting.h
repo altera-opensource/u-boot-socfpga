@@ -17,5 +17,8 @@ int smh_open(const char *fname, char *modestr);
 int smh_close(int fd);
 int smh_len_fd(int fd);
 int smh_len(const char *fname);
+int smh_puts(const char *buffer);
+int smh_putc(const char c);
+int smh_getc(void);
 
 #endif /* __SEMIHOSTING_H__ */

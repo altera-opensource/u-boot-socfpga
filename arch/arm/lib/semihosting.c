@@ -17,23 +17,36 @@
 
 #define SYSOPEN		0x01
 #define SYSCLOSE	0x02
+#define SYSWRITEC	0x03
+#define SYSWRITE0	0x04
 #define SYSREAD		0x06
+#define SYSREADC	0x07
 #define SYSFLEN		0x0C
 
 #define MODE_READ	0x0
 #define MODE_READBIN	0x1
+
+void __auto_semihosting(void) __attribute__((alias("smh_puts")));
 
 /*
  * Call the handler
  */
 static int smh_trap(unsigned int sysnum, void *addr)
 {
-	register int result asm("r0");
 #if defined(CONFIG_ARM64)
+	register int result asm("r0");
 	asm volatile ("hlt #0xf000" : "=r" (result) : "0"(sysnum), "r"(addr));
 #else
-	/* Note - untested placeholder */
-	asm volatile ("svc #0x123456" : "=r" (result) : "0"(sysnum), "r"(addr));
+#ifdef CONFIG_SYS_THUMB_BUILD
+	int result;
+	asm volatile ("mov r0, %1; mov r1, %2; svc 0xAB; mov %0, r0"
+#else
+	asm volatile ("mov r0, %1; mov r1, %2; svc 0x123456; mov %0, r0"
+#endif
+		: "=r" (result)
+		: "r" (sysnum), "r" (addr)
+		: "r0", "r1", "r2", "r3", "ip", "lr", "memory", "cc");
+
 #endif
 	return result;
 }
@@ -230,4 +243,19 @@ int smh_len(const char *fname)
 
 	/* Return the file length (or -1 error indication) */
 	return len;
+}
+
+/* perform a write to console buffer */
+int smh_puts(const char *buffer)
+{
+	return smh_trap(SYSWRITE0, (void *)buffer);
+}
+int smh_putc(const char c)
+{
+	return smh_trap(SYSWRITEC, (void *)&c);
+}
+
+int smh_getc(void)
+{
+	return smh_trap(SYSREADC, NULL);
 }

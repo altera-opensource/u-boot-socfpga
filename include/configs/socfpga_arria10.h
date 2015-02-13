@@ -23,7 +23,7 @@
  * Device tree info
  */
 #define CONFIG_UBOOT_DTB_SIZE		(16 * 1024)
-
+#undef CONFIG_SEMIHOSTING
 /*
  * High level configuration
  */
@@ -202,7 +202,12 @@
 #define CONFIG_MMC
 #endif
 
-#ifdef CONFIG_MMC
+/*
+ * Can't poll in semihosting; so turn off automatic boot command
+ */
+#ifdef CONFIG_SEMIHOSTING
+#define CONFIG_BOOTCOMMAND ""
+#elif defined(CONFIG_MMC)
 #define CONFIG_BOOTCOMMAND "run callscript; run mmcload; run mmcboot"
 #elif defined(CONFIG_CADENCE_QSPI)
 /*#define CONFIG_BOOTCOMMAND "fdt print; printenv; sf probe;"*/

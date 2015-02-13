@@ -14,6 +14,10 @@
 #include <exports.h>
 #include <environment.h>
 
+#ifdef CONFIG_SEMIHOSTING
+#include <asm/semihosting.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static int on_console(const char *name, const char *value, enum env_op op,
@@ -345,6 +349,9 @@ int fprintf(int file, const char *fmt, ...)
 
 int getc(void)
 {
+#ifdef CONFIG_SEMIHOSTING
+	return smh_getc();
+#endif
 #ifdef CONFIG_DISABLE_CONSOLE
 	if (gd->flags & GD_FLG_DISABLE_CONSOLE)
 		return 0;
@@ -414,8 +421,13 @@ static inline void pre_console_puts(const char *s) {}
 static inline void print_pre_console_buffer(void) {}
 #endif
 
+
 void putc(const char c)
 {
+#ifdef CONFIG_SEMIHOSTING
+	smh_putc(c);
+	return;
+#endif
 #ifdef CONFIG_SANDBOX
 	if (!gd || !(gd->flags & GD_FLG_SERIAL_READY)) {
 		os_putc(c);
@@ -432,6 +444,7 @@ void putc(const char c)
 		return;
 #endif
 
+
 	if (!gd->have_console)
 		return pre_console_putc(c);
 
@@ -443,7 +456,6 @@ void putc(const char c)
 		serial_putc(c);
 	}
 }
-
 void puts(const char *s)
 {
 #ifdef CONFIG_SANDBOX
@@ -462,6 +474,9 @@ void puts(const char *s)
 	if (gd->flags & GD_FLG_DISABLE_CONSOLE)
 		return;
 #endif
+#ifdef CONFIG_SEMIHOSTING
+	smh_puts(s);
+#else
 
 	if (!gd->have_console)
 		return pre_console_puts(s);
@@ -473,6 +488,7 @@ void puts(const char *s)
 		/* Send directly to the handler */
 		serial_puts(s);
 	}
+#endif
 }
 
 int printf(const char *fmt, ...)
