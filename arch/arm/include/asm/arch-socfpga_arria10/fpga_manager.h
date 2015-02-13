@@ -7,50 +7,6 @@
 #ifndef	_SOCFPGA_FPGA_MANAGER_H_
 #define	_SOCFPGA_FPGA_MANAGER_H_
 
-#ifdef TEST_AT_ASIMOV
-
-#ifndef __ASSEMBLY__
-struct socfpga_fpga_manager {
-	u32	stat;
-	u32	ctrl;
-	u32	dclkcnt;
-	u32	dclkstat;
-	u32	gpo;
-	u32	gpi;
-	u32	misci;
-};
-#endif /* __ASSEMBLY__ */
-
-#define FPGAMGRREGS_MON_GPIO_PORTA_EOI_ADDRESS	0x84c
-#define FPGAMGRREGS_MON_GPIO_EXT_PORTA_ADDRESS	0x850
-
-#define FPGAMGRREGS_CTRL_CFGWDTH_MASK		0x200
-#define FPGAMGRREGS_CTRL_AXICFGEN_MASK		0x100
-#define FPGAMGRREGS_CTRL_NCONFIGPULL_MASK	0x4
-#define FPGAMGRREGS_CTRL_NCE_MASK		0x2
-#define FPGAMGRREGS_CTRL_EN_MASK		0x1
-#define FPGAMGRREGS_CTRL_CDRATIO_LSB		6
-
-#define FPGAMGRREGS_STAT_MODE_MASK		0x7
-#define FPGAMGRREGS_STAT_MSEL_MASK		0xf8
-#define FPGAMGRREGS_STAT_MSEL_LSB		3
-
-#define FPGAMGRREGS_MON_GPIO_EXT_PORTA_CRC_MASK	0x8
-#define FPGAMGRREGS_MON_GPIO_EXT_PORTA_ID_MASK	0x4
-#define FPGAMGRREGS_MON_GPIO_EXT_PORTA_CD_MASK	0x2
-#define FPGAMGRREGS_MON_GPIO_EXT_PORTA_NS_MASK	0x1
-
-/* FPGA Mode */
-#define FPGAMGRREGS_MODE_FPGAOFF	0x0
-#define FPGAMGRREGS_MODE_RESETPHASE	0x1
-#define FPGAMGRREGS_MODE_CFGPHASE	0x2
-#define FPGAMGRREGS_MODE_INITPHASE	0x3
-#define FPGAMGRREGS_MODE_USERMODE	0x4
-#define FPGAMGRREGS_MODE_UNKNOWN	0x5
-
-
-#else /***************** TEST_AT_ASIMOV *****************/
-
 #ifndef __ASSEMBLY__
 struct socfpga_fpga_manager {
 	volatile uint32_t  _pad_0x0_0x7[2];
@@ -131,8 +87,6 @@ struct socfpga_fpga_manager {
 #define ALT_FPGAMGR_IMGCFG_CTL_02_CDRATIO_SET_MSK    		0x00030000
 #define ALT_FPGAMGR_IMGCFG_CTL_02_CFGWIDTH_SET_MSK    		0x01000000
 #define ALT_FPGAMGR_IMGCFG_CTL_02_CDRATIO_LSB        16
-
-#endif /***************** TEST_AT_ASIMOV *****************/
 
 /* Timeout counter */
 #define FPGA_TIMEOUT_CNT		0x1000000
