@@ -348,6 +348,9 @@
 					CONFIG_OCRAM_STACK_SIZE)
 #endif
 
+/* Enable command to do ddr calibration */
+#define CONFIG_CMD_DDR
+
 /*
  * Generic Interrupt Controller from ARM
  */

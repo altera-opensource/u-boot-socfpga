@@ -1020,6 +1020,50 @@ void sdram_firewall_setup(void)
 #endif
 }
 
+int ddr_calibration_sequence(void)
+{
+	if (!is_fpgamgr_user_mode()) {
+		printf("fpga not configured!\n");
+		return -1;
+	}
+
+	WATCHDOG_RESET();
+
+	config_shared_fpga_pins(gd->fdt_blob);
+
+#ifdef CONFIG_OF_OVERRIDE
+	node = of_get_sdr_cfg(gd->fdt_blob, &cfg);
+#endif
+
+	/* Check to see if SDRAM cal was success */
+	if (sdram_startup()) {
+		puts("DDRCAL: Failed\n");
+		return -1;
+	}
+
+	puts("DDRCAL: Success\n");
+
+	WATCHDOG_RESET();
+
+	/* assigning the SDRAM size */
+	gd->ram_size = sdram_size_calc();
+			
+	/* If a weird value, use default Config size */
+	if (gd->ram_size <= 0)
+		gd->ram_size = PHYS_SDRAM_1_SIZE;
+
+	/* setup the dram info within bd */
+	dram_init_banksize();
+
+	/* initialize the MMR register */
+	sdram_mmr_init();
+
+	/* setup the firewall for DDR */
+	sdram_firewall_setup();
+
+	return 0;
+}
+
 /* Initialise the DRAM by telling the DRAM Size */
 int dram_init(void)
 {
@@ -1072,41 +1116,8 @@ int dram_init(void)
 	if (!is_fpgamgr_user_mode())
 		cff_from_qspi_env();
 #endif
-	if (is_fpgamgr_user_mode()) {
-		WATCHDOG_RESET();
 
-		config_shared_fpga_pins(gd->fdt_blob);
-
-#ifdef CONFIG_OF_OVERRIDE
-		node = of_get_sdr_cfg(gd->fdt_blob, &cfg);
-#endif
-
-		/* Check to see if SDRAM cal was success */
-		if ( sdram_startup() == 0 ) {
-			puts("DDRCAL: Success\n");
-
-			WATCHDOG_RESET();
-
-			/* assigning the SDRAM size */
-			gd->ram_size = sdram_size_calc();
-			
-			/* If a weird value, use default Config size */
-			if (gd->ram_size <= 0)
-				gd->ram_size = PHYS_SDRAM_1_SIZE;
-
-			/* setup the dram info within bd */
-			dram_init_banksize();
-
-			/* initialize the MMR register */
-			sdram_mmr_init();
-
-			/* setup the firewall for DDR */
-			sdram_firewall_setup();
-
-		} else {
-			puts("DDRCAL: Failed\n");
-		}
-	}
+	ddr_calibration_sequence();
 
 	/* Skip relocation as U-Boot cannot run on SDRAM for secure boot */
 	skip_relocation();

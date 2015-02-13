@@ -267,6 +267,7 @@ void sdram_enable_interrupt(unsigned enable);
 void sdram_mmr_init(void);
 void sdram_firewall_setup(void);
 int is_sdram_cal_success(void);
+int ddr_calibration_sequence(void);
 #endif /* __ASSEMBLY__ */
 
 #endif /* _SOCFPGA_SDRAM_H_ */
