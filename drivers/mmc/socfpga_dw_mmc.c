@@ -23,8 +23,13 @@ static void socfpga_dwmci_clksel(struct dwmci_host *host)
 	unsigned int smplsel;
 
 	/* Disable SDMMC clock. */
+#if defined(CONFIG_FPGA_SOCFPGA_ARRIA10)
 	clrbits_le32(&clock_manager_base->per_pll_en,
 		CLKMGR_PERPLLGRP_EN_SDMMCCLK_MASK);
+#else
+	clrbits_le32(&clock_manager_base->per_pll.en,
+		CLKMGR_PERPLLGRP_EN_SDMMCCLK_MASK);
+#endif
 
 	/* Configures drv_sel and smpl_sel */
 	drvsel = CONFIG_SOCFPGA_DWMMC_DRVSEL;
@@ -38,8 +43,13 @@ static void socfpga_dwmci_clksel(struct dwmci_host *host)
 		readl(&system_manager_base->sdmmcgrp_ctrl));
 
 	/* Enable SDMMC clock */
+#if defined(CONFIG_FPGA_SOCFPGA_ARRIA10)
 	setbits_le32(&clock_manager_base->per_pll_en,
 		CLKMGR_PERPLLGRP_EN_SDMMCCLK_MASK);
+#else
+	setbits_le32(&clock_manager_base->per_pll.en,
+		CLKMGR_PERPLLGRP_EN_SDMMCCLK_MASK);
+#endif
 }
 
 int socfpga_dwmmc_init(u32 regbase, int bus_width, int index)
