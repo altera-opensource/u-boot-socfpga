@@ -329,8 +329,10 @@ static int fpga_get_op(char *opstr)
 	else if (!strcmp("loadb", opstr))
 		op = FPGA_LOADB;
 #endif
+#if defined(CONFIG_CMD_FPGA_LOAD)
 	else if (!strcmp("load", opstr))
 		op = FPGA_LOAD;
+#endif
 #if defined(CONFIG_CMD_FPGA_LOADP)
 	else if (!strcmp("loadp", opstr))
 		op = FPGA_LOADP;
@@ -369,7 +371,9 @@ U_BOOT_CMD(fpga, 6, 1, do_fpga,
 	   "  dump\t[dev]\t\t\tLoad device to memory buffer\n"
 #endif
 	   "  info\t[dev]\t\t\tlist known device information\n"
+#if defined(CONFIG_CMD_FPGA_LOAD)
 	   "  load\t[dev] [address] [size]\tLoad device from memory buffer\n"
+#endif
 #if defined(CONFIG_CMD_FPGA_LOADP)
 	   "  loadp\t[dev] [address] [size]\t"
 	   "Load device from memory buffer with partial bitstream\n"

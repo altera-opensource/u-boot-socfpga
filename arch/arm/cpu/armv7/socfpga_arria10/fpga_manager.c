@@ -17,7 +17,8 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static const struct socfpga_fpga_manager *fpga_manager_base =
 		(void *)SOCFPGA_FPGAMGRREGS_ADDRESS;
-#if 0
+
+#if defined(CONFIG_CMD_FPGA_LOAD)
 static const struct socfpga_system_manager *system_manager_base =
 		(void *)SOCFPGA_SYSMGR_ADDRESS;
 #endif
@@ -180,7 +181,7 @@ static int fpgamgr_dclkcnt_set(unsigned long cnt)
 }
 
 /* get the MSEL value, verify we are set for FPP configuration mode */
-unsigned int fpgamgr_verify_msel(void)
+static int fpgamgr_verify_msel(void)
 {
 	unsigned int msel = fpgamgr_get_msel();
 
@@ -196,10 +197,14 @@ unsigned int fpgamgr_verify_msel(void)
  * Write cdratio and cdwidth based on whether the bitstream is compressed
  * and/or encoded
  */
-void fpgamgr_set_cdratio_cdwidth(unsigned int cfg_width, u32 *rbf_data, u32 rbf_size)
+static int fpgamgr_set_cdratio_cdwidth(unsigned int cfg_width, u32 *rbf_data,
+				       u32 rbf_size)
 {
 	unsigned int cd_ratio;
 	bool encrypt, compress;
+
+	if (rbf_size < 230)
+		return -1;
 
 	encrypt = (rbf_data[69] >> 2) & 3;
 	encrypt = encrypt != 0;
@@ -249,6 +254,8 @@ void fpgamgr_set_cdratio_cdwidth(unsigned int cfg_width, u32 *rbf_data, u32 rbf_
 
 	fpgamgr_set_cfgwdth(cfg_width);
 	fpgamgr_set_cd_ratio(cd_ratio);
+
+	return 0;
 }
 
 int fpgamgr_reset(void)
@@ -261,7 +268,7 @@ int fpgamgr_reset(void)
 
 	/* Wait for f2s_nstatus == 0 */
 	if (wait_for_f2s_nstatus_pin(0) == FPGA_TIMEOUT_CNT)
-		return -4;
+		return -5;
 
 	/* S2F_NCONFIG = 1 */
 	setbits_le32(&fpga_manager_base->imgcfg_ctrl_00,
@@ -269,15 +276,15 @@ int fpgamgr_reset(void)
 
 	/* Wait for f2s_nstatus == 1 */
 	if (wait_for_f2s_nstatus_pin(1) == FPGA_TIMEOUT_CNT)
-		return -5;
+		return -6;
 
 	/* read and confirm f2s_condone_pin = 0 and f2s_condone_oe = 1 */
 	reg = readl(&fpga_manager_base->imgcfg_stat);
 	if ((reg & ALT_FPGAMGR_IMGCFG_STAT_F2S_CONDONE_PIN_SET_MSK) != 0)
-		return -6;
+		return -7;
 
 	if ((reg & ALT_FPGAMGR_IMGCFG_STAT_F2S_CONDONE_OE_SET_MSK) == 0)
-		return -7;
+		return -8;
 
 	return 0;
 }
@@ -292,7 +299,8 @@ int fpgamgr_program_init(u32 * rbf_data, u32 rbf_size)
 		return -1;
 
 	/* Step 2 */
-	fpgamgr_set_cdratio_cdwidth(CFGWDTH_32, rbf_data, rbf_size);
+	if (fpgamgr_set_cdratio_cdwidth(CFGWDTH_32, rbf_data, rbf_size))
+		return -2;
 
 	/*
 	 * Step 3:
@@ -300,7 +308,7 @@ int fpgamgr_program_init(u32 * rbf_data, u32 rbf_size)
 	 * programming:
 	 */
 	if (wait_for_nconfig_pin_and_nstatus_pin() == FPGA_TIMEOUT_CNT)
-		return -2;
+		return -3;
 
 	/*
 	 * Step 4:
@@ -360,7 +368,7 @@ int fpgamgr_program_init(u32 * rbf_data, u32 rbf_size)
 
 	/* Step 7 */
 	if (wait_for_nconfig_pin_and_nstatus_pin() == FPGA_TIMEOUT_CNT)
-		return -3;
+		return -4;
 
 	/* Step 8 */
 	ret = fpgamgr_reset();
@@ -398,12 +406,12 @@ int fpgamgr_program_poll_cd(void)
 
 		if ((reg & ALT_FPGAMGR_IMGCFG_STAT_F2S_NSTATUS_PIN_SET_MSK) == 0) {
 			printf("nstatus == 0 while waiting for condone\n");
-			return -8;
+			return -9;
 		}
 	}
 
 	if (i == FPGA_TIMEOUT_CNT)
-		return -9;
+		return -10;
 
 	return 0;
 }
@@ -420,10 +428,10 @@ int fpgamgr_program_poll_usermode(void)
 	unsigned long reg;
 
 	if (fpgamgr_dclkcnt_set(0xf) == FPGA_TIMEOUT_CNT)
-		return -10;
+		return -11;
 
 	if (wait_for_user_mode() == FPGA_TIMEOUT_CNT)
-		return -11;
+		return -12;
 
 	/*
 	 * Step 14:
@@ -457,49 +465,12 @@ int fpgamgr_program_poll_usermode(void)
 	if (((reg & ALT_FPGAMGR_IMGCFG_STAT_F2S_USERMODE_SET_MSK) == 0) ||
 	    ((reg & ALT_FPGAMGR_IMGCFG_STAT_F2S_CONDONE_PIN_SET_MSK) == 0) ||
 	    ((reg & ALT_FPGAMGR_IMGCFG_STAT_F2S_NSTATUS_PIN_SET_MSK) == 0))
-		return -12;
+		return -13;
 
 	return 0;
 }
 
-#if 0
-/*
- * Using FPGA Manager to program the FPGA
- * Return 0 for sucess
- */
-int fpgamgr_program_fpga(const unsigned long *rbf_data,	unsigned long rbf_size)
-{
-	unsigned long status;
-
-	/* prior programming the FPGA, all bridges need to be shut off */
-
-	/* disable all signals from hps peripheral controller to fpga */
-	writel(0, &system_manager_base->fpgaintf_en_global);
-
-	/* disable all axi bridge (hps2fpga, lwhps2fpga & fpga2hps) */
-	reset_assert_all_bridges();
-
-	/* initialize the FPGA Manager */
-	status = fpgamgr_program_init(rbf_data, rbf_size);
-	if (status)
-		return status;
-
-	/* Write the RBF data to FPGA Manager */
-	fpgamgr_program_write(rbf_data, rbf_size);
-
-	/* Ensure the FPGA entering config done */
-	status = fpgamgr_program_poll_cd();
-	if (status)
-		return status;
-
-	/* Ensure the FPGA entering init phase */
-	status = fpgamgr_program_poll_initphase();
-	if (status)
-		return status;
-
-	/* Ensure the FPGA entering user mode */
-	return fpgamgr_program_poll_usermode();
-}
+#if defined(CONFIG_CMD_FPGA_LOAD)
 /*
  * FPGA Manager to program the FPGA. This is the interface used by FPGA driver.
  * Return 0 for sucess, non-zero for error.
@@ -515,7 +486,7 @@ int socfpga_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size)
 	reset_assert_all_bridges();
 
 	/* Initialize the FPGA Manager */
-	status = fpgamgr_program_init(rbf_data, rbf_size);
+	status = fpgamgr_program_init((u32 *)rbf_data, rbf_size);
 	if (status)
 		return status;
 
@@ -535,4 +506,4 @@ int socfpga_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size)
 	/* Ensure the FPGA entering user mode */
 	return fpgamgr_program_poll_usermode();
 }
-#endif
+#endif /* CONFIG_CMD_FPGA_LOAD */
