@@ -25,9 +25,6 @@ static int __do_pinctr_pins(const void *blob, int child, const char *node_name)
 
 	base_addr = fdtdec_get_addr_size(blob, child, "reg", &size);
 	if (base_addr != FDT_ADDR_T_NONE) {
-#ifdef TEST_AT_ASIMOV
-		base_addr &= 0xffff;
-#endif
 		debug("subnode %s %x:%x\n",
 			node_name, base_addr, size);
 
@@ -111,13 +108,13 @@ int config_shared_fpga_pins(const void *blob)
 }
 
 /* This function initializes security policies to be consistent across
- * all logic units in the Arria 10. 
+ * all logic units in the Arria 10.
  *
  * The idea is to set all security policies to be normal, nonsecure
- * for all units. 
+ * for all units.
  *
  * Reality is, we're just hacking stuff in here so things will *work*
- * and we'll fix it as we go. 
+ * and we'll fix it as we go.
  */
 void
 arria10_initialize_security_policies(void)
@@ -142,10 +139,8 @@ void s_init(void)
 
 	arria10_initialize_security_policies();
 
-#ifndef TEST_AT_ASIMOV
 	/* Clear fake OCRAM ECC first as might triggered during power on */
 	//clear_ecc_ocram_ecc_status();
-#endif /***************** TEST_AT_ASIMOV *****************/
 
 	/* Configure the L2 controller to make SDRAM start at 0	*/
 	writel(0x1, SOCFPGA_MPUL2_ADRFLTR_START);
@@ -172,10 +167,8 @@ void s_init(void)
 	}
 #endif /* CONFIG_OF_CONTROL */
 
-#ifndef TEST_AT_ASIMOV
 	/* assert reset to all except L4WD0 and L4TIMER0 */
 	reset_assert_all_peripherals_except_l4wd0_l4timer0();
-#endif
 
 	/* Initialize the timer */
 	timer_init();
@@ -187,10 +180,7 @@ void s_init(void)
 	config_dedicated_pins(gd->fdt_blob);
 	WATCHDOG_RESET();
 
-#ifndef TEST_AT_ASIMOV
 	/* configure the Reset Manager */
 	reset_deassert_peripherals_handoff();
 	reset_deassert_bridges_handoff();
-
-#endif /* TEST_AT_ASIMOV */
 }

@@ -16,49 +16,37 @@ unsigned long rst_mgr_status;
 
 static const struct socfpga_reset_manager *reset_manager_base =
 		(void *)SOCFPGA_RSTMGR_ADDRESS;
-#ifndef TEST_AT_ASIMOV
+
 static const struct socfpga_system_manager *system_manager_base =
 		(void *)SOCFPGA_SYSMGR_ADDRESS;
-#endif
-
 
 /* Release NOC ddr scheduler from reset */
 void reset_deassert_noc_ddr_scheduler(void)
 {
-
-#ifndef TEST_AT_ASIMOV
 	clrbits_le32(&reset_manager_base->brgmodrst,
 		ALT_RSTMGR_BRGMODRST_DDRSCH_SET_MSK);
-#endif
 }
 
 /* Disable the watchdog (toggle reset to watchdog) */
 void watchdog_disable(void)
 {
-#ifndef TEST_AT_ASIMOV
 	/* assert reset for watchdog */
 	setbits_le32(&reset_manager_base->per1modrst,
 		ALT_RSTMGR_PER1MODRST_WD0_SET_MSK);
+
 	/* deassert watchdog from reset (watchdog in not running state) */
 //	clrbits_le32(&reset_manager_base->per1modrst,
 //		ALT_RSTMGR_PER1MODRST_WD0_SET_MSK);
-#else
-	setbits_le32(0xFFD05014, 1<<6);
-	clrbits_le32(0xFFD05014, 1<<6);
-#endif
 }
 
 /* Check whether Watchdog in reset state? */
 int is_wdt_in_reset(void)
 {
 	unsigned long val;
-#ifndef TEST_AT_ASIMOV
+
 	val = readl(&reset_manager_base->per1modrst);
 	val &= ALT_RSTMGR_PER1MODRST_WD0_SET_MSK;
-#else /***************** TEST_AT_ASIMOV *****************/
-	val = readl(0xffd05014);
-	val = ((val >> 6) & 0x1);
-#endif /***************** TEST_AT_ASIMOV *****************/
+
 	/* return 0x1 if watchdog in reset */
 	return val;
 }
@@ -118,7 +106,6 @@ void emac_manage_reset(ulong emacbase, uint state)
 /* Disable all the bridges (hps2fpga, lwhps2fpga, fpga2hps, fpga2sdram) */
 void reset_assert_all_bridges(void)
 {
-#ifndef TEST_AT_ASIMOV
 	/* set idle request to all bridges */
 	writel(ALT_SYSMGR_NOC_H2F_SET_MSK |
 		ALT_SYSMGR_NOC_LWH2F_SET_MSK |
@@ -160,69 +147,11 @@ void reset_assert_all_bridges(void)
 		ALT_RSTMGR_BRGMODRST_F2SSDRAM0_SET_MSK |
 		ALT_RSTMGR_BRGMODRST_F2SSDRAM1_SET_MSK |
 		ALT_RSTMGR_BRGMODRST_F2SSDRAM2_SET_MSK));
-#endif
 }
-#ifdef TEST_AT_ASIMOV
-#define L3REGS_REMAP_LWHPS2FPGA_MASK	0x10
-#define L3REGS_REMAP_HPS2FPGA_MASK	0x08
-#define L3REGS_REMAP_OCRAM_MASK		0x01
-/* Poll until FPGA is ready to be accessed or timeout occurred */
-int fpgamgr_poll_fpga_ready(void)
-{
-	unsigned long i;
-
-	/* If FPGA is blank, wait till WD invoke warm reset */
-	for (i = 0; i < FPGA_TIMEOUT_CNT; i++) {
-		/* check for init done signal */
-		if (!is_fpgamgr_initdone_high())
-			continue;
-		/* check again to avoid false glitches */
-		if (!is_fpgamgr_initdone_high())
-			continue;
-		return 1;
-	}
-
-	return 0;
-}
-void socfpga_bridges_reset(int enable)
-{
-
-	const uint32_t l3mask = L3REGS_REMAP_LWHPS2FPGA_MASK |
-				L3REGS_REMAP_HPS2FPGA_MASK |
-				L3REGS_REMAP_OCRAM_MASK;
-
-	if (enable) {
-		/* brdmodrst */
-		writel(0xffffffff, &reset_manager_base->brg_mod_reset);
-	} else {
-		/* Check signal from FPGA. */
-		if (fpgamgr_poll_fpga_ready()) {
-			/* FPGA not ready. Wait for watchdog timeout. */
-			printf("%s: fpga not ready, hanging.\n", __func__);
-			hang();
-		}
-
-	
-		/* Check signal from FPGA. */
-		if (fpgamgr_poll_fpga_ready()) {
-			/* FPGA not ready. Wait for watchdog timeout. */
-			printf("%s: fpga not ready, hanging.\n", __func__);
-			hang();
-		}
-
-		/* brdmodrst */
-		writel(0, &reset_manager_base->brg_mod_reset);
-
-		/* Remap the bridges into memory map */
-		writel(l3mask, SOCFPGA_L3REGS_ADDRESS);
-	}
-}
-#endif
 
 /* Enable bridges (hps2fpga, lwhps2fpga, fpga2hps, fpga2sdram) per handoff */
 void reset_deassert_bridges_handoff(void)
 {
-#ifndef TEST_AT_ASIMOV
 	unsigned long mask_noc = 0, mask_rstmgr = 0;
 
 	/* skip bridge releasing if FPGA is blank */
@@ -278,13 +207,11 @@ void reset_deassert_bridges_handoff(void)
 	/* Poll until all idleack to 0 */
 	while (readl(&system_manager_base->noc_idleack) & mask_noc)
 		;
-#endif
 }
 
 /* Disable all the peripherals except L4 watchdog0 and L4 Timer 0 */
 void reset_assert_all_peripherals_except_l4wd0_l4timer0(void)
 {
-#ifndef TEST_AT_ASIMOV
 	unsigned mask_ecc_ocp =
 		ALT_RSTMGR_PER0MODRST_EMACECC0_SET_MSK |
 		ALT_RSTMGR_PER0MODRST_EMACECC1_SET_MSK |
@@ -303,12 +230,10 @@ void reset_assert_all_peripherals_except_l4wd0_l4timer0(void)
 
 	/* Finally disable the ECC_OCP */
 	setbits_le32(&reset_manager_base->per0modrst, mask_ecc_ocp);
-#endif
 }
 
 void reset_deassert_peripherals_handoff(void)
 {
-#ifndef TEST_AT_ASIMOV
 	unsigned mask = 0;
 
 	/* enable ECC OCP first */
@@ -468,17 +393,11 @@ void reset_deassert_peripherals_handoff(void)
 	mask |= ALT_RSTMGR_HDSKEN_ETRSTALLEN_SET_MSK;
 #endif
 	setbits_le32(&reset_manager_base->hdsken, mask);
-
-#endif
 }
 
 /* Release L4 OSC1 Watchdog Timer 0 from reset through reset manager */
 void reset_deassert_osc1wd0(void)
 {
-#ifndef TEST_AT_ASIMOV
 	clrbits_le32(&reset_manager_base->per1modrst,
 		ALT_RSTMGR_PER1MODRST_WD0_SET_MSK);
-#else
-	clrbits_le32(0xFFD05014, 1<<6);
-#endif /***************** TEST_AT_ASIMOV *****************/
 }
