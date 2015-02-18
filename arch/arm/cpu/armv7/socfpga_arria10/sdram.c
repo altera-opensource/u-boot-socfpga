@@ -187,6 +187,7 @@ void ddr_delay(int delay) {
       
 int ddr_calibration(void)
 {
+	ddr_delay(500);
 	/* Step 1 - Initiating Reset Sequence */
 	ddr_clr_bit(DDR_REG_GPOUT, ARRIA10_EMIF_RST);	// Reset EMIF
 	ddr_delay(10);
@@ -196,7 +197,7 @@ int ddr_calibration(void)
 
 	/* Step 3 - Clearing registers to OCT core */
 	ddr_clr_bit(DDR_REG_GPOUT, ARRIA10_OCT_CAL_REQ); // OCT Cal Request
-	ddr_delay(1);
+	ddr_delay(5);
 
 	/* Step 4 - Taking EMIF out of reset */
 	ddr_set_bit(DDR_REG_GPOUT, ARRIA10_EMIF_RST);	// EMIF Reset
@@ -279,17 +280,6 @@ int ddr_setup_workaround(void)
 
 unsigned long irq_cnt_ecc_sdram;
 
-struct sdr_cfg {
-	u32 ecc_en;
-	u32 serrcnt;
-	u32 io_size;
-	u32 ddrconf;
-	u32 ddrtiming;
-	u32 ddrmode;
-	u32 readlatency;
-	u32 activate;
-	u32 devtodev;
-};
 struct of_sdr_cfg {
 	const char *prop_name;
 	const u32 offset;
@@ -305,7 +295,6 @@ const struct of_sdr_cfg sdr_cfg_tab[] = {
 	{ "devtodev", offsetof(struct sdr_cfg, devtodev) },
 };
 
-#ifdef CONFIG_OF_OVERRIDE
 static int of_get_sdr_cfg(const void *blob, struct sdr_cfg *cfg) {
 	int node, err, i;
 	u32 val;
@@ -338,7 +327,6 @@ static int of_get_sdr_cfg(const void *blob, struct sdr_cfg *cfg) {
 	}
 	return node;
 }
-#endif
 
 /* Enable and disable SDRAM interrupt */
 void sdram_enable_interrupt(unsigned enable)
@@ -431,13 +419,14 @@ u32 sdram_size_calc(void)
 		   dramaddrw.cfg_row_addr_width +
 		   dramaddrw.cfg_col_addr_width));
 
-	size *= (2 << readl(&socfpga_ecc_hmc_base->ddrcalstat));
+	size *= (2 << (readl(&socfpga_ecc_hmc_base->ddrioctrl) & 
+		       ALT_ECC_HMC_OCP_DDRIOCTRL_IO_SIZE_MSK));
 
 	return size;
 }
 
 /* Function to initialize SDRAM MMR and NOC DDR scheduler*/
-void sdram_mmr_init(void)
+void sdram_mmr_init(struct sdr_cfg * pcfg)
 {
 	u32 update_value, io48_value;
 	volatile union ctrlcfg0_reg ctrlcfg0 =
@@ -461,7 +450,7 @@ void sdram_mmr_init(void)
 	u32 ddrioctl;
 
 	/* Configure the DDR IO size [0xFFCFB008] */
-	writel(CONFIG_HPS_SDR_IO_SIZE,	&socfpga_ecc_hmc_base->ddrioctrl);
+	writel(pcfg->io_size, &socfpga_ecc_hmc_base->ddrioctrl);	
 	ddrioctl = readl(&socfpga_ecc_hmc_base->ddrioctrl);
 
 	/* Enable or disable the SDRAM ECC */
@@ -1066,6 +1055,8 @@ void sdram_firewall_setup(void)
 
 int ddr_calibration_sequence(void)
 {
+	struct sdr_cfg cfg;
+
 	if (!is_fpgamgr_user_mode()) {
 		printf("fpga not configured!\n");
 		return -1;
@@ -1075,9 +1066,7 @@ int ddr_calibration_sequence(void)
 
 	config_shared_fpga_pins(gd->fdt_blob);
 
-#ifdef CONFIG_OF_OVERRIDE
-	node = of_get_sdr_cfg(gd->fdt_blob, &cfg);
-#endif
+	of_get_sdr_cfg(gd->fdt_blob, &cfg);
 
 	/* Check to see if SDRAM cal was success */
 	if (sdram_startup()) {
@@ -1089,6 +1078,9 @@ int ddr_calibration_sequence(void)
 
 	WATCHDOG_RESET();
 
+	/* initialize the MMR register */
+	sdram_mmr_init(&cfg);
+
 	/* assigning the SDRAM size */
 	gd->ram_size = sdram_size_calc();
 			
@@ -1098,9 +1090,6 @@ int ddr_calibration_sequence(void)
 
 	/* setup the dram info within bd */
 	dram_init_banksize();
-
-	/* initialize the MMR register */
-	sdram_mmr_init();
 
 	/* setup the firewall for DDR */
 	sdram_firewall_setup();
@@ -1116,10 +1105,6 @@ int dram_init(void)
 {
 	bd_t *bd;
 	unsigned long addr;
-#ifdef CONFIG_OF_OVERRIDE
-	struct sdr_cfg cfg;
-	int node;
-#endif
 
 	WATCHDOG_RESET();
 
