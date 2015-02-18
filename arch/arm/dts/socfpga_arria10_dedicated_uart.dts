@@ -11,7 +11,8 @@
 
 
 	chosen {
-		cff-file = "ghrd_10as066n2.rbf";
+		cff-file = "ghrd_10as066n2.periph.rbf",
+			"ghrd_10as066n2.core.rbf";
 	};
 
 	pinmux@0xffd07000 {
