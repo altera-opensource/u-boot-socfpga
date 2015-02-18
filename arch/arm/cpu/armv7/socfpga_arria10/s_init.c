@@ -11,6 +11,7 @@
 #include <asm/arch/system_manager.h>
 #include <asm/arch/clock_manager.h>
 #include <asm/arch/ecc_ram.h>
+#include <asm/arch/sdram.h>
 #include <asm/sections.h>
 #include <fdtdec.h>
 
@@ -182,5 +183,8 @@ void s_init(void)
 
 	/* configure the Reset Manager */
 	reset_deassert_peripherals_handoff();
-	reset_deassert_bridges_handoff();
+
+	/* If fpga is already loaded, calibrate ddr and enable
+	   fpga bridges */
+	ddr_calibration_sequence();
 }
