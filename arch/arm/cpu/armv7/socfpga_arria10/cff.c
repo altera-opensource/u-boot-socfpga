@@ -207,6 +207,9 @@ int cff_from_qspi(unsigned long flash_offset)
 	u32 flash_addr, status;
 	u32 temp[4096] __aligned(ARCH_DMA_MINALIGN);
 	u32 remaining = 0;
+#ifdef CONFIG_CHECK_FPGA_DATA_CRC
+	u32 datacrc = 0;
+#endif
 
 	/* initialize the Quad SPI controller */
 	flash = spi_flash_probe(0, 0, CONFIG_SF_DEFAULT_SPEED, SPI_MODE_3);
@@ -221,6 +224,16 @@ int cff_from_qspi(unsigned long flash_offset)
 	/* printf("%s rbf datasize %d data location 0x%x\n", __func__, image_get_data_size(&header), image_get_data(&header)); */
 
 	WATCHDOG_RESET();
+
+        if (!image_check_magic(&header)) {
+		printf("FPGA: Bad Magic Number\n");
+                return -6;
+        }
+
+        if (!image_check_hcrc(&header)) {
+		printf("FPGA: Bad Header Checksum\n");
+                return -7;
+        }
 
 	/* start loading the data from flash and send to FPGA Manager */
 	flash_addr = flash_offset + sizeof(struct image_header);
@@ -244,12 +257,18 @@ int cff_from_qspi(unsigned long flash_offset)
 		 if (remaining > sizeof(temp)) {
 			spi_flash_read(flash, flash_addr,
 				sizeof(temp), temp);
+#ifdef CONFIG_CHECK_FPGA_DATA_CRC
+			datacrc = crc32(datacrc, (unsigned char*)temp, sizeof(temp));
+#endif
 			/* update the counter */
 			remaining -= sizeof(temp);
 			flash_addr += sizeof(temp);
 		 }  else {
 			spi_flash_read(flash, flash_addr,
 				remaining, temp);
+#ifdef CONFIG_CHECK_FPGA_DATA_CRC
+			datacrc = crc32(datacrc, (unsigned char*)temp, remaining);
+#endif
 			remaining = 0;
 		}
 
@@ -257,6 +276,7 @@ int cff_from_qspi(unsigned long flash_offset)
 		fpgamgr_program_write((const long unsigned int *)temp,
 			sizeof(temp));
 		WATCHDOG_RESET();
+
 	}
 
 	/* Ensure the FPGA entering config done */
@@ -283,6 +303,13 @@ int cff_from_qspi(unsigned long flash_offset)
 			status);
 		return -5;
 	}
+
+#ifdef CONFIG_CHECK_FPGA_DATA_CRC
+	if (datacrc !=  image_get_dcrc(&header)) {
+		printf("FPGA: Bad Data Checksum\n");
+		return -8;
+	}
+#endif
 
 	printf("FPGA: Success.\n");
 	WATCHDOG_RESET();
