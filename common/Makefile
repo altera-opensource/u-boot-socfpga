@@ -108,6 +108,7 @@ obj-$(CONFIG_CMD_FITUPD) += cmd_fitupd.o
 obj-$(CONFIG_CMD_FLASH) += cmd_flash.o
 ifdef CONFIG_FPGA
 obj-$(CONFIG_CMD_FPGA) += cmd_fpga.o
+obj-$(CONFIG_CMD_FPGABR) += cmd_fpgabr.o
 endif
 obj-$(CONFIG_CMD_FPGAD) += cmd_fpgad.o
 obj-$(CONFIG_CMD_FS_GENERIC) += cmd_fs.o

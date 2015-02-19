@@ -354,6 +354,9 @@
 /* Enable command to do ddr calibration */
 #define CONFIG_CMD_DDR
 
+/* Enable command to control fpga bridges */
+#define CONFIG_CMD_FPGABR
+
 /*
  * Generic Interrupt Controller from ARM
  */
