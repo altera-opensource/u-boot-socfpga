@@ -6,4 +6,4 @@
 # SPDX-License-Identifier:	GPL-2.0+
 #
 
-obj-y	:= pinmux_config_arria10.o socfpga_arria10.o socfpga_common.o
+obj-y	:= socfpga_arria10.o socfpga_common.o
