@@ -209,11 +209,9 @@
 #endif
 
 /*
- * Enable memory padding if SDRAM ECC is enabled
+ * Enable memory padding in case SDRAM ECC is enabled
  */
-#if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN == 1)
 #define CONFIG_SPL_SDRAM_ECC_PADDING	32
-#endif
 
 /* Stack size for SPL */
 #ifdef CONFIG_SPL_FAT_SUPPORT
