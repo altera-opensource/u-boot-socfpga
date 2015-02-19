@@ -24,6 +24,7 @@
 #include <common.h>
 #include <malloc.h>
 #include <spi.h>
+#include <spi_flash.h>
 #include "cadence_qspi.h"
 
 #define CQSPI_STIG_READ			0
@@ -83,6 +84,9 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 
 	cadence_qspi->slave.bus = bus;
 	cadence_qspi->slave.cs = cs;
+#if (CONFIG_SPI_FLASH_QUAD == 1)
+	cadence_qspi->slave.op_mode_rx = QUAD_OUTPUT_FAST;
+#endif
 	cadence_qspi->mode = mode;
 	cadence_qspi->max_hz = max_hz;
 	cadence_qspi->regbase = (void *)QSPI_BASE;
