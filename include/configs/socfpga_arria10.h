@@ -210,8 +210,7 @@
 #elif defined(CONFIG_MMC)
 #define CONFIG_BOOTCOMMAND "run callscript; run mmcload; run mmcboot"
 #elif defined(CONFIG_CADENCE_QSPI)
-/*#define CONFIG_BOOTCOMMAND "fdt print; printenv; sf probe;"*/
-#define CONFIG_BOOTCOMMAND "fdt print; printenv; sf probe;"
+#define CONFIG_BOOTCOMMAND "run qspiload;run qspiboot"
 #else
 #error "unsported configuration"
 #endif
