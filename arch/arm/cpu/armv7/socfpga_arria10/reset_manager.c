@@ -9,6 +9,7 @@
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/system_manager.h>
 #include <asm/arch/fpga_manager.h>
+#include <fdtdec.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -149,54 +150,58 @@ void reset_assert_all_bridges(void)
 		ALT_RSTMGR_BRGMODRST_F2SSDRAM2_SET_MSK));
 }
 
+static int get_bridge_init_val(const void *blob, int compat_id)
+{
+	int rval = 0;
+	int node;
+	u32 val;
+
+	node = fdtdec_next_compatible(blob, 0, compat_id);
+	if (node >= 0) {
+		if (!fdtdec_get_int_array(blob, node, "init-val", &val, 1)) {
+			if (val == 1)
+				rval = val;
+		}
+	}
+	return rval;
+}
+
+struct bridge_cfg {
+	int compat_id;
+	u32  mask_noc;
+	u32  mask_rstmgr;
+};
+
+static const struct bridge_cfg bridge_cfg_tbl[] = {
+	{
+		COMPAT_ARRIA10_H2F_BRG,
+		ALT_SYSMGR_NOC_H2F_SET_MSK,
+		ALT_RSTMGR_BRGMODRST_H2F_SET_MSK,
+	},
+	{
+		COMPAT_ARRIA10_LWH2F_BRG,
+		ALT_SYSMGR_NOC_LWH2F_SET_MSK,
+		ALT_RSTMGR_BRGMODRST_LWH2F_SET_MSK,
+	},
+	{
+		COMPAT_ARRIA10_F2H_BRG,
+		ALT_SYSMGR_NOC_F2H_SET_MSK,
+		ALT_RSTMGR_BRGMODRST_F2H_SET_MSK,
+	},
+};
 /* Enable bridges (hps2fpga, lwhps2fpga, fpga2hps, fpga2sdram) per handoff */
 void reset_deassert_bridges_handoff(void)
 {
-	unsigned long mask_noc = 0, mask_rstmgr = 0;
+	u32 mask_noc = 0, mask_rstmgr = 0;
+	int i;
 
-	/* skip bridge releasing if FPGA is blank */
-	if (is_fpgamgr_fpga_ready() == 0)
-		return;
-
-	/* setup the mask for NOC register based on handoff */
-#if (CONFIG_HPS_RESET_ASSERT_HPS2FPGA == 0)
-	mask_noc |= ALT_SYSMGR_NOC_H2F_SET_MSK;
-#endif
-#if (CONFIG_HPS_RESET_ASSERT_LWHPS2FPGA == 0)
-	mask_noc |= ALT_SYSMGR_NOC_LWH2F_SET_MSK;
-#endif
-#if (CONFIG_HPS_RESET_ASSERT_FPGA2HPS == 0)
-	mask_noc |= ALT_SYSMGR_NOC_F2H_SET_MSK;
-#endif
-#if (CONFIG_HPS_RESET_ASSERT_FPGA2SDRAM0 == 0)
-	mask_noc |= ALT_SYSMGR_NOC_F2SDR0_SET_MSK;
-#endif
-#if (CONFIG_HPS_RESET_ASSERT_FPGA2SDRAM1 == 0)
-	mask_noc |= ALT_SYSMGR_NOC_F2SDR1_SET_MSK;
-#endif
-#if (CONFIG_HPS_RESET_ASSERT_FPGA2SDRAM2 == 0)
-	mask_noc |= ALT_SYSMGR_NOC_F2SDR2_SET_MSK;
-#endif
-
-	/* setup the mask for Reset Manager register based on handoff */
-#if (CONFIG_HPS_RESET_ASSERT_HPS2FPGA == 0)
-	mask_rstmgr |= ALT_RSTMGR_BRGMODRST_H2F_SET_MSK;
-#endif
-#if (CONFIG_HPS_RESET_ASSERT_LWHPS2FPGA == 0)
-	mask_rstmgr |= ALT_RSTMGR_BRGMODRST_LWH2F_SET_MSK;
-#endif
-#if (CONFIG_HPS_RESET_ASSERT_FPGA2HPS == 0)
-	mask_rstmgr |= ALT_RSTMGR_BRGMODRST_F2H_SET_MSK;
-#endif
-#if (CONFIG_HPS_RESET_ASSERT_FPGA2SDRAM0 == 0)
-	mask_rstmgr |= ALT_RSTMGR_BRGMODRST_F2SSDRAM0_SET_MSK;
-#endif
-#if (CONFIG_HPS_RESET_ASSERT_FPGA2SDRAM1 == 0)
-	mask_rstmgr |= ALT_RSTMGR_BRGMODRST_F2SSDRAM1_SET_MSK;
-#endif
-#if (CONFIG_HPS_RESET_ASSERT_FPGA2SDRAM2 == 0)
-	mask_rstmgr |= ALT_RSTMGR_BRGMODRST_F2SSDRAM2_SET_MSK;
-#endif
+	for (i = 0; i < ARRAY_SIZE(bridge_cfg_tbl); i++) {
+		if (get_bridge_init_val(gd->fdt_blob,
+					bridge_cfg_tbl[i].compat_id)) {
+			mask_noc |= bridge_cfg_tbl[i].mask_noc;
+			mask_rstmgr |= bridge_cfg_tbl[i].mask_rstmgr;
+		}
+	}
 
 	/* clear idle request to all bridges */
 	setbits_le32(&system_manager_base->noc_idlereq_clr, mask_noc);

@@ -75,6 +75,9 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(COMPAT_PINCTRL_SINGLE, "pinctrl-single"),
 	COMPAT(COMPAT_ARRIA10_SDR_CTL, "altr,arria10-sdr-ctl"),
 	COMPAT(COMPAT_ARRIA10_CLK_INIT, "altr,arria10-clk-init"),
+	COMPAT(COMPAT_ARRIA10_H2F_BRG, "altr,socfpga-hps2fpga-bridge"),
+	COMPAT(COMPAT_ARRIA10_LWH2F_BRG, "altr,socfpga-lwhps2fpga-bridge"),
+	COMPAT(COMPAT_ARRIA10_F2H_BRG, "altr,socfpga-fpga2hps-bridge"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)
