@@ -21,9 +21,12 @@ int config_shared_fpga_pins(const void *blob);
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define ARRIA10_EMIF_RST	31	// fpga_mgr_fpgamgrregs.gpo.31
-#define ARRIA10_OCT_CAL_REQ	30	// fpga_mgr_fpgamgrregs.gpo.30
-#define ARRIA10_OCT_CAL_ACK	31	// fpga_mgr_fpgamgrregs.gpi.31
+/* FAWBANK - Number of Bank of a given device involved in the FAW period. */
+#define ARRIA10_SDR_ACTIVATE_FAWBANK	(0x1)
+
+#define ARRIA10_EMIF_RST	31	/* fpga_mgr_fpgamgrregs.gpo.31 */
+#define ARRIA10_OCT_CAL_REQ	30	/* fpga_mgr_fpgamgrregs.gpo.30 */
+#define ARRIA10_OCT_CAL_ACK	31	/* fpga_mgr_fpgamgrregs.gpi.31 */
 
 #define ARRIA10_NIOS_OCT_DONE	7
 #define ARRIA10_NIOS_OCT_ACK	7
@@ -51,43 +54,44 @@ static const struct socfpga_system_manager *socfpga_system_mgr =
 static const struct socfpga_io48_mmr *socfpga_io48_mmr_base =
 		(void *)SOCFPGA_HMC_MMR_IO48_ADDRESS;
 
-#define ARRIA_DDR_CONFIG(A,B,C,R)	((A<<24)|(B<<16)|(C<<8)|R)
+#define ARRIA_DDR_CONFIG(A, B, C, R)	((A<<24)|(B<<16)|(C<<8)|R)
+/* The followring are the supported configurations */
 u32 ddr_config[] = {
 	0,	/* Dummy element to simplify indexing */
 	/* Chip - Row - Bank - Column Style */
 	/* All Types */
-	ARRIA_DDR_CONFIG(0,3,10,12),
-	ARRIA_DDR_CONFIG(0,3,10,13),
-	ARRIA_DDR_CONFIG(0,3,10,14),
-	ARRIA_DDR_CONFIG(0,3,10,15),
-	ARRIA_DDR_CONFIG(0,3,10,16),
-	ARRIA_DDR_CONFIG(0,3,10,17),
+	ARRIA_DDR_CONFIG(0, 3, 10, 12),
+	ARRIA_DDR_CONFIG(0, 3, 10, 13),
+	ARRIA_DDR_CONFIG(0, 3, 10, 14),
+	ARRIA_DDR_CONFIG(0, 3, 10, 15),
+	ARRIA_DDR_CONFIG(0, 3, 10, 16),
+	ARRIA_DDR_CONFIG(0, 3, 10, 17),
 	/* LPDDR x16 */
-	ARRIA_DDR_CONFIG(0,3,11,14),
-	ARRIA_DDR_CONFIG(0,3,11,15),
-	ARRIA_DDR_CONFIG(0,3,11,16),
-	ARRIA_DDR_CONFIG(0,3,12,15),
+	ARRIA_DDR_CONFIG(0, 3, 11, 14),
+	ARRIA_DDR_CONFIG(0, 3, 11, 15),
+	ARRIA_DDR_CONFIG(0, 3, 11, 16),
+	ARRIA_DDR_CONFIG(0, 3, 12, 15),
 	/* DDR4 Only */
-	ARRIA_DDR_CONFIG(0,4,10,14),
-	ARRIA_DDR_CONFIG(0,4,10,15),
-	ARRIA_DDR_CONFIG(0,4,10,16),
-	ARRIA_DDR_CONFIG(0,4,10,17),	/* 14 */
+	ARRIA_DDR_CONFIG(0, 4, 10, 14),
+	ARRIA_DDR_CONFIG(0, 4, 10, 15),
+	ARRIA_DDR_CONFIG(0, 4, 10, 16),
+	ARRIA_DDR_CONFIG(0, 4, 10, 17),	/* 14 */
 	/* Chip - Bank - Row - Column Style */
-	ARRIA_DDR_CONFIG(1,3,10,12),
-	ARRIA_DDR_CONFIG(1,3,10,13),
-	ARRIA_DDR_CONFIG(1,3,10,14),
-	ARRIA_DDR_CONFIG(1,3,10,15),
-	ARRIA_DDR_CONFIG(1,3,10,16),
-	ARRIA_DDR_CONFIG(1,3,10,17),
-	ARRIA_DDR_CONFIG(1,3,11,14),
-	ARRIA_DDR_CONFIG(1,3,11,15),
-	ARRIA_DDR_CONFIG(1,3,11,16),
-	ARRIA_DDR_CONFIG(1,3,12,15),
+	ARRIA_DDR_CONFIG(1, 3, 10, 12),
+	ARRIA_DDR_CONFIG(1, 3, 10, 13),
+	ARRIA_DDR_CONFIG(1, 3, 10, 14),
+	ARRIA_DDR_CONFIG(1, 3, 10, 15),
+	ARRIA_DDR_CONFIG(1, 3, 10, 16),
+	ARRIA_DDR_CONFIG(1, 3, 10, 17),
+	ARRIA_DDR_CONFIG(1, 3, 11, 14),
+	ARRIA_DDR_CONFIG(1, 3, 11, 15),
+	ARRIA_DDR_CONFIG(1, 3, 11, 16),
+	ARRIA_DDR_CONFIG(1, 3, 12, 15),
 	/* DDR4 Only */
-	ARRIA_DDR_CONFIG(1,4,10,14),
-	ARRIA_DDR_CONFIG(1,4,10,15),
-	ARRIA_DDR_CONFIG(1,4,10,16),
-	ARRIA_DDR_CONFIG(1,4,10,17),
+	ARRIA_DDR_CONFIG(1, 4, 10, 14),
+	ARRIA_DDR_CONFIG(1, 4, 10, 15),
+	ARRIA_DDR_CONFIG(1, 4, 10, 16),
+	ARRIA_DDR_CONFIG(1, 4, 10, 17),
 };
 #define DDR_CONFIG_ELEMENTS	(sizeof(ddr_config)/sizeof(u32))
 
@@ -95,7 +99,7 @@ int match_ddr_conf(u32 ddr_conf)
 {
 	int i;
 
-	for (i=0; i < DDR_CONFIG_ELEMENTS; i++) {
+	for (i = 0; i < DDR_CONFIG_ELEMENTS; i++) {
 		if (ddr_conf == ddr_config[i])
 			return i;
 	}
@@ -105,14 +109,14 @@ int match_ddr_conf(u32 ddr_conf)
 /* Check whether SDRAM is successfully Calibrated */
 int is_sdram_cal_success(void)
 {
-        return readl(&socfpga_ecc_hmc_base->ddrcalstat);
+	return readl(&socfpga_ecc_hmc_base->ddrcalstat);
 }
 
 unsigned char ddr_get_bit(ddr_regs_t reg, unsigned char bit)
 {
-	volatile unsigned int * p_reg = (unsigned int *)reg; 
+	volatile unsigned int *p_reg = (unsigned int *)reg;
 
-	return ( ((*p_reg) & (1 << bit)) ? 1 : 0);
+	return ((*p_reg) & (1 << bit)) ? 1 : 0;
 }
 
 unsigned char ddr_wait_bit(ddr_regs_t reg, unsigned int bit,
@@ -132,7 +136,7 @@ unsigned char ddr_wait_bit(ddr_regs_t reg, unsigned int bit,
 
 void ddr_set_bit(ddr_regs_t reg, unsigned char bit)
 {
-	volatile unsigned int * p_reg = (unsigned int *)reg; 
+	volatile unsigned int *p_reg = (unsigned int *)reg;
 	unsigned int tmp;
 
 	tmp = *p_reg;
@@ -142,7 +146,7 @@ void ddr_set_bit(ddr_regs_t reg, unsigned char bit)
 
 void ddr_clr_bit(ddr_regs_t reg, unsigned char bit)
 {
-	volatile unsigned int * p_reg = (unsigned int *)reg; 
+	volatile unsigned int *p_reg = (unsigned int *)reg;
 	unsigned int tmp;
 
 	tmp = *p_reg;
@@ -150,57 +154,59 @@ void ddr_clr_bit(ddr_regs_t reg, unsigned char bit)
 	*p_reg = tmp;
 }
 
-void ddr_delay(int delay) {
+void ddr_delay(int delay)
+{
 	int tmr;
 
 	for (tmr = 0; tmr < delay; tmr++) {
 		udelay(1000);
 		WATCHDOG_RESET();
-   	}	
+	}
 }
 
-// Diagram of OCT Workaround:
-//
-// EMIF Core                     HPS Processor              OCT FSM
-// =================================================================
-//
-// seq2core      ==============> 
-// [0x?????????]   OCT Request   [0xFFD0507C]
-//
-// core2seq
-// [0x?????????] <==============
-//                 OCT Ready     [0xFFD05078]
-//
-//                               [0xFFD03010] ============> Request
-//                                             OCT Request
-//
-//                               [0xFFD03014] <============ Ready
-//                                              OCT Ready 
+/*
+ * Diagram of OCT Workaround:
+ *
+ * EMIF Core                     HPS Processor              OCT FSM
+ * =================================================================
+ *
+ * seq2core      ==============>
+ * [0x?????????]   OCT Request   [0xFFD0507C]
+ *
+ * core2seq
+ * [0x?????????] <==============
+ *                 OCT Ready     [0xFFD05078]
+ *
+ *                               [0xFFD03010] ============> Request
+ *                                             OCT Request
+ *
+ *                               [0xFFD03014] <============ Ready
+ *                                              OCT Ready
+ * Signal definitions:
+ *
+ * seq2core[7] - OCT calibration request (act-high)
+ * core2seq[7] - Signals OCT FSM is ready (active high)
+ * gpout[31]   - EMIF Reset override (active low)
+ * gpout[30]   - OCT calibration request (act-high)
+ * gpin[31]    - OCT calibration ready (act-high)
+ */
 
-// Signal definitions:
-//
-// seq2core[7] - OCT calibration request (act-high)
-// core2seq[7] - Signals OCT FSM is ready (active high)
-// gpout[31]   - EMIF Reset override (active low)
-// gpout[30]   - OCT calibration request (act-high)
-// gpin[31]    - OCT calibration ready (act-high)
-      
 int ddr_calibration(void)
 {
 	ddr_delay(500);
 	/* Step 1 - Initiating Reset Sequence */
-	ddr_clr_bit(DDR_REG_GPOUT, ARRIA10_EMIF_RST);	// Reset EMIF
+	ddr_clr_bit(DDR_REG_GPOUT, ARRIA10_EMIF_RST);	/* Reset EMIF */
 	ddr_delay(10);
 
 	/* Step 2 - Clearing registers to EMIF core */
-	writel(0, DDR_REG_CORE2SEQ);	// Clear the HPS->NIOS COM reg.
+	writel(0, DDR_REG_CORE2SEQ);	/*Clear the HPS->NIOS COM reg.*/
 
 	/* Step 3 - Clearing registers to OCT core */
-	ddr_clr_bit(DDR_REG_GPOUT, ARRIA10_OCT_CAL_REQ); // OCT Cal Request
+	ddr_clr_bit(DDR_REG_GPOUT, ARRIA10_OCT_CAL_REQ); /* OCT Cal Request */
 	ddr_delay(5);
 
 	/* Step 4 - Taking EMIF out of reset */
-	ddr_set_bit(DDR_REG_GPOUT, ARRIA10_EMIF_RST);	// EMIF Reset
+	ddr_set_bit(DDR_REG_GPOUT, ARRIA10_EMIF_RST);
 	ddr_delay(10);
 
 	/* Step 5 - Waiting for OCT circuitry to come out of reset */
@@ -210,11 +216,11 @@ int ddr_calibration(void)
 	/* Step 6 - Allowing EMIF to proceed with OCT calibration */
 	ddr_set_bit(DDR_REG_CORE2SEQ, ARRIA10_NIOS_OCT_DONE);
 
-	/* Step 7 - Waiting for EMIF request */ 
+	/* Step 7 - Waiting for EMIF request */
 	if (ddr_wait_bit(DDR_REG_SEQ2CORE, ARRIA10_NIOS_OCT_ACK, 1, 2000000))
 		return -2;
 
-	/* Step 8 - Acknowledging EMIF OCT request */; 
+	/* Step 8 - Acknowledging EMIF OCT request */
 	ddr_clr_bit(DDR_REG_CORE2SEQ, ARRIA10_NIOS_OCT_DONE);
 
 	/* Step 9 - Waiting for EMIF response */
@@ -249,13 +255,15 @@ int ddr_setup_workaround(void)
 	int chip_version = readl(&socfpga_system_mgr->siliconid1);
 
 	/* Version check - only the initial silicon needs this */
-	if (chip_version !=  DDR_EMIF_DANCE_VER) return 0;
+	if (chip_version !=  DDR_EMIF_DANCE_VER)
+		return 0;
 
 	/* Try 3 times to do a calibration */
 	for (i = 0; (i < 3) && !ddr_setup_complete; i++) {
 		WATCHDOG_RESET();
 
-		if ( (retcode = ddr_calibration()) ) {
+		retcode = ddr_calibration();
+		if (retcode) {
 			printf("DDRCAL: Failure: %d\n", retcode);
 			continue;
 		}
@@ -295,7 +303,8 @@ const struct of_sdr_cfg sdr_cfg_tab[] = {
 	{ "devtodev", offsetof(struct sdr_cfg, devtodev) },
 };
 
-static int of_get_sdr_cfg(const void *blob, struct sdr_cfg *cfg) {
+static int of_get_sdr_cfg(const void *blob, struct sdr_cfg *cfg)
+{
 	int node, err, i;
 	u32 val;
 	void *vcfg = cfg;
@@ -306,24 +315,24 @@ static int of_get_sdr_cfg(const void *blob, struct sdr_cfg *cfg) {
 
 	if (node < 0) {
 		printf("failed to find %s compatible field\n",
-			fdtdec_get_compatible(COMPAT_ARRIA10_SDR_CTL));
+		       fdtdec_get_compatible(COMPAT_ARRIA10_SDR_CTL));
 		return -1;
 	}
 
-	if (fdt_getprop(blob, node, "ecc-en", NULL)) {
+	if (fdt_getprop(blob, node, "ecc-en", NULL))
 		cfg->ecc_en = 1;
-	} else {
+	else
 		cfg->ecc_en = 0;
-	}
+
 	for (i = 0; i < ARRAY_SIZE(sdr_cfg_tab); i++) {
 		err = fdtdec_get_int_array(blob, node,
 			sdr_cfg_tab[i].prop_name, &val, 1);
 		if (err) {
-			printf("failed to find %s %d\n", 
-				sdr_cfg_tab[i].prop_name, err);
+			printf("failed to find %s %d\n",
+			       sdr_cfg_tab[i].prop_name, err);
 			continue;
 		}
-		*(u32*)(vcfg +  sdr_cfg_tab[i].offset) = val;
+		*(u32 *)(vcfg +  sdr_cfg_tab[i].offset) = val;
 	}
 	return node;
 }
@@ -333,31 +342,32 @@ void sdram_enable_interrupt(unsigned enable)
 {
 	/* Clear the internal counter (write 1 to clear) */
 	setbits_le32(&socfpga_ecc_hmc_base->eccctrl,
-		ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK);
+		     ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK);
 
 	/* clear the ECC prior enable or even disable (write 1 to clear) */
 	setbits_le32(&socfpga_ecc_hmc_base->intstat,
-		ALT_ECC_HMC_OCP_INTSTAT_SERRPENA_SET_MSK |
-		ALT_ECC_HMC_OCP_INTSTAT_DERRPENA_SET_MSK);
+		     ALT_ECC_HMC_OCP_INTSTAT_SERRPENA_SET_MSK |
+		     ALT_ECC_HMC_OCP_INTSTAT_DERRPENA_SET_MSK);
 
 	/*
 	 * We want the serr trigger after a number of count instead of
 	 * triggered every single bit error event which cost cpu time
 	 */
-	writel(CONFIG_HPS_SDR_SERRCNT,	&socfpga_ecc_hmc_base->serrcntreg);
+	writel(ALT_ECC_HMC_OCP_SERRCNTREG_VALUE,
+	       &socfpga_ecc_hmc_base->serrcntreg);
 
 	/* Enable the interrupt on compare */
 	setbits_le32(&socfpga_ecc_hmc_base->intmode,
-		ALT_ECC_HMC_OCP_INTMOD_INTONCMP_SET_MSK);
+		     ALT_ECC_HMC_OCP_INTMOD_INTONCMP_SET_MSK);
 
 	if (enable)
 		writel(ALT_ECC_HMC_OCP_ERRINTEN_SERRINTEN_SET_MSK |
-			ALT_ECC_HMC_OCP_ERRINTEN_DERRINTEN_SET_MSK,
-			&socfpga_ecc_hmc_base->errintens);
+		       ALT_ECC_HMC_OCP_ERRINTEN_DERRINTEN_SET_MSK,
+		       &socfpga_ecc_hmc_base->errintens);
 	else
 		writel(ALT_ECC_HMC_OCP_ERRINTEN_SERRINTEN_SET_MSK |
-			ALT_ECC_HMC_OCP_ERRINTEN_DERRINTEN_SET_MSK,
-			&socfpga_ecc_hmc_base->errintenr);
+		       ALT_ECC_HMC_OCP_ERRINTEN_DERRINTEN_SET_MSK,
+		       &socfpga_ecc_hmc_base->errintenr);
 }
 
 /* handler for SDRAM ECC interrupt */
@@ -369,7 +379,7 @@ void irq_handler_ecc_sdram(void *arg)
 	reg_value = readl(&socfpga_ecc_hmc_base->intstat);
 	if (reg_value & ALT_ECC_HMC_OCP_INTSTAT_SERRPENA_SET_MSK) {
 		printf("Info: SDRAM ECC SBE @ 0x%08x\n",
-			readl(&socfpga_ecc_hmc_base->serraddra));
+		       readl(&socfpga_ecc_hmc_base->serraddra));
 		irq_cnt_ecc_sdram += readl(&socfpga_ecc_hmc_base->serrcntreg);
 		setenv_ulong("sdram_ecc_sbe", irq_cnt_ecc_sdram);
 	}
@@ -379,17 +389,17 @@ void irq_handler_ecc_sdram(void *arg)
 		puts("Error: SDRAM ECC DBE occurred\n");
 		printf("sbecount = %lu\n", irq_cnt_ecc_sdram);
 		printf("erraddr = %08x\n",
-			readl(&socfpga_ecc_hmc_base->derraddra));
+		       readl(&socfpga_ecc_hmc_base->derraddra));
 	}
 
 	/* Clear the internal counter (write 1 to clear) */
 	setbits_le32(&socfpga_ecc_hmc_base->eccctrl,
-		ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK);
+		     ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK);
 
 	/* clear the ECC prior enable or even disable (write 1 to clear) */
 	setbits_le32(&socfpga_ecc_hmc_base->intstat,
-		ALT_ECC_HMC_OCP_INTSTAT_SERRPENA_SET_MSK |
-		ALT_ECC_HMC_OCP_INTSTAT_DERRPENA_SET_MSK);
+		     ALT_ECC_HMC_OCP_INTSTAT_SERRPENA_SET_MSK |
+		     ALT_ECC_HMC_OCP_INTSTAT_DERRPENA_SET_MSK);
 
 	/* if DBE, going into hang */
 	if (reg_value & ALT_ECC_HMC_OCP_ERRINTEN_DERRINTEN_SET_MSK) {
@@ -403,7 +413,7 @@ int sdram_startup(void)
 {
 	/* Release NOC ddr scheduler from reset */
 	reset_deassert_noc_ddr_scheduler();
-	
+
 	/* Bringup Workaround */
 	return ddr_setup_workaround();
 }
@@ -414,66 +424,86 @@ u32 sdram_size_calc(void)
 		(union dramaddrw_reg)readl(&socfpga_io48_mmr_base->dramaddrw);
 
 	u32 size = (1 << (dramaddrw.cfg_cs_addr_width +
-		   dramaddrw.cfg_bank_group_addr_width +
-		   dramaddrw.cfg_bank_addr_width +
-		   dramaddrw.cfg_row_addr_width +
-		   dramaddrw.cfg_col_addr_width));
+		    dramaddrw.cfg_bank_group_addr_width +
+		    dramaddrw.cfg_bank_addr_width +
+		    dramaddrw.cfg_row_addr_width +
+		    dramaddrw.cfg_col_addr_width));
 
-	size *= (2 << (readl(&socfpga_ecc_hmc_base->ddrioctrl) & 
+	size *= (2 << (readl(&socfpga_ecc_hmc_base->ddrioctrl) &
 		       ALT_ECC_HMC_OCP_DDRIOCTRL_IO_SIZE_MSK));
 
 	return size;
 }
 
 /* Function to initialize SDRAM MMR and NOC DDR scheduler*/
-void sdram_mmr_init(struct sdr_cfg * pcfg)
+void sdram_mmr_init(struct sdr_cfg *pcfg)
 {
 	u32 update_value, io48_value;
 	volatile union ctrlcfg0_reg ctrlcfg0 =
 		(union ctrlcfg0_reg)readl(&socfpga_io48_mmr_base->ctrlcfg0);
 	volatile union ctrlcfg1_reg ctrlcfg1 =
 		(union ctrlcfg1_reg)readl(&socfpga_io48_mmr_base->ctrlcfg1);
-	volatile union dramaddrw_reg dramaddrw = 
+	volatile union dramaddrw_reg dramaddrw =
 		(union dramaddrw_reg)readl(&socfpga_io48_mmr_base->dramaddrw);
-	volatile union caltiming0_reg caltim0 = 
+	volatile union caltiming0_reg caltim0 =
 		(union caltiming0_reg)readl(&socfpga_io48_mmr_base->caltiming0);
-	volatile union caltiming1_reg caltim1 = 
+	volatile union caltiming1_reg caltim1 =
 		(union caltiming1_reg)readl(&socfpga_io48_mmr_base->caltiming1);
-	volatile union caltiming2_reg caltim2 = 
+	volatile union caltiming2_reg caltim2 =
 		(union caltiming2_reg)readl(&socfpga_io48_mmr_base->caltiming2);
-	volatile union caltiming3_reg caltim3 = 
+	volatile union caltiming3_reg caltim3 =
 		(union caltiming3_reg)readl(&socfpga_io48_mmr_base->caltiming3);
-	volatile union caltiming4_reg caltim4 = 
+	volatile union caltiming4_reg caltim4 =
 		(union caltiming4_reg)readl(&socfpga_io48_mmr_base->caltiming4);
-	volatile union caltiming9_reg caltim9 = 
+	volatile union caltiming9_reg caltim9 =
 		(union caltiming9_reg)readl(&socfpga_io48_mmr_base->caltiming9);
 	u32 ddrioctl;
 
-	/* Configure the DDR IO size [0xFFCFB008] */
-	writel(pcfg->io_size, &socfpga_ecc_hmc_base->ddrioctrl);	
+	/*
+	 * Configure the DDR IO size [0xFFCFB008]
+	 * niosreserve0: Used to indicate DDR width &
+	 *	bit[7:0] = Number of data bits (0x20 for 32bit)
+	 *	bit[8]   = 1 if user-mode OCT is present
+	 *	bit[9]   = 1 if warm reset compiled into EMIF Cal Code
+	 *	bit[10]  = 1 if warm reset is on during generation in EMIF Cal
+	 * niosreserve1: IP ADCDS version encoded as 16 bit value
+	 *	bit[2:0] = Variant (0=not special,1=FAE beta, 2=Customer beta,
+	 *			    3=EAP, 4-6 are reserved)
+	 *	bit[5:3] = Service Pack # (e.g. 1)
+	 *	bit[9:6] = Minor Release #
+	 *	bit[14:10] = Major Release #
+	 */
+	if ((socfpga_io48_mmr_base->niosreserve1 >> 6) & 0x1FF) {
+		update_value = readl(&socfpga_io48_mmr_base->niosreserve0);
+		writel(((update_value & 0xFF) >> 5),
+		       &socfpga_ecc_hmc_base->ddrioctrl);
+	} else {
+		writel(pcfg->io_size, &socfpga_ecc_hmc_base->ddrioctrl);
+		puts("DDR Size Using DT\n");
+	}
+
 	ddrioctl = readl(&socfpga_ecc_hmc_base->ddrioctrl);
 
 	/* Enable or disable the SDRAM ECC */
 	if (ctrlcfg1.cfg_ctrl_enable_ecc) {
 		setbits_le32(&socfpga_ecc_hmc_base->eccctrl,
-			(ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK |
-			 ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK |
-			 ALT_ECC_HMC_OCP_ECCCTL_ECC_EN_SET_MSK));
+			     (ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK |
+			      ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK |
+			      ALT_ECC_HMC_OCP_ECCCTL_ECC_EN_SET_MSK));
 		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl,
-			(ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK |
-			 ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK));
+			     (ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK |
+			      ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK));
 		setbits_le32(&socfpga_ecc_hmc_base->eccctrl2,
-			(ALT_ECC_HMC_OCP_ECCCTL2_RMW_EN_SET_MSK |
-			 ALT_ECC_HMC_OCP_ECCCTL2_AWB_EN_SET_MSK));
-	}
-	else {
+			     (ALT_ECC_HMC_OCP_ECCCTL2_RMW_EN_SET_MSK |
+			      ALT_ECC_HMC_OCP_ECCCTL2_AWB_EN_SET_MSK));
+	} else {
 		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl,
-			(ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK |
-			 ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK |
-			 ALT_ECC_HMC_OCP_ECCCTL_ECC_EN_SET_MSK));
+			     (ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK |
+			      ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK |
+			      ALT_ECC_HMC_OCP_ECCCTL_ECC_EN_SET_MSK));
 		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl2,
-			(ALT_ECC_HMC_OCP_ECCCTL2_RMW_EN_SET_MSK |
-			 ALT_ECC_HMC_OCP_ECCCTL2_AWB_EN_SET_MSK));
+			     (ALT_ECC_HMC_OCP_ECCCTL2_RMW_EN_SET_MSK |
+			      ALT_ECC_HMC_OCP_ECCCTL2_AWB_EN_SET_MSK));
 	}
 
 	/* Set the DDR Configuration [0xFFD12400] */
@@ -488,19 +518,21 @@ void sdram_mmr_init(struct sdr_cfg * pcfg)
 		writel(update_value,
 		&socfpga_noc_ddr_scheduler_base->ddr_t_main_scheduler_ddrconf);
 
-	/* Configure DDR timing [0xFFD1240C]
-	   RDTOMISS = tRTP + tRP + tRCD - BL/2
-	   WRTOMISS = WL + tWR + tRP + tRCD and
-	     WL = RL + BL/2 + 2 - rd-to-wr ; tWR = 15ns  so...
-	   First part of equation is in memory clock units so divide by 2
-	   for HMC clock units. 1066MHz is close to 1ns so use 15 directly.
-	   WRTOMISS = ((RL + BL/2 + 2 + tWR) >> 1)- rd-to-wr + tRP + tRCD */
-	update_value = (caltim2.cfg_rd_to_pch +  caltim4.cfg_pch_to_valid + 
-		        caltim0.cfg_act_to_rdwr - 
-		        (ctrlcfg0.cfg_ctrl_burst_len >> 2));
+	/*
+	 * Configure DDR timing [0xFFD1240C]
+	 *  RDTOMISS = tRTP + tRP + tRCD - BL/2
+	 *  WRTOMISS = WL + tWR + tRP + tRCD and
+	 *    WL = RL + BL/2 + 2 - rd-to-wr ; tWR = 15ns  so...
+	 *  First part of equation is in memory clock units so divide by 2
+	 *  for HMC clock units. 1066MHz is close to 1ns so use 15 directly.
+	 *  WRTOMISS = ((RL + BL/2 + 2 + tWR) >> 1)- rd-to-wr + tRP + tRCD
+	 */
+	update_value = (caltim2.cfg_rd_to_pch +  caltim4.cfg_pch_to_valid +
+			caltim0.cfg_act_to_rdwr -
+			(ctrlcfg0.cfg_ctrl_burst_len >> 2));
 	io48_value = ((((socfpga_io48_mmr_base->dramtiming0 &
 		      ALT_IO48_DRAMTIME_MEM_READ_LATENCY_MASK) + 2 + 15 +
-		      (ctrlcfg0.cfg_ctrl_burst_len >> 1)) >> 1) - 
+		      (ctrlcfg0.cfg_ctrl_burst_len >> 1)) >> 1) -
 		      /* Up to here was in memory cycles so divide by 2 */
 		      caltim1.cfg_rd_to_wr + caltim0.cfg_act_to_rdwr +
 		      caltim4.cfg_pch_to_valid);
@@ -533,18 +565,22 @@ void sdram_mmr_init(struct sdr_cfg * pcfg)
 		&socfpga_noc_ddr_scheduler_base->
 			ddr_t_main_scheduler_readlatency);
 
-	/* configuring timing values concerning activate commands 
-	   [0xFFD12438] [FAWBANK alway 1 because always 4 bank DDR] */
+	/*
+	 * Configuring timing values concerning activate commands
+	 * [0xFFD12438] [FAWBANK alway 1 because always 4 bank DDR]
+	 */
 	writel(((caltim0.cfg_act_to_act_db <<
 			ALT_NOC_MPU_DDR_T_SCHED_ACTIVATE_RRD_LSB) |
 		(caltim9.cfg_4_act_to_act <<
 			ALT_NOC_MPU_DDR_T_SCHED_ACTIVATE_FAW_LSB) |
-		(CONFIG_HPS_SDR_ACTIVATE_FAWBANK <<
+		(ARRIA10_SDR_ACTIVATE_FAWBANK <<
 			ALT_NOC_MPU_DDR_T_SCHED_ACTIVATE_FAWBANK_LSB)),
 		&socfpga_noc_ddr_scheduler_base->ddr_t_main_scheduler_activate);
 
-	/* configuring timing values concerning device to device data bus
-	ownership change [0xFFD1243C] */
+	/*
+	 * Configuring timing values concerning device to device data bus
+	 * ownership change [0xFFD1243C]
+	 */
 	writel(((caltim1.cfg_rd_to_rd_dc <<
 			ALT_NOC_MPU_DDR_T_SCHED_DEVTODEV_BUSRDTORD_LSB) |
 		(caltim1.cfg_rd_to_wr_dc <<
@@ -552,7 +588,6 @@ void sdram_mmr_init(struct sdr_cfg * pcfg)
 		(caltim3.cfg_wr_to_rd_dc <<
 			ALT_NOC_MPU_DDR_T_SCHED_DEVTODEV_BUSWRTORD_LSB)),
 		&socfpga_noc_ddr_scheduler_base->ddr_t_main_scheduler_devtodev);
-
 }
 
 /* quick check for firewall value */
@@ -589,47 +624,47 @@ struct firewall_entry {
 	const u32 en_bit;
 };
 #define FW_MPU_FPGA_ADDRESS \
-	((const struct socfpga_noc_fw_ddr_mpu_fpga2sdram*)\
+	((const struct socfpga_noc_fw_ddr_mpu_fpga2sdram *)\
 	SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS)
 const struct firewall_entry firewall_table[] = {
 	{
 		"mpu0",
-		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS + 
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
 		offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
-			mpuregion0addr),
-		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS + 
+			 mpuregion0addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
 		offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
-			enable),
+			 enable),
 		ALT_NOC_FW_DDR_SCR_EN_MPUREG0EN_SET_MSK
 	},
 	{
 		"mpu1",
-		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS + 
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
 		offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
-			mpuregion1addr),
-		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS + 
+			 mpuregion1addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
 		offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
-			enable),
+			 enable),
 		ALT_NOC_FW_DDR_SCR_EN_MPUREG1EN_SET_MSK
 	},
 	{
 		"mpu2",
-		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS + 
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
 		offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
-			mpuregion2addr),
-		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS + 
+			 mpuregion2addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
 		offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
-			enable),
+			 enable),
 		ALT_NOC_FW_DDR_SCR_EN_MPUREG2EN_SET_MSK
 	},
 	{
 		"mpu3",
-		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS + 
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
 		offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
-			mpuregion3addr),
-		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS + 
+			 mpuregion3addr),
+		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
 		offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
-			enable),
+			 enable),
 		ALT_NOC_FW_DDR_SCR_EN_MPUREG3EN_SET_MSK
 	},
 	{
@@ -699,120 +734,120 @@ const struct firewall_entry firewall_table[] = {
 	{
 		"fpga2sdram0-0",
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			fpga2sdram0region0addr),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 fpga2sdram0region0addr),
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			enable),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 enable),
 		ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG0EN_SET_MSK
 	},
 	{
 		"fpga2sdram0-1",
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			fpga2sdram0region1addr),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 fpga2sdram0region1addr),
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			enable),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 enable),
 		ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG1EN_SET_MSK
 	},
 	{
 		"fpga2sdram0-2",
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			fpga2sdram0region2addr),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 fpga2sdram0region2addr),
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			enable),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 enable),
 		ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG2EN_SET_MSK
 	},
 	{
 		"fpga2sdram0-3",
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			fpga2sdram0region3addr),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 fpga2sdram0region3addr),
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			enable),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 enable),
 		ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG3EN_SET_MSK
 	},
 	{
 		"fpga2sdram1-0",
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			fpga2sdram1region0addr),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 fpga2sdram1region0addr),
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			enable),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 enable),
 		ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG0EN_SET_MSK
 	},
 	{
 		"fpga2sdram1-1",
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			fpga2sdram1region1addr),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 fpga2sdram1region1addr),
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			enable),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 enable),
 		ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG1EN_SET_MSK
 	},
 	{
 		"fpga2sdram1-2",
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			fpga2sdram1region2addr),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 fpga2sdram1region2addr),
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			enable),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 enable),
 		ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG2EN_SET_MSK
 	},
 	{
 		"fpga2sdram1-3",
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			fpga2sdram1region3addr),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 fpga2sdram1region3addr),
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			enable),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 enable),
 		ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG3EN_SET_MSK
 	},	{
 		"fpga2sdram2-0",
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			fpga2sdram2region0addr),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 fpga2sdram2region0addr),
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			enable),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 enable),
 		ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG0EN_SET_MSK
 	},
 	{
 		"fpga2sdram2-1",
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			fpga2sdram2region1addr),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 fpga2sdram2region1addr),
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			enable),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 enable),
 		ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG1EN_SET_MSK
 	},
 	{
 		"fpga2sdram2-2",
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			fpga2sdram2region2addr),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 fpga2sdram2region2addr),
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			enable),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 enable),
 		ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG2EN_SET_MSK
 	},
 	{
 		"fpga2sdram2-3",
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			fpga2sdram2region3addr),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 fpga2sdram2region3addr),
 		SOCFPGA_SDR_FIREWALL_MPU_FPGA_ADDRESS +
-			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram, 
-			enable),
+			offsetof(struct socfpga_noc_fw_ddr_mpu_fpga2sdram,
+				 enable),
 		ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG3EN_SET_MSK
 	},
 
@@ -834,17 +869,19 @@ int of_sdram_firewall_setup(void *blob, int node)
 
 	for (i = 0; i < ARRAY_SIZE(firewall_table); i++) {
 		if (!fdtdec_get_int_array(blob, child,
-			firewall_table[i].prop_name, start_end, 2)) {
+					  firewall_table[i].prop_name,
+					  start_end, 2)) {
 			writel((start_end[0] & ALT_NOC_FW_DDR_ADDR_MASK) |
 				(start_end[1] << ALT_NOC_FW_DDR_END_ADDR_LSB),
-				firewall_table[i].cfg_addr);
+				 firewall_table[i].cfg_addr);
 			setbits_le32(firewall_table[i].en_addr,
-					firewall_table[i].en_bit);
+				     firewall_table[i].en_bit);
 		}
 	}
 
 	return 0;
 }
+
 /* Function to initialize SDRAM MMR and NOC DDR scheduler*/
 void sdram_firewall_setup(void)
 {
@@ -858,28 +895,28 @@ void sdram_firewall_setup(void)
 		(CONFIG_HPS_SDR_MPU0_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
 		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->mpuregion0addr);
 	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_MPUREG0EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_MPUREG0EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_MPU1_ENABLE)
 	writel((CONFIG_HPS_SDR_MPU1_START & ALT_NOC_FW_DDR_ADDR_MASK) |
 		(CONFIG_HPS_SDR_MPU1_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
 		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->mpuregion1addr);
 	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_MPUREG1EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_MPUREG1EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_MPU2_ENABLE)
 	writel((CONFIG_HPS_SDR_MPU2_START & ALT_NOC_FW_DDR_ADDR_MASK) |
 		(CONFIG_HPS_SDR_MPU2_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
 		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->mpuregion2addr);
 	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_MPUREG2EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_MPUREG2EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_MPU3_ENABLE)
 	writel((CONFIG_HPS_SDR_MPU3_START & ALT_NOC_FW_DDR_ADDR_MASK) |
 		(CONFIG_HPS_SDR_MPU3_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
 		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->mpuregion3addr);
 	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_MPUREG3EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_MPUREG3EN_SET_MSK);
 #endif
 
 	/* setup HPS L3 region firewall */
@@ -888,56 +925,56 @@ void sdram_firewall_setup(void)
 		(CONFIG_HPS_SDR_HPS_L3_0_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
 		&socfpga_noc_fw_ddr_l3_base->hpsregion0addr);
 	setbits_le32(&socfpga_noc_fw_ddr_l3_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_HPSREG0EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_HPSREG0EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_HPS_L3_1_ENABLE)
 	writel((CONFIG_HPS_SDR_HPS_L3_1_START & ALT_NOC_FW_DDR_ADDR_MASK) |
 		(CONFIG_HPS_SDR_HPS_L3_1_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
 		&socfpga_noc_fw_ddr_l3_base->hpsregion1addr);
 	setbits_le32(&socfpga_noc_fw_ddr_l3_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_HPSREG1EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_HPSREG1EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_HPS_L3_2_ENABLE)
 	writel((CONFIG_HPS_SDR_HPS_L3_2_START & ALT_NOC_FW_DDR_ADDR_MASK) |
 		(CONFIG_HPS_SDR_HPS_L3_2_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
 		&socfpga_noc_fw_ddr_l3_base->hpsregion2addr);
 	setbits_le32(&socfpga_noc_fw_ddr_l3_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_HPSREG2EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_HPSREG2EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_HPS_L3_3_ENABLE)
 	writel((CONFIG_HPS_SDR_HPS_L3_3_START & ALT_NOC_FW_DDR_ADDR_MASK) |
 		(CONFIG_HPS_SDR_HPS_L3_3_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
 		&socfpga_noc_fw_ddr_l3_base->hpsregion3addr);
 	setbits_le32(&socfpga_noc_fw_ddr_l3_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_HPSREG3EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_HPSREG3EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_HPS_L3_4_ENABLE)
 	writel((CONFIG_HPS_SDR_HPS_L3_4_START & ALT_NOC_FW_DDR_ADDR_MASK) |
 		(CONFIG_HPS_SDR_HPS_L3_4_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
 		&socfpga_noc_fw_ddr_l3_base->hpsregion4addr);
 	setbits_le32(&socfpga_noc_fw_ddr_l3_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_HPSREG4EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_HPSREG4EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_HPS_L3_5_ENABLE)
 	writel((CONFIG_HPS_SDR_HPS_L3_5_START & ALT_NOC_FW_DDR_ADDR_MASK) |
 		(CONFIG_HPS_SDR_HPS_L3_5_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
 		&socfpga_noc_fw_ddr_l3_base->hpsregion5addr);
 	setbits_le32(&socfpga_noc_fw_ddr_l3_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_HPSREG5EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_HPSREG5EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_HPS_L3_6_ENABLE)
 	writel((CONFIG_HPS_SDR_HPS_L3_6_START & ALT_NOC_FW_DDR_ADDR_MASK) |
 		(CONFIG_HPS_SDR_HPS_L3_6_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
 		&socfpga_noc_fw_ddr_l3_base->hpsregion6addr);
 	setbits_le32(&socfpga_noc_fw_ddr_l3_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_HPSREG6EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_HPSREG6EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_HPS_L3_7_ENABLE)
 	writel((CONFIG_HPS_SDR_HPS_L3_7_START & ALT_NOC_FW_DDR_ADDR_MASK) |
 		(CONFIG_HPS_SDR_HPS_L3_7_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
 		&socfpga_noc_fw_ddr_l3_base->hpsregion7addr);
 	setbits_le32(&socfpga_noc_fw_ddr_l3_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_HPSREG7EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_HPSREG7EN_SET_MSK);
 #endif
 
 	/* setup FPGA region firewall */
@@ -948,7 +985,7 @@ void sdram_firewall_setup(void)
 		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
 			fpga2sdram0region0addr);
 	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG0EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG0EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_FPGA2SDRAM0_1_ENABLE)
 	writel((CONFIG_HPS_SDR_FPGA2SDRAM0_1_START & ALT_NOC_FW_DDR_ADDR_MASK) |
@@ -957,16 +994,16 @@ void sdram_firewall_setup(void)
 		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
 			fpga2sdram0region1addr);
 	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG1EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG1EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_FPGA2SDRAM0_2_ENABLE)
 	writel((CONFIG_HPS_SDR_FPGA2SDRAM0_2_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_FPGA2SDRAM0_2_END
+	       (CONFIG_HPS_SDR_FPGA2SDRAM0_2_END
 			<< ALT_NOC_FW_DDR_END_ADDR_LSB),
 		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
 			fpga2sdram0region2addr);
 	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG2EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG2EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_FPGA2SDRAM0_3_ENABLE)
 	writel((CONFIG_HPS_SDR_FPGA2SDRAM0_3_START & ALT_NOC_FW_DDR_ADDR_MASK) |
@@ -975,7 +1012,7 @@ void sdram_firewall_setup(void)
 		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
 			fpga2sdram0region3addr);
 	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG3EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG3EN_SET_MSK);
 #endif
 
 #if (CONFIG_HPS_SDR_FPGA2SDRAM1_0_ENABLE)
@@ -985,7 +1022,7 @@ void sdram_firewall_setup(void)
 		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
 			fpga2sdram1region0addr);
 	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG0EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG0EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_FPGA2SDRAM1_1_ENABLE)
 	writel((CONFIG_HPS_SDR_FPGA2SDRAM1_1_START & ALT_NOC_FW_DDR_ADDR_MASK) |
@@ -994,7 +1031,7 @@ void sdram_firewall_setup(void)
 		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
 			fpga2sdram1region1addr);
 	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG1EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG1EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_FPGA2SDRAM1_2_ENABLE)
 	writel((CONFIG_HPS_SDR_FPGA2SDRAM1_2_START & ALT_NOC_FW_DDR_ADDR_MASK) |
@@ -1003,7 +1040,7 @@ void sdram_firewall_setup(void)
 		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
 			fpga2sdram1region2addr);
 	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG2EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG2EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_FPGA2SDRAM1_3_ENABLE)
 	writel((CONFIG_HPS_SDR_FPGA2SDRAM1_3_START & ALT_NOC_FW_DDR_ADDR_MASK) |
@@ -1012,7 +1049,7 @@ void sdram_firewall_setup(void)
 		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
 			fpga2sdram1region3addr);
 	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG3EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG3EN_SET_MSK);
 #endif
 
 #if (CONFIG_HPS_SDR_FPGA2SDRAM2_0_ENABLE)
@@ -1022,7 +1059,7 @@ void sdram_firewall_setup(void)
 		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
 			fpga2sdram2region0addr);
 	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG0EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG0EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_FPGA2SDRAM2_1_ENABLE)
 	writel((CONFIG_HPS_SDR_FPGA2SDRAM2_1_START & ALT_NOC_FW_DDR_ADDR_MASK) |
@@ -1031,7 +1068,7 @@ void sdram_firewall_setup(void)
 		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
 			fpga2sdram2region1addr);
 	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG1EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG1EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_FPGA2SDRAM2_2_ENABLE)
 	writel((CONFIG_HPS_SDR_FPGA2SDRAM2_2_START & ALT_NOC_FW_DDR_ADDR_MASK) |
@@ -1040,7 +1077,7 @@ void sdram_firewall_setup(void)
 		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
 			fpga2sdram2region2addr);
 	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG2EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG2EN_SET_MSK);
 #endif
 #if (CONFIG_HPS_SDR_FPGA2SDRAM2_3_ENABLE)
 	writel((CONFIG_HPS_SDR_FPGA2SDRAM2_3_START & ALT_NOC_FW_DDR_ADDR_MASK) |
@@ -1049,7 +1086,7 @@ void sdram_firewall_setup(void)
 		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
 			fpga2sdram2region3addr);
 	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG3EN_SET_MSK);
+		     ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG3EN_SET_MSK);
 #endif
 }
 
@@ -1083,7 +1120,7 @@ int ddr_calibration_sequence(void)
 
 	/* assigning the SDRAM size */
 	gd->ram_size = sdram_size_calc();
-			
+
 	/* If a weird value, use default Config size */
 	if (gd->ram_size <= 0)
 		gd->ram_size = PHYS_SDRAM_1_SIZE;
@@ -1121,12 +1158,13 @@ int dram_init(void)
 	 * memory layout in later setup
 	 */
 	addr -= (CONFIG_OCRAM_STACK_SIZE + CONFIG_OCRAM_MALLOC_SIZE);
+
 	/*
 	 * (permanently) allocate a Board Info struct
 	 * and a permanent copy of the "global" data
 	 */
-	addr -= sizeof (bd_t);
-	bd = (bd_t *) addr;
+	addr -= sizeof(bd_t);
+	bd = (bd_t *)addr;
 	gd->bd = bd;
 
 	/* enable the cache */
@@ -1136,7 +1174,7 @@ int dram_init(void)
 	WATCHDOG_RESET();
 	u32 malloc_start = CONFIG_SYS_INIT_SP_ADDR
 		- CONFIG_OCRAM_STACK_SIZE - CONFIG_OCRAM_MALLOC_SIZE;
-	mem_malloc_init (malloc_start, CONFIG_OCRAM_MALLOC_SIZE);
+	mem_malloc_init(malloc_start, CONFIG_OCRAM_MALLOC_SIZE);
 
 #ifdef CONFIG_MMC
 	mmc_initialize(gd->bd);

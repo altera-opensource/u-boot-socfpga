@@ -317,6 +317,8 @@ struct sdr_cfg {
 #define ALT_ECC_HMC_OCP_ECCCTL2_RMW_EN_SET_MSK		0x00000100
 #define ALT_ECC_HMC_OCP_ECCCTL2_AWB_EN_SET_MSK		0x00000001
 
+#define ALT_ECC_HMC_OCP_SERRCNTREG_VALUE		8
+
 #define ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_ACTTOACT_LSB	0
 #define ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_RDTOMISS_LSB	6
 #define ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_WRTOMISS_LSB	12
@@ -369,7 +371,7 @@ struct sdr_cfg {
 /* function declaration */
 void irq_handler_ecc_sdram(void *arg);
 void sdram_enable_interrupt(unsigned enable);
-void sdram_mmr_init(struct sdr_cfg * pcfg);
+void sdram_mmr_init(struct sdr_cfg *pcfg);
 void sdram_firewall_setup(void);
 int is_sdram_cal_success(void);
 int ddr_calibration_sequence(void);

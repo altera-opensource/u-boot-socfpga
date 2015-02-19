@@ -1,16 +1,8 @@
 #ifndef __SDRAM_CONFIG_H
 #define __SDRAM_CONFIG_H
 
-/* option to configure the DDR based on IOCSR instead from handoff */
-#undef CONFIG_HPS_SDR_SKIP_HANDOFF
-
-/* number of serr before interrupt triggered */
-#define CONFIG_HPS_SDR_SERRCNT			(8)
-
-/* FAWBANK - Number of Bank of a given device involved in the FAW period. */
-#define CONFIG_HPS_SDR_ACTIVATE_FAWBANK		(0x1)
-
-/* Firewall setup for DDR
+/*
+ * Firewall setup for DDR
  * This applicable for master when its not in secure state (as secure master
  * can access to entiree DDR). For non secure master, you would need to
  * specify the memory region that can be accessed.
