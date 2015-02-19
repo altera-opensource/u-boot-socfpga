@@ -8,7 +8,6 @@
 #define __CONFIG_SOCFGPA_ARRIA10_H__
 
 #include <asm/arch/hardware.h>
-#include "../../board/altera/socfpga_arria10/build.h"
 #include "../../board/altera/socfpga_arria10/pinmux_config.h"
 #include "../../board/altera/socfpga_arria10/pll_config.h"
 #include "../../board/altera/socfpga_arria10/sdram_config.h"
