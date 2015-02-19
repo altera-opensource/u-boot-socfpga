@@ -328,8 +328,14 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 {
 #ifdef CONFIG_MMC
 	if (!strcmp(fsinfo->interface, "mmc")) {
-		int ret;
-		ret = cff_from_mmc_fat(fsinfo->dev_part, fsinfo->filename, 1);
+		int ret, i, slen = strlen(fsinfo->filename) + 1;
+		
+		for (i = 0; i < slen; i++)
+			if (fsinfo->filename[i] == ',')
+				fsinfo->filename[i] = 0;
+
+		ret = cff_from_mmc_fat(fsinfo->dev_part, fsinfo->filename,
+				       slen);
 		if (ret > 0)
 			return FPGA_SUCCESS;
 		else
