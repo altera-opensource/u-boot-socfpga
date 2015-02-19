@@ -12,7 +12,6 @@
 #include "../../board/altera/socfpga_arria10/pinmux_config.h"
 #include "../../board/altera/socfpga_arria10/pinmux_dedicated_config.h"
 #include "../../board/altera/socfpga_arria10/pll_config.h"
-#include "../../board/altera/socfpga_arria10/reset_config.h"
 #include "../../board/altera/socfpga_arria10/sdram_config.h"
 
 #include <config_cmd_default.h>
