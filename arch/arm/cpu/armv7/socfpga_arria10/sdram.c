@@ -33,12 +33,10 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define DDR_EMIF_DANCE_VER	0x00010001
 
-typedef enum ddr_regs {
-	DDR_REG_SEQ2CORE  = 0xFFD0507C,
-	DDR_REG_CORE2SEQ  = 0xFFD05078,
-	DDR_REG_GPOUT     = 0xFFD03010,
-	DDR_REG_GPIN      = 0xFFD03014
-} ddr_regs_t;
+#define DDR_REG_SEQ2CORE        0xFFD0507C
+#define DDR_REG_CORE2SEQ        0xFFD05078
+#define DDR_REG_GPOUT           0xFFD03010
+#define DDR_REG_GPIN            0xFFD03014
 
 static const struct socfpga_ecc_hmc *socfpga_ecc_hmc_base =
 		(void *)SOCFPGA_SDR_ADDRESS;
@@ -112,49 +110,45 @@ int is_sdram_cal_success(void)
 	return readl(&socfpga_ecc_hmc_base->ddrcalstat);
 }
 
-unsigned char ddr_get_bit(ddr_regs_t reg, unsigned char bit)
+unsigned char ddr_get_bit(u32 ereg, unsigned char bit)
 {
-	volatile unsigned int *p_reg = (unsigned int *)reg;
+	unsigned int reg = readl(ereg);
 
-	return ((*p_reg) & (1 << bit)) ? 1 : 0;
+	return (reg & (1 << bit)) ? 1 : 0;
 }
 
-unsigned char ddr_wait_bit(ddr_regs_t reg, unsigned int bit,
-			   unsigned char expected, unsigned int timeout_usec)
+unsigned char ddr_wait_bit(u32 ereg, u32 bit,
+			   u32 expected, u32 timeout_usec)
 {
 	unsigned int tmr;
 
 	for (tmr = 0; tmr < timeout_usec; tmr += 100) {
 		udelay(100);
 		WATCHDOG_RESET();
-		if (ddr_get_bit(reg, bit) == expected)
+		if (ddr_get_bit(ereg, bit) == expected)
 			return 0;
 	}
 
 	return 1;
 }
 
-void ddr_set_bit(ddr_regs_t reg, unsigned char bit)
+void ddr_set_bit(u32 ereg, u32 bit)
 {
-	volatile unsigned int *p_reg = (unsigned int *)reg;
-	unsigned int tmp;
+	unsigned int tmp = readl(ereg);
 
-	tmp = *p_reg;
 	tmp |= (1 << bit);
-	*p_reg = tmp;
+	writel(tmp, ereg);
 }
 
-void ddr_clr_bit(ddr_regs_t reg, unsigned char bit)
+void ddr_clr_bit(u32 ereg, u32 bit)
 {
-	volatile unsigned int *p_reg = (unsigned int *)reg;
-	unsigned int tmp;
+	unsigned int tmp = readl(ereg);
 
-	tmp = *p_reg;
 	tmp &= ~(1 << bit);
-	*p_reg = tmp;
+	writel(tmp, ereg);
 }
 
-void ddr_delay(int delay)
+void ddr_delay(u32 delay)
 {
 	int tmr;
 
@@ -420,7 +414,7 @@ int sdram_startup(void)
 
 u32 sdram_size_calc(void)
 {
-	volatile union dramaddrw_reg dramaddrw =
+	union dramaddrw_reg dramaddrw =
 		(union dramaddrw_reg)readl(&socfpga_io48_mmr_base->dramaddrw);
 
 	u32 size = (1 << (dramaddrw.cfg_cs_addr_width +
@@ -439,23 +433,23 @@ u32 sdram_size_calc(void)
 void sdram_mmr_init(struct sdr_cfg *pcfg)
 {
 	u32 update_value, io48_value;
-	volatile union ctrlcfg0_reg ctrlcfg0 =
+	union ctrlcfg0_reg ctrlcfg0 =
 		(union ctrlcfg0_reg)readl(&socfpga_io48_mmr_base->ctrlcfg0);
-	volatile union ctrlcfg1_reg ctrlcfg1 =
+	union ctrlcfg1_reg ctrlcfg1 =
 		(union ctrlcfg1_reg)readl(&socfpga_io48_mmr_base->ctrlcfg1);
-	volatile union dramaddrw_reg dramaddrw =
+	union dramaddrw_reg dramaddrw =
 		(union dramaddrw_reg)readl(&socfpga_io48_mmr_base->dramaddrw);
-	volatile union caltiming0_reg caltim0 =
+	union caltiming0_reg caltim0 =
 		(union caltiming0_reg)readl(&socfpga_io48_mmr_base->caltiming0);
-	volatile union caltiming1_reg caltim1 =
+	union caltiming1_reg caltim1 =
 		(union caltiming1_reg)readl(&socfpga_io48_mmr_base->caltiming1);
-	volatile union caltiming2_reg caltim2 =
+	union caltiming2_reg caltim2 =
 		(union caltiming2_reg)readl(&socfpga_io48_mmr_base->caltiming2);
-	volatile union caltiming3_reg caltim3 =
+	union caltiming3_reg caltim3 =
 		(union caltiming3_reg)readl(&socfpga_io48_mmr_base->caltiming3);
-	volatile union caltiming4_reg caltim4 =
+	union caltiming4_reg caltim4 =
 		(union caltiming4_reg)readl(&socfpga_io48_mmr_base->caltiming4);
-	volatile union caltiming9_reg caltim9 =
+	union caltiming9_reg caltim9 =
 		(union caltiming9_reg)readl(&socfpga_io48_mmr_base->caltiming9);
 	u32 ddrioctl;
 
