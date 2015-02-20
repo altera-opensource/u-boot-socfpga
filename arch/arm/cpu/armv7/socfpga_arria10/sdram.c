@@ -1131,9 +1131,6 @@ int ddr_calibration_sequence(void)
 	/* setup the firewall for DDR */
 	sdram_firewall_setup();
 
-	/* enable fpga bridges */
-	reset_deassert_bridges_handoff();
-
 	return 0;
 }
 
