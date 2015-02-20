@@ -9,6 +9,7 @@
 #include <malloc.h>
 #include <mmc.h>
 #include <watchdog.h>
+#include <ns16550.h>
 #include <asm/io.h>
 #include <asm/arch/cff.h>
 #include <asm/arch/misc.h>
@@ -1095,7 +1096,16 @@ int ddr_calibration_sequence(void)
 
 	WATCHDOG_RESET();
 
+	reset_assert_shared_uart();
+
 	config_shared_fpga_pins(gd->fdt_blob);
+
+	reset_deassert_peripherals_handoff();
+
+	NS16550_init(CONFIG_SYS_NS16550_COM1,
+		     ns16550_calc_divisor(CONFIG_SYS_NS16550_COM1,
+					  CONFIG_SYS_NS16550_CLK,
+					  CONFIG_BAUDRATE));
 
 	of_get_sdr_cfg(gd->fdt_blob, &cfg);
 

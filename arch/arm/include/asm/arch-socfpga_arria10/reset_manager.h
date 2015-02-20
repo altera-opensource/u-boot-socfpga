@@ -129,6 +129,8 @@ void emac_manage_reset(ulong emacbase, uint state);
 void reset_assert_all_bridges(void);
 void reset_deassert_bridges_handoff(void);
 void reset_assert_all_peripherals_except_l4wd0_l4timer0(void);
+void reset_assert_shared_uart(void);
+void reset_deassert_dedicated_peripherals(void);
 void reset_deassert_peripherals_handoff(void);
 void reset_deassert_osc1wd0(void);
 #endif /* __ASSEMBLY__ */

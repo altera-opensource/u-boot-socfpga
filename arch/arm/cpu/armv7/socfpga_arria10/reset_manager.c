@@ -237,6 +237,58 @@ void reset_assert_all_peripherals_except_l4wd0_l4timer0(void)
 	setbits_le32(&reset_manager_base->per0modrst, mask_ecc_ocp);
 }
 
+void reset_deassert_dedicated_peripherals(void)
+{
+	u32 mask = 0;
+#if defined(CONFIG_MMC)
+	mask |= ALT_RSTMGR_PER0MODRST_SDMMCECC_SET_MSK;
+#elif defined(CONFIG_CADENCE_QSPI)
+	mask |= ALT_RSTMGR_PER0MODRST_QSPIECC_SET_MSK;
+#elif defined(CONFIG_NAND_DENALI)
+	mask |= ALT_RSTMGR_PER0MODRST_NANDECC_SET_MSK;
+#else
+#error "unsupported dedicated peripherals"
+#endif
+
+
+	/* enable ECC OCP first */
+	clrbits_le32(&reset_manager_base->per0modrst, mask);
+
+	mask = 0;
+#if defined(CONFIG_MMC)
+	mask |= ALT_RSTMGR_PER0MODRST_SDMMC_SET_MSK;
+#elif defined(CONFIG_CADENCE_QSPI)
+	mask |= ALT_RSTMGR_PER0MODRST_QSPI_SET_MSK;
+#elif defined(CONFIG_NAND_DENALI)
+	mask |= ALT_RSTMGR_PER0MODRST_NAND_SET_MSK;
+#else
+#error "unsupported dedicated peripherals"
+#endif
+	clrbits_le32(&reset_manager_base->per0modrst, mask);
+
+	mask = ALT_RSTMGR_PER1MODRST_L4SYSTMR0_SET_MSK;
+
+#if (CONFIG_SYS_NS16550_COM1 == SOCFPGA_UART1_ADDRESS)
+	mask |= ALT_RSTMGR_PER1MODRST_UART1_SET_MSK;
+#elif (CONFIG_SYS_NS16550_COM1 == SOCFPGA_UART0)
+	mask |= ALT_RSTMGR_PER1MODRST_UART0_SET_MSK;
+#endif
+
+	clrbits_le32(&reset_manager_base->per1modrst, mask);
+}
+
+void reset_assert_shared_uart(void)
+{
+	u32 mask = 0;
+#if (CONFIG_SYS_NS16550_COM1 == SOCFPGA_UART1_ADDRESS)
+	mask |= ALT_RSTMGR_PER1MODRST_UART1_SET_MSK;
+#elif (CONFIG_SYS_NS16550_COM1 == SOCFPGA_UART0)
+	mask |= ALT_RSTMGR_PER1MODRST_UART0_SET_MSK;
+#endif
+
+	setbits_le32(&reset_manager_base->per1modrst, mask);
+}
+
 void reset_deassert_peripherals_handoff(void)
 {
 	unsigned mask = 0;

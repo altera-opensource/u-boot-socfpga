@@ -182,7 +182,7 @@ void s_init(void)
 	WATCHDOG_RESET();
 
 	/* configure the Reset Manager */
-	reset_deassert_peripherals_handoff();
+	reset_deassert_dedicated_peripherals();
 
 	/* If fpga is already loaded, calibrate ddr and enable
 	   fpga bridges */
