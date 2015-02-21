@@ -11,11 +11,6 @@
 
 
 	chosen {
-		bootargs = "fatload mmc 0:1 $fpgadata u-boot-rsa.fit; \
-			echo Checking image; \
-			iminfo $fpgadata; \
-			echo Boot the image; \
-			bootm $fpgadata";
 		cff-file = "soc_system.rbf";
 	};
 
