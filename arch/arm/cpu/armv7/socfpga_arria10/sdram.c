@@ -1096,16 +1096,18 @@ int ddr_calibration_sequence(void)
 
 	WATCHDOG_RESET();
 
-	reset_assert_shared_uart();
+	reset_assert_uart();
 
 	config_shared_fpga_pins(gd->fdt_blob);
 
-	reset_deassert_peripherals_handoff();
+	reset_deassert_uart();
+	reset_deassert_shared_connected_peripherals();
+	reset_deassert_fpga_connected_peripherals();
 
-	NS16550_init(CONFIG_SYS_NS16550_COM1,
-		     ns16550_calc_divisor(CONFIG_SYS_NS16550_COM1,
-					  CONFIG_SYS_NS16550_CLK,
-					  CONFIG_BAUDRATE));
+	NS16550_init((NS16550_t)CONFIG_SYS_NS16550_COM1,
+		     ns16550_calc_divisor((NS16550_t)CONFIG_SYS_NS16550_COM1,
+					   CONFIG_SYS_NS16550_CLK,
+					   CONFIG_BAUDRATE));
 
 	of_get_sdr_cfg(gd->fdt_blob, &cfg);
 

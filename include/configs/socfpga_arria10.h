@@ -8,7 +8,6 @@
 #define __CONFIG_SOCFGPA_ARRIA10_H__
 
 #include <asm/arch/hardware.h>
-#include "../../board/altera/socfpga_arria10/pinmux_config.h"
 #include "../../board/altera/socfpga_arria10/pll_config.h"
 #include "../../board/altera/socfpga_arria10/sdram_config.h"
 
@@ -480,11 +479,7 @@
 #define CONFIG_SOCFPGA_DWMMC_FIFO_DEPTH	1024
 /* using smaller max blk cnt to avoid flooding the limited stack we have */
 #define CONFIG_SOCFPGA_DWMMC_BUS_HZ	CONFIG_HPS_CLK_SDMMC_HZ
-#if (CONFIG_PRELOADER_OVERWRITE_DEDICATED == 1)
-#define CONFIG_SOCFPGA_DWMMC_BUS_WIDTH	PINMUX_DEDICATED_SD_WIDTH
-#else
-#define CONFIG_SOCFPGA_DWMMC_BUS_WIDTH	CONFIG_HPS_SDMMC_BUSWIDTH
-#endif
+#define CONFIG_SOCFPGA_DWMMC_BUS_WIDTH	4
 /* requird for dw_mmc driver */
 #define CONFIG_BOUNCE_BUFFER
 #endif	/* CONFIG_MMC */
