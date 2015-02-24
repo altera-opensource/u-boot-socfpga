@@ -15,6 +15,17 @@
 			"ghrd_10as066n2.core.rbf";
 	};
 
+	clocks {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		arria10_hps_0_eosc1: arria10_hps_0_eosc1 {
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+			clock-frequency = <25000000>;	/* 25.00 MHz */
+			clock-output-names = "arria10_hps_0_eosc1-clk";
+		};
+	};
 	pinmux@0xffd07000 {
 		#address-cells = <1>;
 		#size-cells = <1>;
@@ -96,7 +107,7 @@
 				<0x00000040 0x0000000f>;
 
 		};
-		
+
 		dedicated_cfg {
 			reg = <0xffd07200 0x00000200>;
 			pinctrl-single,register-width = <32>;
@@ -121,7 +132,7 @@
 				<0x00000144 0x000d0008>;
 
 		};
-		
+
 		fpga {
 			reg = <0xffd07400 0x00000100>;
 			pinctrl-single,register-width = <32>;

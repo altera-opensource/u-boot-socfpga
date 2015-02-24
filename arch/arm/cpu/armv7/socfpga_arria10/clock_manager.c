@@ -12,6 +12,12 @@
 static const struct socfpga_clock_manager *clock_manager_base =
 		(void *)SOCFPGA_CLKMGR_ADDRESS;
 
+static u32 eosc1_hz;
+static u32 cb_intosc_hz;
+static u32 f2s_free_hz;
+uint32_t cm_l4_main_clk_hz = 0;
+uint32_t cm_l4_sp_clk_hz = 0;
+uint32_t cm_l4_mp_clk_hz = 0;
 #define LOCKED_MASK \
 	(CLKMGR_CLKMGR_STAT_MAINPLLLOCKED_SET_MSK  | \
 	CLKMGR_CLKMGR_STAT_PERPLLLOCKED_SET_MSK)
@@ -33,13 +39,137 @@ static inline void cm_wait4fsm(void)
 			CLKMGR_CLKMGR_STAT_BUSY_SET_MSK;
 	} while (inter_val);
 }
+static u32 cm_get_main_vco(void)
+{
+	u32 vco1, src_hz, numer, denom, vco;
+	u32 clk_src = readl(&clock_manager_base->main_pll_vco0);
+
+	clk_src = (clk_src >> CLKMGR_MAINPLL_VCO0_PSRC_LSB) &
+		CLKMGR_MAINPLL_VCO0_PSRC_MSK;
+
+	if (clk_src == CLKMGR_MAINPLL_VCO0_PSRC_EOSC) {
+		src_hz = eosc1_hz;
+	} else if (clk_src == CLKMGR_MAINPLL_VCO0_PSRC_E_INTOSC) {
+		src_hz = cb_intosc_hz;
+	} else if (clk_src == CLKMGR_MAINPLL_VCO0_PSRC_F2S) {
+		src_hz = f2s_free_hz;
+	} else {
+		printf("cm_get_main_vco invalid clk_src %d\n", clk_src);
+		return 0;
+	}
+	vco1 = readl(&clock_manager_base->main_pll_vco1);
+	numer = vco1 & CLKMGR_MAINPLL_VCO1_NUMER_MSK;
+	denom = (vco1 >> CLKMGR_MAINPLL_VCO1_DENOM_LSB) &
+			CLKMGR_MAINPLL_VCO1_DENOM_MSK;
+	vco = src_hz;
+	vco /= (1 + denom);
+	vco *= (1 + numer);
+
+	return vco;
+}
+
+static u32 cm_get_peri_vco(void)
+{
+	u32 vco1, src_hz, numer, denom, vco;
+	u32 clk_src = readl(&clock_manager_base->per_pll_vco0);
+
+	clk_src = (clk_src >> CLKMGR_PERPLL_VCO0_PSRC_LSB) &
+		CLKMGR_PERPLL_VCO0_PSRC_MSK;
+
+	if (clk_src == CLKMGR_PERPLL_VCO0_PSRC_EOSC) {
+		src_hz = eosc1_hz;
+	} else if (clk_src == CLKMGR_PERPLL_VCO0_PSRC_E_INTOSC) {
+		src_hz = cb_intosc_hz;
+	} else if (clk_src == CLKMGR_PERPLL_VCO0_PSRC_F2S) {
+		src_hz = f2s_free_hz;
+	} else if (clk_src == CLKMGR_PERPLL_VCO0_PSRC_MAIN) {
+		src_hz = cm_get_main_vco();
+		src_hz /= (readl(&clock_manager_base->main_pll_cntr15clk) &
+			CLKMGR_MAINPLL_CNTRCLK_MSK) + 1;
+	} else {
+		printf("cm_get_per_vco invalid clk_src %d\n", clk_src);
+		return 0;
+	}
+	vco1 = readl(&clock_manager_base->per_pll_vco1);
+	numer = vco1 & CLKMGR_PERPLL_VCO1_NUMER_MSK;
+	denom = (vco1 >> CLKMGR_PERPLL_VCO1_DENOM_LSB) &
+			CLKMGR_PERPLL_VCO1_DENOM_MSK;
+	vco = src_hz;
+	vco /= (1 + denom);
+	vco *= (1 + numer);
+
+	return vco;
+}
+
+static u32 cm_get_l4_noc_hz(u32 nocdivshift)
+{
+	u32 clk_src, dividor, nocclk, src_hz;
+	u32 dividor2 = 1 <<
+		((readl(&clock_manager_base->main_pll_nocdiv) >>
+			nocdivshift) & CLKMGR_MAINPLL_NOCDIV_MSK);
+
+	nocclk = readl(&clock_manager_base->main_pll_nocclk);
+	clk_src = (nocclk >> CLKMGR_MAINPLL_NOCCLK_SRC_LSB) &
+		CLKMGR_MAINPLL_NOCCLK_SRC_MSK;
+
+	dividor = 1 + (nocclk & CLKMGR_MAINPLL_NOCDIV_MSK);
+
+	if (clk_src == CLKMGR_PERPLLGRP_SRC_MAIN) {
+		src_hz = cm_get_main_vco();
+		src_hz /= 1 +
+		(readl(SOCFPGA_CLKMGR_ADDRESS+CLKMGR_MAINPLL_NOC_CLK_OFFSET)&
+		CLKMGR_MAINPLL_NOCCLK_CNT_MSK);
+	} else if (clk_src == CLKMGR_PERPLLGRP_SRC_PERI) {
+		src_hz = cm_get_peri_vco();
+		src_hz /= 1 +
+		((readl(SOCFPGA_CLKMGR_ADDRESS+CLKMGR_MAINPLL_NOC_CLK_OFFSET)>>
+			CLKMGR_MAINPLL_NOCCLK_PERICNT_LSB)&
+			CLKMGR_MAINPLL_NOCCLK_CNT_MSK);
+	} else if (clk_src == CLKMGR_PERPLLGRP_SRC_OSC1) {
+		src_hz = eosc1_hz;
+	} else if (clk_src == CLKMGR_PERPLLGRP_SRC_INTOSC) {
+		src_hz = cb_intosc_hz;
+	} else if (clk_src == CLKMGR_PERPLLGRP_SRC_FPGA) {
+		src_hz = f2s_free_hz;
+	} else {
+		src_hz = 0;
+	}
+	return src_hz/dividor/dividor2;
+}
+
 unsigned int cm_get_mmc_controller_clk_hz(void)
 {
-#ifdef TEST_AT_ASIMOV
-	return 50000000;
-#else	
-	return CONFIG_HPS_CLK_SDMMC_HZ/4;
-#endif
+	u32 clk_hz = 0;
+	u32 clk_input = readl(&clock_manager_base->per_pll_cntr6clk);
+	clk_input = (clk_input >> CLKMGR_PERPLL_CNTR6CLK_SRC_LSB) &
+		CLKMGR_PERPLLGRP_SRC_MSK;
+
+	switch (clk_input) {
+	case CLKMGR_PERPLLGRP_SRC_MAIN:
+		clk_hz = cm_get_main_vco();
+		clk_hz /= 1 + (readl(&clock_manager_base->main_pll_cntr6clk) &
+			CLKMGR_MAINPLL_CNTRCLK_MSK);
+		break;
+
+	case CLKMGR_PERPLLGRP_SRC_PERI:
+		clk_hz = cm_get_peri_vco();
+		clk_hz /= 1 + (readl(&clock_manager_base->per_pll_cntr6clk) &
+			CLKMGR_PERPLL_CNTRCLK_MSK);
+		break;
+
+	case CLKMGR_PERPLLGRP_SRC_OSC1:
+		clk_hz = eosc1_hz;
+		break;
+
+	case CLKMGR_PERPLLGRP_SRC_INTOSC:
+		clk_hz = cb_intosc_hz;
+		break;
+
+	case CLKMGR_PERPLLGRP_SRC_FPGA:
+		clk_hz = f2s_free_hz;
+		break;
+	}
+	return clk_hz/4;
 }
 
 struct mainpll_cfg {
@@ -69,6 +199,7 @@ struct mainpll_cfg {
 	u32 nocdiv_cstraceclk;
 	u32 nocdiv_cspdbclk;
 };
+
 struct perpll_cfg {
 	u32 vco0_psrc;
 	u32 vco1_denom;
@@ -98,6 +229,7 @@ struct strtou32 {
 	const char *str;
 	const u32 val;
 };
+
 static const struct strtou32 mailpll_cfg_tab[] = {
 	{ "vco0-psrc", offsetof(struct mainpll_cfg, vco0_psrc) },
 	{ "vco1-denom", offsetof(struct mainpll_cfg, vco1_denom) },
@@ -125,6 +257,7 @@ static const struct strtou32 mailpll_cfg_tab[] = {
 	{ "nocdiv-cstraceclk", offsetof(struct mainpll_cfg, nocdiv_cstraceclk) },
 	{ "nocdiv-cspdbclk", offsetof(struct mainpll_cfg, nocdiv_cspdbclk) },
 };
+
 static const struct strtou32 perpll_cfg_tab[] = {
 	{ "vco0-psrc", offsetof(struct perpll_cfg, vco0_psrc) },
 	{ "vco1-denom", offsetof(struct perpll_cfg, vco1_denom) },
@@ -150,10 +283,11 @@ static const struct strtou32 perpll_cfg_tab[] = {
 };
 
 int of_to_struct(const void *blob, int node, const struct strtou32* cfg_tab,
-	int cfg_tab_len, void *cfg)
+		 int cfg_tab_len, void *cfg)
 {
 	int i;
 	u32 val;
+
 	for (i = 0; i < cfg_tab_len; i++) {
 		if (fdtdec_get_int_array(blob, node, cfg_tab[i].str, &val, 1)) {
 			/* could not find required property */
@@ -161,13 +295,29 @@ int of_to_struct(const void *blob, int node, const struct strtou32* cfg_tab,
 		}
 		*(u32*)(cfg + cfg_tab[i].val) = val;
 	}
+
 	return 0;
 }
-int of_get_clk_cfg(const void *blob, struct mainpll_cfg* main_cfg,
-	struct perpll_cfg *per_cfg)
+
+static void of_get_input_clks(const void *blob)
+{
+	u32 val;
+	int node = fdt_path_offset(blob, "/clocks/arria10_hps_0_eosc1");
+
+	if (node < 0)
+		return;
+
+	if (!fdtdec_get_int_array(blob, node, "clock-frequency", &val, 1))
+		eosc1_hz = val;
+}
+
+static int of_get_clk_cfg(const void *blob, struct mainpll_cfg *main_cfg,
+			  struct perpll_cfg *per_cfg)
 {
 	int node, child, len;
 	const char *node_name;
+
+	of_get_input_clks(blob);
 
 	node = fdtdec_next_compatible(blob, 0, COMPAT_ARRIA10_CLK_INIT);
 
@@ -335,8 +485,8 @@ static int cm_full_cfg(struct mainpll_cfg *main_cfg, struct perpll_cfg *per_cfg)
 		&clock_manager_base->per_pll_vco0);
 
 	/* setup all the main PLL counter and clock source */
-	writel(main_cfg->nocclk, 
-		SOCFPGA_CLKMGR_ADDRESS + CLKMGR_MAINPLL_NOC_CLK_OFFSET);
+	writel(main_cfg->nocclk,
+	       SOCFPGA_CLKMGR_ADDRESS + CLKMGR_MAINPLL_NOC_CLK_OFFSET);
 
 	/* main_emaca_clk divider */
 	writel(main_cfg->cntr2clk_cnt, &clock_manager_base->main_pll_cntr2clk);
@@ -492,17 +642,36 @@ int cm_basic_init(const void *blob)
 {
 	struct mainpll_cfg main_cfg;
 	struct perpll_cfg per_cfg;
+	int rval;
 	if (of_get_clk_cfg(blob, &main_cfg, &per_cfg)) {
 		return 1;
 	}
 
-	return cm_full_cfg(&main_cfg, &per_cfg);
+	rval =  cm_full_cfg(&main_cfg, &per_cfg);
+
+	cm_l4_main_clk_hz =
+		cm_get_l4_noc_hz(CLKMGR_MAINPLL_NOCDIV_L4MAINCLK_LSB);
+
+	cm_l4_mp_clk_hz =
+		cm_get_l4_noc_hz(CLKMGR_MAINPLL_NOCDIV_L4MPCLK_LSB);
+
+	cm_l4_sp_clk_hz =
+		cm_get_l4_noc_hz(CLKMGR_MAINPLL_NOCDIV_L4SPCLK_LSB);
+
+	return rval;
 }
 
 static void cm_print_clock_quick_summary(void)
 {
-	printf("EOSC1       %8d kHz\n", CONFIG_HPS_CLK_OSC1_HZ / 1000);
+	printf("EOSC1       %8d kHz\n", eosc1_hz / 1000);
 	printf("MMC         %8d kHz\n", cm_get_mmc_controller_clk_hz() / 1000);
+	printf("Main VCO    %8d kHz\n", cm_get_main_vco()/1000);
+	printf("L4 Main	    %8d kHz\n",
+	       cm_get_l4_noc_hz(CLKMGR_MAINPLL_NOCDIV_L4MAINCLK_LSB)/1000);
+	printf("L4 MP       %8d kHz\n",
+	       cm_get_l4_noc_hz(CLKMGR_MAINPLL_NOCDIV_L4MPCLK_LSB)/1000);
+	printf("L4 SP       %8d kHz\n",
+	       cm_get_l4_noc_hz(CLKMGR_MAINPLL_NOCDIV_L4SPCLK_LSB)/1000);
 }
 
 int do_showclocks(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])

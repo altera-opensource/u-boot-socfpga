@@ -8,7 +8,7 @@
 #define __CONFIG_SOCFGPA_ARRIA10_H__
 
 #include <asm/arch/hardware.h>
-#include "../../board/altera/socfpga_arria10/pll_config.h"
+#include <asm/arch/clock_manager.h>
 #include "../../board/altera/socfpga_arria10/sdram_config.h"
 
 #include <config_cmd_default.h>
@@ -377,7 +377,7 @@
 #define CONFIG_CONS_INDEX               1
 #define CONFIG_SYS_NS16550_COM1		SOCFPGA_UART1_ADDRESS
 #define CONFIG_SYS_BAUDRATE_TABLE {4800, 9600, 19200, 38400, 57600, 115200}
-#define CONFIG_SYS_NS16550_CLK		CONFIG_HPS_CLK_UART_HZ
+#define CONFIG_SYS_NS16550_CLK		(cm_l4_sp_clk_hz)
 
 #define CONFIG_BAUDRATE			115200
 #endif /* CONFIG_SYS_NS16550 */
@@ -501,7 +501,7 @@
 #define CONFIG_SF_DEFAULT_MODE		SPI_MODE_3
 #define CONFIG_SPI_FLASH_QUAD		(1)
 /* QSPI reference clock */
-#define CONFIG_CQSPI_REF_CLK		CONFIG_HPS_CLK_QSPI_HZ
+#define CONFIG_CQSPI_REF_CLK		(cm_l4_main_clk_hz)
 /* QSPI page size and block size */
 #define CONFIG_CQSPI_PAGE_SIZE		(256)
 #define CONFIG_CQSPI_BLOCK_SIZE		(16)
