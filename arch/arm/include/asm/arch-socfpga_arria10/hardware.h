@@ -53,6 +53,8 @@
 #define SOCFPGA_PINMUX_FPGA_INTERFACE_ADDRESS	(0xffd07400)
 #define SOCFPGA_MPUSCU_ADDRESS			(0xffffc000)
 #define SOCFPGA_MPUL2_ADDRESS			(0xfffff000)
+#define SOCFPGA_I2C0_ADDRESS			(0xffc02200)
+#define SOCFPGA_I2C1_ADDRESS			(0xffc02300)
 #endif /***************** TEST_AT_ASIMOV *****************/
 
 #define SOCFPGA_ECC_OCRAM_ADDRESS		(0xff8c3000)

@@ -560,4 +560,20 @@
 
 #define CONFIG_SYS_GENERIC_BOARD
 
+
+/*
+ * I2C support
+ */
+#define CONFIG_HARD_I2C
+#define CONFIG_DW_I2C
+#define CONFIG_SYS_I2C_BASE             SOCFPGA_I2C1_ADDRESS
+/* using standard mode which the speed up to 100Kb/s) */
+#define CONFIG_SYS_I2C_SPEED            (100000)
+/* address of device when used as slave */
+#define CONFIG_SYS_I2C_SLAVE            (0x02)
+#define CONFIG_HPS_CLK_I2C_HZ		(cm_l4_sp_clk_hz)
+/* clock supplied to I2C controller in unit of MHz */
+#define IC_CLK                          (CONFIG_HPS_CLK_I2C_HZ / 1000000)
+#define CONFIG_CMD_I2C
+
 #endif	/* __CONFIG_H */
