@@ -584,33 +584,6 @@ void sdram_mmr_init(struct sdr_cfg *pcfg)
 		&socfpga_noc_ddr_scheduler_base->ddr_t_main_scheduler_devtodev);
 }
 
-/* quick check for firewall value */
-#if (CONFIG_HPS_SDR_MPU0_START > CONFIG_HPS_SDR_MPU0_END) | \
-(CONFIG_HPS_SDR_MPU1_START > CONFIG_HPS_SDR_MPU1_END) | \
-(CONFIG_HPS_SDR_MPU2_START > CONFIG_HPS_SDR_MPU2_END) | \
-(CONFIG_HPS_SDR_MPU3_START > CONFIG_HPS_SDR_MPU3_END) | \
-(CONFIG_HPS_SDR_HPS_L3_0_START > CONFIG_HPS_SDR_HPS_L3_0_END) | \
-(CONFIG_HPS_SDR_HPS_L3_1_START > CONFIG_HPS_SDR_HPS_L3_1_END) | \
-(CONFIG_HPS_SDR_HPS_L3_2_START > CONFIG_HPS_SDR_HPS_L3_2_END) | \
-(CONFIG_HPS_SDR_HPS_L3_3_START > CONFIG_HPS_SDR_HPS_L3_3_END) | \
-(CONFIG_HPS_SDR_HPS_L3_4_START > CONFIG_HPS_SDR_HPS_L3_4_END) | \
-(CONFIG_HPS_SDR_HPS_L3_5_START > CONFIG_HPS_SDR_HPS_L3_5_END) | \
-(CONFIG_HPS_SDR_HPS_L3_6_START > CONFIG_HPS_SDR_HPS_L3_6_END) | \
-(CONFIG_HPS_SDR_HPS_L3_7_START > CONFIG_HPS_SDR_HPS_L3_7_END) | \
-(CONFIG_HPS_SDR_FPGA2SDRAM0_0_START > CONFIG_HPS_SDR_FPGA2SDRAM0_0_END) | \
-(CONFIG_HPS_SDR_FPGA2SDRAM0_1_START > CONFIG_HPS_SDR_FPGA2SDRAM0_1_END) | \
-(CONFIG_HPS_SDR_FPGA2SDRAM0_2_START > CONFIG_HPS_SDR_FPGA2SDRAM0_2_END) | \
-(CONFIG_HPS_SDR_FPGA2SDRAM0_3_START > CONFIG_HPS_SDR_FPGA2SDRAM0_3_END) | \
-(CONFIG_HPS_SDR_FPGA2SDRAM1_0_START > CONFIG_HPS_SDR_FPGA2SDRAM1_0_END) | \
-(CONFIG_HPS_SDR_FPGA2SDRAM1_1_START > CONFIG_HPS_SDR_FPGA2SDRAM1_1_END) | \
-(CONFIG_HPS_SDR_FPGA2SDRAM1_2_START > CONFIG_HPS_SDR_FPGA2SDRAM1_2_END) | \
-(CONFIG_HPS_SDR_FPGA2SDRAM1_3_START > CONFIG_HPS_SDR_FPGA2SDRAM1_3_END) | \
-(CONFIG_HPS_SDR_FPGA2SDRAM2_0_START > CONFIG_HPS_SDR_FPGA2SDRAM2_0_END) | \
-(CONFIG_HPS_SDR_FPGA2SDRAM2_1_START > CONFIG_HPS_SDR_FPGA2SDRAM2_1_END) | \
-(CONFIG_HPS_SDR_FPGA2SDRAM2_2_START > CONFIG_HPS_SDR_FPGA2SDRAM2_2_END) | \
-(CONFIG_HPS_SDR_FPGA2SDRAM2_3_START > CONFIG_HPS_SDR_FPGA2SDRAM2_3_END)
-#error "sdram_config.h handoff file contain invalid DDR firewall value"
-#endif
 struct firewall_entry {
 	const char *prop_name;
 	const u32 cfg_addr;
@@ -847,7 +820,7 @@ const struct firewall_entry firewall_table[] = {
 
 };
 
-int of_sdram_firewall_setup(void *blob, int node)
+int of_sdram_firewall_setup(const void *blob, int node)
 {
 	int child, i;
 	u32 start_end[2];
@@ -876,217 +849,10 @@ int of_sdram_firewall_setup(void *blob, int node)
 	return 0;
 }
 
-/* Function to initialize SDRAM MMR and NOC DDR scheduler*/
-void sdram_firewall_setup(void)
-{
-	/* set to default state */
-	writel(0, &socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable);
-	writel(0, &socfpga_noc_fw_ddr_l3_base->enable);
-
-	/* setup MPU region firewall */
-#if (CONFIG_HPS_SDR_MPU0_ENABLE)
-	writel((CONFIG_HPS_SDR_MPU0_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_MPU0_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->mpuregion0addr);
-	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_MPUREG0EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_MPU1_ENABLE)
-	writel((CONFIG_HPS_SDR_MPU1_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_MPU1_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->mpuregion1addr);
-	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_MPUREG1EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_MPU2_ENABLE)
-	writel((CONFIG_HPS_SDR_MPU2_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_MPU2_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->mpuregion2addr);
-	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_MPUREG2EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_MPU3_ENABLE)
-	writel((CONFIG_HPS_SDR_MPU3_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_MPU3_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->mpuregion3addr);
-	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_MPUREG3EN_SET_MSK);
-#endif
-
-	/* setup HPS L3 region firewall */
-#if (CONFIG_HPS_SDR_HPS_L3_0_ENABLE)
-	writel((CONFIG_HPS_SDR_HPS_L3_0_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_HPS_L3_0_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_l3_base->hpsregion0addr);
-	setbits_le32(&socfpga_noc_fw_ddr_l3_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_HPSREG0EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_HPS_L3_1_ENABLE)
-	writel((CONFIG_HPS_SDR_HPS_L3_1_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_HPS_L3_1_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_l3_base->hpsregion1addr);
-	setbits_le32(&socfpga_noc_fw_ddr_l3_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_HPSREG1EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_HPS_L3_2_ENABLE)
-	writel((CONFIG_HPS_SDR_HPS_L3_2_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_HPS_L3_2_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_l3_base->hpsregion2addr);
-	setbits_le32(&socfpga_noc_fw_ddr_l3_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_HPSREG2EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_HPS_L3_3_ENABLE)
-	writel((CONFIG_HPS_SDR_HPS_L3_3_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_HPS_L3_3_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_l3_base->hpsregion3addr);
-	setbits_le32(&socfpga_noc_fw_ddr_l3_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_HPSREG3EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_HPS_L3_4_ENABLE)
-	writel((CONFIG_HPS_SDR_HPS_L3_4_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_HPS_L3_4_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_l3_base->hpsregion4addr);
-	setbits_le32(&socfpga_noc_fw_ddr_l3_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_HPSREG4EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_HPS_L3_5_ENABLE)
-	writel((CONFIG_HPS_SDR_HPS_L3_5_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_HPS_L3_5_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_l3_base->hpsregion5addr);
-	setbits_le32(&socfpga_noc_fw_ddr_l3_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_HPSREG5EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_HPS_L3_6_ENABLE)
-	writel((CONFIG_HPS_SDR_HPS_L3_6_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_HPS_L3_6_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_l3_base->hpsregion6addr);
-	setbits_le32(&socfpga_noc_fw_ddr_l3_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_HPSREG6EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_HPS_L3_7_ENABLE)
-	writel((CONFIG_HPS_SDR_HPS_L3_7_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_HPS_L3_7_END << ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_l3_base->hpsregion7addr);
-	setbits_le32(&socfpga_noc_fw_ddr_l3_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_HPSREG7EN_SET_MSK);
-#endif
-
-	/* setup FPGA region firewall */
-#if (CONFIG_HPS_SDR_FPGA2SDRAM0_0_ENABLE)
-	writel((CONFIG_HPS_SDR_FPGA2SDRAM0_0_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_FPGA2SDRAM0_0_END
-			<< ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
-			fpga2sdram0region0addr);
-	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG0EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_FPGA2SDRAM0_1_ENABLE)
-	writel((CONFIG_HPS_SDR_FPGA2SDRAM0_1_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_FPGA2SDRAM0_1_END
-			<< ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
-			fpga2sdram0region1addr);
-	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG1EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_FPGA2SDRAM0_2_ENABLE)
-	writel((CONFIG_HPS_SDR_FPGA2SDRAM0_2_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-	       (CONFIG_HPS_SDR_FPGA2SDRAM0_2_END
-			<< ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
-			fpga2sdram0region2addr);
-	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG2EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_FPGA2SDRAM0_3_ENABLE)
-	writel((CONFIG_HPS_SDR_FPGA2SDRAM0_3_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_FPGA2SDRAM0_3_END
-			<< ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
-			fpga2sdram0region3addr);
-	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_F2SDR0REG3EN_SET_MSK);
-#endif
-
-#if (CONFIG_HPS_SDR_FPGA2SDRAM1_0_ENABLE)
-	writel((CONFIG_HPS_SDR_FPGA2SDRAM1_0_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_FPGA2SDRAM1_0_END
-			<< ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
-			fpga2sdram1region0addr);
-	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG0EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_FPGA2SDRAM1_1_ENABLE)
-	writel((CONFIG_HPS_SDR_FPGA2SDRAM1_1_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_FPGA2SDRAM1_1_END
-			<< ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
-			fpga2sdram1region1addr);
-	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG1EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_FPGA2SDRAM1_2_ENABLE)
-	writel((CONFIG_HPS_SDR_FPGA2SDRAM1_2_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_FPGA2SDRAM1_2_END
-			<< ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
-			fpga2sdram1region2addr);
-	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG2EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_FPGA2SDRAM1_3_ENABLE)
-	writel((CONFIG_HPS_SDR_FPGA2SDRAM1_3_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_FPGA2SDRAM1_3_END
-			<< ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
-			fpga2sdram1region3addr);
-	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_F2SDR1REG3EN_SET_MSK);
-#endif
-
-#if (CONFIG_HPS_SDR_FPGA2SDRAM2_0_ENABLE)
-	writel((CONFIG_HPS_SDR_FPGA2SDRAM2_0_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_FPGA2SDRAM2_0_END
-			<< ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
-			fpga2sdram2region0addr);
-	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG0EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_FPGA2SDRAM2_1_ENABLE)
-	writel((CONFIG_HPS_SDR_FPGA2SDRAM2_1_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_FPGA2SDRAM2_1_END
-			<< ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
-			fpga2sdram2region1addr);
-	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG1EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_FPGA2SDRAM2_2_ENABLE)
-	writel((CONFIG_HPS_SDR_FPGA2SDRAM2_2_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_FPGA2SDRAM2_2_END
-			<< ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
-			fpga2sdram2region2addr);
-	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG2EN_SET_MSK);
-#endif
-#if (CONFIG_HPS_SDR_FPGA2SDRAM2_3_ENABLE)
-	writel((CONFIG_HPS_SDR_FPGA2SDRAM2_3_START & ALT_NOC_FW_DDR_ADDR_MASK) |
-		(CONFIG_HPS_SDR_FPGA2SDRAM2_3_END
-			<< ALT_NOC_FW_DDR_END_ADDR_LSB),
-		&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->
-			fpga2sdram2region3addr);
-	setbits_le32(&socfpga_noc_fw_ddr_mpu_fpga2sdram_base->enable,
-		     ALT_NOC_FW_DDR_SCR_EN_F2SDR2REG3EN_SET_MSK);
-#endif
-}
-
 int ddr_calibration_sequence(void)
 {
 	struct sdr_cfg cfg;
+	int node;
 
 	if (!is_fpgamgr_user_mode()) {
 		printf("fpga not configured!\n");
@@ -1096,7 +862,7 @@ int ddr_calibration_sequence(void)
 	WATCHDOG_RESET();
 
 
-	of_get_sdr_cfg(gd->fdt_blob, &cfg);
+	node = of_get_sdr_cfg(gd->fdt_blob, &cfg);
 
 	/* Check to see if SDRAM cal was success */
 	if (sdram_startup()) {
@@ -1121,8 +887,8 @@ int ddr_calibration_sequence(void)
 	/* setup the dram info within bd */
 	dram_init_banksize();
 
-	/* setup the firewall for DDR */
-	sdram_firewall_setup();
+	if (node > 0)
+		of_sdram_firewall_setup(gd->fdt_blob, node);
 
 	return 0;
 }

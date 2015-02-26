@@ -9,7 +9,6 @@
 
 #include <asm/arch/hardware.h>
 #include <asm/arch/clock_manager.h>
-#include "../../board/altera/socfpga_arria10/sdram_config.h"
 
 #include <config_cmd_default.h>
 
