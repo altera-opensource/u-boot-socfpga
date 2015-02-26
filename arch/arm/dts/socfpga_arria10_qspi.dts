@@ -11,7 +11,7 @@
 
 
 	chosen {
-		cff-file = "soc_system.rbf";
+		/* external-fpga-config; */
 	};
 
 	clocks {

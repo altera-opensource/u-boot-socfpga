@@ -14,6 +14,7 @@
 #include <asm/arch/dwmmc.h>
 #include <altera.h>
 #include <dwmmc.h>
+#include <fdtdec.h>
 #include <fpga.h>
 #include <mmc.h>
 #include <netdev.h>
@@ -166,3 +167,16 @@ void skip_relocation(void)
 	board_init_r(id, (CONFIG_SYS_INIT_SP_ADDR - CONFIG_OCRAM_STACK_SIZE));
 }
 
+int is_external_fpga_config(const void *blob)
+{
+	int node, len;
+	int rval = 0;
+
+	node = fdt_subnode_offset(blob, 0, "chosen");
+	if (node >= 0) {
+		if (fdt_getprop(blob, node, "external-fpga-config", &len))
+			rval = 1;
+	}
+
+	return rval;
+}

@@ -8,6 +8,8 @@
 #include <common.h>
 #include <asm/io.h>
 #include <asm/arch/fpga_manager.h>
+#include <asm/arch/reset_manager.h>
+#include <asm/arch/misc.h>
 #include <fat.h>
 #include <fs.h>
 #include <mmc.h>
@@ -19,7 +21,7 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 #ifdef CONFIG_MMC
-static const char *get_cff_filename(const void *fdt, int *len)
+const char *get_cff_filename(const void *fdt, int *len)
 {
 	const char *cff_filename = NULL;
 	const char *cell;
@@ -336,10 +338,14 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 
 		ret = cff_from_mmc_fat(fsinfo->dev_part, fsinfo->filename,
 				       slen);
-		if (ret > 0)
+		if (ret > 0) {
+			config_shared_fpga_pins(gd->fdt_blob);
+			reset_deassert_shared_connected_peripherals();
+			reset_deassert_fpga_connected_peripherals();
 			return FPGA_SUCCESS;
-		else
+		} else {
 			return FPGA_FAIL;
+		}
 	}
 #endif
 #ifdef CONFIG_CADENCE_QSPI
@@ -348,6 +354,9 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 		u32 rbfaddr = simple_strtoul(fsinfo->dev_part, NULL, 16);
 		ret = cff_from_qspi(rbfaddr);
 		if (ret > 0)
+			config_shared_fpga_pins(gd->fdt_blob);
+			reset_deassert_shared_connected_peripherals();
+			reset_deassert_fpga_connected_peripherals();
 			return FPGA_SUCCESS;
 		else
 			return FPGA_FAIL;

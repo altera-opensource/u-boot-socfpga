@@ -18,7 +18,6 @@
 #include <asm/arch/sdram.h>
 #include <asm/arch/system_manager.h>
 
-int config_shared_fpga_pins(const void *blob);
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1096,18 +1095,6 @@ int ddr_calibration_sequence(void)
 
 	WATCHDOG_RESET();
 
-	reset_assert_uart();
-
-	config_shared_fpga_pins(gd->fdt_blob);
-
-	reset_deassert_uart();
-	reset_deassert_shared_connected_peripherals();
-	reset_deassert_fpga_connected_peripherals();
-
-	NS16550_init((NS16550_t)CONFIG_SYS_NS16550_COM1,
-		     ns16550_calc_divisor((NS16550_t)CONFIG_SYS_NS16550_COM1,
-					   CONFIG_SYS_NS16550_CLK,
-					   CONFIG_BAUDRATE));
 
 	of_get_sdr_cfg(gd->fdt_blob, &cfg);
 
@@ -1145,6 +1132,7 @@ int dram_init(void)
 {
 	bd_t *bd;
 	unsigned long addr;
+	int rval = 0;
 
 	WATCHDOG_RESET();
 
@@ -1179,18 +1167,38 @@ int dram_init(void)
 		- CONFIG_OCRAM_STACK_SIZE - CONFIG_OCRAM_MALLOC_SIZE;
 	mem_malloc_init(malloc_start, CONFIG_OCRAM_MALLOC_SIZE);
 
-#ifdef CONFIG_MMC
-	mmc_initialize(gd->bd);
+	if (is_external_fpga_config(gd->fdt_blob)) {
+		ddr_calibration_sequence();
+	} else {
+#if defined(CONFIG_MMC)
+		int len = 0;
+		const char *cff = get_cff_filename(gd->fdt_blob, &len);
+		if (cff && (len > 0)) {
+			mmc_initialize(gd->bd);
 
-	cff_from_mmc_fat_dt();
+			rval = cff_from_mmc_fat("0:1", cff, len);
+		}
+#elif defined(CONFIG_CADENCE_QSPI)
+		rval = cff_from_qspi_env();
+#else
+#error "unsupported config"
 #endif
-#ifdef CONFIG_CADENCE_QSPI
-	/* do I need this if, or just superflous? */
-	if (!is_fpgamgr_user_mode())
-		cff_from_qspi_env();
-#endif
+		if (rval > 0) {
+			reset_assert_uart();
+			config_shared_fpga_pins(gd->fdt_blob);
+			reset_deassert_uart();
 
-	ddr_calibration_sequence();
+			reset_deassert_shared_connected_peripherals();
+			reset_deassert_fpga_connected_peripherals();
+			NS16550_init((NS16550_t)CONFIG_SYS_NS16550_COM1,
+				     ns16550_calc_divisor(
+					     (NS16550_t)CONFIG_SYS_NS16550_COM1,
+					     CONFIG_SYS_NS16550_CLK,
+					     CONFIG_BAUDRATE));
+
+			ddr_calibration_sequence();
+		}
+	}
 
 	/* Skip relocation as U-Boot cannot run on SDRAM for secure boot */
 	skip_relocation();
@@ -1222,4 +1230,3 @@ void dram_bank_mmu_setup(int bank)
 	set_section_dcache(i, DCACHE_WRITEBACK);
 #endif
 }
-

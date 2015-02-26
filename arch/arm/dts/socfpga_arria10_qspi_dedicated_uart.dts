@@ -11,6 +11,7 @@
 
 
 	chosen {
+		/* external-fpga-config; */
 	};
 
 	clocks {

@@ -7,10 +7,12 @@
 #include <common.h>
 #include <asm/io.h>
 #include <watchdog.h>
+#include <asm/arch/fpga_manager.h>
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/system_manager.h>
 #include <asm/arch/clock_manager.h>
 #include <asm/arch/ecc_ram.h>
+#include <asm/arch/misc.h>
 #include <asm/arch/sdram.h>
 #include <asm/sections.h>
 #include <fdtdec.h>
@@ -184,7 +186,12 @@ void s_init(void)
 	/* configure the Reset Manager */
 	reset_deassert_dedicated_peripherals();
 
-	/* If fpga is already loaded, calibrate ddr and enable
-	   fpga bridges */
-	ddr_calibration_sequence();
+	if (is_external_fpga_config(gd->fdt_blob)) {
+		while (!is_fpgamgr_user_mode())
+			;
+
+		config_shared_fpga_pins(gd->fdt_blob);
+		reset_deassert_shared_connected_peripherals();
+		reset_deassert_fpga_connected_peripherals();
+	}
 }

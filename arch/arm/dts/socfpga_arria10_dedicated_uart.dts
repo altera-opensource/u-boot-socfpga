@@ -13,6 +13,7 @@
 	chosen {
 		cff-file = "ghrd_10as066n2.periph.rbf",
 			"ghrd_10as066n2.core.rbf";
+		/* external-fpga-config; */
 	};
 
 	clocks {
