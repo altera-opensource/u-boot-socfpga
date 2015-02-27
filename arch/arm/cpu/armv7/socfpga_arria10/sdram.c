@@ -287,14 +287,7 @@ struct of_sdr_cfg {
 	const u32 offset;
 };
 const struct of_sdr_cfg sdr_cfg_tab[] = {
-	{ "serrcnt", offsetof(struct sdr_cfg, serrcnt) },
 	{ "io-size", offsetof(struct sdr_cfg, io_size) },
-	{ "ddrconf", offsetof(struct sdr_cfg, ddrconf) },
-	{ "ddrtiming", offsetof(struct sdr_cfg, ddrtiming) },
-	{ "ddrmode", offsetof(struct sdr_cfg, ddrmode) },
-	{ "readlatency", offsetof(struct sdr_cfg, readlatency) },
-	{ "activate", offsetof(struct sdr_cfg, activate) },
-	{ "devtodev", offsetof(struct sdr_cfg, devtodev) },
 };
 
 static int of_get_sdr_cfg(const void *blob, struct sdr_cfg *cfg)

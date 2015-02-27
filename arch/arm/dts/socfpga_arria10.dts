@@ -228,14 +228,7 @@
 
 	sdram@0xffcfb000 {
 		compatible = "altr,arria10-sdr-ctl";
-		serrcnt = <8>;
 		io-size = <1>;
-		ddrconf = <0>;
-		ddrtiming = <0xbeefcafe>;
-		ddrmode = <0>;
-		readlatency = <0x13>;
-		activate = <0x1>;
-		devtodev = <0xdeadbeef>;
 		firewall {
 			/* existance of property implies it is enabled */
 			/* values are <start end> */
