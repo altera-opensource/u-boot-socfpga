@@ -300,9 +300,12 @@
 /* Enable overwrite of previous console environment settings */
 #define CONFIG_SYS_CONSOLE_ENV_OVERWRITE
 /* Environment from flash not allowed as not secure */
-#define CONFIG_ENV_IS_NOWHERE
 /* Environtment import command not allowed as not secure too */
 #undef CONFIG_CMD_IMPORTENV
+
+#define CONFIG_ENV_IS_IN_MMC
+#define CONFIG_SYS_MMC_ENV_DEV		0/* device 0 */
+#define CONFIG_ENV_OFFSET		512/* just after the MBR */
 
 /*
  * Console setup
