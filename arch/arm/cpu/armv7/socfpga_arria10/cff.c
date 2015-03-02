@@ -353,13 +353,14 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 		int ret;
 		u32 rbfaddr = simple_strtoul(fsinfo->dev_part, NULL, 16);
 		ret = cff_from_qspi(rbfaddr);
-		if (ret > 0)
+		if (ret > 0) {
 			config_shared_fpga_pins(gd->fdt_blob);
 			reset_deassert_shared_connected_peripherals();
 			reset_deassert_fpga_connected_peripherals();
 			return FPGA_SUCCESS;
-		else
+		} else {
 			return FPGA_FAIL;
+		}
 	}
 #endif
 
