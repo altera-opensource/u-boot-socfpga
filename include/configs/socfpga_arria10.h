@@ -17,7 +17,7 @@
 /*
  * Device tree info
  */
-#define CONFIG_UBOOT_DTB_SIZE		(16 * 1024)
+#define CONFIG_UBOOT_DTB_SIZE		(10 * 1024)
 #undef CONFIG_SEMIHOSTING
 /*
  * High level configuration
@@ -553,7 +553,7 @@
 
 /* size of stack and malloc in ocram */
 #ifdef CONFIG_DESIGNWARE_ETH
-#define CONFIG_OCRAM_MALLOC_SIZE	(24 * 1024)
+#define CONFIG_OCRAM_MALLOC_SIZE	(35 * 1024)
 #else
 #define CONFIG_OCRAM_MALLOC_SIZE	(16 * 1024)
 #endif
