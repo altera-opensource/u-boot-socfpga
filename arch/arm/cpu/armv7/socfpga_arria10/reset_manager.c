@@ -249,6 +249,7 @@ void reset_deassert_dedicated_peripherals(void)
 #else
 #error "unsupported dedicated peripherals"
 #endif
+	mask |= ALT_RSTMGR_PER0MODRST_DMAECC_SET_MSK;
 
 	/* enable ECC OCP first */
 	clrbits_le32(&reset_manager_base->per0modrst, mask);
@@ -263,6 +264,8 @@ void reset_deassert_dedicated_peripherals(void)
 #else
 #error "unsupported dedicated peripherals"
 #endif
+	mask |= ALT_RSTMGR_PER0MODRST_DMA_SET_MSK;
+
 	clrbits_le32(&reset_manager_base->per0modrst, mask);
 
 	mask = ALT_RSTMGR_PER1MODRST_L4SYSTMR0_SET_MSK;
