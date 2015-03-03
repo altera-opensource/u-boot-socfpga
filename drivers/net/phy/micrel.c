@@ -478,7 +478,6 @@ int ksz9031_config_init(struct phy_device *phydev)
 		ksz9031_set_txdx_skew(phydev, i, txdx_skew_regval[i]);
 	}
 
-	dump_skew_values("final\n", phydev);
 
 	/* Be sure to disable asym pause since if enabled, the ksz9031 is not
 	 * able to establish a link in some cases. There is an errata for
