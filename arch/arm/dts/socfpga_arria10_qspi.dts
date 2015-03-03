@@ -154,7 +154,7 @@
 	};
 
 	clock_manager@ffd04000 {
-		compatible = "altr,arria10-clk-init";
+		compatible = "altr,socfpga-a10-clk-init";
 
 		mainpll {
 			vco0-psrc = <0>;
@@ -209,25 +209,9 @@
 		};
 	};
 
-	reset_manager@0xffd05000 {
-		compatible = "socfpga_arria10,reset_manager";
-		/* 1 mean particular IP need to be kept under reset state */
-		noc-mask = <0xdeadbeef>;
-		bridge-mod-mask = <0xdeadbeef>;
-		peripheral-mod-mask = <0xdeadbeef 0xdeadbeef>;
-		hdsken-mask = <0xdeadbeef>;
-	};
-
 	sdram@0xffcfb000 {
-		compatible = "altr,arria10-sdr-ctl";
-		serrcnt = <8>;
+		compatible = "altr,socfpga-a10-sdr-ctl";
 		io-size = <1>;
-		ddrconf = <0>;
-		ddrtiming = <0xbeefcafe>;
-		ddrmode = <0>;
-		readlatency = <0x13>;
-		activate = <0x1>;
-		devtodev = <0xdeadbeef>;
 		firewall {
 			/* existance of property implies it is enabled */
 			/* values are <start end> */
