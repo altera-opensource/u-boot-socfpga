@@ -303,10 +303,6 @@
 /* Environtment import command not allowed as not secure too */
 #undef CONFIG_CMD_IMPORTENV
 
-#define CONFIG_ENV_IS_IN_MMC
-#define CONFIG_SYS_MMC_ENV_DEV		0/* device 0 */
-#define CONFIG_ENV_OFFSET		512/* just after the MBR */
-
 /*
  * Console setup
  */
@@ -463,6 +459,11 @@
  */
 
 #ifdef CONFIG_MMC
+
+#define CONFIG_ENV_IS_IN_MMC
+#define CONFIG_SYS_MMC_ENV_DEV		0/* device 0 */
+#define CONFIG_ENV_OFFSET		512/* just after the MBR */
+
 #define CONFIG_CMD_FAT
 #define CONFIG_CMD_MMC
 /* Enable FAT write support */
@@ -492,6 +493,7 @@
 #define CONFIG_CQSPI_BASE		(SOCFPGA_QSPIREGS_ADDRESS)
 #define CONFIG_CQSPI_AHB_BASE		(SOCFPGA_QSPIDATA_ADDRESS)
 #ifdef CONFIG_CADENCE_QSPI
+#define CONFIG_ENV_IS_NOWHERE
 #define CONFIG_QSPI_RBF_ADDR 		0x720000
 #define CONFIG_SPI_FLASH		/* SPI flash subsystem */
 #define CONFIG_SPI_FLASH_STMICRO	/* Micron/Numonyx flash */
