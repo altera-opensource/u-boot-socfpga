@@ -263,19 +263,6 @@
 		"bootz ${loadaddr} - ${fdtaddr}\0" \
 	"bootcmd=" CONFIG_BOOTCOMMAND "\0" \
 	"fpga=0\0" \
-	"ipaddr=192.199.1.2\0" \
-	"txen-skew-ps=0\0" \
-	"rxdv-skew-ps=0\0" \
-	"rxc-skew-ps=0\0" \
-	"txc-skew-ps=0\0" \
-	"rxd0-skew-ps=0\0" \
-	"rxd1-skew-ps=0\0" \
-	"rxd2-skew-ps=0\0" \
-	"rxd3-skew-ps=0\0" \
-	"txd0-skew-ps=0\0" \
-	"txd1-skew-ps=0\0" \
-	"txd2-skew-ps=0\0" \
-	"txd3-skew-ps=0\0" \
 	"fpgadata=0x2000000\0" \
 	"fpgadatasize=0x700000\0" \
 	CONFIG_KSZ9021_CLK_SKEW_ENV "=" \
