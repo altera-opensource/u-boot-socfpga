@@ -97,11 +97,11 @@ enum fdt_compat_id {
 	COMPAT_SAMSUNG_EXYNOS_SYSMMU,	/* Exynos sysmmu */
 	COMPAT_PARADE_PS8625,		/* Parade PS8622 EDP->LVDS bridge */
 	COMPAT_PINCTRL_SINGLE,		/* pinctrl-single */
-	COMPAT_ARRIA10_SDR_CTL,		/* Arria10 SDRAM controller */
 	COMPAT_ARRIA10_CLK_INIT,	/* Arria10 Clock initialization */
 	COMPAT_ARRIA10_H2F_BRG,		/* Arria10 hps2fpga bridge */
 	COMPAT_ARRIA10_LWH2F_BRG,	/* Arria10 lwhps2fpga bridge */
 	COMPAT_ARRIA10_F2H_BRG,		/* Arria10 fpga2hps bridge */
+	COMPAT_ARRIA10_NOC,		/* Arria10 NOC */
 
 	COMPAT_COUNT,
 };

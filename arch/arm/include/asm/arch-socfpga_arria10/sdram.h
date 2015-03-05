@@ -291,17 +291,6 @@ union caltiming9_reg {
 	u32 word;
 };
 
-struct sdr_cfg {
-	u32 ecc_en;
-	u32 serrcnt;
-	u32 io_size;
-	u32 ddrconf;
-	u32 ddrtiming;
-	u32 ddrmode;
-	u32 readlatency;
-	u32 activate;
-	u32 devtodev;
-};
 #endif /* __ASSEMBLY__ */
 
 #define ALT_ECC_HMC_OCP_DDRIOCTRL_IO_SIZE_MSK		0x00000003
@@ -371,7 +360,7 @@ struct sdr_cfg {
 /* function declaration */
 void irq_handler_ecc_sdram(void *arg);
 void sdram_enable_interrupt(unsigned enable);
-void sdram_mmr_init(struct sdr_cfg *pcfg);
+void sdram_mmr_init(void);
 void sdram_firewall_setup(void);
 int is_sdram_cal_success(void);
 int ddr_calibration_sequence(void);

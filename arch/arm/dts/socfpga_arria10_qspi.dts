@@ -209,9 +209,9 @@
 		};
 	};
 
-	sdram@0xffcfb000 {
-		compatible = "altr,socfpga-a10-sdr-ctl";
-		io-size = <1>;
+
+	i_noc: noc@0xffd10000 {
+		compatible = "altr,socfpga-a10-noc";
 		firewall {
 			/* existance of property implies it is enabled */
 			/* values are <start end> */

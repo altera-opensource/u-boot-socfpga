@@ -282,48 +282,6 @@ int ddr_setup_workaround(void)
 
 unsigned long irq_cnt_ecc_sdram;
 
-struct of_sdr_cfg {
-	const char *prop_name;
-	const u32 offset;
-};
-const struct of_sdr_cfg sdr_cfg_tab[] = {
-	{ "io-size", offsetof(struct sdr_cfg, io_size) },
-};
-
-static int of_get_sdr_cfg(const void *blob, struct sdr_cfg *cfg)
-{
-	int node, err, i;
-	u32 val;
-	void *vcfg = cfg;
-
-	memset(cfg, 0, sizeof(*cfg));
-
-	node = fdtdec_next_compatible(blob, 0, COMPAT_ARRIA10_SDR_CTL);
-
-	if (node < 0) {
-		printf("failed to find %s compatible field\n",
-		       fdtdec_get_compatible(COMPAT_ARRIA10_SDR_CTL));
-		return -1;
-	}
-
-	if (fdt_getprop(blob, node, "ecc-en", NULL))
-		cfg->ecc_en = 1;
-	else
-		cfg->ecc_en = 0;
-
-	for (i = 0; i < ARRAY_SIZE(sdr_cfg_tab); i++) {
-		err = fdtdec_get_int_array(blob, node,
-			sdr_cfg_tab[i].prop_name, &val, 1);
-		if (err) {
-			printf("failed to find %s %d\n",
-			       sdr_cfg_tab[i].prop_name, err);
-			continue;
-		}
-		*(u32 *)(vcfg +  sdr_cfg_tab[i].offset) = val;
-	}
-	return node;
-}
-
 /* Enable and disable SDRAM interrupt */
 void sdram_enable_interrupt(unsigned enable)
 {
@@ -423,7 +381,7 @@ u32 sdram_size_calc(void)
 }
 
 /* Function to initialize SDRAM MMR and NOC DDR scheduler*/
-void sdram_mmr_init(struct sdr_cfg *pcfg)
+void sdram_mmr_init(void)
 {
 	u32 update_value, io48_value;
 	union ctrlcfg0_reg ctrlcfg0 =
@@ -464,9 +422,6 @@ void sdram_mmr_init(struct sdr_cfg *pcfg)
 		update_value = readl(&socfpga_io48_mmr_base->niosreserve0);
 		writel(((update_value & 0xFF) >> 5),
 		       &socfpga_ecc_hmc_base->ddrioctrl);
-	} else {
-		writel(pcfg->io_size, &socfpga_ecc_hmc_base->ddrioctrl);
-		puts("DDR Size Using DT\n");
 	}
 
 	ddrioctl = readl(&socfpga_ecc_hmc_base->ddrioctrl);
@@ -813,10 +768,14 @@ const struct firewall_entry firewall_table[] = {
 
 };
 
-int of_sdram_firewall_setup(const void *blob, int node)
+int of_sdram_firewall_setup(const void *blob)
 {
-	int child, i;
+	int child, i, node;
 	u32 start_end[2];
+
+	node = fdtdec_next_compatible(blob, 0, COMPAT_ARRIA10_NOC);
+	if (node < 0)
+		return 2;
 
 	child = fdt_first_subnode(blob, node);
 	if (child < 0)
@@ -844,8 +803,6 @@ int of_sdram_firewall_setup(const void *blob, int node)
 
 int ddr_calibration_sequence(void)
 {
-	struct sdr_cfg cfg;
-	int node;
 
 	if (!is_fpgamgr_user_mode()) {
 		printf("fpga not configured!\n");
@@ -853,9 +810,6 @@ int ddr_calibration_sequence(void)
 	}
 
 	WATCHDOG_RESET();
-
-
-	node = of_get_sdr_cfg(gd->fdt_blob, &cfg);
 
 	/* Check to see if SDRAM cal was success */
 	if (sdram_startup()) {
@@ -868,7 +822,7 @@ int ddr_calibration_sequence(void)
 	WATCHDOG_RESET();
 
 	/* initialize the MMR register */
-	sdram_mmr_init(&cfg);
+	sdram_mmr_init();
 
 	/* assigning the SDRAM size */
 	gd->ram_size = sdram_size_calc();
@@ -880,8 +834,7 @@ int ddr_calibration_sequence(void)
 	/* setup the dram info within bd */
 	dram_init_banksize();
 
-	if (node > 0)
-		of_sdram_firewall_setup(gd->fdt_blob, node);
+	of_sdram_firewall_setup(gd->fdt_blob);
 
 	return 0;
 }
