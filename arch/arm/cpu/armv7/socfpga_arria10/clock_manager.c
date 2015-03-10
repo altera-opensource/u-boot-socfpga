@@ -417,17 +417,20 @@ static int cm_full_cfg(struct mainpll_cfg *main_cfg, struct perpll_cfg *per_cfg)
 		CLKMGR_CLKMGR_STAT_BOOTCLKSRC_SET_MSK) == 0) {
 		/* non secure clock */
 		writel(CLKMGR_MAINPLL_VCO0_RESET |
+			CLKMGR_MAINPLL_VCO0_REGEXTSEL_SET_MSK |
 			(main_cfg->vco0_psrc <<
 				CLKMGR_MAINPLL_VCO0_PSRC_LSB),
 			&clock_manager_base->main_pll_vco0);
 	} else {
 		/* secure clock always use int_osc */
 		writel(CLKMGR_MAINPLL_VCO0_RESET |
+			CLKMGR_MAINPLL_VCO0_REGEXTSEL_SET_MSK |
 			(CLKMGR_MAINPLL_VCO0_PSRC_E_INTOSC <<
 				CLKMGR_MAINPLL_VCO0_PSRC_LSB),
 			&clock_manager_base->main_pll_vco0);
 	}
 	writel(CLKMGR_PERPLL_VCO0_RESET |
+		CLKMGR_PERPLL_VCO0_REGEXTSEL_SET_MSK |
 		(per_cfg->vco0_psrc <<
 			CLKMGR_PERPLL_VCO0_PSRC_LSB),
 		&clock_manager_base->per_pll_vco0);
