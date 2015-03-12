@@ -299,16 +299,28 @@ int of_to_struct(const void *blob, int node, const struct strtou32* cfg_tab,
 	return 0;
 }
 
+struct strtopu32 {
+	const char *str;
+	u32 *p;
+};
+const struct strtopu32 dt_to_val[] = {
+	{"/clocks/arria10_hps_0_eosc1", &eosc1_hz},
+	{"/clocks/altera_cb_intosc_ls", &cb_intosc_hz},
+	{"/clocks/altera_arria10_hps_f2h_free", &f2s_free_hz},
+};
 static void of_get_input_clks(const void *blob)
 {
-	u32 val;
-	int node = fdt_path_offset(blob, "/clocks/arria10_hps_0_eosc1");
+	int node, i;
 
-	if (node < 0)
-		return;
+	for (i = 0; i < ARRAY_SIZE(dt_to_val); i++) {
+		node = fdt_path_offset(blob, dt_to_val[i].str);
 
-	if (!fdtdec_get_int_array(blob, node, "clock-frequency", &val, 1))
-		eosc1_hz = val;
+		if (node < 0)
+			continue;
+
+		fdtdec_get_int_array(blob, node, "clock-frequency",
+			dt_to_val[i].p, 1);
+	}
 }
 
 static int of_get_clk_cfg(const void *blob, struct mainpll_cfg *main_cfg,
@@ -667,6 +679,8 @@ int cm_basic_init(const void *blob)
 static void cm_print_clock_quick_summary(void)
 {
 	printf("EOSC1       %8d kHz\n", eosc1_hz / 1000);
+	printf("cb_intosc   %8d kHz\n", cb_intosc_hz / 1000);
+	printf("f2s_free    %8d kHz\n", f2s_free_hz / 1000);
 	printf("MMC         %8d kHz\n", cm_get_mmc_controller_clk_hz() / 1000);
 	printf("Main VCO    %8d kHz\n", cm_get_main_vco()/1000);
 	printf("L4 Main	    %8d kHz\n",
