@@ -706,10 +706,8 @@ retry_scr:
 			mmc->version = SD_VERSION_1_0;
 			break;
 	}
-#if 0
 	if (mmc->scr[0] & SD_DATA_4BIT)
 		mmc->card_caps |= MMC_MODE_4BIT;
-#endif
 
 	/* Version 1.0 doesn't support switching */
 	if (mmc->version == SD_VERSION_1_0)
