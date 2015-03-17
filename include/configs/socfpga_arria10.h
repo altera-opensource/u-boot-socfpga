@@ -241,12 +241,13 @@
 	"nandrootfstype=jffs2\0" \
 	"ethaddr=00:07:ed:00:64:04\0" \
 	"ramboot=setenv bootargs " CONFIG_BOOTARGS " printk.time=1 debug mem=${fdt_high} " \
-		"lpj=3977216;bootm ${loadaddr} - ${fdtaddr}\0" \
+		"lpj=3977216;fpgabr 1; bootz ${loadaddr} - ${fdtaddr}\0" \
 	"mmcload=mmc rescan;" \
 		"${mmcloadcmd} mmc 0:${mmcloadpart} ${loadaddr} ${bootimage};" \
 		"${mmcloadcmd} mmc 0:${mmcloadpart} ${fdtaddr} ${fdtimage}\0" \
 	"mmcboot=setenv bootargs " CONFIG_BOOTARGS \
 		" root=${mmcroot} rw rootwait;" \
+		"fpgabr 1;" \
 		"bootz ${loadaddr} - ${fdtaddr}\0" \
 	"netboot=dhcp ${bootimage} ; " \
 		"tftp ${fdtaddr} ${fdtimage} ; run ramboot\0" \
@@ -255,11 +256,13 @@
 		"sf read ${fdtaddr} ${qspifdtaddr} ${fdtimagesize};\0" \
 	"qspiboot=setenv bootargs " CONFIG_BOOTARGS \
 		" root=${qspiroot} rw rootfstype=${qspirootfstype};"\
+		"fpgabr 1;" \
 		"bootz ${loadaddr} - ${fdtaddr}\0" \
 	"nandload=nand read ${loadaddr} ${nandbootimageaddr} ${bootimagesize};"\
 		"nand read ${fdtaddr} ${nandfdtaddr} ${fdtimagesize}\0" \
 	"nandboot=setenv bootargs " CONFIG_BOOTARGS \
 		" root=${nandroot} rw rootfstype=${nandrootfstype};"\
+		"fpgabr 1;" \
 		"bootz ${loadaddr} - ${fdtaddr}\0" \
 	"bootcmd=" CONFIG_BOOTCOMMAND "\0" \
 	"fpga=0\0" \
