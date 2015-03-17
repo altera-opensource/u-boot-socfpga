@@ -236,7 +236,6 @@ static const struct strtou32 mailpll_cfg_tab[] = {
 	{ "vco1-numer", offsetof(struct mainpll_cfg, vco1_numer) },
 	{ "mpuclk-cnt", offsetof(struct mainpll_cfg, mpuclk_cnt) },
 	{ "mpuclk-src", offsetof(struct mainpll_cfg, mpuclk_src) },
-	{ "nocclk", offsetof(struct mainpll_cfg, nocclk) },
 	{ "nocclk-cnt", offsetof(struct mainpll_cfg, nocclk_cnt) },
 	{ "nocclk-src", offsetof(struct mainpll_cfg, nocclk_src) },
 	{ "cntr2clk-cnt", offsetof(struct mainpll_cfg, cntr2clk_cnt) },
@@ -255,7 +254,7 @@ static const struct strtou32 mailpll_cfg_tab[] = {
 	{ "nocdiv-l4spclk", offsetof(struct mainpll_cfg, nocdiv_l4spclk) },
 	{ "nocdiv-csatclk", offsetof(struct mainpll_cfg, nocdiv_csatclk) },
 	{ "nocdiv-cstraceclk", offsetof(struct mainpll_cfg, nocdiv_cstraceclk) },
-	{ "nocdiv-cspdbclk", offsetof(struct mainpll_cfg, nocdiv_cspdbclk) },
+	{ "nocdiv-cspdbgclk", offsetof(struct mainpll_cfg, nocdiv_cspdbclk) },
 };
 
 static const struct strtou32 perpll_cfg_tab[] = {
@@ -282,6 +281,10 @@ static const struct strtou32 perpll_cfg_tab[] = {
 	{ "gpiodiv-gpiodbclk", offsetof(struct perpll_cfg, gpiodiv_gpiodbclk) },
 };
 
+static const struct strtou32 alteragrp_cfg_tab[] = {
+	{ "nocclk", offsetof(struct mainpll_cfg, nocclk) },
+};
+
 int of_to_struct(const void *blob, int node, const struct strtou32* cfg_tab,
 		 int cfg_tab_len, void *cfg)
 {
@@ -304,8 +307,8 @@ struct strtopu32 {
 	u32 *p;
 };
 const struct strtopu32 dt_to_val[] = {
-	{"/clocks/arria10_hps_0_eosc1", &eosc1_hz},
-	{"/clocks/altera_cb_intosc_ls", &cb_intosc_hz},
+	{"/clocks/altera_arria10_hps_eosc1", &eosc1_hz},
+	{"/clocks/altera_arria10_hps_cb_intosc_ls", &cb_intosc_hz},
 	{"/clocks/altera_arria10_hps_f2h_free", &f2s_free_hz},
 };
 static void of_get_input_clks(const void *blob)
@@ -323,7 +326,7 @@ static void of_get_input_clks(const void *blob)
 	}
 }
 
-static int of_get_clk_cfg(const void *blob, struct mainpll_cfg *main_cfg,
+int of_get_clk_cfg(const void *blob, struct mainpll_cfg *main_cfg,
 			  struct perpll_cfg *per_cfg)
 {
 	int node, child, len;
@@ -352,6 +355,10 @@ static int of_get_clk_cfg(const void *blob, struct mainpll_cfg *main_cfg,
 			if (of_to_struct(blob, child, perpll_cfg_tab,
 				ARRAY_SIZE(perpll_cfg_tab), per_cfg))
 				return 102;
+		} else if (!strcmp(node_name, "alteragrp")) {
+			if (of_to_struct(blob, child, alteragrp_cfg_tab,
+				ARRAY_SIZE(alteragrp_cfg_tab), main_cfg))
+				return 103;
 		}
 		child = fdt_next_subnode(blob, child);
 

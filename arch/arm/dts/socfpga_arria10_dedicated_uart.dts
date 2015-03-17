@@ -20,7 +20,7 @@
 		#address-cells = <1>;
 		#size-cells = <1>;
 
-		arria10_hps_0_eosc1: arria10_hps_0_eosc1 {
+		altera_arria10_hps_eosc1: altera_arria10_hps_eosc1 {
 			compatible = "fixed-clock";
 			#clock-cells = <0>;
 			clock-frequency = <25000000>;	/* 25.00 MHz */
@@ -172,7 +172,6 @@
 			vco1-numer = <191>;
 			mpuclk-cnt = <0>;
 			mpuclk-src = <0>;
-			nocclk = <0x50005>;
 			nocclk-cnt = <0>;
 			nocclk-src = <0>;
 			cntr2clk-cnt = <47>;
@@ -191,7 +190,7 @@
 			nocdiv-l4spclk = <2>;
 			nocdiv-csatclk = <0>;
 			nocdiv-cstraceclk = <0>;
-			nocdiv-cspdbclk = <1>;
+			nocdiv-cspdbgclk = <1>;
 		};
 
 		perpll {
@@ -216,6 +215,9 @@
 			emacctl-emac1sel = <0>;
 			emacctl-emac2sel = <0>;
 			gpiodiv-gpiodbclk = <32000>;
+		};
+		alteragrp {
+			nocclk = <0x50005>;
 		};
 	};
 
