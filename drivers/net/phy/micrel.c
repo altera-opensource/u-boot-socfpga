@@ -485,12 +485,6 @@ int ksz9031_config_skews(struct phy_device *phydev)
 
 int ksz9031_config_init(struct phy_device *phydev)
 {
-
-	/* Be sure to disable asym pause since if enabled, the ksz9031 is not
-	 * able to establish a link in some cases. There is an errata for
-	 * asym pause on the ksz9031.
-	 */
-
 	genphy_config_aneg(phydev);
 	genphy_restart_aneg(phydev);
 
