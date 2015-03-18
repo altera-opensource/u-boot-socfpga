@@ -265,6 +265,10 @@
 		"fpgabr 1;" \
 		"bootz ${loadaddr} - ${fdtaddr}\0" \
 	"bootcmd=" CONFIG_BOOTCOMMAND "\0" \
+	"ksz9031-rgmii-ctrl-skew=0x70\0" \
+	"ksz9031-rgmii-rxd-skew=0x7777\0" \
+	"ksz9031-rgmii-txd-skew=0x0\0" \
+	"ksz9031-rgmii-clock-skew=0x3fc\0" \
 	"fpga=0\0" \
 	"fpgadata=0x2000000\0" \
 	"fpgadatasize=0x700000\0" \

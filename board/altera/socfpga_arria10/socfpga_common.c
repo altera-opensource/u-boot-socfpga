@@ -90,8 +90,52 @@ socfpga_get_phy_mode(ulong phymode)
 	return val;
 }
 
+int is_ksz9031(struct phy_device *phydev)
+{
+	unsigned short phyid1;
+	unsigned short phyid2;
+
+	phyid1 = phy_read(phydev, MDIO_DEVAD_NONE, MII_PHYSID1);
+	phyid2 = phy_read(phydev, MDIO_DEVAD_NONE, MII_PHYSID2);
+
+	phyid2 = phyid2 & MICREL_KSZ9031_PHYID2_REVISION_MASK;
+
+	debug("phyid1 %04x, phyid2 %04x\n", phyid1, phyid2);
+
+	if ((phyid1 == MICREL_KSZ9031_PHYID1) &&
+	    (phyid2 == MICREL_KSZ9031_PHYID2))
+		return 1;
+	return 0;
+}
+
+
+
 int board_phy_config(struct phy_device *phydev)
 {
+	if (is_ksz9031(phydev)) {
+		unsigned short reg4;
+		unsigned short reg5;
+		unsigned short reg6;
+		unsigned short reg8;
+
+		reg4 = getenv_ulong("ksz9031-rgmii-ctrl-skew", 16, 0x77);
+		reg5 = getenv_ulong("ksz9031-rgmii-rxd-skew", 16, 0x7777);
+		reg6 = getenv_ulong("ksz9031-rgmii-txd-skew", 16, 0x7777);
+		reg8 = getenv_ulong("ksz9031-rgmii-clock-skew", 16, 0x1ef);
+
+		ksz9031_phy_extended_write(phydev, 2, 4,
+					   MII_KSZ9031_MOD_DATA_NO_POST_INC,
+					   reg4);
+		ksz9031_phy_extended_write(phydev, 2, 5,
+					   MII_KSZ9031_MOD_DATA_NO_POST_INC,
+					   reg5);
+		ksz9031_phy_extended_write(phydev, 2, 6,
+					   MII_KSZ9031_MOD_DATA_NO_POST_INC,
+					   reg6);
+		ksz9031_phy_extended_write(phydev, 2, 8,
+					   MII_KSZ9031_MOD_DATA_NO_POST_INC,
+					   reg8);
+	}
 	if (phydev->drv->config)
 		phydev->drv->config(phydev);
 
