@@ -399,7 +399,8 @@ long ksz9031_range_check(const char *name, long val, long lower, long upper)
 #define KSZ9031_DEFAULT_RXD_SKEW_PS	0
 #define KSZ9031_DEFAULT_TXD_SKEW_PS	0
 
-int ksz9031_config_init(struct phy_device *phydev)
+
+int ksz9031_config_skews(struct phy_device *phydev)
 {
 	long rxc_skew_ps;	/* -900ps through 960ps */
 	long txc_skew_ps;	/* -900ps through 960ps */
@@ -478,6 +479,12 @@ int ksz9031_config_init(struct phy_device *phydev)
 		ksz9031_set_txdx_skew(phydev, i, txdx_skew_regval[i]);
 	}
 
+	return 0;
+}
+
+
+int ksz9031_config_init(struct phy_device *phydev)
+{
 
 	/* Be sure to disable asym pause since if enabled, the ksz9031 is not
 	 * able to establish a link in some cases. There is an errata for
