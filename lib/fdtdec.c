@@ -74,10 +74,10 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(PARADE_PS8625, "parade,ps8625"),
 	COMPAT(COMPAT_PINCTRL_SINGLE, "pinctrl-single"),
 	COMPAT(COMPAT_ARRIA10_CLK_INIT, "altr,socfpga-a10-clk-init"),
-	COMPAT(COMPAT_ARRIA10_NOC, "altr,socfpga-a10-noc"),
 	COMPAT(COMPAT_ARRIA10_H2F_BRG, "altr,socfpga-hps2fpga-bridge"),
 	COMPAT(COMPAT_ARRIA10_LWH2F_BRG, "altr,socfpga-lwhps2fpga-bridge"),
 	COMPAT(COMPAT_ARRIA10_F2H_BRG, "altr,socfpga-fpga2hps-bridge"),
+	COMPAT(COMPAT_ARRIA10_NOC, "altr,socfpga-a10-noc"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)
