@@ -834,7 +834,8 @@ int ddr_calibration_sequence(void)
 	/* setup the dram info within bd */
 	dram_init_banksize();
 
-	of_sdram_firewall_setup(gd->fdt_blob);
+	if (of_sdram_firewall_setup(gd->fdt_blob))
+		puts("FW: Error Configuring Firewall\n");
 
 	return 0;
 }
