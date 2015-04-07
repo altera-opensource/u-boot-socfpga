@@ -10,6 +10,7 @@
 #include <mmc.h>
 #include <watchdog.h>
 #include <ns16550.h>
+#include <pl330.h>
 #include <asm/io.h>
 #include <asm/arch/cff.h>
 #include <asm/arch/misc.h>
@@ -37,6 +38,8 @@ DECLARE_GLOBAL_DATA_PTR;
 #define DDR_REG_CORE2SEQ        0xFFD05078
 #define DDR_REG_GPOUT           0xFFD03010
 #define DDR_REG_GPIN            0xFFD03014
+
+#define DDR_ECC_DMA_SIZE	1500
 
 static const struct socfpga_ecc_hmc *socfpga_ecc_hmc_base =
 		(void *)SOCFPGA_SDR_ADDRESS;
@@ -280,77 +283,47 @@ int ddr_setup_workaround(void)
 	return 0;
 }
 
-unsigned long irq_cnt_ecc_sdram;
-
-/* Enable and disable SDRAM interrupt */
-void sdram_enable_interrupt(unsigned enable)
+int is_sdram_ecc_enabled(void)
 {
-	/* Clear the internal counter (write 1 to clear) */
-	setbits_le32(&socfpga_ecc_hmc_base->eccctrl,
-		     ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK);
-
-	/* clear the ECC prior enable or even disable (write 1 to clear) */
-	setbits_le32(&socfpga_ecc_hmc_base->intstat,
-		     ALT_ECC_HMC_OCP_INTSTAT_SERRPENA_SET_MSK |
-		     ALT_ECC_HMC_OCP_INTSTAT_DERRPENA_SET_MSK);
-
-	/*
-	 * We want the serr trigger after a number of count instead of
-	 * triggered every single bit error event which cost cpu time
-	 */
-	writel(ALT_ECC_HMC_OCP_SERRCNTREG_VALUE,
-	       &socfpga_ecc_hmc_base->serrcntreg);
-
-	/* Enable the interrupt on compare */
-	setbits_le32(&socfpga_ecc_hmc_base->intmode,
-		     ALT_ECC_HMC_OCP_INTMOD_INTONCMP_SET_MSK);
-
-	if (enable)
-		writel(ALT_ECC_HMC_OCP_ERRINTEN_SERRINTEN_SET_MSK |
-		       ALT_ECC_HMC_OCP_ERRINTEN_DERRINTEN_SET_MSK,
-		       &socfpga_ecc_hmc_base->errintens);
-	else
-		writel(ALT_ECC_HMC_OCP_ERRINTEN_SERRINTEN_SET_MSK |
-		       ALT_ECC_HMC_OCP_ERRINTEN_DERRINTEN_SET_MSK,
-		       &socfpga_ecc_hmc_base->errintenr);
+	return (readl(&socfpga_ecc_hmc_base->eccctrl) &
+		ALT_ECC_HMC_OCP_ECCCTL_ECC_EN_SET_MSK) != 0;
 }
 
-/* handler for SDRAM ECC interrupt */
-void irq_handler_ecc_sdram(void *arg)
+/* Initialize SDRAM ECC bits to avoid false DBE */
+void sdram_init_ecc_bits(void)
 {
-	unsigned reg_value;
+	struct pl330_transfer_struct pl330;
+	u8 buf[DDR_ECC_DMA_SIZE];
+	unsigned int start;
 
-	/* check whether SBE happen */
-	reg_value = readl(&socfpga_ecc_hmc_base->intstat);
-	if (reg_value & ALT_ECC_HMC_OCP_INTSTAT_SERRPENA_SET_MSK) {
-		printf("Info: SDRAM ECC SBE @ 0x%08x\n",
-		       readl(&socfpga_ecc_hmc_base->serraddra));
-		irq_cnt_ecc_sdram += readl(&socfpga_ecc_hmc_base->serrcntreg);
-		setenv_ulong("sdram_ecc_sbe", irq_cnt_ecc_sdram);
-	}
+	pl330.dst_addr = CONFIG_SYS_SDRAM_BASE;
+	pl330.size_byte = gd->ram_size;
+	pl330.channel_num = 0;
+	pl330.buf_size = sizeof(buf);
+	pl330.buf = buf;
 
-	/* check whether DBE happen */
-	if (reg_value & ALT_ECC_HMC_OCP_ERRINTEN_DERRINTEN_SET_MSK) {
-		puts("Error: SDRAM ECC DBE occurred\n");
-		printf("sbecount = %lu\n", irq_cnt_ecc_sdram);
-		printf("erraddr = %08x\n",
-		       readl(&socfpga_ecc_hmc_base->derraddra));
-	}
+	printf("SDRAM: Initializing ECC 0x%08lx - 0x%08lx\n",
+	       pl330.dst_addr, pl330.dst_addr + pl330.size_byte);
+	reset_timer();
+	start = get_timer(0);
 
-	/* Clear the internal counter (write 1 to clear) */
-	setbits_le32(&socfpga_ecc_hmc_base->eccctrl,
-		     ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK);
-
-	/* clear the ECC prior enable or even disable (write 1 to clear) */
-	setbits_le32(&socfpga_ecc_hmc_base->intstat,
-		     ALT_ECC_HMC_OCP_INTSTAT_SERRPENA_SET_MSK |
-		     ALT_ECC_HMC_OCP_INTSTAT_DERRPENA_SET_MSK);
-
-	/* if DBE, going into hang */
-	if (reg_value & ALT_ECC_HMC_OCP_ERRINTEN_DERRINTEN_SET_MSK) {
-		sdram_enable_interrupt(0);
+	if (pl330_transfer_zeroes(&pl330)) {
+		puts("ERROR - DMA setup failed\n");
 		hang();
 	}
+
+	if (pl330_transfer_start(&pl330)) {
+		puts("ERROR - DMA start failed\n");
+		hang();
+	}
+
+	if (pl330_transfer_finish(&pl330)) {
+		puts("ERROR - DMA finish failed\n");
+		hang();
+	}
+
+	printf("SDRAM-ECC: Initialized success with %d ms\n",
+	       (unsigned)get_timer(start));
 }
 
 /* Function to startup the SDRAM*/
@@ -425,28 +398,6 @@ void sdram_mmr_init(void)
 	}
 
 	ddrioctl = readl(&socfpga_ecc_hmc_base->ddrioctrl);
-
-	/* Enable or disable the SDRAM ECC */
-	if (ctrlcfg1.cfg_ctrl_enable_ecc) {
-		setbits_le32(&socfpga_ecc_hmc_base->eccctrl,
-			     (ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK |
-			      ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK |
-			      ALT_ECC_HMC_OCP_ECCCTL_ECC_EN_SET_MSK));
-		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl,
-			     (ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK |
-			      ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK));
-		setbits_le32(&socfpga_ecc_hmc_base->eccctrl2,
-			     (ALT_ECC_HMC_OCP_ECCCTL2_RMW_EN_SET_MSK |
-			      ALT_ECC_HMC_OCP_ECCCTL2_AWB_EN_SET_MSK));
-	} else {
-		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl,
-			     (ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK |
-			      ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK |
-			      ALT_ECC_HMC_OCP_ECCCTL_ECC_EN_SET_MSK));
-		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl2,
-			     (ALT_ECC_HMC_OCP_ECCCTL2_RMW_EN_SET_MSK |
-			      ALT_ECC_HMC_OCP_ECCCTL2_AWB_EN_SET_MSK));
-	}
 
 	/* Set the DDR Configuration [0xFFD12400] */
 	io48_value = ARRIA_DDR_CONFIG(ctrlcfg1.cfg_addr_order,
@@ -530,6 +481,28 @@ void sdram_mmr_init(void)
 		(caltim3.cfg_wr_to_rd_dc <<
 			ALT_NOC_MPU_DDR_T_SCHED_DEVTODEV_BUSWRTORD_LSB)),
 		&socfpga_noc_ddr_scheduler_base->ddr_t_main_scheduler_devtodev);
+
+	/* Enable or disable the SDRAM ECC */
+	if (ctrlcfg1.cfg_ctrl_enable_ecc) {
+		setbits_le32(&socfpga_ecc_hmc_base->eccctrl,
+			     (ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK |
+			      ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK |
+			      ALT_ECC_HMC_OCP_ECCCTL_ECC_EN_SET_MSK));
+		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl,
+			     (ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK |
+			      ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK));
+		setbits_le32(&socfpga_ecc_hmc_base->eccctrl2,
+			     (ALT_ECC_HMC_OCP_ECCCTL2_RMW_EN_SET_MSK |
+			      ALT_ECC_HMC_OCP_ECCCTL2_AWB_EN_SET_MSK));
+	} else {
+		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl,
+			     (ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK |
+			      ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK |
+			      ALT_ECC_HMC_OCP_ECCCTL_ECC_EN_SET_MSK));
+		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl2,
+			     (ALT_ECC_HMC_OCP_ECCCTL2_RMW_EN_SET_MSK |
+			      ALT_ECC_HMC_OCP_ECCCTL2_AWB_EN_SET_MSK));
+	}
 }
 
 struct firewall_entry {
@@ -836,6 +809,9 @@ int ddr_calibration_sequence(void)
 
 	if (of_sdram_firewall_setup(gd->fdt_blob))
 		puts("FW: Error Configuring Firewall\n");
+
+	if (is_sdram_ecc_enabled())
+		sdram_init_ecc_bits();
 
 	return 0;
 }

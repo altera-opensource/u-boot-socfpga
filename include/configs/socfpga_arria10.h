@@ -552,7 +552,7 @@
 
 /* size of stack and malloc in ocram */
 #ifdef CONFIG_DESIGNWARE_ETH
-#define CONFIG_OCRAM_MALLOC_SIZE	(35 * 1024)
+#define CONFIG_OCRAM_MALLOC_SIZE	(34 * 1024)
 #else
 #define CONFIG_OCRAM_MALLOC_SIZE	(16 * 1024)
 #endif
@@ -568,7 +568,7 @@
 /*
  * DMA support
  */
-#undef CONFIG_PL330_DMA
+#define CONFIG_PL330_DMA
 
 #define CONFIG_SYS_GENERIC_BOARD
 
