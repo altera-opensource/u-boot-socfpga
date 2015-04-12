@@ -216,15 +216,20 @@
  * Do note the value will overide also the chosen node in FDT blob.
  */
 #define CONFIG_BOOTARGS "console=ttyS0," __stringify(CONFIG_BAUDRATE)
+#define CONFIG_SYS_DTB_ADDR 0x100
+#define MAX_DTB_SIZE_IN_RAM 0x7f00
+#if ((CONFIG_SYS_DTB_ADDR + MAX_DTB_SIZE_IN_RAM) > CONFIG_SYS_LOAD_ADDR)
+#error "MAX_DTB_SIZE_IN_RAM is too big. It will overwrite zImage in memory."
+#endif
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"verify=y\0" \
 	"loadaddr=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
-	"fdtaddr=0x00000100\0" \
+	"fdtaddr=" __stringify(CONFIG_SYS_DTB_ADDR) "\0" \
 	"bootimage=zImage\0" \
 	"bootimagesize=0x600000\0" \
 	"fdtimage=socfpga_arria10_socdk.dtb\0" \
-	"fdtimagesize=0x5000\0" \
+	"fdtimagesize=" __stringify(MAX_DTB_SIZE_IN_RAM) "\0" \
 	"fdt_high=0x2000000\0" \
 	"mmcloadcmd=fatload\0" \
 	"mmcloadpart=1\0" \
