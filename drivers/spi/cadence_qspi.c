@@ -119,7 +119,7 @@ int spi_calibration(struct spi_slave *slave)
 	void *base = cadence_qspi->regbase;
 	u8 opcode_rdid = 0x9F;
 	unsigned int idcode = 0, temp = 0;
-	int err = 0, i, range_lo = -1, range_hi = -1;
+	int err = 0, i, range_lo = -1, range_hi = -1, delay;
 
 	/* start with slowest clock (1 MHz) */
 	spi_set_speed(slave, 1000000);
@@ -180,10 +180,12 @@ int spi_calibration(struct spi_slave *slave)
 	/* Disable QSPI for subsequent initialization */
 	cadence_qspi_apb_controller_disable(base);
 
+	delay = DIV_ROUND_UP((range_hi + range_lo), 2);
+
 	/* configure the final value for read data capture delay register */
-	cadence_qspi_apb_readdata_capture(base, 1, (range_hi + range_lo) / 2);
+	cadence_qspi_apb_readdata_capture(base, 1, delay);
 	printf("SF: Read data capture delay calibrated to %i (%i - %i)\n",
-		(range_hi + range_lo) / 2, range_lo, range_hi);
+		delay, range_lo, range_hi);
 
 	/* just to ensure we do once only when speed or chip select change */
 	qspi_calibrated_hz = cadence_qspi->max_hz;
