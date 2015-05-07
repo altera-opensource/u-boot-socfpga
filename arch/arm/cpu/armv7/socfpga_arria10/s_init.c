@@ -132,6 +132,19 @@ arria10_initialize_security_policies(void)
 	writel(0x1, 0xffd13400);
 }
 
+/* This function masks all the ECC errors. The next stage
+ * (Linux or a different OS) will unmask the appropriate
+ * module in the ECC enable routine.
+ */
+void
+arria10_mask_ecc_errors(void)
+{
+	const struct socfpga_system_manager *system_manager_base =
+		(void *)SOCFPGA_SYSMGR_ADDRESS;
+
+	writel(0x0007FFFF, &system_manager_base->ecc_intmask_set);
+}
+
 /*
  * First C function to initialize the critical hardware early
  */
@@ -142,8 +155,10 @@ void s_init(void)
 
 	arria10_initialize_security_policies();
 
+	arria10_mask_ecc_errors();
+
 	/* Clear fake OCRAM ECC first as might triggered during power on */
-	//clear_ecc_ocram_ecc_status();
+	clear_ecc_ocram_ecc_status();
 
 	/* Configure the L2 controller to make SDRAM start at 0	*/
 	writel(0x1, SOCFPGA_MPUL2_ADRFLTR_START);
