@@ -575,7 +575,11 @@
 
 /*
  * I2C support
+ * Disabled by default to free up OCRAM space. Compile using linaro 4.9
+ * appears to produce more efficient code.
  */
+#undef CONFIG_I2C
+#ifdef CONFIG_I2C
 #define CONFIG_HARD_I2C
 #define CONFIG_DW_I2C
 #define CONFIG_SYS_I2C_BASE             SOCFPGA_I2C1_ADDRESS
@@ -587,5 +591,6 @@
 /* clock supplied to I2C controller in unit of MHz */
 #define IC_CLK                          (CONFIG_HPS_CLK_I2C_HZ / 1000000)
 #define CONFIG_CMD_I2C
+#endif	/* #ifdef CONFIG_I2C */
 
 #endif	/* __CONFIG_H */
