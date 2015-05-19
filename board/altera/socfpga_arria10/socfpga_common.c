@@ -141,6 +141,8 @@ int board_phy_config(struct phy_device *phydev)
 
 	return 0;
 }
+
+#ifdef CONFIG_DESIGNWARE_ETH
 /* We know all the init functions have been run now */
 int board_eth_init(bd_t *bis)
 {
@@ -172,4 +174,5 @@ int board_eth_init(bd_t *bis)
 	return designware_initialize(CONFIG_EMAC_BASE,
 					CONFIG_PHY_INTERFACE_MODE);
 }
+#endif
 
