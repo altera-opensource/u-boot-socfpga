@@ -11,6 +11,8 @@
 int cff_from_mmc_fat_dt(void);
 int cff_from_qspi_env(void);
 int cff_from_qspi(unsigned long flash_offset);
+int cff_from_nand_env(void);
+int cff_from_nand(unsigned long flash_offset);
 const char *get_cff_filename(const void *fdt, int *len);
 int cff_from_mmc_fat(char *dev_part, const char *filename, int len);
 #endif /* __ASSEMBLY__ */

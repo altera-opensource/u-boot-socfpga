@@ -8,6 +8,7 @@
 #include <fdtdec.h>
 #include <malloc.h>
 #include <mmc.h>
+#include <nand.h>
 #include <watchdog.h>
 #include <ns16550.h>
 #include <pl330.h>
@@ -870,6 +871,9 @@ int dram_init(void)
 		}
 #elif defined(CONFIG_CADENCE_QSPI)
 		rval = cff_from_qspi_env();
+#elif defined(CONFIG_NAND_DENALI)
+		nand_init();
+		rval = cff_from_nand_env();
 #else
 #error "unsupported config"
 #endif
