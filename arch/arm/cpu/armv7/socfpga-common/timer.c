@@ -122,7 +122,7 @@ ulong get_timer_count_masked(void)
 		gd->arch.tbl += gd->arch.lastinc - now;
 	} else {
 		/* we have overflow of the count down timer */
-		gd->arch.tbl += TIMER_LOAD_VAL - gd->arch.lastinc + now;
+		gd->arch.tbl += TIMER_LOAD_VAL - now + gd->arch.lastinc;
 	}
 	gd->arch.lastinc = now;
 	return gd->arch.tbl;
