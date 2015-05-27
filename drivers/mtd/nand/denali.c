@@ -711,6 +711,19 @@ static void read_oob_data(struct mtd_info *mtd, uint8_t *buf, int page)
 	}
 }
 
+static void do_nand_cmd_readoob(struct mtd_info *mtd, int page)
+{
+	struct denali_nand_info *denali = mtd_to_denali(mtd);
+	uint32_t addr;
+	uint32_t cmd;
+
+	denali->page = page;
+
+	addr = BANK(denali->flash_bank) | denali->page;
+	cmd = MODE_10 | addr;
+	index_addr(denali, cmd, SPARE_ACCESS);
+}
+
 /* this function examines buffers to see if they contain data that
  * indicate that the buffer is part of an erased region of flash.
  */
@@ -1102,7 +1115,7 @@ static void denali_cmdfunc(struct mtd_info *mtd, unsigned int cmd, int col,
 		reset_bank(denali);
 		break;
 	case NAND_CMD_READOOB:
-		/* TODO: Read OOB data */
+		do_nand_cmd_readoob(mtd, page);
 		break;
 	case NAND_CMD_ERASE1:
 		/*
