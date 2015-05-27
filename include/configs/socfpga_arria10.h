@@ -193,10 +193,6 @@
 #define CONFIG_SYS_HUSH_PARSER
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 
-#if !defined(CONFIG_CADENCE_QSPI)  &&  !defined(CONFIG_NAND_DENALI)
-#define CONFIG_MMC
-#endif
-
 /*
  * Can't poll in semihosting; so turn off automatic boot command
  */
@@ -208,8 +204,10 @@
 #elif defined(CONFIG_CADENCE_QSPI)
 #define CONFIG_BOOTCOMMAND "run qspiload;" \
 	"run set_initswstate; run qspiboot"
+#elif defined(CONFIG_NAND_DENALI)
+#define CONFIG_BOOTCOMMAND "run nandload;run nandboot"
 #else
-#error "unsported configuration"
+#error "unsupported configuration"
 #endif
 
 /*
@@ -525,13 +523,61 @@
  * NAND
  */
 #ifdef CONFIG_NAND_DENALI
+
+#ifdef CONFIG_MMC
+#error Cannot define CONFIG_MMC when CONFIG_NAND_DENALI is also defined.
+#endif
+#ifdef CONFIG_CADENCE_QSPI
+#error Cannot define CONFIG_CADENCE_QSPI when \
+CONFIG_NAND_DENALI is also defined.
+#endif
+
+/* remove a bunch of stuff so we have enough room for the nand code */
+#undef CONFIG_CMD_PCMCIA
+#undef CONFIG_CMD_PING
+#undef CONFIG_CMD_MII
+#undef CONFIG_CMD_FLASH
+#undef CONFIG_AUTO_COMPLETE
+#undef CONFIG_CMDLINE_EDITING
+#undef CONFIG_SYS_HUSH_PARSER
+#undef CONFIG_SYS_PROMPT_HUSH_PS2
+#undef CONFIG_CMD_MEMTEST
+#undef CONFIG_SYS_ALT_MEMTEST
+#undef CONFIG_SYS_MEMTEST_SCRATCH
+#undef CONFIG_CMD_DDR
+#undef CONFIG_DESIGNWARE_ETH
+#undef CONFIG_TX_DESCR_NUM
+#undef CONFIG_RX_DESCR_NUM
+#undef CONFIG_CMD_DHCP
+#undef CONFIG_CMD_NET
+#undef CONFIG_CMD_PING
+#undef CONFIG_NET_MULTI
+#undef CONFIG_DW_ALTDESCRIPTOR
+#undef CONFIG_DW_SEARCH_PHY
+#undef CONFIG_MII
+#undef CONFIG_PHY_GIGE
+#undef CONFIG_DW_AUTONEG
+#undef CONFIG_PHYLIB
+#undef CONFIG_PHY_MICREL
+#undef CONFIG_PHY_MICREL_KSZ9021
+#undef CONFIG_EPHY0_PHY_ADDR
+#undef CONFIG_ENV_IS_IN_MMC
+#undef CONFIG_SYS_MMC_ENV_DEV
+#undef CONFIG_ENV_OFFSET
+
+/* here are the defines for NAND */
+#define CONFIG_ENV_IS_NOWHERE
+#define CONFIG_NAND_RBF_ADDR		0x720000
 #define CONFIG_CMD_NAND
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
-#define CONFIG_SYS_NAND_USE_FLASH_BBT
-#define CONFIG_SYS_NAND_REGS_BASE	0xff200000
-#define CONFIG_SYS_NAND_DATA_BASE	0xff300000
-#define CONFIG_SYS_NAND_BASE		0xff400000
+/* the following, when defined, requries 128K from malloc! */
+#undef CONFIG_SYS_NAND_USE_FLASH_BBT
 #define CONFIG_SYS_NAND_ONFI_DETECTION
+/* will not compile with the following defined */
+#undef CONFIG_SYS_NAND_SELF_INIT
+#define CONFIG_SYS_NAND_REGS_BASE	0xffb80000
+#define CONFIG_SYS_NAND_DATA_BASE	0xffb90000
+#define CONFIG_SYS_NAND_BASE	        CONFIG_SYS_NAND_REGS_BASE
 /* The ECC size which either 512 or 1024 */
 #define CONFIG_NAND_DENALI_ECC_SIZE			(512)
 #endif /* CONFIG_NAND_DENALI */
@@ -541,6 +587,7 @@
  */
 /* Enables FPGA subsystem */
 #define CONFIG_FPGA
+#ifdef CONFIG_FPGA
 /* Altera FPGA */
 #define CONFIG_FPGA_ALTERA
 /* Family type */
@@ -550,6 +597,7 @@
 /* Enable FPGA command at console */
 #define CONFIG_CMD_FPGA
 #define CONFIG_CMD_FPGA_LOADFS
+#endif /* CONFIG_FPGA */
 
 /*
  * Memory allocation (MALLOC)
@@ -558,6 +606,8 @@
 /* size of stack and malloc in ocram */
 #ifdef CONFIG_DESIGNWARE_ETH
 #define CONFIG_OCRAM_MALLOC_SIZE	(35 * 1024)
+#elif defined(CONFIG_NAND_DENALI)
+#define CONFIG_OCRAM_MALLOC_SIZE	(45 * 1024)
 #else
 #define CONFIG_OCRAM_MALLOC_SIZE	(16 * 1024)
 #endif
