@@ -1148,7 +1148,7 @@ static int denali_nand_init(struct nand_chip *nand)
 {
 	struct denali_nand_info *denali;
 
-	denali = malloc(sizeof(*denali));
+	denali = kzalloc(sizeof(*denali), GFP_KERNEL);
 	if (!denali)
 		return -ENOMEM;
 
