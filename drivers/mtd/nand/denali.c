@@ -415,13 +415,28 @@ static void find_valid_banks(struct denali_nand_info *denali)
 }
 
 /*
+ * The max_bank encoding is different depending upon revision
+ * so we need to read the revision register, yuck
+ */
+static void detect_revision(struct denali_nand_info *denali)
+{
+	denali->revision = readl(denali->flash_reg + REVISION);
+	/* let's turn it into a number we can compare with */
+	denali->revision = MAKE_COMPARABLE_REVISION(denali->revision);
+}
+
+/*
  * Use the configuration feature register to determine the maximum number of
  * banks that the hardware supports.
  */
 static void detect_max_banks(struct denali_nand_info *denali)
 {
 	uint32_t features = readl(denali->flash_reg + FEATURES);
-	denali->max_banks = 2 << (features & FEATURES__N_BANKS);
+	/* encoding changed in revision 5.1 */
+	if (denali->revision < REVISION_5_1)
+		denali->max_banks = 2 << (features & FEATURES__N_BANKS);
+	else
+		denali->max_banks = 1 << (features & FEATURES__N_BANKS);
 }
 
 static void detect_partition_feature(struct denali_nand_info *denali)
@@ -1128,6 +1143,7 @@ static void denali_hw_init(struct denali_nand_info *denali)
 	 */
 	writel(CONFIG_NAND_DENALI_SPARE_AREA_SKIP_BYTES,
 	       denali->flash_reg + SPARE_AREA_SKIP_BYTES);
+	detect_revision(denali);
 	detect_max_banks(denali);
 	denali_nand_reset(denali);
 	writel(0x0F, denali->flash_reg + RB_PIN_ENABLED);
