@@ -237,8 +237,19 @@ void reset_assert_all_peripherals_except_l4wd0_l4timer0(void)
 	setbits_le32(&reset_manager_base->per0modrst, mask_ecc_ocp);
 }
 
+#define ECC_MASK (ALT_RSTMGR_PER0MODRST_EMACECC0_SET_MSK|\
+	ALT_RSTMGR_PER0MODRST_EMACECC1_SET_MSK|\
+	ALT_RSTMGR_PER0MODRST_EMACECC2_SET_MSK|\
+	ALT_RSTMGR_PER0MODRST_NANDECC_SET_MSK|\
+	ALT_RSTMGR_PER0MODRST_QSPIECC_SET_MSK|\
+	ALT_RSTMGR_PER0MODRST_SDMMCECC_SET_MSK)
+
 void reset_deassert_dedicated_peripherals(void)
 {
+	int i;
+	u32 mask0 = 0;
+	u32 mask1 = 0;
+	u32 pinmux_addr = SOCFPGA_PINMUX_DEDICATED_IO_ADDRESS;
 	u32 mask = 0;
 #if defined(CONFIG_MMC)
 	mask |= ALT_RSTMGR_PER0MODRST_SDMMCECC_SET_MSK;
@@ -277,6 +288,54 @@ void reset_deassert_dedicated_peripherals(void)
 #endif
 
 	clrbits_le32(&reset_manager_base->per1modrst, mask);
+
+	/* start with 4 as first 3 registers are reserved */
+	for (i = 4, pinmux_addr += (sizeof(u32) * (i - 1)); i <= 17;
+		i++, pinmux_addr += sizeof(u32)) {
+		switch (readl(pinmux_addr)) {
+		case 0:
+			if ((i == 12) || (i == 13))
+				mask1 |= ALT_RSTMGR_PER1MODRST_I2C3_SET_MSK;
+			else if ((i == 14) || (i == 15))
+				mask1 |= ALT_RSTMGR_PER1MODRST_I2C4_SET_MSK;
+			else if ((i == 16) || (i == 17))
+				mask1 |= ALT_RSTMGR_PER1MODRST_I2C2_SET_MSK;
+			break;
+		case 1:
+			if ((i == 12) || (i == 13))
+				mask0 |=
+				    ALT_RSTMGR_PER0MODRST_EMACECC1_SET_MSK |
+				    ALT_RSTMGR_PER0MODRST_EMAC1_SET_MSK;
+			else if ((i == 14) || (i == 15))
+				mask0 |=
+				    ALT_RSTMGR_PER0MODRST_EMACECC2_SET_MSK |
+				    ALT_RSTMGR_PER0MODRST_EMAC2_SET_MSK;
+			else if ((i == 16) || (i == 17))
+				mask0 |=
+				    ALT_RSTMGR_PER0MODRST_EMACECC0_SET_MSK |
+				    ALT_RSTMGR_PER0MODRST_EMAC0_SET_MSK;
+			break;
+		case 2:
+			if ((i == 10) || ((i >= 15) && (i <= 17)))
+				mask0 |= ALT_RSTMGR_PER0MODRST_SPIS0_SET_MSK;
+			break;
+		case 3:
+			if ((i >= 10) && (i <= 14))
+				mask0 |= ALT_RSTMGR_PER0MODRST_SPIM0_SET_MSK;
+			break;
+		case 13:
+			if (i >= 12)
+				mask1 |= ALT_RSTMGR_PER1MODRST_UART1_SET_MSK;
+			break;
+		case 15:
+			mask1 |= ALT_RSTMGR_PER1MODRST_GPIO2_SET_MSK;
+			break;
+		}
+	}
+	clrbits_le32(&reset_manager_base->per0modrst, mask0 & ECC_MASK);
+	clrbits_le32(&reset_manager_base->per1modrst, mask1);
+	clrbits_le32(&reset_manager_base->per0modrst, mask0);
+
 }
 
 void reset_assert_uart(void)
@@ -302,13 +361,6 @@ void reset_deassert_uart(void)
 
 	clrbits_le32(&reset_manager_base->per1modrst, mask);
 }
-
-#define ECC_MASK (ALT_RSTMGR_PER0MODRST_EMACECC0_SET_MSK|\
-	ALT_RSTMGR_PER0MODRST_EMACECC1_SET_MSK|\
-	ALT_RSTMGR_PER0MODRST_EMACECC2_SET_MSK|\
-	ALT_RSTMGR_PER0MODRST_NANDECC_SET_MSK|\
-	ALT_RSTMGR_PER0MODRST_QSPIECC_SET_MSK|\
-	ALT_RSTMGR_PER0MODRST_SDMMCECC_SET_MSK)
 
 static const u32 per0fpgamasks[] = {
 	ALT_RSTMGR_PER0MODRST_EMACECC0_SET_MSK |
