@@ -394,9 +394,9 @@ static const u32 per1fpgamasks[] = {
 	0, /* emac2 per0mod */
 	ALT_RSTMGR_PER1MODRST_I2C0_SET_MSK,
 	ALT_RSTMGR_PER1MODRST_I2C1_SET_MSK,
-	0, /* i2c0_emac */
-	0, /* i2c1_emac */
-	0, /* i2c2_emac */
+	ALT_RSTMGR_PER1MODRST_I2C2_SET_MSK, /* i2c0_emac */
+	ALT_RSTMGR_PER1MODRST_I2C3_SET_MSK, /* i2c1_emac */
+	ALT_RSTMGR_PER1MODRST_I2C4_SET_MSK, /* i2c2_emac */
 	0, /* nand per0mod */
 	0, /* qspi per0mod */
 	0, /* sdmmc per0mod */
