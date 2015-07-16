@@ -176,6 +176,7 @@ struct mainpll_cfg {
 	u32 vco0_psrc;
 	u32 vco1_denom;
 	u32 vco1_numer;
+	u32 mpuclk;
 	u32 mpuclk_cnt;
 	u32 mpuclk_src;
 	u32 nocclk;
@@ -283,6 +284,7 @@ static const struct strtou32 perpll_cfg_tab[] = {
 
 static const struct strtou32 alteragrp_cfg_tab[] = {
 	{ "nocclk", offsetof(struct mainpll_cfg, nocclk) },
+	{ "mpuclk", offsetof(struct mainpll_cfg, mpuclk) },
 };
 
 int of_to_struct(const void *blob, int node, const struct strtou32* cfg_tab,
@@ -509,6 +511,8 @@ static int cm_full_cfg(struct mainpll_cfg *main_cfg, struct perpll_cfg *per_cfg)
 	/* setup all the main PLL counter and clock source */
 	writel(main_cfg->nocclk,
 	       SOCFPGA_CLKMGR_ADDRESS + CLKMGR_MAINPLL_NOC_CLK_OFFSET);
+	writel(main_cfg->mpuclk,
+	       SOCFPGA_CLKMGR_ADDRESS + CLKMGR_ALTERAGRP_MPU_CLK_OFFSET);
 
 	/* main_emaca_clk divider */
 	writel(main_cfg->cntr2clk_cnt, &clock_manager_base->main_pll_cntr2clk);
@@ -665,6 +669,10 @@ int cm_basic_init(const void *blob)
 	struct mainpll_cfg main_cfg;
 	struct perpll_cfg per_cfg;
 	int rval;
+
+	/* initialize to zero for use case of optional node */
+	memset(&main_cfg, 0, sizeof(main_cfg));
+
 	if (of_get_clk_cfg(blob, &main_cfg, &per_cfg)) {
 		return 1;
 	}

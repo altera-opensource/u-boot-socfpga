@@ -81,6 +81,7 @@ extern uint32_t cm_l4_sp_clk_hz;
 extern uint32_t cm_l4_mp_clk_hz;
 #endif /* __ASSEMBLY__ */
 
+#define CLKMGR_ALTERAGRP_MPU_CLK_OFFSET			0x140
 #define CLKMGR_MAINPLL_NOC_CLK_OFFSET			0x144
 
 /* value */
