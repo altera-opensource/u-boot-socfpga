@@ -115,6 +115,7 @@
 		/* Address Block: soc_clock_manager_OCP_SLV.i_clk_mgr_alteragrp */
 		alteragrp {
 			nocclk = <0x00030005>;	/* Register: nocclk */
+			mpuclk = <0x10001>;
 		};
 	};
 

@@ -211,6 +211,7 @@
 
 		alteragrp {
 			nocclk = <0x50005>;
+			mpuclk = <0x10001>;
 		};
 	};
 
