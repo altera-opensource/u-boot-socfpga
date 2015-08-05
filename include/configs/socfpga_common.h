@@ -1,5 +1,5 @@
 /*
- *  Copyright Altera Corporation (C) 2013. All rights reserved
+ *  Copyright Altera Corporation (C) 2013-2015. All rights reserved
  *
  *  This program is free software; you can redistribute it and/or modify it
  *  under the terms and conditions of the GNU General Public License,
@@ -507,7 +507,11 @@
 #endif	/* CONFIG_CADENCE_QSPI */
 
 /* NAND */
+#if (CONFIG_PRELOADER_BOOT_FROM_NAND == 0)
 #undef CONFIG_NAND_DENALI
+#else
+#define CONFIG_NAND_DENALI
+#endif
 #ifdef CONFIG_NAND_DENALI
 #define CONFIG_CMD_NAND
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
