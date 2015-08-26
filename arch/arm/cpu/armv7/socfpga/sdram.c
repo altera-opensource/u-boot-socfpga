@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2012 Altera Corporation <www.altera.com>
+ *  Copyright (C) 2012-2015 Altera Corporation <www.altera.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -70,8 +70,9 @@ unsigned long irq_cnt_ecc_sdram;
 #if (CONFIG_PRELOADER_SDRAM_SCRUB_REMAIN_REGION == 1)
 struct pl330_transfer_struct pl330_0;
 struct pl330_transfer_struct pl330_1;
-u8 pl330_buf0[100];
-u8 pl330_buf1[1500];
+/* the size is determined based on the microcde generated for 2GB SDRAM */
+u8 pl330_buf0[2500];
+u8 pl330_buf1[2500];
 #endif
 
 /* Initialise the DRAM by telling the DRAM Size. */
@@ -1544,15 +1545,14 @@ unsigned long sdram_calculate_size(void)
 void sdram_scrub_boot_region(void)
 {
 	struct pl330_transfer_struct pl330;
-	u8 buf[100];
 	unsigned int start;
 
 	pl330.dst_addr = CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_START;
 	pl330.size_byte = CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_END -
 		CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_START;
 	pl330.channel_num = 0;
-	pl330.buf_size = sizeof(buf);
-	pl330.buf = buf;
+	pl330.buf_size = sizeof(pl330_buf1);
+	pl330.buf = pl330_buf1;
 
 	printf("SDRAM: Scrubbing 0x%08x - 0x%08x\n",
 		CONFIG_PRELOADER_SDRAM_SCRUB_BOOT_REGION_START,
