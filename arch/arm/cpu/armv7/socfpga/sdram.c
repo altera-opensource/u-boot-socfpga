@@ -530,6 +530,12 @@ defined(CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_NODMPINS)
 			SDR_CTRLGRP_CTRLCFG_NODMPINS_LSB,
 			SDR_CTRLGRP_CTRLCFG_NODMPINS_MASK);
 #endif
+#if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN == 1)
+	/* Enable ECC overwrites if ECC is enabled */
+	reg_value = sdram_write_register_field(reg_value, 0x1,
+		SDR_CTRLGRP_CTRLCFG_CFG_ENABLE_ECC_CODE_OVERWRITES_LSB,
+		SDR_CTRLGRP_CTRLCFG_CFG_ENABLE_ECC_CODE_OVERWRITES_MASK);
+#endif
 	if (sdram_write_verify(register_offset,	reg_value) == 1) {
 		status = 1;
 		COMPARE_FAIL_ACTION
