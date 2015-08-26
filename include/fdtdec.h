@@ -101,6 +101,9 @@ enum fdt_compat_id {
 	COMPAT_ARRIA10_H2F_BRG,		/* Arria10 hps2fpga bridge */
 	COMPAT_ARRIA10_LWH2F_BRG,	/* Arria10 lwhps2fpga bridge */
 	COMPAT_ARRIA10_F2H_BRG,		/* Arria10 fpga2hps bridge */
+	COMPAT_ARRIA10_F2SDR0,		/* Arria10 fpga2SDRAM0 bridge */
+	COMPAT_ARRIA10_F2SDR1,		/* Arria10 fpga2SDRAM1 bridge */
+	COMPAT_ARRIA10_F2SDR2,		/* Arria10 fpga2SDRAM2 bridge */
 	COMPAT_ARRIA10_NOC,		/* Arria10 NOC */
 
 	COMPAT_COUNT,

@@ -314,4 +314,19 @@
 		compatible = "altr,socfpga-fpga2hps-bridge";
 		init-val = <1>;
 	};
+
+	hps_fpgabridge3: fpgabridge@3 {
+		compatible = "altr,socfpga-fpga2sdram0-bridge";
+		init-val = <0>;
+	};
+
+	hps_fpgabridge4: fpgabridge@4 {
+		compatible = "altr,socfpga-fpga2sdram1-bridge";
+		init-val = <1>;
+	};
+
+	hps_fpgabridge5: fpgabridge@5 {
+		compatible = "altr,socfpga-fpga2sdram2-bridge";
+		init-val = <0>;
+	};
 };

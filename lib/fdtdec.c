@@ -77,6 +77,9 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(COMPAT_ARRIA10_H2F_BRG, "altr,socfpga-hps2fpga-bridge"),
 	COMPAT(COMPAT_ARRIA10_LWH2F_BRG, "altr,socfpga-lwhps2fpga-bridge"),
 	COMPAT(COMPAT_ARRIA10_F2H_BRG, "altr,socfpga-fpga2hps-bridge"),
+	COMPAT(COMPAT_ARRIA10_F2SDR0, "altr,socfpga-fpga2sdram0-bridge"),
+	COMPAT(COMPAT_ARRIA10_F2SDR1, "altr,socfpga-fpga2sdram1-bridge"),
+	COMPAT(COMPAT_ARRIA10_F2SDR2, "altr,socfpga-fpga2sdram2-bridge"),
 	COMPAT(COMPAT_ARRIA10_NOC, "altr,socfpga-a10-noc"),
 };
 
