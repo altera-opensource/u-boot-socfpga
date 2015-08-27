@@ -40,6 +40,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define DDR_REG_GPIN            0xFFD03014
 
 #define DDR_ECC_DMA_SIZE	1500
+#define DDR_READ_LATENCY_DELAY	40
 
 static const struct socfpga_ecc_hmc *socfpga_ecc_hmc_base =
 		(void *)SOCFPGA_SDR_ADDRESS;
@@ -454,7 +455,8 @@ void sdram_mmr_init(void)
 
 	/* Configure the read latency [0xFFD12414] */
 	writel(((socfpga_io48_mmr_base->dramtiming0 &
-		ALT_IO48_DRAMTIME_MEM_READ_LATENCY_MASK) >> 1),
+		ALT_IO48_DRAMTIME_MEM_READ_LATENCY_MASK) >> 1) +
+		DDR_READ_LATENCY_DELAY,
 		&socfpga_noc_ddr_scheduler_base->
 			ddr_t_main_scheduler_readlatency);
 
