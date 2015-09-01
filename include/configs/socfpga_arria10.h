@@ -203,9 +203,11 @@
 #ifdef CONFIG_SEMIHOSTING
 #define CONFIG_BOOTCOMMAND ""
 #elif defined(CONFIG_MMC)
-#define CONFIG_BOOTCOMMAND "run callscript; run mmcload; run mmcboot"
+#define CONFIG_BOOTCOMMAND "run callscript; run mmcload;" \
+	"run set_initswstate; run mmcboot"
 #elif defined(CONFIG_CADENCE_QSPI)
-#define CONFIG_BOOTCOMMAND "run qspiload;run qspiboot"
+#define CONFIG_BOOTCOMMAND "run qspiload;" \
+	"run set_initswstate; run qspiboot"
 #else
 #error "unsported configuration"
 #endif
@@ -270,6 +272,10 @@
 		"fpgabr 1;" \
 		"bootz ${loadaddr} - ${fdtaddr}\0" \
 	"bootcmd=" CONFIG_BOOTCOMMAND "\0" \
+	"u-boot_swstate_reg=0xffd0620c\0" \
+	"u-boot_image_valid=0x49535756\0" \
+	"set_initswstate=" \
+		"mw ${u-boot_swstate_reg} ${u-boot_image_valid}\0" \
 	"ksz9031-rgmii-ctrl-skew=0x70\0" \
 	"ksz9031-rgmii-rxd-skew=0x7777\0" \
 	"ksz9031-rgmii-txd-skew=0x0\0" \
