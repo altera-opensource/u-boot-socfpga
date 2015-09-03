@@ -246,7 +246,6 @@
 	"nandfdtaddr=0xA0000\0" \
 	"nandroot=/dev/mtdblock1\0" \
 	"nandrootfstype=jffs2\0" \
-	"ethaddr=00:07:ed:00:64:04\0" \
 	"ramboot=setenv bootargs " CONFIG_BOOTARGS " printk.time=1 debug mem=${fdt_high} " \
 		"lpj=3977216;fpgabr 1; bootz ${loadaddr} - ${fdtaddr}\0" \
 	"mmcload=mmc rescan;" \
