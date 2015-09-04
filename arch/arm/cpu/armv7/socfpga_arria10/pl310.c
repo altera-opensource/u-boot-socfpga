@@ -26,6 +26,12 @@ void v7_outer_cache_enable(void)
 		PL310_AUX_CTRL_INST_PREFETCH_MASK |
 		PL310_AUX_CTRL_EARLY_BRESP_MASK);
 
+	/* enable double linefills and prefetch for better performance */
+	setbits_le32(&pl310_regs_base->pl310_prefetch_ctrl,
+		PL310_PREFETCH_CTRL_DATA_PREFETCH_MASK	|
+		PL310_PREFETCH_CTRL_INST_PREFETCH_MASK	|
+		PL310_PREFETCH_CTRL_DBL_LINEFILL_MASK);
+
 	/* setup tag ram latency */
 	writel(0, &pl310_regs_base->pl310_tag_latency_ctrl);
 
