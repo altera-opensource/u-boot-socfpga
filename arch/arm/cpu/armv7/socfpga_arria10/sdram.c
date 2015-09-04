@@ -59,7 +59,6 @@ static const struct socfpga_io48_mmr *socfpga_io48_mmr_base =
 #define ARRIA_DDR_CONFIG(A, B, C, R)	((A<<24)|(B<<16)|(C<<8)|R)
 /* The followring are the supported configurations */
 u32 ddr_config[] = {
-	0,	/* Dummy element to simplify indexing */
 	/* Chip - Row - Bank - Column Style */
 	/* All Types */
 	ARRIA_DDR_CONFIG(0, 3, 10, 12),
