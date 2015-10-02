@@ -711,19 +711,6 @@ static void read_oob_data(struct mtd_info *mtd, uint8_t *buf, int page)
 	}
 }
 
-static void do_nand_cmd_readoob(struct mtd_info *mtd, int page)
-{
-	struct denali_nand_info *denali = mtd_to_denali(mtd);
-	uint32_t addr;
-	uint32_t cmd;
-
-	denali->page = page;
-
-	addr = BANK(denali->flash_bank) | denali->page;
-	cmd = MODE_10 | addr;
-	index_addr(denali, cmd, SPARE_ACCESS);
-}
-
 /* this function examines buffers to see if they contain data that
  * indicate that the buffer is part of an erased region of flash.
  */
@@ -1006,6 +993,52 @@ static int denali_read_oob(struct mtd_info *mtd, struct nand_chip *chip,
 	return 0;
 }
 
+/*
+ * This function is used instead of the generic nand_block_bad.  The generic
+ * function sends a READOOB command to the NAND device, and that command is
+ * not supported in newer NAND chips.  This function is basically a copy of
+ * the nand_block_bad with the READOOB command replaced by denali_read_oob.
+ */
+static int denali_nand_block_bad(struct mtd_info *mtd, loff_t ofs, int getchip)
+{
+	int page, res = 0, i = 0;
+	struct nand_chip *chip = mtd->priv;
+	u16 bad;
+
+	if (chip->bbt_options & NAND_BBT_SCANLASTPAGE)
+		ofs += mtd->erasesize - mtd->writesize;
+
+	page = (int)(ofs >> chip->page_shift) & chip->pagemask;
+
+	if (getchip) {
+		chip->state = FL_READING;
+
+		/* Select the NAND device */
+		chip->select_chip(mtd, (int)(ofs >> chip->chip_shift));
+	}
+
+	do {
+		denali_read_oob(mtd, chip, page);
+
+		bad = chip->oob_poi[chip->badblockpos];
+
+		if (likely(chip->badblockbits == 8))
+			res = bad != 0xFF;
+		else
+			res = hweight8(bad) < chip->badblockbits;
+		ofs += mtd->writesize;
+		page = (int)(ofs >> chip->page_shift) & chip->pagemask;
+		i++;
+	} while (!res && i < 2 && (chip->bbt_options & NAND_BBT_SCAN2NDPAGE));
+
+	if (getchip) {
+		chip->select_chip(mtd, -1);
+		chip->state = FL_READY;
+	}
+
+	return res;
+}
+
 static uint8_t denali_read_byte(struct mtd_info *mtd)
 {
 	struct denali_nand_info *denali = mtd_to_denali(mtd);
@@ -1115,7 +1148,6 @@ static void denali_cmdfunc(struct mtd_info *mtd, unsigned int cmd, int col,
 		reset_bank(denali);
 		break;
 	case NAND_CMD_READOOB:
-		do_nand_cmd_readoob(mtd, page);
 		break;
 	case NAND_CMD_ERASE1:
 		/*
@@ -1198,6 +1230,9 @@ static int denali_nand_init(struct nand_chip *nand)
 	 */
 	nand->bbt_options |= NAND_BBT_NO_OOB;
 #endif
+
+	nand->options |= NAND_NO_SUBPAGE_WRITE;
+	nand->block_bad = denali_nand_block_bad;
 
 	nand->ecc.mode = NAND_ECC_HW;
 	nand->ecc.size = CONFIG_NAND_DENALI_ECC_SIZE;
