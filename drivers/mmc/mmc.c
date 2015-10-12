@@ -16,10 +16,16 @@
 #include <malloc.h>
 #include <linux/list.h>
 #include <div64.h>
+#include <asm/arch/system_manager.h>
 #include "mmc_private.h"
+
+/* This macro is silicon ID for A10 engineering sample(ES) revision A board. */
+#define ARRIA10_ES_SILICON_VER	0x00010001
 
 static struct list_head mmc_devices;
 static int cur_dev_num = -1;
+static const struct socfpga_system_manager *socfpga_system_mgr =
+		(void *)SOCFPGA_SYSMGR_ADDRESS;
 
 __weak int board_mmc_getwp(struct mmc *mmc)
 {
@@ -819,6 +825,8 @@ static int mmc_startup(struct mmc *mmc)
 	ALLOC_CACHE_ALIGN_BUFFER(u8, ext_csd, MMC_MAX_BLOCK_LEN);
 	ALLOC_CACHE_ALIGN_BUFFER(u8, test_csd, MMC_MAX_BLOCK_LEN);
 	int timeout = 1000;
+	/* Reading the Silicon ID */
+	int chip_version = readl(&socfpga_system_mgr->siliconid1);
 
 #ifdef CONFIG_MMC_SPI_CRC_ON
 	if (mmc_host_is_spi(mmc)) { /* enable CRC check for spi */
@@ -1160,7 +1168,11 @@ static int mmc_startup(struct mmc *mmc)
 		}
 	}
 
-	mmc->tran_speed = 25000000;
+	/* Only A10 engineering sample revision A silicon needs the clock
+		being capped at 25Mhz */
+	if (ARRIA10_ES_SILICON_VER == chip_version)
+		mmc->tran_speed = 25000000;
+
 	mmc_set_clock(mmc, mmc->tran_speed);
 
 	/* fill in device description */
