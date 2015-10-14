@@ -32,7 +32,8 @@ DECLARE_GLOBAL_DATA_PTR;
 #define ARRIA10_NIOS_OCT_DONE	7
 #define ARRIA10_NIOS_OCT_ACK	7
 
-#define DDR_EMIF_DANCE_VER	0x00010001
+/* Engineering sample silicon */
+#define ARRIA10_ES_SILICON_VER	0x00010001
 
 #define DDR_REG_SEQ2CORE        0xFFD0507C
 #define DDR_REG_CORE2SEQ        0xFFD05078
@@ -188,7 +189,7 @@ void ddr_delay(u32 delay)
  * gpin[31]    - OCT calibration ready (act-high)
  */
 
-int ddr_calibration(void)
+int ddr_calibration_es_workaround(void)
 {
 	ddr_delay(500);
 	/* Step 1 - Initiating Reset Sequence */
@@ -246,23 +247,25 @@ int ddr_calibration(void)
 	return 0;
 }
 
-int ddr_setup_workaround(void)
+/* Reset the EMIF */
+
+int ddr_setup(void)
 {
 	int i, j, retcode, ddr_setup_complete = 0;
-	int chip_version = readl(&socfpga_system_mgr->siliconid1);
 
-	/* Version check - only the initial silicon needs this */
-	if (chip_version !=  DDR_EMIF_DANCE_VER)
-		return 0;
+	int chip_version = readl(&socfpga_system_mgr->siliconid1);
 
 	/* Try 3 times to do a calibration */
 	for (i = 0; (i < 3) && !ddr_setup_complete; i++) {
 		WATCHDOG_RESET();
 
-		retcode = ddr_calibration();
-		if (retcode) {
-			printf("DDRCAL: Failure: %d\n", retcode);
-			continue;
+		/* Only engineering sample needs calibration workaround */
+		if (ARRIA10_ES_SILICON_VER == chip_version) {
+			retcode = ddr_calibration_es_workaround();
+			if (retcode) {
+				printf("DDRCAL: Failure: %d\n", retcode);
+				continue;
+			}
 		}
 
 		/* A delay to wait for calibration bit to set */
@@ -270,9 +273,6 @@ int ddr_setup_workaround(void)
 			ddr_delay(500);
 			ddr_setup_complete = is_sdram_cal_success();
 		}
-
-		if (!ddr_setup_complete)
-			puts("DDRCAL: Retry\n");
 	}
 
 	if (!ddr_setup_complete) {
@@ -332,8 +332,8 @@ int sdram_startup(void)
 	/* Release NOC ddr scheduler from reset */
 	reset_deassert_noc_ddr_scheduler();
 
-	/* Bringup Workaround */
-	return ddr_setup_workaround();
+	/* Bringup the DDR (calibration and configuration) */
+	return ddr_setup();
 }
 
 u32 sdram_size_calc(void)
