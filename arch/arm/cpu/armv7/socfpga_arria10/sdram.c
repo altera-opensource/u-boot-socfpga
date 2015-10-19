@@ -40,6 +40,15 @@ DECLARE_GLOBAL_DATA_PTR;
 #define DDR_REG_CORE2SEQ        0xFFD05078
 #define DDR_REG_GPOUT           0xFFD03010
 #define DDR_REG_GPIN            0xFFD03014
+#define DDR_MAX_TRIES		0x00100000
+#define IO48_MMR_DRAMSTS	0xFFCFA0EC
+#define IO48_MMR_NIOS2_RESERVE0	0xFFCFA110
+#define IO48_MMR_NIOS2_RESERVE1	0xFFCFA114
+#define IO48_MMR_NIOS2_RESERVE2	0xFFCFA118
+
+#define SEQ2CORE_MASK		0xF
+#define CORE2SEQ_INT_REQ	0xF
+#define SEQ2CORE_INT_RESP_BIT	3
 
 #define DDR_ECC_DMA_SIZE	1500
 #define DDR_READ_LATENCY_DELAY	40
@@ -248,7 +257,59 @@ int ddr_calibration_es_workaround(void)
 	return 0;
 }
 
-/* Reset the EMIF */
+static int emif_clear(void)
+{
+	u32 s2c;
+	u32 i = DDR_MAX_TRIES;
+
+	writel(0, DDR_REG_CORE2SEQ);
+	do {
+		ddr_delay(50);
+		s2c = readl(DDR_REG_SEQ2CORE);
+	} while ((s2c & SEQ2CORE_MASK) && (--i > 0));
+
+	return !i;
+}
+static int emif_reset(void)
+{
+	u32 c2s, s2c;
+
+	c2s = readl(DDR_REG_CORE2SEQ);
+	s2c = readl(DDR_REG_SEQ2CORE);
+
+	debug("c2s=%08x s2c=%08x nr0=%08x nr1=%08x nr2=%08x dst=%08x\n",
+		c2s, s2c, readl(IO48_MMR_NIOS2_RESERVE0),
+		readl(IO48_MMR_NIOS2_RESERVE1),
+		readl(IO48_MMR_NIOS2_RESERVE2),
+		readl(IO48_MMR_DRAMSTS));
+
+	if ((s2c & SEQ2CORE_MASK) && emif_clear()) {
+		printf("failed emif_clear()\n");
+		return -1;
+	}
+
+	writel(CORE2SEQ_INT_REQ, DDR_REG_CORE2SEQ);
+
+	if (ddr_wait_bit(DDR_REG_SEQ2CORE, SEQ2CORE_INT_RESP_BIT, 0, 1000000)) {
+		printf("emif_reset failed to see interrupt acknowledge\n");
+		return -2;
+	} else {
+		printf("emif_reset interrupt acknowledged\n");
+	}
+
+	if (emif_clear()) {
+		printf("emif_clear() failed\n");
+		return -3;
+	}
+	debug("emif_reset interrupt cleared\n");
+
+	debug("nr0=%08x nr1=%08x nr2=%08x\n",
+		readl(IO48_MMR_NIOS2_RESERVE0),
+		readl(IO48_MMR_NIOS2_RESERVE1),
+		readl(IO48_MMR_NIOS2_RESERVE2));
+
+	return 0;
+}
 
 int ddr_setup(void)
 {
@@ -273,6 +334,10 @@ int ddr_setup(void)
 		for (j = 0; (j < 10) && !ddr_setup_complete; j++) {
 			ddr_delay(500);
 			ddr_setup_complete = is_sdram_cal_success();
+		}
+
+		if (ARRIA10_ES_SILICON_VER != chip_version) {
+			emif_reset();
 		}
 	}
 
