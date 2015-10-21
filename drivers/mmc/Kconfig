@@ -1,0 +1,3 @@
+config MMC
+        bool "Include MMC driver"
+        default n
