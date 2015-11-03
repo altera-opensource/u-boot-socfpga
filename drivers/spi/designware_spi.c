@@ -1,6 +1,8 @@
 /*
  * Designware master SPI core controller driver
  *
+ * Copyright (C) 2015 Altera Corporation
+ *
  * Copyright (C) 2014 Stefan Roese <sr@denx.de>
  *
  * Very loosely based on the Linux driver:
@@ -11,7 +13,6 @@
  */
 
 #include <common.h>
-#include <dm.h>
 #include <errno.h>
 #include <malloc.h>
 #include <spi.h>
@@ -21,33 +22,6 @@
 #include <asm/arch/clock_manager.h>
 
 DECLARE_GLOBAL_DATA_PTR;
-
-/* Register offsets */
-#define DW_SPI_CTRL0			0x00
-#define DW_SPI_CTRL1			0x04
-#define DW_SPI_SSIENR			0x08
-#define DW_SPI_MWCR			0x0c
-#define DW_SPI_SER			0x10
-#define DW_SPI_BAUDR			0x14
-#define DW_SPI_TXFLTR			0x18
-#define DW_SPI_RXFLTR			0x1c
-#define DW_SPI_TXFLR			0x20
-#define DW_SPI_RXFLR			0x24
-#define DW_SPI_SR			0x28
-#define DW_SPI_IMR			0x2c
-#define DW_SPI_ISR			0x30
-#define DW_SPI_RISR			0x34
-#define DW_SPI_TXOICR			0x38
-#define DW_SPI_RXOICR			0x3c
-#define DW_SPI_RXUICR			0x40
-#define DW_SPI_MSTICR			0x44
-#define DW_SPI_ICR			0x48
-#define DW_SPI_DMACR			0x4c
-#define DW_SPI_DMATDLR			0x50
-#define DW_SPI_DMARDLR			0x54
-#define DW_SPI_IDR			0x58
-#define DW_SPI_VERSION			0x5c
-#define DW_SPI_DR			0x60
 
 /* Bit fields in CTRLR0 */
 #define SPI_DFS_OFFSET			0
@@ -85,342 +59,370 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define RX_TIMEOUT			1000		/* timeout in ms */
 
-struct dw_spi_platdata {
-	s32 frequency;		/* Default clock frequency, -1 for none */
-	void __iomem *regs;
+#ifndef CONFIG_SYS_ALTERA_SPI_LIST
+	#define CONFIG_SYS_ALTERA_SPI_LIST { CONFIG_SYS_SPI_BASE }
+#endif
+
+static ulong dw_spi_base_list[] = CONFIG_SYS_ALTERA_SPI_LIST;
+
+/* DesignWare spi register set */
+struct dw_spi_regs {
+	u32 DW_SPI_CTRL0;	/* 0x00 */
+	u32 DW_SPI_CTRL1;	/* 0x04 */
+	u32 DW_SPI_SSIENR;	/* 0x08 */
+	u32 DW_SPI_MWCR;	/* 0x0C */
+	u32 DW_SPI_SER;		/* 0x10 */
+	u32 DW_SPI_BAUDR;	/* 0x14 */
+	u32 DW_SPI_TXFLTR;	/* 0x18 */
+	u32 DW_SPI_RXFLTR;	/* 0x1C */
+	u32 DW_SPI_TXFLR;	/* 0x20 */
+	u32 DW_SPI_RXFLR;	/* 0x24 */
+	u32 DW_SPI_SR;		/* 0x28 */
+	u32 DW_SPI_IMR;		/* 0x2c */
+	u32 DW_SPI_ISR;		/* 0x30 */
+	u32 DW_SPI_RISR;	/* 0x34 */
+	u32 DW_SPI_TXOICR;	/* 0x38 */
+	u32 DW_SPI_RXOICR;	/* 0x3c */
+	u32 DW_SPI_RXUICR;	/* 0x40 */
+	u32 DW_SPI_MSTICR;	/* 0x44 */
+	u32 DW_SPI_ICR;		/* 0x48 */
+	u32 DW_SPI_DMACR;	/* 0x4c */
+	u32 DW_SPI_DMATDLR;	/* 0x50 */
+	u32 DW_SPI_DMARDLR;	/* 0x54 */
+	u32 DW_SPI_IDR;		/* 0x58 */
+	u32 DW_SPI_VERSION;	/* 0x5c */
+	u32 DW_SPI_DR;		/* 0x60 */
 };
 
-struct dw_spi_priv {
-	void __iomem *regs;
-	unsigned int freq;		/* Default frequency */
-	unsigned int mode;
-
-	int bits_per_word;
-	u8 cs;			/* chip select pin */
+struct dw_spi_slave {
+	struct spi_slave slave;
+	struct dw_spi_regs *base; /* Base address of the SPI core */
+	unsigned int plat_freq;	/* Default clock frequency, -1 for none */
+	unsigned int freq;	/* Current frequency */
+	unsigned int max_hz;	/* User defined frequency */
+	unsigned int mode;	/* Identifies the SPI mode to use */
 	u8 tmode;		/* TR/TO/RO/EEPROM */
 	u8 type;		/* SPI/SSP/MicroWire */
-	int len;
-
-	u32 fifo_len;		/* depth of the FIFO buffer */
-	void *tx;
-	void *tx_end;
-	void *rx;
-	void *rx_end;
+	int len;		/* Bytes of data to send or receive */
+	u8 nbytes;		/* Data frame in byte */
+	u32 fifo_len;		/* Depth of the FIFO buffer */
+	void *tx;		/* Pointer to the start of transmit data */
+	void *tx_end;		/* Pointer to the end of transmit data */
+	void *rx;		/* Pointer to the start of receive data */
+	void *rx_end;		/* Pointer to the start receive data */
 };
 
-static inline u32 dw_readl(struct dw_spi_priv *priv, u32 offset)
+#define to_dw_spi_slave(s) container_of(s, struct dw_spi_slave, slave)
+
+int spi_cs_is_valid(unsigned int bus, unsigned int cs)
 {
-	return __raw_readl(priv->regs + offset);
+	return bus < ARRAY_SIZE(dw_spi_base_list) && cs < 4;
 }
 
-static inline void dw_writel(struct dw_spi_priv *priv, u32 offset, u32 val)
+static inline void spi_enable_chip(struct dw_spi_slave *dwspi, int enable)
 {
-	__raw_writel(val, priv->regs + offset);
+	__raw_writel((enable ? 1 : 0), &dwspi->base->DW_SPI_SSIENR);
 }
 
-static inline u16 dw_readw(struct dw_spi_priv *priv, u32 offset)
+void spi_free_slave(struct spi_slave *slave)
 {
-	return __raw_readw(priv->regs + offset);
+	struct dw_spi_slave *dwspi = to_dw_spi_slave(slave);
+
+	free(dwspi);
+
+	return;
 }
 
-static inline void dw_writew(struct dw_spi_priv *priv, u32 offset, u16 val)
+void spi_release_bus(struct spi_slave *slave)
 {
-	__raw_writew(val, priv->regs + offset);
+	struct dw_spi_slave *dwspi = to_dw_spi_slave(slave);
+
+	debug("%s: bus:%i cs:%i\n", __func__, slave->bus, slave->cs);
+
+	/* Slave select disabled */
+	spi_enable_chip(dwspi, 0);
+	spi_cs_deactivate(&dwspi->slave);
+
+	return;
 }
 
-static int dw_spi_ofdata_to_platdata(struct udevice *bus)
+struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
+					unsigned int max_hz, unsigned int mode)
 {
-	struct dw_spi_platdata *plat = bus->platdata;
-	const void *blob = gd->fdt_blob;
-	int node = bus->of_offset;
+	struct dw_spi_slave *dwspi;
 
-	plat->regs = (struct dw_spi *)fdtdec_get_addr(blob, node, "reg");
+	if (!spi_cs_is_valid(bus, cs)) {
+		debug("%s: Invalid bus/chip select %d, %d\n", __func__,
+		      bus, cs);
+		return NULL;
+	}
 
-	/* Use 500KHz as a suitable default */
-	plat->frequency = fdtdec_get_int(blob, node, "spi-max-frequency",
-					500000);
-	debug("%s: regs=%p max-frequency=%d\n", __func__, plat->regs,
-	      plat->frequency);
+	dwspi = spi_alloc_slave(struct dw_spi_slave, bus, cs);
 
-	return 0;
+	if (!dwspi) {
+		debug("%s: Could not allocate spi_slave\n", __func__);
+		return NULL;
+	}
+
+	/* Currently only bits_per_word == 8 supported */
+	dwspi->slave.wordlen = 8;
+	dwspi->nbytes = dwspi->slave.wordlen >> 3;
+	dwspi->tmode = 0; /* Tx & Rx */
+	dwspi->mode = mode;
+	dwspi->type = SPI_FRF_SPI;
+	dwspi->base = (struct dw_spi_regs *)dw_spi_base_list[bus];
+	dwspi->plat_freq = SPI_MAX_FREQUENCY;
+	dwspi->max_hz = max_hz;
+
+	return &dwspi->slave;
 }
 
-static inline void spi_enable_chip(struct dw_spi_priv *priv, int enable)
+int spi_claim_bus(struct spi_slave *slave)
 {
-	dw_writel(priv, DW_SPI_SSIENR, (enable ? 1 : 0));
-}
+	struct dw_spi_slave *dwspi = to_dw_spi_slave(slave);
 
-/* Restart the controller, disable all interrupts, clean rx fifo */
-static void spi_hw_init(struct dw_spi_priv *priv)
-{
-	spi_enable_chip(priv, 0);
-	dw_writel(priv, DW_SPI_IMR, 0xff);
-	spi_enable_chip(priv, 1);
+	debug("%s: bus:%i cs:%i\n", __func__, slave->bus, slave->cs);
+
+	spi_enable_chip(dwspi, 0);
+	__raw_writel(0xff, &dwspi->base->DW_SPI_IMR);
+	spi_enable_chip(dwspi, 1);
+
+	spi_set_speed(&dwspi->slave, dwspi->max_hz);
 
 	/*
 	 * Try to detect the FIFO depth if not set by interface driver,
 	 * the depth could be from 2 to 256 from HW spec
 	 */
-	if (!priv->fifo_len) {
+	if (!dwspi->fifo_len) {
 		u32 fifo;
 
 		for (fifo = 1; fifo < 256; fifo++) {
-			dw_writew(priv, DW_SPI_TXFLTR, fifo);
-			if (fifo != dw_readw(priv, DW_SPI_TXFLTR))
+			__raw_writel(fifo, &(dwspi->base->DW_SPI_TXFLTR));
+			if (fifo != __raw_readl(&dwspi->base->DW_SPI_TXFLTR))
 				break;
 		}
 
-		priv->fifo_len = (fifo == 1) ? 0 : fifo;
-		dw_writew(priv, DW_SPI_TXFLTR, 0);
+		dwspi->fifo_len = (fifo == 1) ? 0 : fifo;
+		__raw_writel(0, &dwspi->base->DW_SPI_TXFLTR);
 	}
-	debug("%s: fifo_len=%d\n", __func__, priv->fifo_len);
-}
-
-static int dw_spi_probe(struct udevice *bus)
-{
-	struct dw_spi_platdata *plat = dev_get_platdata(bus);
-	struct dw_spi_priv *priv = dev_get_priv(bus);
-
-	priv->regs = plat->regs;
-	priv->freq = plat->frequency;
-
-	/* Currently only bits_per_word == 8 supported */
-	priv->bits_per_word = 8;
-
-	priv->tmode = 0; /* Tx & Rx */
-
-	/* Basic HW init */
-	spi_hw_init(priv);
+	debug("%s: fifo_len=%d\n", __func__, dwspi->fifo_len);
 
 	return 0;
 }
 
 /* Return the max entries we can fill into tx fifo */
-static inline u32 tx_max(struct dw_spi_priv *priv)
+static inline u32 tx_max(struct dw_spi_slave *dw_spi)
 {
+	struct dw_spi_slave *dwspi = dw_spi;
 	u32 tx_left, tx_room, rxtx_gap;
 
-	tx_left = (priv->tx_end - priv->tx) / (priv->bits_per_word >> 3);
-	tx_room = priv->fifo_len - dw_readw(priv, DW_SPI_TXFLR);
+	tx_left = (dwspi->tx_end - dwspi->tx) / (dwspi->nbytes);
+	tx_room = dwspi->fifo_len - __raw_readl(&dwspi->base->DW_SPI_TXFLTR);
 
 	/*
 	 * Another concern is about the tx/rx mismatch, we
-	 * thought about using (priv->fifo_len - rxflr - txflr) as
+	 * thought about using (dwspi->fifo_len - rxflr - txflr) as
 	 * one maximum value for tx, but it doesn't cover the
 	 * data which is out of tx/rx fifo and inside the
 	 * shift registers. So a control from sw point of
 	 * view is taken.
 	 */
-	rxtx_gap = ((priv->rx_end - priv->rx) - (priv->tx_end - priv->tx)) /
-		(priv->bits_per_word >> 3);
+	rxtx_gap = ((dwspi->rx_end - dwspi->rx) - (dwspi->tx_end - dwspi->tx)) /
+		(dwspi->nbytes);
 
-	return min3(tx_left, tx_room, (u32)(priv->fifo_len - rxtx_gap));
+	return min3(tx_left, tx_room, (u32)(dwspi->fifo_len - rxtx_gap));
 }
 
 /* Return the max entries we should read out of rx fifo */
-static inline u32 rx_max(struct dw_spi_priv *priv)
+static inline u32 rx_max(struct dw_spi_slave *dw_spi)
 {
-	u32 rx_left = (priv->rx_end - priv->rx) / (priv->bits_per_word >> 3);
+	struct dw_spi_slave *dwspi = dw_spi;
+	u32 rx_left = (dwspi->rx_end - dwspi->rx) / (dwspi->nbytes);
 
-	return min_t(u32, rx_left, dw_readw(priv, DW_SPI_RXFLR));
+	return min_t(u32, rx_left, __raw_readl(&dwspi->base->DW_SPI_RXFLR));
 }
 
-static void dw_writer(struct dw_spi_priv *priv)
+static void dw_writer(struct dw_spi_slave *dw_spi)
 {
-	u32 max = tx_max(priv);
+	struct dw_spi_slave *dwspi = dw_spi;
+	u32 max = tx_max(dwspi);
 	u16 txw = 0;
 
+	/*
+	 * Cautious: For continuous data transfers, you must ensure that the
+	 * transmit FIFO buffer does not become empty before all the data have
+	 * been transmitted, so performance impact logic should be avoided
+	 * like 'printf'.
+	 */
 	while (max--) {
-		/* Set the tx word if the transfer's original "tx" is not null */
-		if (priv->tx_end - priv->len) {
-			if (priv->bits_per_word == 8)
-				txw = *(u8 *)(priv->tx);
+		if (dwspi->tx_end - dwspi->len) {
+			if (dwspi->slave.wordlen == 8)
+				txw = *(u8 *)(dwspi->tx);
 			else
-				txw = *(u16 *)(priv->tx);
+				txw = *(u16 *)(dwspi->tx);
 		}
-		dw_writew(priv, DW_SPI_DR, txw);
-		debug("%s: tx=0x%02x\n", __func__, txw);
-		priv->tx += priv->bits_per_word >> 3;
+
+		__raw_writel(txw, &dwspi->base->DW_SPI_DR);
+		dwspi->tx += dwspi->nbytes;
 	}
 }
 
-static int dw_reader(struct dw_spi_priv *priv)
+static int dw_reader(struct dw_spi_slave *dw_spi)
 {
+	struct dw_spi_slave *dwspi = dw_spi;
 	unsigned start = get_timer(0);
 	u32 max;
-	u16 rxw;
+	u32 rxw;
 
 	/* Wait for rx data to be ready */
-	while (rx_max(priv) == 0) {
+	while (rx_max(dwspi) == 0) {
 		if (get_timer(start) > RX_TIMEOUT)
 			return -ETIMEDOUT;
 	}
 
-	max = rx_max(priv);
+	max = rx_max(dwspi);
 
 	while (max--) {
-		rxw = dw_readw(priv, DW_SPI_DR);
-		debug("%s: rx=0x%02x\n", __func__, rxw);
+		rxw = __raw_readl(&dwspi->base->DW_SPI_DR);
 
 		/*
 		 * Care about rx only if the transfer's original "rx" is
 		 * not null
 		 */
-		if (priv->rx_end - priv->len) {
-			if (priv->bits_per_word == 8)
-				*(u8 *)(priv->rx) = rxw;
+		if (dwspi->rx_end - dwspi->len) {
+			if (dwspi->slave.wordlen == 8)
+				*(u8 *)(dwspi->rx) = rxw;
 			else
-				*(u16 *)(priv->rx) = rxw;
+				*(u16 *)(dwspi->rx) = rxw;
 		}
-		priv->rx += priv->bits_per_word >> 3;
+		dwspi->rx += dwspi->nbytes;
 	}
 
 	return 0;
 }
 
-static int poll_transfer(struct dw_spi_priv *priv)
+static int poll_transfer(struct dw_spi_slave *dw_spi)
 {
+	struct dw_spi_slave *dwspi = dw_spi;
 	int ret;
 
 	do {
-		dw_writer(priv);
-		ret = dw_reader(priv);
+		dw_writer(dwspi);
+		ret = dw_reader(dwspi);
 		if (ret < 0)
 			return ret;
-	} while (priv->rx_end > priv->rx);
+	} while (dwspi->rx_end > dwspi->rx);
 
 	return 0;
 }
 
-static int dw_spi_xfer(struct udevice *dev, unsigned int bitlen,
-		       const void *dout, void *din, unsigned long flags)
+int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
+	      void *din, unsigned long flags)
 {
-	struct udevice *bus = dev->parent;
-	struct dw_spi_priv *priv = dev_get_priv(bus);
+	struct dw_spi_slave *dwspi = to_dw_spi_slave(slave);
 	const u8 *tx = dout;
 	u8 *rx = din;
 	int ret = 0;
 	u32 cr0 = 0;
-	u32 cs;
 
-	/* spi core configured to do 8 bit transfers */
+/* spi core configured to do 8 bit transfers */
 	if (bitlen % 8) {
 		debug("Non byte aligned SPI transfer.\n");
 		return -1;
 	}
 
-	cr0 = (priv->bits_per_word - 1) | (priv->type << SPI_FRF_OFFSET) |
-		(priv->mode << SPI_MODE_OFFSET) |
-		(priv->tmode << SPI_TMOD_OFFSET);
+	cr0 = (dwspi->slave.wordlen - 1) | (dwspi->type << SPI_FRF_OFFSET) |
+		(dwspi->mode << SPI_MODE_OFFSET) |
+		(dwspi->tmode << SPI_TMOD_OFFSET);
 
 	if (rx && tx)
-		priv->tmode = SPI_TMOD_TR;
+		dwspi->tmode = SPI_TMOD_TR;
 	else if (rx)
-		priv->tmode = SPI_TMOD_RO;
+		dwspi->tmode = SPI_TMOD_RO;
 	else
-		priv->tmode = SPI_TMOD_TO;
+		dwspi->tmode = SPI_TMOD_TO;
 
 	cr0 &= ~SPI_TMOD_MASK;
-	cr0 |= (priv->tmode << SPI_TMOD_OFFSET);
+	cr0 |= (dwspi->tmode << SPI_TMOD_OFFSET);
 
-	priv->len = bitlen >> 3;
-	debug("%s: rx=%p tx=%p len=%d [bytes]\n", __func__, rx, tx, priv->len);
+	dwspi->len = bitlen >> 3;
+	debug("%s: rx=%p tx=%p len=%d [bytes]\n", __func__, rx, tx, dwspi->len);
 
-	priv->tx = (void *)tx;
-	priv->tx_end = priv->tx + priv->len;
-	priv->rx = rx;
-	priv->rx_end = priv->rx + priv->len;
+	dwspi->tx = (void *)tx;
+	dwspi->tx_end = dwspi->tx + dwspi->len;
+	dwspi->rx = rx;
+	dwspi->rx_end = dwspi->rx + dwspi->len;
 
 	/* Disable controller before writing control registers */
-	spi_enable_chip(priv, 0);
+	spi_enable_chip(dwspi, 0);
 
 	debug("%s: cr0=%08x\n", __func__, cr0);
-	/* Reprogram cr0 only if changed */
-	if (dw_readw(priv, DW_SPI_CTRL0) != cr0)
-		dw_writew(priv, DW_SPI_CTRL0, cr0);
 
-	/*
-	 * Configure the desired SS (slave select 0...3) in the controller
-	 * The DW SPI controller will activate and deactivate this CS
-	 * automatically. So no cs_activate() etc is needed in this driver.
-	 */
-	cs = spi_chip_select(dev);
-	dw_writel(priv, DW_SPI_SER, 1 << cs);
+	/* Reprogram cr0 only if changed */
+	if (__raw_readl(&dwspi->base->DW_SPI_CTRL0) != cr0)
+		__raw_writel(cr0, &dwspi->base->DW_SPI_CTRL0);
+
+	spi_cs_activate(&dwspi->slave);
 
 	/* Enable controller after writing control registers */
-	spi_enable_chip(priv, 1);
+	spi_enable_chip(dwspi, 1);
 
 	/* Start transfer in a polling loop */
-	ret = poll_transfer(priv);
+	ret = poll_transfer(dwspi);
 
 	return ret;
 }
 
-static int dw_spi_set_speed(struct udevice *bus, uint speed)
+void spi_set_speed(struct spi_slave *slave, uint hz)
 {
-	struct dw_spi_platdata *plat = bus->platdata;
-	struct dw_spi_priv *priv = dev_get_priv(bus);
+	struct dw_spi_slave *dwspi = to_dw_spi_slave(slave);
 	u16 clk_div;
 
-	if (speed > plat->frequency)
-		speed = plat->frequency;
+	if (hz > dwspi->plat_freq)
+		hz = dwspi->plat_freq;
 
 	/* Disable controller before writing control registers */
-	spi_enable_chip(priv, 0);
+	spi_enable_chip(dwspi, 0);
 
 	/* clk_div doesn't support odd number */
-	clk_div = cm_get_spi_controller_clk_hz() / speed;
+	clk_div = CONFIG_SPI_REF_CLK / hz;
 	clk_div = (clk_div + 1) & 0xfffe;
-	dw_writel(priv, DW_SPI_BAUDR, clk_div);
+	__raw_writel(clk_div, &dwspi->base->DW_SPI_BAUDR);
 
 	/* Enable controller after writing control registers */
-	spi_enable_chip(priv, 1);
+	spi_enable_chip(dwspi, 1);
 
-	priv->freq = speed;
-	debug("%s: regs=%p speed=%d clk_div=%d\n", __func__, priv->regs,
-	      priv->freq, clk_div);
+	dwspi->freq = hz;
 
-	return 0;
+	return;
 }
 
-static int dw_spi_set_mode(struct udevice *bus, uint mode)
+void spi_cs_activate(struct spi_slave *slave)
 {
-	struct dw_spi_priv *priv = dev_get_priv(bus);
+	struct dw_spi_slave *dwspi = to_dw_spi_slave(slave);
 
 	/*
-	 * Can't set mode yet. Since this depends on if rx, tx, or
-	 * rx & tx is requested. So we have to defer this to the
-	 * real transfer function.
+	 * Configure the desired SS (slave select 0...3) in the controller.
+	 * If no slaves are enabled prior to writing to the Data Register (DR),
+	 * the transfer does not begin until a slave is enabled.
 	 */
-	priv->mode = mode;
-	debug("%s: regs=%p, mode=%d\n", __func__, priv->regs, priv->mode);
+	__raw_writel((1 << dwspi->slave.cs), &dwspi->base->DW_SPI_SER);
 
-	return 0;
+	return;
 }
 
-static const struct dm_spi_ops dw_spi_ops = {
-	.xfer		= dw_spi_xfer,
-	.set_speed	= dw_spi_set_speed,
-	.set_mode	= dw_spi_set_mode,
-	/*
-	 * cs_info is not needed, since we require all chip selects to be
-	 * in the device tree explicitly
-	 */
-};
+void spi_cs_deactivate(struct spi_slave *slave)
+{
+	struct dw_spi_slave *dwspi = to_dw_spi_slave(slave);
 
-static const struct udevice_id dw_spi_ids[] = {
-	{ .compatible = "snps,dw-spi-mmio" },
-	{ }
-};
+	__raw_writel(0, &dwspi->base->DW_SPI_SER);
 
-U_BOOT_DRIVER(dw_spi) = {
-	.name = "dw_spi",
-	.id = UCLASS_SPI,
-	.of_match = dw_spi_ids,
-	.ops = &dw_spi_ops,
-	.ofdata_to_platdata = dw_spi_ofdata_to_platdata,
-	.platdata_auto_alloc_size = sizeof(struct dw_spi_platdata),
-	.priv_auto_alloc_size = sizeof(struct dw_spi_priv),
-	.per_child_auto_alloc_size = sizeof(struct spi_slave),
-	.probe = dw_spi_probe,
-};
+	return;
+}
+
+void spi_init(void)
+{
+	/* nothing to do */
+	return;
+}
+
