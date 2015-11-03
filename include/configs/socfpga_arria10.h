@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2014 Altera Corporation <www.altera.com>
+ *  Copyright (C) 2014-2015 Altera Corporation <www.altera.com>
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -627,6 +627,19 @@ CONFIG_NAND_DENALI is also defined.
 
 #define CONFIG_SYS_GENERIC_BOARD
 
+/*
+ * SPI support
+ */
+#undef CONFIG_DESIGNWARE_SPI
+#ifdef CONFIG_DESIGNWARE_SPI
+#define CONFIG_CMD_SPI
+/* SPI reference clock */
+#define CONFIG_SPI_REF_CLK	(cm_l4_mp_clk_hz)
+/* The base address of the SPI master */
+#define CONFIG_SYS_SPI_BASE	0xffda5000
+/* Platform frequency */
+#define SPI_MAX_FREQUENCY	1000000
+#endif
 
 /*
  * I2C support
