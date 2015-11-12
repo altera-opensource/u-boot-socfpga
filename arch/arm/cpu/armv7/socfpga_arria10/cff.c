@@ -161,31 +161,10 @@ int cff_from_mmc_fat(char *dev_part, const char *filename, int len)
 	}
 
 	/* Ensure the FPGA entering config done */
-	status = fpgamgr_program_poll_cd();
+	status = fpgamgr_program_fini();
 	if (status) {
-		printf("FPGA: Poll CD failed with error code %d\n", status);
-		return -2;
+		return status;
 	}
-	WATCHDOG_RESET();
-
-	/* Ensure the FPGA entering init phase */
-	status = fpgamgr_program_poll_initphase();
-	if (status) {
-		printf("FPGA: Poll initphase failed with error code %d\n",
-			status);
-		return -3;
-	}
-	WATCHDOG_RESET();
-
-	/* Ensure the FPGA entering user mode */
-	status = fpgamgr_program_poll_usermode();
-	if (status) {
-		printf("FPGA: Poll usermode failed with error code %d\n",
-			status);
-		return -4;
-	}
-
-	printf("FPGA: Success.\n");
 	WATCHDOG_RESET();
 
 	return num_files;
@@ -283,28 +262,9 @@ int cff_from_qspi(unsigned long flash_offset)
 	}
 
 	/* Ensure the FPGA entering config done */
-	status = fpgamgr_program_poll_cd();
+	status = fpgamgr_program_fini();
 	if (status) {
-		printf("FPGA: Poll CD failed with error code %d\n", status);
-		return -3;
-	}
-	WATCHDOG_RESET();
-
-	/* Ensure the FPGA entering init phase */
-	status = fpgamgr_program_poll_initphase();
-	if (status) {
-		printf("FPGA: Poll initphase failed with error code %d\n",
-			status);
-		return -4;
-	}
-	WATCHDOG_RESET();
-
-	/* Ensure the FPGA entering user mode */
-	status = fpgamgr_program_poll_usermode();
-	if (status) {
-		printf("FPGA: Poll usermode failed with error code %d\n",
-			status);
-		return -5;
+		return status;
 	}
 
 #ifdef CONFIG_CHECK_FPGA_DATA_CRC
@@ -313,8 +273,6 @@ int cff_from_qspi(unsigned long flash_offset)
 		return -8;
 	}
 #endif
-
-	printf("FPGA: Success.\n");
 	WATCHDOG_RESET();
 	return 1;
 }
@@ -467,31 +425,11 @@ int cff_from_nand(unsigned long flash_offset)
 #endif
 
 	/* Ensure the FPGA entering config done */
-	status = fpgamgr_program_poll_cd();
+	status = fpgamgr_program_fini();
 	if (status) {
-		printf("FPGA: Poll CD failed with error code %d\n", status);
-		return -3;
-	}
-	WATCHDOG_RESET();
-
-	/* Ensure the FPGA entering init phase */
-	status = fpgamgr_program_poll_initphase();
-	if (status) {
-		printf("FPGA: Poll initphase failed with error code %d\n",
-		       status);
-		return -4;
-	}
-	WATCHDOG_RESET();
-
-	/* Ensure the FPGA entering user mode */
-	status = fpgamgr_program_poll_usermode();
-	if (status) {
-		printf("FPGA: Poll usermode failed with error code %d\n",
-		       status);
-		return -5;
+		return status;
 	}
 
-	printf("FPGA: Success.\n");
 	WATCHDOG_RESET();
 	return 1;
 }

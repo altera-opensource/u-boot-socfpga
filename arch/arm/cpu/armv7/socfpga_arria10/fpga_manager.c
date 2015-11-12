@@ -12,6 +12,7 @@
 #include <asm/arch/sdram.h>
 #include <altera.h>
 #include <errno.h>
+#include <watchdog.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -386,6 +387,38 @@ int fpgamgr_program_init(u32 * rbf_data, u32 rbf_size)
 	return 0;
 }
 
+int fpgamgr_program_fini(void)
+{
+	/* Ensure the FPGA entering config done */
+	int status = fpgamgr_program_poll_cd();
+	if (status) {
+		printf("FPGA: Poll CD failed with error code %d\n", status);
+		return -3;
+	}
+	WATCHDOG_RESET();
+
+	/* Ensure the FPGA entering init phase */
+	status = fpgamgr_program_poll_initphase();
+	if (status) {
+		printf("FPGA: Poll initphase failed with error code %d\n",
+			status);
+		return -4;
+	}
+	WATCHDOG_RESET();
+
+	/* Ensure the FPGA entering user mode */
+	status = fpgamgr_program_poll_usermode();
+	if (status) {
+		printf("FPGA: Poll usermode failed with error code %d\n",
+			status);
+		return -5;
+	}
+
+	printf("FPGA: Success.\n");
+
+	return 0;
+}
+
 /* Write the RBF data to FPGA Manager */
 void fpgamgr_program_write(const unsigned long *rbf_data,
 	unsigned long rbf_size)
@@ -493,17 +526,6 @@ int socfpga_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size)
 	/* Write the RBF data to FPGA Manager */
 	fpgamgr_program_write(rbf_data, rbf_size);
 
-	/* Ensure the FPGA entering config done */
-	status = fpgamgr_program_poll_cd();
-	if (status)
-		return status;
-
-	/* Ensure the FPGA entering init phase */
-	status = fpgamgr_program_poll_initphase();
-	if (status)
-		return status;
-
-	/* Ensure the FPGA entering user mode */
-	return fpgamgr_program_poll_usermode();
+	return fpgamgr_program_fini();
 }
 #endif /* CONFIG_CMD_FPGA_LOAD */
