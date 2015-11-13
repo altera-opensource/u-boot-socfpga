@@ -108,6 +108,7 @@ int fpgamgr_program_init(u32 * rbf_data, u32 rbf_size);
 int fpgamgr_program_fini(void);
 void fpgamgr_program_write(const unsigned long *rbf_data,
 	unsigned long rbf_size);
+void fpgamgr_program_sync(void);
 int fpgamgr_program_poll_cd(void);
 int fpgamgr_program_poll_initphase(void);
 int is_fpgamgr_user_mode(void);

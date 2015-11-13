@@ -158,6 +158,7 @@ int cff_from_mmc_fat(char *dev_part, const char *filename, int len)
 		slen = strlen(filename) + 1;
 		len -= slen;
 		filename += slen;
+		fpgamgr_program_sync();
 	}
 
 	/* Ensure the FPGA entering config done */
@@ -260,6 +261,8 @@ int cff_from_qspi(unsigned long flash_offset)
 		WATCHDOG_RESET();
 
 	}
+
+	fpgamgr_program_sync();
 
 	/* Ensure the FPGA entering config done */
 	status = fpgamgr_program_fini();
@@ -416,6 +419,8 @@ int cff_from_nand(unsigned long flash_offset)
 
 		WATCHDOG_RESET();
 	}
+
+	fpgamgr_program_sync();
 
 #ifdef CONFIG_CHECK_FPGA_DATA_CRC
 	if (datacrc !=  image_get_dcrc(&header)) {

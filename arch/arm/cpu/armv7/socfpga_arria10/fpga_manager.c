@@ -70,6 +70,17 @@ static int wait_for_user_mode(void)
 	return i;
 }
 
+/* send sync words to clock data through the control block */
+void fpgamgr_program_sync(void)
+{
+	u32 sync_data = 0xffffffff;
+	int i;
+	for (i = 0; i < 10; i++) {
+		fpgamgr_program_write((const long unsigned int *)&sync_data,
+				sizeof(sync_data));
+	}
+}
+
 static int wait_for_imgcfg_stat(unsigned long mask)
 {
 	unsigned long reg, i;
