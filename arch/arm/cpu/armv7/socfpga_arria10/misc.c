@@ -167,16 +167,22 @@ void skip_relocation(void)
 	board_init_r(id, (CONFIG_SYS_INIT_SP_ADDR - CONFIG_OCRAM_STACK_SIZE));
 }
 
-int is_external_fpga_config(const void *blob)
+int is_chosen_boolean_true(const void *blob, const char *name)
 {
-	int node, len;
+	int node;
 	int rval = 0;
 
 	node = fdt_subnode_offset(blob, 0, "chosen");
-	if (node >= 0) {
-		if (fdt_getprop(blob, node, "external-fpga-config", &len))
-			rval = 1;
-	}
+
+	if (node >= 0)
+		rval = fdtdec_get_bool(blob, node, name);
 
 	return rval;
+}
+
+int is_external_fpga_config(const void *blob)
+{
+	static const char *name = "external-fpga-config";
+
+	return is_chosen_boolean_true(blob, name);
 }
