@@ -179,6 +179,26 @@ int cff_from_mmc_fat_dt(void)
 
 	return cff_from_mmc_fat("0:1", filename, len);
 }
+#else /* helper function supports both QSPI and NAND */
+static int get_cff_offset(const void *fdt)
+{
+	int nodeoffset = 0;
+
+	nodeoffset = fdt_subnode_offset(fdt, 0, "chosen");
+
+	if (nodeoffset >= 0) {
+#if defined(CONFIG_CADENCE_QSPI) && defined(CONFIG_QSPI_RBF_ADDR)
+		return fdtdec_get_int(fdt, nodeoffset, "cff-offset",
+			CONFIG_QSPI_RBF_ADDR);
+#elif defined(CONFIG_NAND_DENALI) && defined(CONFIG_NAND_RBF_ADDR)
+		return fdtdec_get_int(fdt, nodeoffset, "cff-offset",
+			CONFIG_NAND_RBF_ADDR);
+#else
+		return fdtdec_get_int(fdt, nodeoffset, "cff-offset", -1);
+#endif
+	}
+	return -1;
+}
 #endif /* #ifdef CONFIG_MMC */
 
 
@@ -282,7 +302,16 @@ int cff_from_qspi(unsigned long flash_offset)
 
 int cff_from_qspi_env(void)
 {
-	return cff_from_qspi(CONFIG_QSPI_RBF_ADDR);
+	int qspi_rbf_addr = 0;
+
+	qspi_rbf_addr = get_cff_offset(gd->fdt_blob);
+
+	if (0 > qspi_rbf_addr) {
+		printf("Error: No QSPI rbf addrress found\n");
+		return -1;
+	}
+
+	return cff_from_qspi(qspi_rbf_addr);
 }
 #endif /* #ifdef CONFIG_CADENCE_QSPI */
 
@@ -441,7 +470,17 @@ int cff_from_nand(unsigned long flash_offset)
 
 int cff_from_nand_env(void)
 {
-	return cff_from_nand(CONFIG_NAND_RBF_ADDR);
+	int nand_rbf_addr = 0;
+
+	nand_rbf_addr = get_cff_offset(gd->fdt_blob);
+
+	if (0 > nand_rbf_addr) {
+		printf(" Error: No NAND rbf addrress found\n");
+		return -1;
+	}
+
+	return cff_from_nand(nand_rbf_addr);
+
 }
 #endif /* CONFIG_NAND_DENALI */
 
