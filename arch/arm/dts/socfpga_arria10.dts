@@ -20,11 +20,7 @@
 	model = "SOCFPGA Arria10 Dev Kit";	/* Bootloader setting: uboot.model */
 
 	chosen {
-		/*
-		 * Bootloader setting: uboot.peripheral_rbf_filename
-		 * Bootloader setting: uboot.core_rbf_filename
-		 */
-		cff-file = "ghrd_10as066n2.periph.rbf", "ghrd_10as066n2.core.rbf";
+		cff-file = "ghrd_10as066n2.rbf";	/* Bootloader setting: uboot.rbf_filename */
 	};
 
 	/* Clock sources */
@@ -38,6 +34,14 @@
 			#clock-cells = <0>;
 			clock-frequency = <25000000>;
 			clock-output-names = "altera_arria10_hps_eosc1-clk";
+		};
+
+		/* Clock source: altera_arria10_hps_cb_intosc_ls */
+		altera_arria10_hps_cb_intosc_ls: altera_arria10_hps_cb_intosc_ls {
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+			clock-frequency = <60000000>;
+			clock-output-names = "altera_arria10_hps_cb_intosc_ls-clk";
 		};
 
 		/* Clock source: altera_arria10_hps_f2h_free */
@@ -72,7 +76,7 @@
 			cntr3clk-cnt = <900>;	/* Field: cntr3clk.cnt */
 			cntr4clk-cnt = <900>;	/* Field: cntr4clk.cnt */
 			cntr5clk-cnt = <900>;	/* Field: cntr5clk.cnt */
-			cntr6clk-cnt = <11>;	/* Field: cntr6clk.cnt */
+			cntr6clk-cnt = <900>;	/* Field: cntr6clk.cnt */
 			cntr7clk-cnt = <900>;	/* Field: cntr7clk.cnt */
 			cntr7clk-src = <0>;	/* Field: cntr7clk.src */
 			cntr8clk-cnt = <900>;	/* Field: cntr8clk.cnt */
@@ -80,9 +84,9 @@
 			cntr9clk-src = <0>;	/* Field: cntr9clk.src */
 			cntr15clk-cnt = <900>;	/* Field: cntr15clk.cnt */
 			nocdiv-l4mainclk = <0>;	/* Field: nocdiv.l4mainclk */
-			nocdiv-l4mpclk = <1>;	/* Field: nocdiv.l4mpclk */
+			nocdiv-l4mpclk = <0>;	/* Field: nocdiv.l4mpclk */
 			nocdiv-l4spclk = <2>;	/* Field: nocdiv.l4spclk */
-			nocdiv-csatclk = <1>;	/* Field: nocdiv.csatclk */
+			nocdiv-csatclk = <0>;	/* Field: nocdiv.csatclk */
 			nocdiv-cstraceclk = <1>;	/* Field: nocdiv.cstraceclk */
 			nocdiv-cspdbgclk = <1>;	/* Field: nocdiv.cspdbgclk */
 		};
@@ -100,8 +104,8 @@
 			cntr4clk-src = <1>;	/* Field: cntr4clk.src */
 			cntr5clk-cnt = <499>;	/* Field: cntr5clk.cnt */
 			cntr5clk-src = <1>;	/* Field: cntr5clk.src */
-			cntr6clk-cnt = <900>;	/* Field: cntr6clk.cnt */
-			cntr6clk-src = <0>;	/* Field: cntr6clk.src */
+			cntr6clk-cnt = <9>;	/* Field: cntr6clk.cnt */
+			cntr6clk-src = <1>;	/* Field: cntr6clk.src */
 			cntr7clk-cnt = <900>;	/* Field: cntr7clk.cnt */
 			cntr8clk-cnt = <900>;	/* Field: cntr8clk.cnt */
 			cntr8clk-src = <0>;	/* Field: cntr8clk.src */
@@ -114,8 +118,8 @@
 
 		/* Address Block: soc_clock_manager_OCP_SLV.i_clk_mgr_alteragrp */
 		alteragrp {
-			nocclk = <0x03840005>;	/* Register: nocclk */
-			mpuclk = <0x10001>;
+			nocclk = <0x0384000b>;	/* Register: nocclk */
+			mpuclk = <0x03840001>;	/* Register: mpuclk */
 		};
 	};
 
@@ -167,8 +171,8 @@
 				<0x0000006c 0x00000003>,	/* Register: pinmux_shared_io_q3_4 */
 				<0x00000070 0x00000003>,	/* Register: pinmux_shared_io_q3_5 */
 				<0x00000074 0x0000000f>,	/* Register: pinmux_shared_io_q3_6 */
-				<0x00000078 0x0000000d>,	/* Register: pinmux_shared_io_q3_7 */
-				<0x0000007c 0x0000000d>,	/* Register: pinmux_shared_io_q3_8 */
+				<0x00000078 0x0000000a>,	/* Register: pinmux_shared_io_q3_7 */
+				<0x0000007c 0x0000000a>,	/* Register: pinmux_shared_io_q3_8 */
 				<0x00000080 0x0000000a>,	/* Register: pinmux_shared_io_q3_9 */
 				<0x00000084 0x0000000a>,	/* Register: pinmux_shared_io_q3_10 */
 				<0x00000088 0x00000001>,	/* Register: pinmux_shared_io_q3_11 */
@@ -199,14 +203,14 @@
 				<0x00000018 0x00000008>,	/* Register: pinmux_dedicated_io_7 */
 				<0x0000001c 0x00000008>,	/* Register: pinmux_dedicated_io_8 */
 				<0x00000020 0x00000008>,	/* Register: pinmux_dedicated_io_9 */
-				<0x00000024 0x00000008>,	/* Register: pinmux_dedicated_io_10 */
+				<0x00000024 0x0000000a>,	/* Register: pinmux_dedicated_io_10 */
 				<0x00000028 0x0000000a>,	/* Register: pinmux_dedicated_io_11 */
 				<0x0000002c 0x00000008>,	/* Register: pinmux_dedicated_io_12 */
 				<0x00000030 0x00000008>,	/* Register: pinmux_dedicated_io_13 */
 				<0x00000034 0x00000008>,	/* Register: pinmux_dedicated_io_14 */
 				<0x00000038 0x00000008>,	/* Register: pinmux_dedicated_io_15 */
-				<0x0000003c 0x0000000a>,	/* Register: pinmux_dedicated_io_16 */
-				<0x00000040 0x0000000a>;	/* Register: pinmux_dedicated_io_17 */
+				<0x0000003c 0x0000000d>,	/* Register: pinmux_dedicated_io_16 */
+				<0x00000040 0x0000000d>;	/* Register: pinmux_dedicated_io_17 */
 		};
 
 		/* Address Block: soc_3v_io48_pin_mux_OCP_SLV.i_io48_pin_mux_dedicated_io_grp */
@@ -225,14 +229,14 @@
 				<0x0000011c 0x000a282a>,	/* Register: configuration_dedicated_io_7 */
 				<0x00000120 0x000a282a>,	/* Register: configuration_dedicated_io_8 */
 				<0x00000124 0x000a282a>,	/* Register: configuration_dedicated_io_9 */
-				<0x00000128 0x0008282a>,	/* Register: configuration_dedicated_io_10 */
+				<0x00000128 0x00090000>,	/* Register: configuration_dedicated_io_10 */
 				<0x0000012c 0x00090000>,	/* Register: configuration_dedicated_io_11 */
 				<0x00000130 0x000b282a>,	/* Register: configuration_dedicated_io_12 */
 				<0x00000134 0x000b282a>,	/* Register: configuration_dedicated_io_13 */
 				<0x00000138 0x000b282a>,	/* Register: configuration_dedicated_io_14 */
 				<0x0000013c 0x000b282a>,	/* Register: configuration_dedicated_io_15 */
-				<0x00000140 0x00090000>,	/* Register: configuration_dedicated_io_16 */
-				<0x00000144 0x00090000>;	/* Register: configuration_dedicated_io_17 */
+				<0x00000140 0x0008282a>,	/* Register: configuration_dedicated_io_16 */
+				<0x00000144 0x000a282a>;	/* Register: configuration_dedicated_io_17 */
 		};
 
 		/* Address Block: soc_3v_io48_pin_mux_OCP_SLV.i_io48_pin_mux_fpga_interface_grp */
@@ -317,16 +321,16 @@
 
 	hps_fpgabridge3: fpgabridge@3 {
 		compatible = "altr,socfpga-fpga2sdram0-bridge";
-		init-val = <0>;
+		init-val = <1>;
 	};
 
 	hps_fpgabridge4: fpgabridge@4 {
 		compatible = "altr,socfpga-fpga2sdram1-bridge";
-		init-val = <1>;
+		init-val = <0>;
 	};
 
 	hps_fpgabridge5: fpgabridge@5 {
 		compatible = "altr,socfpga-fpga2sdram2-bridge";
-		init-val = <0>;
+		init-val = <1>;
 	};
 };
