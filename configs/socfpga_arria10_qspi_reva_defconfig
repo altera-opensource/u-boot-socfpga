@@ -1,0 +1,14 @@
+/*
+ * Altera's Arria10 DevKit with QSPI daughter card defconfig.
+ *
+ * Copyright (C) 2015 Altera Corporation. All rights reserved
+ *
+ * SPDX-License-Identifier: 	GPL-2.0
+ */
+
++S:CONFIG_ARM=y
++S:CONFIG_TARGET_SOCFPGA_ARRIA10=y
+CONFIG_OF_CONTROL=y
+CONFIG_DEFAULT_DEVICE_TREE="socfpga_arria10_qspi_reva"
+CONFIG_SKIP_LOWLEVEL_INIT=n
+CONFIG_CADENCE_QSPI=y
