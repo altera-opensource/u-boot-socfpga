@@ -331,5 +331,5 @@
 	hps_fpgabridge5: fpgabridge@5 {
 		compatible = "altr,socfpga-fpga2sdram2-bridge";
 		init-val = <1>;
-	}
+	};
 };
