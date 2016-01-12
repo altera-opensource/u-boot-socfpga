@@ -135,6 +135,14 @@ int board_phy_config(struct phy_device *phydev)
 		ksz9031_phy_extended_write(phydev, 2, 8,
 					   MII_KSZ9031_MOD_DATA_NO_POST_INC,
 					   reg8);
+
+		ksz9031_phy_extended_write(phydev, 0,
+			MII_KSZ9031RN_FLP_BURST_TX_HI,
+			MII_KSZ9031_MOD_DATA_NO_POST_INC, 0x0006);
+
+		ksz9031_phy_extended_write(phydev, 0,
+			MII_KSZ9031RN_FLP_BURST_TX_LO,
+			MII_KSZ9031_MOD_DATA_NO_POST_INC, 0x1A80);
 	}
 	if (phydev->drv->config)
 		phydev->drv->config(phydev);
