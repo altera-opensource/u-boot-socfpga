@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Altera Corporation <www.altera.com>
+ * Copyright (C) 2014-2016 Altera Corporation <www.altera.com>
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -120,23 +120,23 @@ void reset_assert_all_bridges(void)
 		&system_manager_base->noc_timeout);
 
 	/* Poll until all idleack to 1 */
-	while ((readl(&system_manager_base->noc_idleack) &
+	while ((readl(&system_manager_base->noc_idleack) ^
 		(ALT_SYSMGR_NOC_H2F_SET_MSK |
 		ALT_SYSMGR_NOC_LWH2F_SET_MSK |
 		ALT_SYSMGR_NOC_F2H_SET_MSK |
 		ALT_SYSMGR_NOC_F2SDR0_SET_MSK |
 		ALT_SYSMGR_NOC_F2SDR1_SET_MSK |
-		ALT_SYSMGR_NOC_F2SDR2_SET_MSK)) == 0)
+		ALT_SYSMGR_NOC_F2SDR2_SET_MSK)))
 		;
 
 	/* Poll until all idlestatus to 1 */
-	while ((readl(&system_manager_base->noc_idlestatus) &
+	while ((readl(&system_manager_base->noc_idlestatus) ^
 		(ALT_SYSMGR_NOC_H2F_SET_MSK |
 		ALT_SYSMGR_NOC_LWH2F_SET_MSK |
 		ALT_SYSMGR_NOC_F2H_SET_MSK |
 		ALT_SYSMGR_NOC_F2SDR0_SET_MSK |
 		ALT_SYSMGR_NOC_F2SDR1_SET_MSK |
-		ALT_SYSMGR_NOC_F2SDR2_SET_MSK)) == 0)
+		ALT_SYSMGR_NOC_F2SDR2_SET_MSK)))
 		;
 
 	/* Put all bridges (except NOR DDR scheduler) into reset state */
