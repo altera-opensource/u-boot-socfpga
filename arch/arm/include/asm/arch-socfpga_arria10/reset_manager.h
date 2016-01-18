@@ -134,6 +134,8 @@ void reset_deassert_uart(void);
 void reset_deassert_dedicated_peripherals(void);
 void reset_deassert_shared_connected_peripherals(void);
 void reset_deassert_fpga_connected_peripherals(void);
+void reset_assert_shared_connected_peripherals(void);
+void reset_assert_fpga_connected_peripherals(void);
 void reset_deassert_osc1wd0(void);
 #endif /* __ASSEMBLY__ */
 

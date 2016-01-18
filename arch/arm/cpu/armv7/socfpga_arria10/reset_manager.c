@@ -423,6 +423,26 @@ static const u32 per1fpgamasks[] = {
 	ALT_RSTMGR_PER1MODRST_UART1_SET_MSK,
 };
 
+void reset_assert_fpga_connected_peripherals(void)
+{
+	u32 mask0 = 0;
+	u32 mask1 = 0;
+	u32 fpga_pinux_addr = SOCFPGA_PINMUX_FPGA_INTERFACE_ADDRESS;
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(per1fpgamasks); i++) {
+		if (readl(fpga_pinux_addr)) {
+			mask0 |= per0fpgamasks[i];
+			mask1 |= per1fpgamasks[i];
+		}
+		fpga_pinux_addr += sizeof(u32);
+	}
+
+	setbits_le32(&reset_manager_base->per0modrst, mask0 & ECC_MASK);
+	setbits_le32(&reset_manager_base->per1modrst, mask1);
+	setbits_le32(&reset_manager_base->per0modrst, mask0);
+}
+
 void reset_deassert_fpga_connected_peripherals(void)
 {
 	u32 mask0 = 0;
@@ -691,6 +711,30 @@ void reset_deassert_shared_connected_peripherals_q4(u32 *mask0, u32 *mask1,
 			break;
 		}
 	}
+}
+
+void reset_assert_shared_connected_peripherals(void)
+{
+	u32 mask0 = 0;
+	u32 mask1 = 0;
+	u32 pinmux_addr = SOCFPGA_PINMUX_SHARED_3V_IO_ADDRESS;
+
+	reset_deassert_shared_connected_peripherals_q1(&mask0, &mask1,
+						       &pinmux_addr);
+	reset_deassert_shared_connected_peripherals_q2(&mask0, &mask1,
+						       &pinmux_addr);
+	reset_deassert_shared_connected_peripherals_q3(&mask0, &mask1,
+						       &pinmux_addr);
+	reset_deassert_shared_connected_peripherals_q4(&mask0, &mask1,
+						       &pinmux_addr);
+	mask1 |= ALT_RSTMGR_PER1MODRST_WD1_SET_MSK |
+		ALT_RSTMGR_PER1MODRST_L4SYSTMR1_SET_MSK |
+		ALT_RSTMGR_PER1MODRST_SPTMR0_SET_MSK |
+		ALT_RSTMGR_PER1MODRST_SPTMR1_SET_MSK;
+
+	setbits_le32(&reset_manager_base->per0modrst, mask0 & ECC_MASK);
+	setbits_le32(&reset_manager_base->per1modrst, mask1);
+	setbits_le32(&reset_manager_base->per0modrst, mask0);
 }
 
 void reset_deassert_shared_connected_peripherals(void)
