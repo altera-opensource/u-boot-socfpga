@@ -170,15 +170,6 @@ int cff_from_mmc_fat(char *dev_part, const char *filename, int len)
 
 	return num_files;
 }
-
-/* Get filename from DT, load it to fpga */
-int cff_from_mmc_fat_dt(void)
-{
-	int len = 0;
-	const char *filename = get_cff_filename(gd->fdt_blob, &len);
-
-	return cff_from_mmc_fat("0:1", filename, len);
-}
 #else /* helper function supports both QSPI and NAND */
 static int get_cff_offset(const void *fdt)
 {

@@ -8,7 +8,6 @@
 #define	_SOCFPGA_CFF_H_
 
 #ifndef __ASSEMBLY__
-int cff_from_mmc_fat_dt(void);
 int cff_from_qspi_env(void);
 int cff_from_qspi(unsigned long flash_offset);
 int cff_from_nand_env(void);
