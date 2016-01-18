@@ -1,7 +1,7 @@
 /*
- *  Copyright (C) 2014-2015 Altera Corporation <www.altera.com>
+ *  Copyright (C) 2014-2016 Altera Corporation <www.altera.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * SPDX-License-Identifier:	GPL-2.0
  */
 
 #ifndef __CONFIG_SOCFGPA_ARRIA10_H__

@@ -2,6 +2,8 @@
  * (C) Copyright 2000, 2001
  * Rich Ireland, Enterasys Networks, rireland@enterasys.com.
  *
+ * Copyright (C) 2016 Altera Corporation <www.altera.com>
+ *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
