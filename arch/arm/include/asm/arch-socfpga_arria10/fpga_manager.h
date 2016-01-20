@@ -90,6 +90,7 @@ struct socfpga_fpga_manager {
 
 /* Timeout counter */
 #define FPGA_TIMEOUT_CNT		0x1000000
+#define FPGA_TIMEOUT_MSEC		1000  /* timeout in ms */
 
 /* FPGA CD Ratio Value */
 #define CDRATIO_x1	0x0
@@ -118,6 +119,8 @@ int fpgamgr_program_fpga(const unsigned long *rbf_data,
 	unsigned long rbf_size);
 void fpgamgr_axi_write(const unsigned long *rbf_data,
 	const unsigned long fpgamgr_data_addr, unsigned long rbf_size);
+int fpgamgr_wait_early_user_mode(void);
+int is_fpgamgr_early_user_mode(void);
 #endif /* __ASSEMBLY__ */
 
 #endif /* _SOCFPGA_FPGA_MANAGER_H_ */

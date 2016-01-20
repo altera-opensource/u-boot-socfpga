@@ -54,13 +54,22 @@ int do_fpga(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 #if defined(CONFIG_CMD_FPGA_LOADFS)
 	fpga_fs_info fpga_fsinfo;
 	fpga_fsinfo.fstype = FS_TYPE_ANY;
+#if defined(CONFIG_FPGA_SOCFPGA_ARRIA10)
+	char *rbftosdramaddr = getenv("rbftosdramaddr");
+	fpga_fsinfo.rbftosdramaddr = (unsigned int *)
+				simple_strtoul(rbftosdramaddr, NULL, 16);
+	/*
+	 * Default to assuming Raw Binary Type "combined"
+	 */
+	fpga_fsinfo.rbftype = "combined";
+#endif
 #endif
 
 	/* fpga <op> */
 	if (argc >= 2) {
 		op = (int)fpga_get_op(argv[1]);
 	} else {
-		debug("%s: Too many or too few args (%d)\n", __func__, argc);
+		debug("%s: Too few args (%d)\n", __func__, argc);
 		op = FPGA_NONE;	/* force usage display */
 	}
 
@@ -71,6 +80,19 @@ int do_fpga(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
 	switch (argc) {
 #if defined(CONFIG_CMD_FPGA_LOADFS)
+#if defined(CONFIG_FPGA_SOCFPGA_ARRIA10)
+	case 7:
+	case 6:
+		if (op == FPGA_LOADFS) {
+			dev = (unsigned int)simple_strtoul(argv[2], NULL, 16);
+			fpga_fsinfo.interface = argv[3];
+			fpga_fsinfo.dev_part = argv[4];
+			fpga_fsinfo.filename = argv[5];
+			if (argv[6])
+				fpga_fsinfo.rbftype = argv[6];
+		}
+		break;
+#endif
 	case 9:
 		fpga_fsinfo.blocksize = (unsigned int)
 					     simple_strtoul(argv[5], NULL, 16);
@@ -97,17 +119,6 @@ int do_fpga(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 			      (ulong)fpga_data);
 		}
 		debug("%s: fpga_data = 0x%x\n", __func__, (uint)fpga_data);
-
-#if defined(CONFIG_CMD_FPGA_LOADFS)
-	case 6:
-		/* this is uuuuugly */
-		if (op == FPGA_LOADFS) {
-			fpga_fsinfo.interface = argv[3];
-			fpga_fsinfo.dev_part = argv[4];
-			fpga_fsinfo.filename = argv[5];
-			data_size = 1; /* don't need data_size in this case */
-		}
-#endif
 
 	case 3:		/* fpga <op> <dev | data addr> */
 		dev = (int)simple_strtoul(argv[2], NULL, 16);
@@ -158,8 +169,9 @@ int do_fpga(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	case FPGA_LOADFS:
 		/* Blocksize can be zero */
 		if (!fpga_fsinfo.interface || !fpga_fsinfo.dev_part ||
-		    !fpga_fsinfo.filename)
+		    !fpga_fsinfo.filename || !fpga_fsinfo.rbftype)
 			wrong_parms = 1;
+		break;
 #endif
 	case FPGA_LOAD:
 	case FPGA_LOADP:
@@ -394,6 +406,21 @@ U_BOOT_CMD(fpga, 6, 1, do_fpga,
 #if defined(CONFIG_FPGA_XILINX)
 	   "  loadfs [dev] [address] [image size] [blocksize] <interface>\n"
 	   "        [<dev[:part]>] <filename>\n"
+#elif defined(CONFIG_FPGA_SOCFPGA_ARRIA10)
+	   "  loadfs [dev] [interface] [<dev[:part]>] <filename/offset> "
+	   "[rbftype(periph,core,combined)]\n"
+	   "  Description:\n"
+	   "    [dev] - FPGA device number\n"
+	   "    [interface] - source device interface ([mmc], [qspi], or "
+	   "[nand])\n"
+	   "    <dev[:[part]> - <source device num[:partition of dev]> "
+	   "such as 0:1 for mmc FAT partition\n"
+	   "    [filename/offset] - rbf filename or offset entry of the rbf in "
+	   "source device\n"
+	   "    [rbftype](optional) - [periph], [core], or [combined],"
+	   " default:[combined]\n"
+	   "  This command requires no "
+	   "[device number] [image address] [image size]\n"
 #else
 	   "  loadfs [dev] [interface] [<dev[:part]>] <filename>\n"
 #endif

@@ -41,6 +41,8 @@ typedef struct {                /* typedef fpga_desc */
 	char *dev_part;
 	char *filename;
 	int fstype;
+	char *rbftype;
+	unsigned int *rbftosdramaddr;
 } fpga_fs_info;
 
 typedef enum {

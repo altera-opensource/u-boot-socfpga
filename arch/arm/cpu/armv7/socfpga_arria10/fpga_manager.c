@@ -60,14 +60,32 @@ int is_fpgamgr_user_mode(void)
 
 static int wait_for_user_mode(void)
 {
-	unsigned long i;
+	unsigned start = get_timer(0);
 
-	for (i = 0; i < FPGA_TIMEOUT_CNT; i++) {
-		if (is_fpgamgr_user_mode())
-			break;
+	while (!(is_fpgamgr_user_mode())) {
+		if (get_timer(start) > FPGA_TIMEOUT_MSEC)
+			return -ETIMEDOUT;
 	}
 
-	return i;
+	return 0;
+}
+
+int is_fpgamgr_early_user_mode(void)
+{
+	return (readl(&fpga_manager_base->imgcfg_stat) &
+		ALT_FPGAMGR_IMGCFG_STAT_F2S_EARLY_USERMODE_SET_MSK) != 0;
+}
+
+int fpgamgr_wait_early_user_mode(void)
+{
+	unsigned start = get_timer(0);
+
+	while (!(is_fpgamgr_early_user_mode())) {
+		if (get_timer(start) > FPGA_TIMEOUT_MSEC)
+			return -ETIMEDOUT;
+	}
+
+	return 0;
 }
 
 /* send sync words to clock data through the control block */
@@ -470,12 +488,18 @@ int fpgamgr_program_poll_initphase(void)
 int fpgamgr_program_poll_usermode(void)
 {
 	unsigned long reg;
+	int ret = 0;
 
 	if (fpgamgr_dclkcnt_set(0xf) == FPGA_TIMEOUT_CNT)
 		return -11;
 
-	if (wait_for_user_mode() == FPGA_TIMEOUT_CNT)
-		return -12;
+	ret = wait_for_user_mode();
+
+	if (ret < 0) {
+		printf("%s: Failed to enter user mode with ", __func__);
+		printf("error code %d\n", ret);
+		return ret;
+	}
 
 	/*
 	 * Step 14:

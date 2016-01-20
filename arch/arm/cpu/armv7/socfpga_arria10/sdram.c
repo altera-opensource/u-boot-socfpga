@@ -843,12 +843,6 @@ int of_sdram_firewall_setup(const void *blob)
 
 int ddr_calibration_sequence(void)
 {
-
-	if (!is_fpgamgr_user_mode()) {
-		printf("fpga not configured!\n");
-		return -1;
-	}
-
 	WATCHDOG_RESET();
 
 	/* Check to see if SDRAM cal was success */
@@ -932,7 +926,8 @@ int dram_init(void)
 		if (cff && (len > 0)) {
 			mmc_initialize(gd->bd);
 
-			rval = cff_from_mmc_fat("0:1", cff, len);
+			rval = cff_from_mmc_fat("0:1", cff, len, 1,
+				is_early_release_fpga_config(gd->fdt_blob));
 		}
 #elif defined(CONFIG_CADENCE_QSPI)
 		rval = cff_from_qspi_env();

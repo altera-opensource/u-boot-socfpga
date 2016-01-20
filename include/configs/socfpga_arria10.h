@@ -199,7 +199,7 @@
 #ifdef CONFIG_SEMIHOSTING
 #define CONFIG_BOOTCOMMAND ""
 #elif defined(CONFIG_MMC)
-#define CONFIG_BOOTCOMMAND "run callscript; run mmcload;" \
+#define CONFIG_BOOTCOMMAND " run core_rbf_prog; run callscript; run mmcload;" \
 	"run set_initswstate; run mmcboot"
 #elif defined(CONFIG_CADENCE_QSPI)
 #define CONFIG_BOOTCOMMAND "run qspiload;" \
@@ -280,6 +280,9 @@
 	"fpga=0\0" \
 	"fpgadata=0x2000000\0" \
 	"fpgadatasize=0x700000\0" \
+	"rbftosdramaddr=0x40\0" \
+	"rbfcoreimage=ghrd_10as066n2.core.rbf\0" \
+	"core_rbf_prog=fpga loadfs 0 mmc 0:1 ${rbfcoreimage} core\0 "\
 	CONFIG_KSZ9021_CLK_SKEW_ENV "=" \
 		__stringify(CONFIG_KSZ9021_CLK_SKEW_VAL) "\0" \
 	CONFIG_KSZ9021_DATA_SKEW_ENV "=" \

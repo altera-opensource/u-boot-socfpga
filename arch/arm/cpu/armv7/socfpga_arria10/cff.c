@@ -9,6 +9,7 @@
 #include <asm/io.h>
 #include <asm/arch/fpga_manager.h>
 #include <asm/arch/reset_manager.h>
+#include <asm/arch/system_manager.h>
 #include <asm/arch/misc.h>
 #include <fat.h>
 #include <fs.h>
@@ -20,6 +21,13 @@
 #include <nand.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+static u32 *rbftosdramaddr;
+
+#if defined(CONFIG_CMD_FPGA_LOADFS)
+static const struct socfpga_system_manager *system_manager_base =
+		(void *)SOCFPGA_SYSMGR_ADDRESS;
+#endif
 
 #ifdef CONFIG_MMC
 const char *get_cff_filename(const void *fdt, int *len)
@@ -123,9 +131,12 @@ static int to_fpga_from_fat(char *dev_part, const char *filename, u32 *temp, u32
 	return 0;
 }
 
-int cff_from_mmc_fat(char *dev_part, const char *filename, int len)
+int cff_from_mmc_fat(char *dev_part, const char *filename, int len,
+	int do_init, int wait_early)
 {
-	u32 temp[4096] __aligned(ARCH_DMA_MINALIGN);
+	u32 temp_ocr[4096] __aligned(ARCH_DMA_MINALIGN);
+	u32 temp_sizebytes = sizeof(temp_ocr);
+	u32 *temp =  temp_ocr;
 	int slen, status, num_files = 0, ret;
 
 	if (filename == NULL) {
@@ -135,24 +146,38 @@ int cff_from_mmc_fat(char *dev_part, const char *filename, int len)
 
 	WATCHDOG_RESET();
 
-	ret = read_rbf_header_from_fat(dev_part, filename, temp, sizeof(temp));
-	if (ret) {
-		printf("cff_from_mmc_fat: error reading rbf header\n");
-		return ret;
+	if (!(do_init || wait_early)) {
+		/* using SDRAM, faster than OCRAM, only for core rbf */
+		if (NULL != rbftosdramaddr && 0 != (gd->ram_size)) {
+			temp = rbftosdramaddr;
+			/* Calculating available DDR size */
+			temp_sizebytes = (gd->ram_size) - (u32)rbftosdramaddr;
+		}
 	}
 
-	WATCHDOG_RESET();
+	if (do_init) {
+		ret = read_rbf_header_from_fat(dev_part, filename,
+			temp, temp_sizebytes);
+		if (ret) {
+			printf("cff_from_mmc_fat: error reading rbf header\n");
+			return ret;
+		}
 
-	/* initialize the FPGA Manager */
-	status = fpgamgr_program_init(temp, sizeof(temp));
-	if (status) {
-		printf("FPGA: Init failed with error code %d\n", status);
-		return -1;
+		WATCHDOG_RESET();
+
+		/* initialize the FPGA Manager */
+		status = fpgamgr_program_init(temp, temp_sizebytes);
+		if (status) {
+			printf("FPGA: Init failed with error ");
+			printf("code %d\n", status);
+			return -1;
+		}
 	}
 
 	while (len > 0) {
 		printf("FPGA: writing %s\n", filename);
-		if (to_fpga_from_fat(dev_part, filename, temp, sizeof(temp)))
+		if (to_fpga_from_fat(dev_part, filename, temp,
+			temp_sizebytes))
 			return -10;
 		num_files++;
 		slen = strlen(filename) + 1;
@@ -161,10 +186,19 @@ int cff_from_mmc_fat(char *dev_part, const char *filename, int len)
 		fpgamgr_program_sync();
 	}
 
-	/* Ensure the FPGA entering config done */
-	status = fpgamgr_program_fini();
-	if (status) {
-		return status;
+	if (wait_early) {
+		if (-ETIMEDOUT != fpgamgr_wait_early_user_mode()) {
+			printf("FPGA: Early Release\n");
+		} else {
+			printf("FPGA: Failed to see Early Release\n");
+			return -5;
+		}
+	} else {
+		/* Ensure the FPGA entering config done */
+		status = fpgamgr_program_fini();
+		if (status)
+			return status;
+
 	}
 	WATCHDOG_RESET();
 
@@ -191,7 +225,6 @@ static int get_cff_offset(const void *fdt)
 	return -1;
 }
 #endif /* #ifdef CONFIG_MMC */
-
 
 #ifdef CONFIG_CADENCE_QSPI
 int cff_from_qspi(unsigned long flash_offset)
@@ -480,6 +513,49 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 		fpga_fs_info *fsinfo)
 {
 	int ret = 0;
+	int do_init = 0;
+	int wait_early = 0;
+	rbftosdramaddr = fsinfo->rbftosdramaddr;
+
+	if (!strcmp(fsinfo->rbftype, "periph")) {
+		do_init = 1;
+		wait_early = 1;
+	} else if (!strcmp(fsinfo->rbftype, "core")) {
+			if (is_fpgamgr_early_user_mode() &&
+				!is_fpgamgr_user_mode()) {
+				do_init = 0;
+				wait_early = 0;
+			} else {
+				if (is_early_release_fpga_config(gd->fdt_blob)
+				) {
+					printf("Failed: Program core.rbf ");
+					printf("must be in Early IO Release ");
+					printf("mode!!\n");
+				} else {
+					/* do nothing, Early IO release
+					is not enabled */
+					printf("Early IO release is not ");
+					printf("enabled!!\n");
+				}
+				return ret;
+			}
+	} else if (!strcmp(fsinfo->rbftype, "combined")) {
+		do_init = 1;
+		wait_early = 0;
+	} else {
+		printf("Unsupported raw binary type: %s\n", fsinfo->rbftype);
+	}
+
+	/* disable all signals from hps peripheral controller to fpga */
+	writel(0, &system_manager_base->fpgaintf_en_global);
+
+	/* disable all axi bridge (hps2fpga, lwhps2fpga & fpga2hps) */
+	reset_assert_all_bridges();
+
+	reset_assert_shared_connected_peripherals();
+
+	reset_assert_fpga_connected_peripherals();
+
 #if defined(CONFIG_MMC)
 	if (!strcmp(fsinfo->interface, "mmc")) {
 		int i, slen = strlen(fsinfo->filename) + 1;
@@ -489,7 +565,7 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 				fsinfo->filename[i] = 0;
 
 		ret = cff_from_mmc_fat(fsinfo->dev_part, fsinfo->filename,
-				       slen);
+			slen, do_init, wait_early);
 	}
 #elif defined(CONFIG_CADENCE_QSPI)
 	if (!strcmp(fsinfo->interface, "qspi")) {

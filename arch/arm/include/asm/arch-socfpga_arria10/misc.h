@@ -11,6 +11,7 @@
 void skip_relocation(void);
 int is_chosen_boolean_true(const void *blob, const char *name);
 int is_external_fpga_config(const void *blob);
+int is_early_release_fpga_config(const void *blob);
 int config_shared_fpga_pins(const void *blob);
 
 #endif /* __ASSEMBLY__ */

@@ -186,3 +186,10 @@ int is_external_fpga_config(const void *blob)
 
 	return is_chosen_boolean_true(blob, name);
 }
+
+int is_early_release_fpga_config(const void *blob)
+{
+	static const char *name = "early-release-fpga-config";
+
+	return is_chosen_boolean_true(blob, name);
+}
