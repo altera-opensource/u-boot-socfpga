@@ -9,7 +9,7 @@
 
 #ifndef __ASSEMBLY__
 int cff_from_qspi_env(void);
-int cff_from_qspi(unsigned long flash_offset);
+int cff_from_qspi(unsigned long flash_offset, int do_init, int wait_early);
 int cff_from_nand_env(void);
 int cff_from_nand(unsigned long flash_offset);
 const char *get_cff_filename(const void *fdt, int *len);

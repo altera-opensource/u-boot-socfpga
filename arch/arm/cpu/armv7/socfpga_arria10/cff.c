@@ -227,12 +227,14 @@ static int get_cff_offset(const void *fdt)
 #endif /* #ifdef CONFIG_MMC */
 
 #ifdef CONFIG_CADENCE_QSPI
-int cff_from_qspi(unsigned long flash_offset)
+int cff_from_qspi(unsigned long flash_offset, int do_init, int wait_early)
 {
 	struct spi_flash *flash;
 	struct image_header header;
 	u32 flash_addr, status;
-	u32 temp[4096] __aligned(ARCH_DMA_MINALIGN);
+	u32 temp_ocr[4096] __aligned(ARCH_DMA_MINALIGN);
+	u32 temp_sizebytes = sizeof(temp_ocr);
+	u32 *temp = temp_ocr;
 	u32 remaining = 0;
 #ifdef CONFIG_CHECK_FPGA_DATA_CRC
 	u32 datacrc = 0;
@@ -262,17 +264,29 @@ int cff_from_qspi(unsigned long flash_offset)
                 return -7;
         }
 
+	if (!(do_init || wait_early)) {
+		/* using SDRAM, faster than OCRAM, only for core rbf */
+		if (NULL != rbftosdramaddr && 0 != (gd->ram_size)) {
+			temp = rbftosdramaddr;
+			/* Calculating available DDR size */
+			temp_sizebytes = (gd->ram_size) - (u32)rbftosdramaddr;
+		}
+	}
+
 	/* start loading the data from flash and send to FPGA Manager */
 	flash_addr = flash_offset + sizeof(struct image_header);
 
 	spi_flash_read(flash, flash_addr,
-		sizeof(temp), temp);
+		temp_sizebytes, temp);
 
-	/* initialize the FPGA Manager */
-	status = fpgamgr_program_init((u32 *)&temp, sizeof(temp));
-	if (status) {
-		printf("FPGA: Init failed with error code %d\n", status);
-		return -2;
+	if (do_init) {
+		/* initialize the FPGA Manager */
+		status = fpgamgr_program_init((u32 *)&temp, temp_sizebytes);
+		if (status) {
+			printf("FPGA: Init failed with error ");
+			printf("code %d\n", status);
+			return -2;
+		}
 	}
 
 	remaining = image_get_data_size(&header);
@@ -281,37 +295,48 @@ int cff_from_qspi(unsigned long flash_offset)
 		 * Read the data by small chunk by chunk. At this stage,
 		 * use the temp as temporary buffer.
 		 */
-		 if (remaining > sizeof(temp)) {
+		 if (remaining > temp_sizebytes) {
 			spi_flash_read(flash, flash_addr,
-				sizeof(temp), temp);
+				temp_sizebytes, temp);
 #ifdef CONFIG_CHECK_FPGA_DATA_CRC
-			datacrc = crc32(datacrc, (unsigned char*)temp, sizeof(temp));
+			datacrc = crc32(datacrc, (unsigned char *)temp,
+					temp_sizebytes);
 #endif
 			/* update the counter */
-			remaining -= sizeof(temp);
-			flash_addr += sizeof(temp);
+			remaining -= temp_sizebytes;
+			flash_addr += temp_sizebytes;
 		 }  else {
 			spi_flash_read(flash, flash_addr,
 				remaining, temp);
 #ifdef CONFIG_CHECK_FPGA_DATA_CRC
-			datacrc = crc32(datacrc, (unsigned char*)temp, remaining);
+			datacrc = crc32(datacrc, (unsigned char *)temp,
+					remaining);
 #endif
 			remaining = 0;
 		}
 
 		/* transfer data to FPGA Manager */
 		fpgamgr_program_write((const long unsigned int *)temp,
-			sizeof(temp));
+			temp_sizebytes);
 		WATCHDOG_RESET();
 
 	}
 
 	fpgamgr_program_sync();
 
+	if (wait_early) {
+		if (-ETIMEDOUT != fpgamgr_wait_early_user_mode()) {
+			printf("FPGA: Early Release\n");
+		} else {
+			printf("FPGA: Failed to see Early Release\n");
+			return -5;
+		}
+	} else {
 	/* Ensure the FPGA entering config done */
-	status = fpgamgr_program_fini();
-	if (status) {
-		return status;
+		status = fpgamgr_program_fini();
+		if (status)
+			return status;
+
 	}
 
 #ifdef CONFIG_CHECK_FPGA_DATA_CRC
@@ -335,7 +360,8 @@ int cff_from_qspi_env(void)
 		return -1;
 	}
 
-	return cff_from_qspi(qspi_rbf_addr);
+	return cff_from_qspi(qspi_rbf_addr, 1,
+				is_early_release_fpga_config(gd->fdt_blob));
 }
 #endif /* #ifdef CONFIG_CADENCE_QSPI */
 
@@ -569,8 +595,8 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 	}
 #elif defined(CONFIG_CADENCE_QSPI)
 	if (!strcmp(fsinfo->interface, "qspi")) {
-		u32 rbfaddr = simple_strtoul(fsinfo->dev_part, NULL, 16);
-		ret = cff_from_qspi(rbfaddr);
+		u32 rbfaddr = simple_strtoul(fsinfo->filename, NULL, 16);
+		ret = cff_from_qspi(rbfaddr, do_init, wait_early);
 	}
 #elif defined(CONFIG_NAND_DENALI)
 	if (!strcmp(fsinfo->interface, "nand")) {
