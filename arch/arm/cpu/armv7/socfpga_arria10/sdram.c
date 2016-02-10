@@ -336,7 +336,8 @@ int ddr_setup(void)
 			ddr_setup_complete = is_sdram_cal_success();
 		}
 
-		if (ARRIA10_ES_SILICON_VER != chip_version) {
+		if (!ddr_setup_complete &&
+			(ARRIA10_ES_SILICON_VER != chip_version)) {
 			emif_reset();
 		}
 	}
