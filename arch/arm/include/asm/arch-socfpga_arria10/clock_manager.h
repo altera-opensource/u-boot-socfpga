@@ -76,6 +76,7 @@ struct socfpga_clock_manager {
 
 extern int cm_basic_init(const void* blob);
 extern unsigned int cm_get_mmc_controller_clk_hz(void);
+extern void cm_use_intosc(void);
 extern uint32_t cm_l4_main_clk_hz;
 extern uint32_t cm_l4_sp_clk_hz;
 extern uint32_t cm_l4_mp_clk_hz;
@@ -125,6 +126,7 @@ extern uint32_t cm_l4_mp_clk_hz;
 #define CLKMGR_CLKMGR_INTR_MAINPLLACHIEVED_SET_MSK	0x00000001
 #define CLKMGR_CLKMGR_INTR_PERPLLACHIEVED_SET_MSK	0x00000002
 #define CLKMGR_CLKMGR_CTL_BOOTMOD_SET_MSK		0x00000001
+#define CLKMGR_CLKMGR_CTL_BOOTCLK_INTOSC_SET_MSK	0x00000300
 #define CLKMGR_PERPLL_EN_RESET				0x00000f7f
 #define CLKMGR_PERPLLGRP_EN_SDMMCCLK_MASK		0x00000020
 #define CLKMGR_MAINPLL_VCO0_PSRC_MSK			0x00000003

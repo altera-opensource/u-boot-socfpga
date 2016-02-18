@@ -150,6 +150,11 @@ arria10_mask_ecc_errors(void)
  */
 void s_init(void)
 {
+	/*
+	 * Configure Clock Manager to use intosc clock instead external osc to
+	 * ensure success watchdog operation. We do it as early as possible.
+	 */
+	cm_use_intosc();
 
 	watchdog_disable();
 
@@ -162,7 +167,6 @@ void s_init(void)
 
 	/* Configure the L2 controller to make SDRAM start at 0	*/
 	writel(0x1, SOCFPGA_MPUL2_ADRFLTR_START);
-
 
 #ifdef CONFIG_HW_WATCHDOG
 	/* release osc1 watchdog timer 0 from reset */

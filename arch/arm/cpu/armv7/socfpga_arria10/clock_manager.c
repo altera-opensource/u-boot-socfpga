@@ -434,22 +434,12 @@ static int cm_full_cfg(struct mainpll_cfg *main_cfg, struct perpll_cfg *per_cfg)
 	 * Some code might have messed with them. At same time set the
 	 * desired clock source
 	 */
-	if ((readl(&clock_manager_base->stat) &
-		CLKMGR_CLKMGR_STAT_BOOTCLKSRC_SET_MSK) == 0) {
-		/* non secure clock */
-		writel(CLKMGR_MAINPLL_VCO0_RESET |
-			CLKMGR_MAINPLL_VCO0_REGEXTSEL_SET_MSK |
-			(main_cfg->vco0_psrc <<
-				CLKMGR_MAINPLL_VCO0_PSRC_LSB),
-			&clock_manager_base->main_pll_vco0);
-	} else {
-		/* secure clock always use int_osc */
-		writel(CLKMGR_MAINPLL_VCO0_RESET |
-			CLKMGR_MAINPLL_VCO0_REGEXTSEL_SET_MSK |
-			(CLKMGR_MAINPLL_VCO0_PSRC_E_INTOSC <<
-				CLKMGR_MAINPLL_VCO0_PSRC_LSB),
-			&clock_manager_base->main_pll_vco0);
-	}
+	writel(CLKMGR_MAINPLL_VCO0_RESET |
+		CLKMGR_MAINPLL_VCO0_REGEXTSEL_SET_MSK |
+		(main_cfg->vco0_psrc <<
+			CLKMGR_MAINPLL_VCO0_PSRC_LSB),
+		&clock_manager_base->main_pll_vco0);
+
 	writel(CLKMGR_PERPLL_VCO0_RESET |
 		CLKMGR_PERPLL_VCO0_REGEXTSEL_SET_MSK |
 		(per_cfg->vco0_psrc <<
@@ -689,6 +679,12 @@ int cm_basic_init(const void *blob)
 		cm_get_l4_noc_hz(CLKMGR_MAINPLL_NOCDIV_L4SPCLK_LSB);
 
 	return rval;
+}
+
+void cm_use_intosc(void)
+{
+	setbits_le32(&clock_manager_base->ctrl,
+		     CLKMGR_CLKMGR_CTL_BOOTCLK_INTOSC_SET_MSK);
 }
 
 static void cm_print_clock_quick_summary(void)
