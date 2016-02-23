@@ -147,6 +147,9 @@ void reset_assert_all_bridges(void)
 		ALT_RSTMGR_BRGMODRST_F2SSDRAM0_SET_MSK |
 		ALT_RSTMGR_BRGMODRST_F2SSDRAM1_SET_MSK |
 		ALT_RSTMGR_BRGMODRST_F2SSDRAM2_SET_MSK));
+
+	/* Disable NOC timeout */
+	writel(0, &system_manager_base->noc_timeout);
 }
 
 static int get_bridge_init_val(const void *blob, int compat_id)
