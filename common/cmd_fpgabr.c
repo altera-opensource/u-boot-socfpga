@@ -26,7 +26,8 @@ static int do_fpgabr(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	case 1:
 		printf("FPGA BRIDGES: enable\n");
 		/* enable fpga bridges */
-		reset_deassert_bridges_handoff();
+		if (reset_deassert_bridges_handoff())
+			return CMD_RET_FAILURE;
 		break;
 	default:
 		return CMD_RET_USAGE;

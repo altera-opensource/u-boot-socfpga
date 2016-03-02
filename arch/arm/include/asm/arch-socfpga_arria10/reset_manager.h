@@ -127,7 +127,7 @@ void watchdog_disable(void);
 int is_wdt_in_reset(void);
 void emac_manage_reset(ulong emacbase, uint state);
 void reset_assert_all_bridges(void);
-void reset_deassert_bridges_handoff(void);
+int reset_deassert_bridges_handoff(void);
 void reset_assert_all_peripherals_except_l4wd0_l4timer0(void);
 void reset_assert_uart(void);
 void reset_deassert_uart(void);

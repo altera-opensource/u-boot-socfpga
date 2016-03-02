@@ -10,6 +10,7 @@
 #include <asm/arch/system_manager.h>
 #include <asm/arch/fpga_manager.h>
 #include <fdtdec.h>
+#include <errno.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -208,10 +209,11 @@ static const struct bridge_cfg bridge_cfg_tbl[] = {
 };
 
 /* Enable bridges (hps2fpga, lwhps2fpga, fpga2hps, fpga2sdram) per handoff */
-void reset_deassert_bridges_handoff(void)
+int reset_deassert_bridges_handoff(void)
 {
 	u32 mask_noc = 0, mask_rstmgr = 0;
 	int i;
+	unsigned start = get_timer(0);
 
 	for (i = 0; i < ARRAY_SIZE(bridge_cfg_tbl); i++) {
 		if (get_bridge_init_val(gd->fdt_blob,
@@ -227,9 +229,16 @@ void reset_deassert_bridges_handoff(void)
 	/* Release bridges from reset state per handoff value */
 	clrbits_le32(&reset_manager_base->brgmodrst, mask_rstmgr);
 
-	/* Poll until all idleack to 0 */
-	while (readl(&system_manager_base->noc_idleack) & mask_noc)
-		;
+	/* Poll until all idleack to 0, timeout at 1000ms */
+	while (readl(&system_manager_base->noc_idleack) & mask_noc) {
+		if (get_timer(start) > 1000) {
+			printf("Fail: noc_idleack = 0x%08x mask_noc = 0x%08x\n",
+				readl(&system_manager_base->noc_idleack),
+				mask_noc);
+			return -ETIMEDOUT;
+		}
+	}
+	return 0;
 }
 
 /* Disable all the peripherals except L4 watchdog0 and L4 Timer 0 */
