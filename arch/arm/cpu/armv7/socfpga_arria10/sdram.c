@@ -21,6 +21,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+unsigned long irq_cnt_ecc_sdram = 0;
+
 /* FAWBANK - Number of Bank of a given device involved in the FAW period. */
 #define ARRIA10_SDR_ACTIVATE_FAWBANK	(0x1)
 
@@ -1056,6 +1058,10 @@ void irq_handler_DDR_ecc_serr(void)
 		/* Clear the interrupt signal from DRAM controller */
 		writel(ALT_ECC_HMC_OCP_INTSTAT_SERR_MSK,
 			&socfpga_ecc_hmc_base->intstat);
+		irq_cnt_ecc_sdram++;
+#ifndef CONFIG_ENV_IS_NOWHERE
+		setenv_ulong("sdram_ecc_sbe", irq_cnt_ecc_sdram);
+#endif
 		/* word address is 16 bytes, shift left by 4 to byte address
 		   translation */
 		printf("Info: DRAM ECC SBE @ 0x%08x\n",
