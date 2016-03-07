@@ -11,7 +11,6 @@
 #define IRQ_ECC_OCRAM_UNCORRECTED	211
 
 extern unsigned long irq_cnt_ecc_ocram_corrected;
-extern unsigned long irq_cnt_ecc_ocram_uncorrected;
 
 #ifndef __ASSEMBLY__
 

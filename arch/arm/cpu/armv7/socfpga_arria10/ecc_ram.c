@@ -11,8 +11,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-unsigned long irq_cnt_ecc_ocram_corrected;
-unsigned long irq_cnt_ecc_ocram_uncorrected;
+unsigned long irq_cnt_ecc_ocram_corrected = 0;
 
 static const struct socfpga_ecc *ecc_ocram_base =
 		(void *)SOCFPGA_ECC_OCRAM_ADDRESS;
@@ -26,6 +25,9 @@ static void irq_handler_ecc_ocram_corrected(void)
 	printf("IRQ triggered: Corrected OCRAM ECC @ 0x%08x\n",
 		readl(&ecc_ocram_base->serraddra));
 	irq_cnt_ecc_ocram_corrected++;
+#ifndef CONFIG_ENV_IS_NOWHERE
+	setenv_ulong("ocram_ecc_sbe", irq_cnt_ecc_ocram_corrected);
+#endif
 	/* write 1 to clear the ECC */
 	writel(ALT_ECC_INTSTAT_SERRPENA_SET_MSK, &ecc_ocram_base->intstat);
 }
@@ -34,7 +36,7 @@ static void irq_handler_ecc_ocram_uncorrected(void)
 {
 	printf("IRQ triggered: Un-corrected OCRAM ECC @ 0x%08x\n",
 		readl(&ecc_ocram_base->derraddra));
-	irq_cnt_ecc_ocram_uncorrected++;
+
 	/* write 1 to clear the ECC */
 	writel(ALT_ECC_INTSTAT_DERRPENA_SET_MSK, &ecc_ocram_base->intstat);
 	hang();
