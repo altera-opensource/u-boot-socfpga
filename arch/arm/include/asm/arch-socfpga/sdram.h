@@ -43,9 +43,7 @@ unsigned sdram_mmr_init_full(unsigned int sdr_phy_reg);
 unsigned sdram_calibration_full(void);
 unsigned sdram_check_self_refresh_seq(void);
 #endif /* CONFIG_SPL_BUILD */
-void sdram_scrub_boot_region(void);
-void sdram_scrub_remain_region_trigger(void);
-void sdram_scrub_remain_region_finish(void);
+void sdram_ecc_init(void);
 
 #endif /* __ASSEMBLY__ */
 

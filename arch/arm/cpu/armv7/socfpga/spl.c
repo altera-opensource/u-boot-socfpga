@@ -697,17 +697,10 @@ void spl_board_init(void)
 		hang();
 #endif /* CONFIG_PRELOADER_HARDWARE_DIAGNOSTIC */
 
-#if (CONFIG_PRELOADER_SDRAM_SCRUBBING == 1)
-	/* scrub the boot region before copying happen */
-	sdram_scrub_boot_region();
-#if (CONFIG_PRELOADER_SDRAM_SCRUB_REMAIN_REGION == 1)
-	/*
-	 * Trigger DMA to scrub remain region so it can run parallel
-	 * with flash loading to minimize the scrubbing time penalty
-	 */
-	sdram_scrub_remain_region_trigger();
-#endif /* CONFIG_PRELOADER_SDRAM_SCRUB_REMAIN_REGION */
-#endif /* CONFIG_PRELOADER_SDRAM_SCRUBBING */
+#if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN == 1)
+	/* init the whole SDRAM ECC bit if SDRAM ECC is enabled */
+	sdram_ecc_init();
+#endif
 
 #endif	/* CONFIG_PRELOADER_SKIP_SDRAM */
 
