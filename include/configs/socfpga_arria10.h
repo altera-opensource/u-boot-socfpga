@@ -205,7 +205,8 @@
 #define CONFIG_BOOTCOMMAND "run qspirbfcore_rbf_prog; run qspiload;" \
 	"run set_initswstate; run qspiboot"
 #elif defined(CONFIG_NAND_DENALI)
-#define CONFIG_BOOTCOMMAND "run nandload;run nandboot"
+#define CONFIG_BOOTCOMMAND "run nandrbfcore_rbf_prog; run nandload;" \
+	"run set_initswstate; run nandboot"
 #else
 #error "unsupported configuration"
 #endif
@@ -241,9 +242,11 @@
 	"qspiroot=/dev/mtdblock1\0" \
 	"qspirootfstype=jffs2\0" \
 	"nandbootimageaddr=0x120000\0" \
-	"nandfdtaddr=0xA0000\0" \
+	"nandfdtaddr=0x100000\0" \
+	"nandrbfcoreimage=0x820000\0" \
 	"nandroot=/dev/mtdblock1\0" \
 	"nandrootfstype=jffs2\0" \
+	"nandrbfcore_rbf_prog=fpga loadfs 0 nand 0:0 ${nandrbfcoreimage} core\0 "\
 	"ramboot=setenv bootargs " CONFIG_BOOTARGS " printk.time=1 debug mem=${fdt_high} " \
 		"lpj=3977216;fpgabr 1; bootz ${loadaddr} - ${fdtaddr}\0" \
 	"mmcload=mmc rescan;" \
