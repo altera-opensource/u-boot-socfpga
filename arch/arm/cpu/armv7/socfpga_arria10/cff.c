@@ -281,7 +281,7 @@ int cff_from_qspi(unsigned long flash_offset, int do_init, int wait_early)
 
 	if (do_init) {
 		/* initialize the FPGA Manager */
-		status = fpgamgr_program_init((u32 *)&temp, temp_sizebytes);
+		status = fpgamgr_program_init(temp, temp_sizebytes);
 		if (status) {
 			printf("FPGA: Init failed with error ");
 			printf("code %d\n", status);
@@ -585,7 +585,7 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 #if defined(CONFIG_MMC)
 	if (!strcmp(fsinfo->interface, "mmc")) {
 		int i, slen = strlen(fsinfo->filename) + 1;
-		
+
 		for (i = 0; i < slen; i++)
 			if (fsinfo->filename[i] == ',')
 				fsinfo->filename[i] = 0;
