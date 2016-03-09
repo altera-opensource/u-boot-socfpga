@@ -112,6 +112,25 @@ int is_ksz9031(struct phy_device *phydev)
 
 int board_phy_config(struct phy_device *phydev)
 {
+	int reg;
+	int devad = MDIO_DEVAD_NONE;
+
+	reg = phy_read(phydev, devad, MII_BMCR);
+	if (reg < 0) {
+		debug("PHY status read failed\n");
+		return -1;
+	}
+
+	if (reg & BMCR_PDOWN) {
+		reg &= ~BMCR_PDOWN;
+		if (phy_write(phydev, devad, MII_BMCR, reg) < 0) {
+			debug("PHY power up failed\n");
+			return -1;
+		}
+		udelay(1500);
+	}
+
+
 	if (is_ksz9031(phydev)) {
 		unsigned short reg4;
 		unsigned short reg5;
