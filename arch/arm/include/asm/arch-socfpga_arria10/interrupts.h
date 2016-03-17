@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2014 Altera Corporation <www.altera.com>
+ * Copyright (C) 2014-2016 Altera Corporation <www.altera.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * SPDX-License-Identifier:	GPL-2.0
  */
 
 #ifndef	_SOCFPGA_INTERRUPTS_H_
@@ -22,10 +22,17 @@ typedef struct {
 	unsigned intrID;
 } interrupt_struct;
 
+/* GIC number */
+#define IRQ_ECC_SERR				34
+#define IRQ_ECC_DERR				32
+
 /* function declaration */
-int irq_register (unsigned char intrID, INTR_FXN_PTR fxn, void *arg,
+int irq_register(unsigned int irqID, INTR_FXN_PTR fxn, void *arg,
 	unsigned char level0edge1);
-void irq_trigger (unsigned char intrID);
+void irq_trigger(unsigned int intrID);
+void ocram_ecc_masking_interrupt(unsigned mask);
+void irq_handler_ecc_serr(void *arg);
+void irq_handler_ecc_derr(void *arg);
 #endif /* __ASSEMBLY__ */
 
 #endif /* _SOCFPGA_INTERRUPTS_H_ */

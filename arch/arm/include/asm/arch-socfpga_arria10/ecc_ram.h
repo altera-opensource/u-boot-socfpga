@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2014 Altera Corporation <www.altera.com>
+ * Copyright (C) 2014-2016 Altera Corporation <www.altera.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * SPDX-License-Identifier:	GPL-2.0
  */
 
 #ifndef	_SOCFPGA_ECC_RAM_H_
@@ -56,10 +56,12 @@ void irq_handler_ecc_ram_serr(void);
 void irq_handler_ecc_ram_derr(void);
 void enable_ecc_ram_serr_int(void);
 void clear_ecc_ocram_ecc_status(void);
+int is_ocram_ecc_enabled(void);
 #endif /* __ASSEMBLY__ */
 
 #define ALT_ECC_INTSTAT_SERRPENA_SET_MSK	0x00000001
 #define ALT_ECC_INTSTAT_DERRPENA_SET_MSK	0x00000100
 #define ALT_ECC_ERRINTEN_SERRINTEN_SET_MSK	0x00000001
+#define ALT_ECC_CTRL_ECCEN_SET_MSK		0x00000001
 
 #endif /* _SOCFPGA_ECC_RAM_H_ */

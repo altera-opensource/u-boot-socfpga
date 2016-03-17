@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2014 Altera Corporation <www.altera.com>
+ * Copyright (C) 2014-2016 Altera Corporation <www.altera.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * SPDX-License-Identifier:	GPL-2.0
  */
 
 #include <common.h>
@@ -38,6 +38,15 @@ static void irq_handler_ecc_ocram_uncorrected(void)
 	/* write 1 to clear the ECC */
 	writel(ALT_ECC_INTSTAT_DERRPENA_SET_MSK, &ecc_ocram_base->intstat);
 	hang();
+}
+
+int is_ocram_ecc_enabled(void)
+{
+	static const struct socfpga_ecc *ecc_ocram_base =
+		(void *)SOCFPGA_ECC_OCRAM_ADDRESS;
+
+	return (readl(&ecc_ocram_base->ctrl) &
+			ALT_ECC_CTRL_ECCEN_SET_MSK) != 0;
 }
 #endif
 void irq_handler_ecc_ram_serr(void)

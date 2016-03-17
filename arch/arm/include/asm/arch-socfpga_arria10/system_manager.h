@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2014 Altera Corporation <www.altera.com>
+ * Copyright (C) 2014-2016 Altera Corporation <www.altera.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * SPDX-License-Identifier:	GPL-2.0
  */
 
 #ifndef	_SOCFPGA_SYSTEM_MANAGER_H_
@@ -292,6 +292,7 @@ struct socfpga_system_manager {
 
 #define ALT_SYSMGR_ECC_INTSTAT_SERR_OCRAM_SET_MSK    0x00000002
 #define ALT_SYSMGR_ECC_INTSTAT_DERR_OCRAM_SET_MSK    0x00000002
+#define ALT_SYSMGR_ECC_INT_OCRAM_MSK                 0x00000002
 
 #define SYSMGR_SDMMC_CTRL_SET(smplsel, drvsel)	\
 	((drvsel << 0) & 0x7) | ((smplsel << 4) & 0x70)
