@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2014 Altera Corporation <www.altera.com>
+ * Copyright (C) 2014-2016 Altera Corporation <www.altera.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * SPDX-License-Identifier:	GPL-2.0
  */
 
 #include <asm-offsets.h>
@@ -48,27 +48,21 @@ relocate_loop:
 #endif	/* CONFIG_PRELOADER_EXE_ON_FPGA */
 
 	/*
-	 * Clearing BSS as we need to execute C code before relocation.
-	 * There might possible these C file would call global variable
+	 * Clearing the OCRAM memory that wasn't initialized during the write
+	 * of the U-Boot image
 	 */
-	ldr	r2, =reset
-	ldr	r0, =__bss_start
-	ldr	r1, =__bss_end
+	ldr	r0, =__bss_start	/* start of remaining region out of
+						U-boot binary image */
+	ldr	r1, = CONFIG_SYS_TEXT_BASE	/* start of OCRAM */
+	ldr r2, = CONFIG_SYS_INIT_RAM_SIZE 	/* size of OCRAM */
+	add r1, r1, r2			/* end of OCRAM */
+	sub r1, r1, #1
 	mov	r2, #0x00000000		/* prepare zero to clear BSS */
-clrbss:	cmp	r0, r1			/* while not at end of BSS */
-	strlo	r2, [r0]		/* clear 32-bit BSS word */
+clrrmn:
+	cmp	r0, r1			/* while not at end of OCRAM */
+	strlo	r2, [r0]		/* clear 32-bit word length */
 	addlo	r0, r0, #4		/* move to next */
-	blo	clrbss
-
-	/* clearing the stack at OCRAM to avoid false double bit error */
-	ldr	r1, =CONFIG_SYS_INIT_SP_ADDR	/* clear end which is the SP */
-	ldr	r2, =CONFIG_OCRAM_STACK_SIZE
-	sub	r0, r1, r2		/* clear starting which is end of SP */
-	ldr	r2, =0x00110011		/* prepare zero to mem init */
-clrsp:	cmp	r0, r1			/* while not at end of stack */
-	strlo	r2, [r0]		/* clear 32-bit word */
-	addlo	r0, r0, #4		/* move to next */
-	blo	clrsp
+	blo	clrrmn
 
 	bx	lr
 
