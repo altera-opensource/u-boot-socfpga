@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2014 Altera Corporation <www.altera.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * SPDX-License-Identifier:	GPL-2.0
  */
+
+#include <asm/arch/system_manager.h>
 
 #ifndef	_SOCFPGA_SDRAM_H_
 #define	_SOCFPGA_SDRAM_H_
@@ -52,18 +54,20 @@ struct socfpga_ecc_hmc {
 	uint32_t autowb_corraddr;
 	uint32_t serrcntreg;
 	uint32_t autowb_drop_cntreg;
-	uint32_t _pad_0x144_0x147;
 	uint32_t ecc_reg2wreccdatabus;
 	uint32_t ecc_rdeccdata2regbus;
 	uint32_t ecc_reg2rdeccdatabus;
-	uint32_t _pad_0x154_0x15f[3];
 	uint32_t ecc_diagon;
 	uint32_t ecc_decstat;
-	uint32_t _pad_0x168_0x16f[2];
+	uint32_t _pad_0x158_0x15f[2];
 	uint32_t ecc_errgenaddr_0;
 	uint32_t ecc_errgenaddr_1;
 	uint32_t ecc_errgenaddr_2;
 	uint32_t ecc_errgenaddr_3;
+	uint32_t ecc_ref2rddatabus_beat0;
+	uint32_t ecc_ref2rddatabus_beat1;
+	uint32_t ecc_ref2rddatabus_beat2;
+	uint32_t ecc_ref2rddatabus_beat3;
 };
 
 struct socfpga_noc_ddr_scheduler {
@@ -292,21 +296,34 @@ union caltiming9_reg {
 };
 
 #endif /* __ASSEMBLY__ */
+#define IRQ_ECC_SERR				34
+#define IRQ_ECC_DERR				32
 
-#define ALT_ECC_HMC_OCP_DDRIOCTRL_IO_SIZE_MSK		0x00000003
+#define ALT_ECC_HMC_OCP_DDRIOCTRL_IO_SIZE_MSK			0x00000003
 
-#define ALT_ECC_HMC_OCP_INTSTAT_SERRPENA_SET_MSK	0x00000001
-#define ALT_ECC_HMC_OCP_INTSTAT_DERRPENA_SET_MSK	0x00000002
-#define ALT_ECC_HMC_OCP_ERRINTEN_SERRINTEN_SET_MSK	0x00000001
-#define ALT_ECC_HMC_OCP_ERRINTEN_DERRINTEN_SET_MSK	0x00000002
-#define ALT_ECC_HMC_OCP_INTMOD_INTONCMP_SET_MSK		0x00010000
-#define ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK	0x00010000
-#define ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK		0x00000100
-#define ALT_ECC_HMC_OCP_ECCCTL_ECC_EN_SET_MSK		0x00000001
-#define ALT_ECC_HMC_OCP_ECCCTL2_RMW_EN_SET_MSK		0x00000100
-#define ALT_ECC_HMC_OCP_ECCCTL2_AWB_EN_SET_MSK		0x00000001
+#define ALT_ECC_HMC_OCP_INTSTAT_SERRPENA_SET_MSK		0x00000001
+#define ALT_ECC_HMC_OCP_INTSTAT_DERRPENA_SET_MSK		0x00000002
+#define ALT_ECC_HMC_OCP_ERRINTEN_SERRINTEN_SET_MSK		0x00000001
+#define ALT_ECC_HMC_OCP_ERRINTEN_DERRINTEN_SET_MSK		0x00000002
+#define ALT_ECC_HMC_OCP_INTMOD_INTONCMP_SET_MSK			0x00010000
+#define ALT_ECC_HMC_OCP_INTMOD_SERR_SET_MSK			0x00000001
+#define ALT_ECC_HMC_OCP_INTMOD_EXT_ADDRPARITY_SET_MSK		0x00000100
+#define ALT_ECC_HMC_OCP_ECCCTL_AWB_CNT_RST_SET_MSK		0x00010000
+#define ALT_ECC_HMC_OCP_ECCCTL_CNT_RST_SET_MSK			0x00000100
+#define ALT_ECC_HMC_OCP_ECCCTL_ECC_EN_SET_MSK			0x00000001
+#define ALT_ECC_HMC_OCP_ECCCTL2_RMW_EN_SET_MSK			0x00000100
+#define ALT_ECC_HMC_OCP_ECCCTL2_AWB_EN_SET_MSK			0x00000001
+#define ALT_ECC_HMC_OCP_ERRINTEN_SERR_SET_MSK			0x00000001
+#define ALT_ECC_HMC_OCP_ERRINTEN_DERR_SET_MSK			0x00000002
+#define ALT_ECC_HMC_OCP_ERRINTEN_HMI_SET_MSK			0x00000004
+#define ALT_ECC_HMC_OCP_INTSTAT_SERR_MSK			0x00000001
+#define ALT_ECC_HMC_OCP_INTSTAT_DERR_MSK			0x00000002
+#define ALT_ECC_HMC_OCP_INTSTAT_HMI_MSK				0x00000004
+#define ALT_ECC_HMC_OCP_INTSTAT_ADDRMTCFLG_MSK			0x00010000
+#define ALT_ECC_HMC_OCP_INTSTAT_ADDRPARFLG_MSK			0x00020000
+#define ALT_ECC_HMC_OCP_INTSTAT_DERRBUSFLG_MSK			0x00040000
 
-#define ALT_ECC_HMC_OCP_SERRCNTREG_VALUE		8
+#define ALT_ECC_HMC_OCP_SERRCNTREG_VALUE				8
 
 #define ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_ACTTOACT_LSB	0
 #define ALT_NOC_MPU_DDR_T_SCHED_DDRTIMING_RDTOMISS_LSB	6
@@ -358,12 +375,16 @@ union caltiming9_reg {
 
 #ifndef __ASSEMBLY__
 /* function declaration */
-void irq_handler_ecc_sdram(void *arg);
-void sdram_enable_interrupt(unsigned enable);
 void sdram_mmr_init(void);
 void sdram_firewall_setup(void);
 int is_sdram_cal_success(void);
 int ddr_calibration_sequence(void);
+int is_sdram_ecc_enabled(void);
+void irq_handler_DDR_ecc_serr(void);
+void irq_handler_DDR_ecc_derr(void);
+void db_err_enable_interrupt(unsigned enable);
+void sb_err_enable_interrupt(unsigned enable);
+void ext_addrparity_err_enable_interrupt(unsigned enable);
 #endif /* __ASSEMBLY__ */
 
 #endif /* _SOCFPGA_SDRAM_H_ */

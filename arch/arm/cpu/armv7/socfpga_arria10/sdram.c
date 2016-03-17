@@ -18,8 +18,6 @@
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/fpga_manager.h>
 #include <asm/arch/sdram.h>
-#include <asm/arch/system_manager.h>
-
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -984,4 +982,154 @@ void dram_bank_mmu_setup(int bank)
 #else
 	set_section_dcache(i, DCACHE_WRITEBACK);
 #endif
+}
+
+/* Enable and disable external address parity error interrupt */
+void ext_addrparity_err_enable_interrupt(unsigned enable)
+{
+	const struct socfpga_ecc_hmc *socfpga_ecc_hmc_base =
+		(void *)SOCFPGA_SDR_ADDRESS;
+
+	if (enable) /* Enable generating interrupt when external parity error
+		       is detected */
+		setbits_le32(&socfpga_ecc_hmc_base->intmode,
+				ALT_ECC_HMC_OCP_INTMOD_EXT_ADDRPARITY_SET_MSK);
+	else /* Disable address parity on DERR interrupt */
+		clrbits_le32(&socfpga_ecc_hmc_base->intmode,
+				ALT_ECC_HMC_OCP_INTMOD_EXT_ADDRPARITY_SET_MSK);
+
+	return;
+}
+
+/* Enable and disable double bit error interrupt in HMI */
+void db_err_enable_interrupt(unsigned enable)
+{
+	const struct socfpga_ecc_hmc *socfpga_ecc_hmc_base =
+		(void *)SOCFPGA_SDR_ADDRESS;
+
+	if (enable)
+		writel(ALT_ECC_HMC_OCP_ERRINTEN_DERR_SET_MSK,
+			&socfpga_ecc_hmc_base->errintens);
+	else
+		writel(ALT_ECC_HMC_OCP_ERRINTEN_DERR_SET_MSK,
+			&socfpga_ecc_hmc_base->errintenr);
+
+	return;
+}
+
+/* Enable and disable single bit error interrupt */
+void sb_err_enable_interrupt(unsigned enable)
+{
+	const struct socfpga_ecc_hmc *socfpga_ecc_hmc_base =
+		(void *)SOCFPGA_SDR_ADDRESS;
+
+	if (enable) {
+		writel(ALT_ECC_HMC_OCP_ERRINTEN_SERR_SET_MSK,
+			&socfpga_ecc_hmc_base->errintens);
+		/* Enable generating interrupt on every SERR */
+		setbits_le32(&socfpga_ecc_hmc_base->intmode,
+				ALT_ECC_HMC_OCP_INTMOD_SERR_SET_MSK);
+	} else {
+		writel(ALT_ECC_HMC_OCP_ERRINTEN_SERR_SET_MSK,
+			&socfpga_ecc_hmc_base->errintenr);
+		/* Disable generating interrupt on every SERR */
+		clrbits_le32(&socfpga_ecc_hmc_base->intmode,
+				ALT_ECC_HMC_OCP_INTMOD_SERR_SET_MSK);
+	}
+
+	return;
+}
+
+/* Handler for DDR sb interrupt */
+void irq_handler_DDR_ecc_serr(void)
+{
+	unsigned int reg_value = 0;
+	const struct socfpga_ecc_hmc *socfpga_ecc_hmc_base =
+		(void *)SOCFPGA_SDR_ADDRESS;
+
+	sb_err_enable_interrupt(0);
+
+	/* Check whether SBE happen */
+	reg_value = readl(&socfpga_ecc_hmc_base->intstat);
+
+	if (reg_value & ALT_ECC_HMC_OCP_INTSTAT_SERR_MSK) {
+		/* Clear the interrupt signal from DRAM controller */
+		writel(ALT_ECC_HMC_OCP_INTSTAT_SERR_MSK,
+			&socfpga_ecc_hmc_base->intstat);
+		/* word address is 16 bytes, shift left by 4 to byte address
+		   translation */
+		printf("Info: DRAM ECC SBE @ 0x%08x\n",
+		readl(&socfpga_ecc_hmc_base->serraddra) << 4);
+		printf("Info: DRAM ECC AUTO CORRECTION SBE ADDRESS @ 0x%08x\n",
+		readl(&socfpga_ecc_hmc_base->autowb_corraddr) << 4);
+		printf("decoder0: erraddr = %08x\n",
+		readl(&socfpga_ecc_hmc_base->ecc_errgenaddr_0) << 4);
+		printf("decoder1: erraddr = %08x\n",
+		readl(&socfpga_ecc_hmc_base->ecc_errgenaddr_1) << 4);
+		printf("decoder2: erraddr = %08x\n",
+		readl(&socfpga_ecc_hmc_base->ecc_errgenaddr_2) << 4);
+		printf("decoder3: erraddr = %08x\n",
+		readl(&socfpga_ecc_hmc_base->ecc_errgenaddr_3) << 4);
+	}
+
+	sb_err_enable_interrupt(1);
+
+	return;
+}
+
+/* Handler for db interrupt */
+void irq_handler_DDR_ecc_derr(void)
+{
+	unsigned int reg_value = 0;
+	const struct socfpga_ecc_hmc *socfpga_ecc_hmc_base =
+		(void *)SOCFPGA_SDR_ADDRESS;
+
+	db_err_enable_interrupt(0);
+
+	/* Check whether DDR DBE happen */
+	reg_value = readl(&socfpga_ecc_hmc_base->intstat);
+
+	if (reg_value & ALT_ECC_HMC_OCP_INTSTAT_DERR_MSK) {
+		/* Address mismatch */
+		if (reg_value & ALT_ECC_HMC_OCP_INTSTAT_ADDRMTCFLG_MSK) {
+			/* clear the address mismatch error */
+			writel(ALT_ECC_HMC_OCP_INTSTAT_ADDRMTCFLG_MSK,
+				&socfpga_ecc_hmc_base->intstat);
+			/* word address is 16 bytes, shift left by 4 to byte
+			    address translation */
+			puts("Error: DRAM address mismatch error occurred\n");
+			printf("decoder0: erraddr = %08x\n",
+			readl(&socfpga_ecc_hmc_base->ecc_errgenaddr_0) << 4);
+			printf("decoder1: erraddr = %08x\n",
+			readl(&socfpga_ecc_hmc_base->ecc_errgenaddr_1) << 4);
+			printf("decoder2: erraddr = %08x\n",
+			readl(&socfpga_ecc_hmc_base->ecc_errgenaddr_2) << 4);
+			printf("decoder3: erraddr = %08x\n",
+			readl(&socfpga_ecc_hmc_base->ecc_errgenaddr_3) << 4);
+		} /* External address parity error */
+		else if (reg_value & ALT_ECC_HMC_OCP_INTSTAT_ADDRPARFLG_MSK) {
+			/* clear the address parity error */
+			writel(ALT_ECC_HMC_OCP_INTSTAT_ADDRPARFLG_MSK,
+				&socfpga_ecc_hmc_base->intstat);
+			puts("Error: DRAM external parity error occurred\n");
+		} /* Double bit bus error */
+		else if (reg_value & ALT_ECC_HMC_OCP_INTSTAT_DERRBUSFLG_MSK) {
+			/* clear the double bit bus error */
+			writel(ALT_ECC_HMC_OCP_INTSTAT_DERRBUSFLG_MSK,
+				&socfpga_ecc_hmc_base->intstat);
+			puts("Error: DRAM ECC DBE occurred\n");
+			printf("erraddr = %08x\n",
+			readl(&socfpga_ecc_hmc_base->derraddra) << 4);
+		}
+
+		/* Clear the double bit error interrupt signal */
+		writel(ALT_ECC_HMC_OCP_INTSTAT_DERR_MSK,
+			&socfpga_ecc_hmc_base->intstat);
+
+		puts("### ERROR ### Please RESET the board ###\n");
+	}
+
+	db_err_enable_interrupt(1);
+
+	return;
 }

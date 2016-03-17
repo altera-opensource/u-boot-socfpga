@@ -33,6 +33,7 @@ void irq_trigger(unsigned int intrID);
 void ocram_ecc_masking_interrupt(unsigned mask);
 void irq_handler_ecc_serr(void *arg);
 void irq_handler_ecc_derr(void *arg);
+void ddr0_ecc_masking_interrupt(unsigned mask);
 #endif /* __ASSEMBLY__ */
 
 #endif /* _SOCFPGA_INTERRUPTS_H_ */

@@ -293,6 +293,7 @@ struct socfpga_system_manager {
 #define ALT_SYSMGR_ECC_INTSTAT_SERR_OCRAM_SET_MSK    0x00000002
 #define ALT_SYSMGR_ECC_INTSTAT_DERR_OCRAM_SET_MSK    0x00000002
 #define ALT_SYSMGR_ECC_INT_OCRAM_MSK                 0x00000002
+#define ALT_SYSMGR_ECC_INT_DDR0_MSK                  0x00020000
 
 #define SYSMGR_SDMMC_CTRL_SET(smplsel, drvsel)	\
 	((drvsel << 0) & 0x7) | ((smplsel << 4) & 0x70)

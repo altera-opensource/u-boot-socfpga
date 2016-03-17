@@ -11,6 +11,7 @@
 #include <asm/arch/debug_memory.h>
 #include <asm/arch/ecc_ram.h>
 #include <asm/arch/system_manager.h>
+#include <asm/arch/sdram.h>
 
 #ifdef CONFIG_USE_IRQ
 interrupt_struct interrupt_vectors[MAX_INT_VECTORS];
@@ -59,7 +60,7 @@ int arch_interrupt_init (void)
 	memset(interrupt_vectors, (int) INVERSE_NULL,
 		sizeof(interrupt_vectors));
 
-	if (is_ocram_ecc_enabled()) {
+	if (is_ocram_ecc_enabled() || is_sdram_ecc_enabled()) {
 		irq_register(IRQ_ECC_SERR,
 			irq_handler_ecc_serr,
 			0, 0);
@@ -67,9 +68,19 @@ int arch_interrupt_init (void)
 		irq_register(IRQ_ECC_DERR,
 			irq_handler_ecc_derr,
 			0, 0);
+	}
 
-		/* Unmasking single bit interrupt for OCRAM */
+	if (is_ocram_ecc_enabled())
 		ocram_ecc_masking_interrupt(0);
+
+	if (is_sdram_ecc_enabled()) {
+		ddr0_ecc_masking_interrupt(0);
+
+		sb_err_enable_interrupt(1);
+
+		ext_addrparity_err_enable_interrupt(1);
+
+		db_err_enable_interrupt(1);
 	}
 
 	return 0;
@@ -101,6 +112,22 @@ int irq_register(unsigned int irqID, INTR_FXN_PTR fxn, void *arg,
 void irq_trigger(unsigned int intrID)
 {
 	gic_dic_set_pending (intrID);
+}
+
+/* Masking DDR0 ecc interrupt in system manager */
+void ddr0_ecc_masking_interrupt(unsigned mask)
+{
+	const struct socfpga_system_manager *socfpga_system_mgr =
+		(void *)SOCFPGA_SYSMGR_ADDRESS;
+
+	if (mask)
+		writel(ALT_SYSMGR_ECC_INT_DDR0_MSK,
+			&socfpga_system_mgr->ecc_intmask_set);
+	else
+		writel(ALT_SYSMGR_ECC_INT_DDR0_MSK,
+			&socfpga_system_mgr->ecc_intmask_clr);
+
+	return;
 }
 
 /* Masking OCRAM ecc interrupt in system manager */
@@ -139,6 +166,9 @@ void irq_handler_ecc_serr(void *arg)
 			case 1:
 				irq_handler_ecc_ram_serr();
 				break;
+			case 17:
+				irq_handler_DDR_ecc_serr();
+				break;
 			case 0:
 			case 2:
 			case 3:
@@ -155,7 +185,6 @@ void irq_handler_ecc_serr(void *arg)
 			case 14:
 			case 15:
 			case 16:
-			case 17:
 			case 18:
 				printf("Can't find serr irq handler ");
 				printf("for source %d\n", source_num);
@@ -190,6 +219,9 @@ void irq_handler_ecc_derr(void *arg)
 			case 1:
 				irq_handler_ecc_ram_derr();
 				break;
+			case 17:
+				irq_handler_DDR_ecc_derr();
+				break;
 			case 0:
 			case 2:
 			case 3:
@@ -206,7 +238,6 @@ void irq_handler_ecc_derr(void *arg)
 			case 14:
 			case 15:
 			case 16:
-			case 17:
 			case 18:
 				printf("Can't find derr irq handler ");
 				printf("for source %d\n", source_num);
