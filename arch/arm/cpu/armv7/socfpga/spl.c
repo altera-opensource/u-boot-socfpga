@@ -698,8 +698,13 @@ void spl_board_init(void)
 #endif /* CONFIG_PRELOADER_HARDWARE_DIAGNOSTIC */
 
 #if (CONFIG_HPS_SDR_CTRLCFG_CTRLCFG_ECCEN == 1)
-	/* init the whole SDRAM ECC bit if SDRAM ECC is enabled */
-	sdram_ecc_init();
+	/*
+	 * Init the whole SDRAM ECC bit except the case when self refresh
+	 * is enabled and after a warm reset.
+	 */
+	if ((warmrst_preserve_sdram == 0) ||
+	   (rst_mgr_status & RSTMGR_COLDRST_MASK) != 0)
+		sdram_ecc_init();
 #endif
 
 #endif	/* CONFIG_PRELOADER_SKIP_SDRAM */
