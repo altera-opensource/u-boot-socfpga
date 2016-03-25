@@ -411,9 +411,9 @@
 #define CONFIG_TIMER_CLOCK_KHZ		(CONFIG_HPS_CLK_OSC1_HZ / 1000)
 #define CONFIG_SYS_TIMER_RATE		(CONFIG_HPS_CLK_OSC1_HZ)
 #else
-#define CONFIG_TIMER_CLOCK_HZ		(100000000)
+#define CONFIG_TIMER_CLOCK_HZ		(cm_l4_sys_free_clk_hz)
 #define CONFIG_TIMER_CLOCK_KHZ		(CONFIG_TIMER_CLOCK_HZ/1000)
-#define CONFIG_SYS_TIMER_RATE		(100000000)
+#define CONFIG_SYS_TIMER_RATE		(cm_l4_sys_free_clk_hz)
 #endif
 /* DesignWare timer is a countdown timer */
 #define CONFIG_SYS_TIMER_COUNTS_DOWN

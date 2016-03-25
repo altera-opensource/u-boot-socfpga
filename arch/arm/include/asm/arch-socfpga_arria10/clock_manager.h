@@ -80,6 +80,7 @@ extern void cm_use_intosc(void);
 extern uint32_t cm_l4_main_clk_hz;
 extern uint32_t cm_l4_sp_clk_hz;
 extern uint32_t cm_l4_mp_clk_hz;
+extern uint32_t cm_l4_sys_free_clk_hz;
 #endif /* __ASSEMBLY__ */
 
 #define CLKMGR_ALTERAGRP_MPU_CLK_OFFSET			0x140

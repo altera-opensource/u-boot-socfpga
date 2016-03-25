@@ -18,6 +18,7 @@ static u32 f2s_free_hz;
 uint32_t cm_l4_main_clk_hz = 0;
 uint32_t cm_l4_sp_clk_hz = 0;
 uint32_t cm_l4_mp_clk_hz = 0;
+uint32_t cm_l4_sys_free_clk_hz = 0;
 #define LOCKED_MASK \
 	(CLKMGR_CLKMGR_STAT_MAINPLLLOCKED_SET_MSK  | \
 	CLKMGR_CLKMGR_STAT_PERPLLLOCKED_SET_MSK)
@@ -101,12 +102,9 @@ static u32 cm_get_peri_vco(void)
 	return vco;
 }
 
-static u32 cm_get_l4_noc_hz(u32 nocdivshift)
+static u32 cm_get_noc_hz(void)
 {
 	u32 clk_src, dividor, nocclk, src_hz;
-	u32 dividor2 = 1 <<
-		((readl(&clock_manager_base->main_pll_nocdiv) >>
-			nocdivshift) & CLKMGR_MAINPLL_NOCDIV_MSK);
 
 	nocclk = readl(&clock_manager_base->main_pll_nocclk);
 	clk_src = (nocclk >> CLKMGR_MAINPLL_NOCCLK_SRC_LSB) &
@@ -134,7 +132,16 @@ static u32 cm_get_l4_noc_hz(u32 nocdivshift)
 	} else {
 		src_hz = 0;
 	}
-	return src_hz/dividor/dividor2;
+	return src_hz/dividor;
+}
+
+static u32 cm_get_l4_noc_hz(u32 nocdivshift)
+{
+	u32 dividor2 = 1 <<
+		((readl(&clock_manager_base->main_pll_nocdiv) >>
+			nocdivshift) & CLKMGR_MAINPLL_NOCDIV_MSK);
+
+	return cm_get_noc_hz()/dividor2;
 }
 
 unsigned int cm_get_mmc_controller_clk_hz(void)
@@ -678,6 +685,8 @@ int cm_basic_init(const void *blob)
 	cm_l4_sp_clk_hz =
 		cm_get_l4_noc_hz(CLKMGR_MAINPLL_NOCDIV_L4SPCLK_LSB);
 
+	cm_l4_sys_free_clk_hz = cm_get_noc_hz()/4;
+
 	return rval;
 }
 
@@ -694,12 +703,14 @@ static void cm_print_clock_quick_summary(void)
 	printf("f2s_free    %8d kHz\n", f2s_free_hz / 1000);
 	printf("MMC         %8d kHz\n", cm_get_mmc_controller_clk_hz() / 1000);
 	printf("Main VCO    %8d kHz\n", cm_get_main_vco()/1000);
+	printf("NOC         %8d kHz\n", cm_get_noc_hz()/1000);
 	printf("L4 Main	    %8d kHz\n",
 	       cm_get_l4_noc_hz(CLKMGR_MAINPLL_NOCDIV_L4MAINCLK_LSB)/1000);
 	printf("L4 MP       %8d kHz\n",
 	       cm_get_l4_noc_hz(CLKMGR_MAINPLL_NOCDIV_L4MPCLK_LSB)/1000);
 	printf("L4 SP       %8d kHz\n",
 	       cm_get_l4_noc_hz(CLKMGR_MAINPLL_NOCDIV_L4SPCLK_LSB)/1000);
+	printf("L4 sys free %8d kHz\n", cm_l4_sys_free_clk_hz/1000);
 }
 
 int do_showclocks(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
