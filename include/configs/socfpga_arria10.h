@@ -11,6 +11,7 @@
 #include <asm/arch/clock_manager.h>
 
 #include <config_cmd_default.h>
+#include <generated/autoconf.h>
 
 #define CONFIG_SOCFPGA_ARRIA10
 #define CONFIG_SOCFPGA_COMMON 1
@@ -228,7 +229,7 @@
 	"loadaddr=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
 	"fdtaddr=" __stringify(CONFIG_SYS_DTB_ADDR) "\0" \
 	"bootimage=zImage\0" \
-	"bootimagesize=0x600000\0" \
+	"bootimagesize=0x5F0000\0" \
 	"fdtimage=socfpga_arria10_socdk.dtb\0" \
 	"fdtimagesize=" __stringify(MAX_DTB_SIZE_IN_RAM) "\0" \
 	"fdt_high=0x2000000\0" \
@@ -393,7 +394,7 @@
 /*
  * FLASH
  */
-#define CONFIG_SYS_NO_FLASH 
+#define CONFIG_SYS_NO_FLASH
 
 /*
  * L4 OSC1 Timer 0
@@ -503,7 +504,6 @@
 #define CONFIG_CQSPI_BASE		(SOCFPGA_QSPIREGS_ADDRESS)
 #define CONFIG_CQSPI_AHB_BASE		(SOCFPGA_QSPIDATA_ADDRESS)
 #ifdef CONFIG_CADENCE_QSPI
-#define CONFIG_ENV_IS_NOWHERE
 #define CONFIG_QSPI_RBF_ADDR 		0x720000
 #define CONFIG_SPI_FLASH		/* SPI flash subsystem */
 #define CONFIG_SPI_FLASH_STMICRO	/* Micron/Numonyx flash */
@@ -525,6 +525,10 @@
 #define CONFIG_CQSPI_TCHSH_NS		(20)
 #define CONFIG_CQSPI_TSLCH_NS		(20)
 #define CONFIG_CQSPI_DECODER		(0)
+#define CONFIG_ENV_IS_IN_SPI_FLASH
+#define CONFIG_ENV_OFFSET		0x710000
+#define CONFIG_ENV_SIZE			(4 * 1024)
+#define CONFIG_ENV_SECT_SIZE		(4 * 1024)
 #endif	/* CONFIG_CADENCE_QSPI */
 
 /*
@@ -623,7 +627,9 @@ CONFIG_NAND_DENALI is also defined.
 #define CONFIG_OCRAM_STACK_SIZE		(20 * 1024)
 
 /* Room required on the stack for the environment data */
+#ifndef CONFIG_ENV_SIZE
 #define CONFIG_ENV_SIZE			4096
+#endif
 /* Size of DRAM reserved for malloc() use */
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_OCRAM_MALLOC_SIZE - \
 					CONFIG_ENV_SIZE)
