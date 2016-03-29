@@ -183,7 +183,6 @@ int cff_from_mmc_fat(char *dev_part, const char *filename, int len,
 		slen = strlen(filename) + 1;
 		len -= slen;
 		filename += slen;
-		fpgamgr_program_sync();
 	}
 
 	if (wait_early) {
@@ -312,6 +311,7 @@ int cff_from_qspi(unsigned long flash_offset, int do_init, int wait_early)
 			datacrc = crc32(datacrc, (unsigned char *)temp,
 					remaining);
 #endif
+			temp_sizebytes = remaining;
 			remaining = 0;
 		}
 
@@ -321,8 +321,6 @@ int cff_from_qspi(unsigned long flash_offset, int do_init, int wait_early)
 		WATCHDOG_RESET();
 
 	}
-
-	fpgamgr_program_sync();
 
 	if (wait_early) {
 		if (-ETIMEDOUT != fpgamgr_wait_early_user_mode()) {

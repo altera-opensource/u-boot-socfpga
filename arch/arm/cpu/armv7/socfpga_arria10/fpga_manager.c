@@ -78,13 +78,20 @@ int is_fpgamgr_early_user_mode(void)
 
 int fpgamgr_wait_early_user_mode(void)
 {
+	u32 sync_data = 0xffffffff;
+	u32 i = 0;
 	unsigned start = get_timer(0);
 
 	while (!(is_fpgamgr_early_user_mode())) {
 		if (get_timer(start) > FPGA_TIMEOUT_MSEC)
 			return -ETIMEDOUT;
+		fpgamgr_program_write((const long unsigned int *)&sync_data,
+				sizeof(sync_data));
+		udelay(1000);
+		i++;
 	}
 
+	debug("Additional %i sync word needed\n", i);
 	return 0;
 }
 
@@ -280,7 +287,7 @@ static int fpgamgr_set_cdratio_cdwidth(unsigned int cfg_width, u32 *rbf_data,
 		   field setting is incremented) */
 		if (cfg_width == CFGWDTH_32)
 			cd_ratio += 1;
-	}		
+	}
 
 	fpgamgr_set_cfgwdth(cfg_width);
 	fpgamgr_set_cd_ratio(cd_ratio);
