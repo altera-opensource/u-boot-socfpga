@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2014 Altera Corporation <www.altera.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * SPDX-License-Identifier:	GPL-2.0
  */
 
 #include <common.h>
@@ -114,22 +114,27 @@ int config_shared_fpga_pins(const void *blob)
  * all logic units in the Arria 10.
  *
  * The idea is to set all security policies to be normal, nonsecure
- * for all units.
- *
- * Reality is, we're just hacking stuff in here so things will *work*
- * and we'll fix it as we go.
+ * for all units. This is to avoid bringup issue for user who
+ * doesn't need any security or firewall protection.
  */
 void
 arria10_initialize_security_policies(void)
 {
 
-	/* Temp HACK to put OCRAM in non-secure */
+	/* Put OCRAM in non-secure */
 	writel(0x003f0000, 0xffd1320c);
 	writel(0x1, 0xffd13200);
 
-	/* Temp HACK to put DDR in non-secure */
+	/* Put DDR in non-secure */
 	writel(0xffff0000, 0xffd1340c);
 	writel(0x1, 0xffd13400);
+
+	/* Enable priviledge and non priviledge access to L4 peripherals */
+	writel(~0, ALT_NOC_L4_PRIV_FLT_OFST);
+
+	/* Enable secure and non secure transaction to bridges */
+	writel(~0, ALT_NOC_FW_H2F_SCR_OFST);
+	writel(~0, ALT_NOC_FW_H2F_SCR_OFST + 4);
 }
 
 /* This function masks all the ECC errors. The next stage
