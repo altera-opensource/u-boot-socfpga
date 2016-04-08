@@ -188,7 +188,8 @@
 /* Enable editing and history functions for interactive CLI operations */
 #define CONFIG_CMDLINE_EDITING
 /* Additional help message */
-#define CONFIG_SYS_LONGHELP
+/* Undef to save memory, if you want further debugging, enable it */
+#undef CONFIG_SYS_LONGHELP
 /* use "hush" command parser */
 #define CONFIG_SYS_HUSH_PARSER
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
