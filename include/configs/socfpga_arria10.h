@@ -614,7 +614,7 @@ CONFIG_NAND_DENALI is also defined.
 
 /* size of stack and malloc in ocram */
 #ifdef CONFIG_DESIGNWARE_ETH
-#define CONFIG_OCRAM_MALLOC_SIZE	(35 * 1024)
+#define CONFIG_OCRAM_MALLOC_SIZE	(42 * 1024)
 #elif defined(CONFIG_NAND_DENALI)
 #define CONFIG_OCRAM_MALLOC_SIZE	(45 * 1024)
 #else
