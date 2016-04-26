@@ -50,7 +50,7 @@ SECTIONS
 	/* allocate empty space for DTB as we will cat dtb after bin file */
 	. = . + CONFIG_UBOOT_DTB_SIZE;
 
-	. = ALIGN(4);
+	. = ALIGN(8);
 	.bss_start : {
 		KEEP(*(.__bss_start));
 		__bss_base = .;
