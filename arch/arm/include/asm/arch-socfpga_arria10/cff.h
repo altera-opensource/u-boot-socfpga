@@ -20,22 +20,31 @@ struct raw_flash_info {
 };
 #endif
 
+#if defined(CONFIG_MMC)
+struct sdmmc_flash_info {
+	char *filename;
+	char *dev_part;
+};
+#endif
+
 struct cff_flash_info {
 #if defined(CONFIG_CADENCE_QSPI)
 	struct raw_flash_info raw_flashinfo;
+#endif
+#if defined(CONFIG_MMC)
+	struct sdmmc_flash_info sdmmc_flashinfo;
 #endif
 	u32 remaining;
 	u32 buffer[4096] __aligned(ARCH_DMA_MINALIGN);
 	u32 flash_offset;
 };
 
+int cff_from_sdmmc_env(void);
 int cff_from_qspi_env(void);
 int cff_from_flash(fpga_fs_info *fpga_fsinfo);
 int cff_from_nand_env(void);
 int cff_from_nand(unsigned long flash_offset);
 const char *get_cff_filename(const void *fdt, int *len);
-int cff_from_mmc_fat(char *dev_part, const char *filename, int len,
-	int do_init, int wait_early);
 #endif /* __ASSEMBLY__ */
 
 #endif /* _SOCFPGA_CFF_H_ */

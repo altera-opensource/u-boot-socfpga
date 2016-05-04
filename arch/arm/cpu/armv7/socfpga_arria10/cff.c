@@ -24,7 +24,7 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 /* Local functions */
-#ifdef CONFIG_CADENCE_QSPI
+#if defined(CONFIG_CADENCE_QSPI) || defined(CONFIG_MMC)
 static int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 	u32 *buffer_sizebytes);
 static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
@@ -41,29 +41,46 @@ static int cff_flash_probe(struct cff_flash_info *cff_flashinfo)
 		return -1;
 	}
 #endif
+#ifdef CONFIG_MMC
+	/* we are looking at the FAT partition */
+	if (fs_set_blk_dev("mmc", cff_flashinfo->sdmmc_flashinfo.dev_part,
+		FS_TYPE_FAT)) {
+		printf("Failed to set filesystem to FAT.\n");
+		return -2;
+	}
+#endif
 
 	return 1;
 }
 
-static void flash_read(struct cff_flash_info *cff_flashinfo,
+static int flash_read(struct cff_flash_info *cff_flashinfo,
 	u32 flash_offset,
 	size_t size_read,
 	u32 *buffer_ptr)
 {
+	u32 bytesread = 0;
+
 #ifdef CONFIG_CADENCE_QSPI
 	spi_flash_read(cff_flashinfo->raw_flashinfo.flash,
 		flash_offset,
 		size_read,
 		buffer_ptr);
 #endif
+#ifdef CONFIG_MMC
+	bytesread = file_fat_read_at(cff_flashinfo->sdmmc_flashinfo.filename,
+			flash_offset, buffer_ptr, size_read);
 
-	return;
+	if (bytesread != size_read) {
+		printf("Failed to read %s from FAT %d ",
+			cff_flashinfo->sdmmc_flashinfo.filename, bytesread);
+		printf("!= %d.\n", size_read);
+		return -3;
+	}
+#endif
+
+	return bytesread;
 }
-#endif
-
-#if defined(CONFIG_MMC)
-static u32 *rbftosdramaddr;
-#endif
+#endif /* #if defined(CONFIG_CADENCE_QSPI) || defined(CONFIG_MMC) */
 
 #if defined(CONFIG_CMD_FPGA_LOADFS)
 static const struct socfpga_system_manager *system_manager_base =
@@ -87,162 +104,130 @@ const char *get_cff_filename(const void *fdt, int *len)
 	return cff_filename;
 }
 
-/* read the first chunk of the file off the fat */
-static int read_rbf_header_from_fat(char *dev_part, const char *filename, u32 *temp, u32 size_of_temp)
+int cff_from_sdmmc_env(void)
 {
-	u32 filesize, bytesread, readsize;
+	int len = 0;
+	int rval = -1;
+	fpga_fs_info fpga_fsinfo;
+	const char *cff = get_cff_filename(gd->fdt_blob, &len);
 
-	/* we are looking at the FAT partition */
-	if (fs_set_blk_dev("mmc", dev_part, FS_TYPE_FAT)) {
-		printf("failed to set filesystem to FAT\n");
-		return -1;
+	if (cff && (len > 0)) {
+		mmc_initialize(gd->bd);
+
+		fpga_fsinfo.filename = (char *)cff;
+
+		fpga_fsinfo.interface = "sdmmc";
+
+		fpga_fsinfo.dev_part = "0:1";
+
+		if (is_early_release_fpga_config(gd->fdt_blob))
+			fpga_fsinfo.rbftype = "periph";
+		else/* monolithic rbf image */
+			fpga_fsinfo.rbftype = "combined";
+
+		rval = cff_from_flash(&fpga_fsinfo);
+	}
+
+	return rval;
+}
+
+int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
+	fpga_fs_info *fpga_fsinfo, u32 *buffer, u32 *buffer_sizebytes)
+{
+	int bytesread = 0;
+	int ret = 0;
+	size_t buffer_size = sizeof(cff_flashinfo->buffer);
+	u32 *buffer_ptr = cff_flashinfo->buffer;
+
+	cff_flashinfo->sdmmc_flashinfo.filename = fpga_fsinfo->filename;
+	cff_flashinfo->sdmmc_flashinfo.dev_part = fpga_fsinfo->dev_part;
+
+	ret = cff_flash_probe(cff_flashinfo);
+
+	if (0 >= ret) {
+		puts("Flash probe failed.\n");
+		return ret;
 	}
 
 	/* checking the size of the file */
-	filesize = fs_size(filename);
-	if (filesize == -1) {
-		printf("Error - %s not found within SDMMC\n", filename);
-		return -2;
-	}
-
-	WATCHDOG_RESET();
-
-	if (filesize < size_of_temp)
-		readsize = filesize;
-	else
-		readsize = size_of_temp;
-
-	bytesread = file_fat_read_at(filename, 0, temp, readsize);
-	if (bytesread != readsize) {
-		printf("read_rbf_header_from_fat: failed to read %s %d != %d\n",
-			filename, bytesread, readsize);
+	cff_flashinfo->remaining = fs_size(fpga_fsinfo->filename);
+	if (cff_flashinfo->remaining == -1) {
+		printf("Error - %s not found within SDMMC.\n",
+			fpga_fsinfo->filename);
 		return -3;
 	}
 
 	WATCHDOG_RESET();
 
-	return 0;
-}
-
-static int to_fpga_from_fat(char *dev_part, const char *filename, u32 *temp, u32 size_of_temp)
-{
-	u32 filesize, readsize, bytesread, offset = 0;
-
-	/* we are looking at the FAT partition */
-	if (fs_set_blk_dev("mmc", dev_part, FS_TYPE_FAT)) {
-		printf("failed to set filesystem to FAT\n");
-		return 1;
+	if (cff_flashinfo->remaining > buffer_size)
+		cff_flashinfo->remaining -= buffer_size;
+	else {
+		buffer_size = cff_flashinfo->remaining;
+		cff_flashinfo->remaining = 0;
 	}
 
-	/* checking the size of the file */
-	filesize = fs_size(filename);
-	if (filesize == -1) {
-		printf("Error - %s not found within SDMMC\n", filename);
-		return 1;
+	bytesread = flash_read(cff_flashinfo, 0, buffer_size,
+			buffer_ptr);
+
+	if (0 >= bytesread) {
+		printf(" Failed to read rbf header from FAT.\n");
+		return -4;
 	}
+
+	/* Update next reading rbf data flash offset */
+	cff_flashinfo->flash_offset += bytesread;
+
+	/* Update the starting addr of rbf data to init FPGA & programming
+	   into FPGA */
+	*buffer = (u32)buffer_ptr;
+
+	/* Update the size of rbf data to be programmed into FPGA */
+	*buffer_sizebytes = buffer_size;
+
+	printf("FPGA: writing %s ...\n", fpga_fsinfo->filename);
 
 	WATCHDOG_RESET();
-
-	while (filesize) {
-		/*
-		 * Read the data by small chunk by chunk. At this stage,
-		 * use the temp as temporary buffer.
-		 */
-		if (filesize < size_of_temp)
-			readsize = filesize;
-		else
-			readsize = size_of_temp;
-
-		bytesread = file_fat_read_at(filename, offset, temp, readsize);
-		if (bytesread != readsize) {
-			printf("failed to read %s at offset %d %d != %d\n",
-				filename, offset, bytesread, readsize);
-			return 1;
-		}
-
-		filesize -= readsize;
-		offset += readsize;
-
-		/* transfer data to FPGA Manager */
-		fpgamgr_program_write((const long unsigned int *)temp, readsize);
-
-		WATCHDOG_RESET();
-	}
 
 	return 0;
 }
 
-int cff_from_mmc_fat(char *dev_part, const char *filename, int len,
-	int do_init, int wait_early)
+int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
+	u32 *buffer_sizebytes)
 {
-	u32 temp_ocr[4096] __aligned(ARCH_DMA_MINALIGN);
-	u32 temp_sizebytes = sizeof(temp_ocr);
-	u32 *temp =  temp_ocr;
-	int slen, status, num_files = 0, ret;
+	u32 bytesread = 0;
+	/* To avoid from keeping re-read the contents */
+	u32 flash_addr = cff_flashinfo->flash_offset;
+	size_t buffer_size = sizeof(cff_flashinfo->buffer);
+	u32 *buffer_ptr = cff_flashinfo->buffer;
 
-	if (filename == NULL) {
-		printf("no filename specified\n");
-		return 0;
+	/* Read the data by small chunk by chunk. */
+	if (cff_flashinfo->remaining > buffer_size)
+		cff_flashinfo->remaining -= buffer_size;
+	else {
+		buffer_size = cff_flashinfo->remaining;
+		cff_flashinfo->remaining = 0;
 	}
 
-	WATCHDOG_RESET();
+	bytesread = flash_read(cff_flashinfo, flash_addr, buffer_size,
+			buffer_ptr);
 
-	if (!(do_init || wait_early)) {
-		/* using SDRAM, faster than OCRAM, only for core rbf */
-		if (NULL != rbftosdramaddr && 0 != (gd->ram_size)) {
-			temp = rbftosdramaddr;
-			/* Calculating available DDR size */
-			temp_sizebytes = (gd->ram_size) - (u32)rbftosdramaddr;
-		}
+	if (0 >= bytesread) {
+		printf(" Failed to read rbf data from FAT.\n");
+		return -1;
 	}
 
-	if (do_init) {
-		ret = read_rbf_header_from_fat(dev_part, filename,
-			temp, temp_sizebytes);
-		if (ret) {
-			printf("cff_from_mmc_fat: error reading rbf header\n");
-			return ret;
-		}
+	/* Update next reading rbf data flash offset */
+	flash_addr += bytesread;
 
-		WATCHDOG_RESET();
+	cff_flashinfo->flash_offset = flash_addr;
 
-		/* initialize the FPGA Manager */
-		status = fpgamgr_program_init(temp, temp_sizebytes);
-		if (status) {
-			printf("FPGA: Init failed with error ");
-			printf("code %d\n", status);
-			return -1;
-		}
-	}
+	/* Update the starting of rbf data to be programmed into FPGA */
+	*buffer = (u32)buffer_ptr;
 
-	while (len > 0) {
-		printf("FPGA: writing %s\n", filename);
-		if (to_fpga_from_fat(dev_part, filename, temp,
-			temp_sizebytes))
-			return -10;
-		num_files++;
-		slen = strlen(filename) + 1;
-		len -= slen;
-		filename += slen;
-	}
+	/* Update the size of rbf data to be programmed into FPGA */
+	*buffer_sizebytes = buffer_size;
 
-	if (wait_early) {
-		if (-ETIMEDOUT != fpgamgr_wait_early_user_mode()) {
-			printf("FPGA: Early Release\n");
-		} else {
-			printf("FPGA: Failed to see Early Release\n");
-			return -5;
-		}
-	} else {
-		/* Ensure the FPGA entering config done */
-		status = fpgamgr_program_fini();
-		if (status)
-			return status;
-
-	}
-	WATCHDOG_RESET();
-
-	return num_files;
+	return 0;
 }
 #else /* helper function supports both QSPI and NAND */
 static int get_cff_offset(const void *fdt)
@@ -266,7 +251,7 @@ static int get_cff_offset(const void *fdt)
 }
 #endif /* #ifdef CONFIG_MMC */
 
-#ifdef CONFIG_CADENCE_QSPI
+#if defined(CONFIG_CADENCE_QSPI) || defined(CONFIG_MMC)
 int cff_from_flash(fpga_fs_info *fpga_fsinfo)
 {
 	u32 buffer = 0;
@@ -352,7 +337,9 @@ int cff_from_flash(fpga_fs_info *fpga_fsinfo)
 	WATCHDOG_RESET();
 	return 1;
 }
+#endif /* #if defined(CONFIG_CADENCE_QSPI) || defined(CONFIG_MMC) */
 
+#ifdef CONFIG_CADENCE_QSPI
 static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 	fpga_fs_info *fpga_fsinfo, u32 *buffer, u32 *buffer_sizebytes)
 {
@@ -719,40 +706,7 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 		fpga_fs_info *fsinfo)
 {
 	int ret = 0;
-#if defined(CONFIG_MMC)
-	int do_init = 0;
-	int wait_early = 0;
-	rbftosdramaddr = fsinfo->rbftosdramaddr;
 
-	if (!strcmp(fsinfo->rbftype, "periph")) {
-		do_init = 1;
-		wait_early = 1;
-	} else if (!strcmp(fsinfo->rbftype, "core")) {
-			if (is_fpgamgr_early_user_mode() &&
-				!is_fpgamgr_user_mode()) {
-				do_init = 0;
-				wait_early = 0;
-			} else {
-				if (is_early_release_fpga_config(gd->fdt_blob)
-				) {
-					printf("Failed: Program core.rbf ");
-					printf("must be in Early IO Release ");
-					printf("mode!!\n");
-				} else {
-					/* do nothing, Early IO release
-					is not enabled */
-					printf("Early IO release is not ");
-					printf("enabled!!\n");
-				}
-				return ret;
-			}
-	} else if (!strcmp(fsinfo->rbftype, "combined")) {
-		do_init = 1;
-		wait_early = 0;
-	} else {
-		printf("Unsupported raw binary type: %s\n", fsinfo->rbftype);
-	}
-#endif
 	/* disable all signals from hps peripheral controller to fpga */
 	writel(0, &system_manager_base->fpgaintf_en_global);
 
@@ -771,8 +725,7 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 			if (fsinfo->filename[i] == ',')
 				fsinfo->filename[i] = 0;
 
-		ret = cff_from_mmc_fat(fsinfo->dev_part, fsinfo->filename,
-			slen, do_init, wait_early);
+		ret = cff_from_flash(fsinfo);
 	}
 #elif defined(CONFIG_CADENCE_QSPI)
 	if (!strcmp(fsinfo->interface, "qspi"))

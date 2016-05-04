@@ -922,14 +922,7 @@ int dram_init(void)
 		ddr_calibration_sequence();
 	} else {
 #if defined(CONFIG_MMC)
-		int len = 0;
-		const char *cff = get_cff_filename(gd->fdt_blob, &len);
-		if (cff && (len > 0)) {
-			mmc_initialize(gd->bd);
-
-			rval = cff_from_mmc_fat("0:1", cff, len, 1,
-				is_early_release_fpga_config(gd->fdt_blob));
-		}
+		rval = cff_from_sdmmc_env();
 #elif defined(CONFIG_CADENCE_QSPI)
 		rval = cff_from_qspi_env();
 #elif defined(CONFIG_NAND_DENALI)
