@@ -7,6 +7,7 @@
 #include <altera.h>
 #include <common.h>
 #include <asm/io.h>
+#include <asm/arch/cff.h>
 #include <asm/arch/fpga_manager.h>
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/system_manager.h>
@@ -22,7 +23,47 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+/* Local functions */
+#ifdef CONFIG_CADENCE_QSPI
+static int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
+	u32 *buffer_sizebytes);
+static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
+	fpga_fs_info *fpga_fsinfo, u32 *buffer, u32 *buffer_sizebytes);
+static int cff_flash_probe(struct cff_flash_info *cff_flashinfo)
+{
+#ifdef CONFIG_CADENCE_QSPI
+	/* initialize the Quad SPI controller */
+	cff_flashinfo->raw_flashinfo.flash =
+		spi_flash_probe(0, 0, CONFIG_SF_DEFAULT_SPEED, SPI_MODE_3);
+
+	if (!(cff_flashinfo->raw_flashinfo.flash)) {
+		puts("SPI probe failed.\n");
+		return -1;
+	}
+#endif
+
+	return 1;
+}
+
+static void flash_read(struct cff_flash_info *cff_flashinfo,
+	u32 flash_offset,
+	size_t size_read,
+	u32 *buffer_ptr)
+{
+#ifdef CONFIG_CADENCE_QSPI
+	spi_flash_read(cff_flashinfo->raw_flashinfo.flash,
+		flash_offset,
+		size_read,
+		buffer_ptr);
+#endif
+
+	return;
+}
+#endif
+
+#if defined(CONFIG_MMC)
 static u32 *rbftosdramaddr;
+#endif
 
 #if defined(CONFIG_CMD_FPGA_LOADFS)
 static const struct socfpga_system_manager *system_manager_base =
@@ -226,140 +267,281 @@ static int get_cff_offset(const void *fdt)
 #endif /* #ifdef CONFIG_MMC */
 
 #ifdef CONFIG_CADENCE_QSPI
-int cff_from_qspi(unsigned long flash_offset, int do_init, int wait_early)
+int cff_from_flash(fpga_fs_info *fpga_fsinfo)
 {
-	struct spi_flash *flash;
-	struct image_header header;
-	u32 flash_addr, status;
-	u32 temp_ocr[4096] __aligned(ARCH_DMA_MINALIGN);
-	u32 temp_sizebytes = sizeof(temp_ocr);
-	u32 *temp = temp_ocr;
-	u32 remaining = 0;
-#ifdef CONFIG_CHECK_FPGA_DATA_CRC
-	u32 datacrc = 0;
-#endif
+	u32 buffer = 0;
+	u32 buffer_sizebytes = 0;
+	struct cff_flash_info cff_flashinfo;
+	u32 status;
+	int ret = 0;
 
-	/* initialize the Quad SPI controller */
-	flash = spi_flash_probe(0, 0, CONFIG_SF_DEFAULT_SPEED, SPI_MODE_3);
-	if (!flash) {
-		puts("SPI probe failed.\n");
-		return -1;
+	memset(&cff_flashinfo, 0, sizeof(cff_flashinfo));
+
+	if (fpga_fsinfo->filename == NULL) {
+		printf("no [periph/core] rbf [filename/offset] specified.\n");
+		return 0;
 	}
 
-	/* Load mkimage header on top of rbf file */
-	spi_flash_read(flash, flash_offset,
-		sizeof(struct image_header), &header);
-	/* printf("%s rbf datasize %d data location 0x%x\n", __func__, image_get_data_size(&header), image_get_data(&header)); */
+	if (strcmp(fpga_fsinfo->rbftype, "periph") &&
+		strcmp(fpga_fsinfo->rbftype, "combined") &&
+		strcmp(fpga_fsinfo->rbftype, "core")) {
+		printf("Unsupported FGPA raw binary type.\n");
+		return 0;
+	}
 
 	WATCHDOG_RESET();
 
-        if (!image_check_magic(&header)) {
-		printf("FPGA: Bad Magic Number\n");
-                return -6;
-        }
+	ret = cff_flash_preinit(&cff_flashinfo, fpga_fsinfo, &buffer,
+		&buffer_sizebytes);
 
-        if (!image_check_hcrc(&header)) {
-		printf("FPGA: Bad Header Checksum\n");
-                return -7;
-        }
+	if (ret)
+		return ret;
 
-	if (!(do_init || wait_early)) {
-		/* using SDRAM, faster than OCRAM, only for core rbf */
-		if (NULL != rbftosdramaddr && 0 != (gd->ram_size)) {
-			temp = rbftosdramaddr;
-			/* Calculating available DDR size */
-			temp_sizebytes = (gd->ram_size) - (u32)rbftosdramaddr;
-		}
-	}
-
-	/* start loading the data from flash and send to FPGA Manager */
-	flash_addr = flash_offset + sizeof(struct image_header);
-
-	spi_flash_read(flash, flash_addr,
-		temp_sizebytes, temp);
-
-	if (do_init) {
+	if (!strcmp(fpga_fsinfo->rbftype, "periph") ||
+		!strcmp(fpga_fsinfo->rbftype, "combined")) {
 		/* initialize the FPGA Manager */
-		status = fpgamgr_program_init(temp, temp_sizebytes);
+		status = fpgamgr_program_init((u32 *)buffer, buffer_sizebytes);
 		if (status) {
-			printf("FPGA: Init failed with error ");
+			printf("FPGA: Init with %s failed with error. ",
+				fpga_fsinfo->rbftype);
 			printf("code %d\n", status);
 			return -2;
 		}
 	}
 
-	remaining = image_get_data_size(&header);
-	while (remaining) {
-		/*
-		 * Read the data by small chunk by chunk. At this stage,
-		 * use the temp as temporary buffer.
-		 */
-		 if (remaining > temp_sizebytes) {
-			spi_flash_read(flash, flash_addr,
-				temp_sizebytes, temp);
-#ifdef CONFIG_CHECK_FPGA_DATA_CRC
-			datacrc = crc32(datacrc, (unsigned char *)temp,
-					temp_sizebytes);
-#endif
-			/* update the counter */
-			remaining -= temp_sizebytes;
-			flash_addr += temp_sizebytes;
-		 }  else {
-			spi_flash_read(flash, flash_addr,
-				remaining, temp);
-#ifdef CONFIG_CHECK_FPGA_DATA_CRC
-			datacrc = crc32(datacrc, (unsigned char *)temp,
-					remaining);
-#endif
-			temp_sizebytes = remaining;
-			remaining = 0;
-		}
+	WATCHDOG_RESET();
+
+	/* transfer data to FPGA Manager */
+	fpgamgr_program_write((const long unsigned int *)buffer,
+		buffer_sizebytes);
+
+	WATCHDOG_RESET();
+
+	while (cff_flashinfo.remaining) {
+		ret = cff_flash_read(&cff_flashinfo, &buffer,
+			&buffer_sizebytes);
+
+		if (ret)
+			return ret;
 
 		/* transfer data to FPGA Manager */
-		fpgamgr_program_write((const long unsigned int *)temp,
-			temp_sizebytes);
-		WATCHDOG_RESET();
+		fpgamgr_program_write((const long unsigned int *)buffer,
+			buffer_sizebytes);
 
+		WATCHDOG_RESET();
 	}
 
-	if (wait_early) {
+	if (!strcmp(fpga_fsinfo->rbftype, "periph")) {
 		if (-ETIMEDOUT != fpgamgr_wait_early_user_mode()) {
-			printf("FPGA: Early Release\n");
+			printf("FPGA: Early Release Succeeded.\n");
 		} else {
-			printf("FPGA: Failed to see Early Release\n");
+			printf("FPGA: Failed to see Early Release.\n");
 			return -5;
 		}
-	} else {
-	/* Ensure the FPGA entering config done */
+	} else if ((!strcmp(fpga_fsinfo->rbftype, "combined")) ||
+		(!strcmp(fpga_fsinfo->rbftype, "core"))) {
+		/* Ensure the FPGA entering config done */
 		status = fpgamgr_program_fini();
 		if (status)
 			return status;
-
+	} else {
+		printf("Config Error: Unsupported FGPA raw binary type.\n");
+		return -1;
 	}
 
-#ifdef CONFIG_CHECK_FPGA_DATA_CRC
-	if (datacrc !=  image_get_dcrc(&header)) {
-		printf("FPGA: Bad Data Checksum\n");
-		return -8;
-	}
-#endif
 	WATCHDOG_RESET();
 	return 1;
 }
 
+static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
+	fpga_fs_info *fpga_fsinfo, u32 *buffer, u32 *buffer_sizebytes)
+{
+	u32 *bufferptr_after_header = NULL;
+	u32 buffersize_after_header = 0;
+	u32 rbf_header_data_size = 0;
+	int ret = 0;
+	/* To avoid from keeping re-read the contents */
+	struct image_header *header = &(cff_flashinfo->raw_flashinfo.header);
+	size_t buffer_size = sizeof(cff_flashinfo->buffer);
+	u32 *buffer_ptr = cff_flashinfo->buffer;
+
+	cff_flashinfo->raw_flashinfo.rbf_offset =
+		simple_strtoul(fpga_fsinfo->filename, NULL, 16);
+
+	ret = cff_flash_probe(cff_flashinfo);
+
+	if (0 >= ret) {
+		puts("Flash probe failed.\n");
+		return ret;
+	}
+
+	 /* Load mkimage header into buffer */
+	flash_read(cff_flashinfo, cff_flashinfo->raw_flashinfo.rbf_offset,
+		sizeof(struct image_header), buffer_ptr);
+
+	WATCHDOG_RESET();
+
+	memcpy(header, (u_char *)buffer_ptr, sizeof(*header));
+
+	if (!image_check_magic(header)) {
+		printf("FPGA: Bad Magic Number.\n");
+		return -6;
+	}
+
+	if (!image_check_hcrc(header)) {
+		printf("FPGA: Bad Header Checksum.\n");
+		return -7;
+	}
+
+	/* Getting rbf data size */
+	cff_flashinfo->remaining =
+		image_get_data_size(header);
+
+	/* Calculate total size of both rbf data with mkimage header */
+	rbf_header_data_size = cff_flashinfo->remaining +
+				sizeof(struct image_header);
+
+	/* Loading to buffer chunk by chunk, normally for OCRAM buffer */
+	if (rbf_header_data_size > buffer_size) {
+		/* Calculate size of rbf data in the buffer */
+		buffersize_after_header =
+			buffer_size - sizeof(struct image_header);
+		cff_flashinfo->remaining -= buffersize_after_header;
+	} else {
+	/* Loading whole rbf image into buffer, normally for DDR buffer */
+		buffer_size = rbf_header_data_size;
+		/* Calculate size of rbf data in the buffer */
+		buffersize_after_header =
+			buffer_size - sizeof(struct image_header);
+		cff_flashinfo->remaining = 0;
+	}
+
+	/* Loading mkimage header and rbf data into buffer */
+	flash_read(cff_flashinfo, cff_flashinfo->raw_flashinfo.rbf_offset,
+		buffer_size, buffer_ptr);
+
+	/* Getting pointer of rbf data starting address where is it
+	   right after mkimage header */
+	bufferptr_after_header =
+		(u32 *)((u_char *)buffer_ptr + sizeof(struct image_header));
+
+	/* Update next reading rbf data flash offset */
+	cff_flashinfo->flash_offset = cff_flashinfo->raw_flashinfo.rbf_offset +
+					buffer_size;
+
+	/* Update the starting addr of rbf data to init FPGA & programming
+	   into FPGA */
+	*buffer = (u32)bufferptr_after_header;
+
+	/* Update the size of rbf data to be programmed into FPGA */
+	*buffer_sizebytes = buffersize_after_header;
+
+#ifdef CONFIG_CHECK_FPGA_DATA_CRC
+	cff_flashinfo->raw_flashinfo.datacrc =
+		crc32(cff_flashinfo->raw_flashinfo.datacrc,
+		(u_char *)bufferptr_after_header,
+		buffersize_after_header);
+#endif
+if (0 == (cff_flashinfo->remaining)) {
+#ifdef CONFIG_CHECK_FPGA_DATA_CRC
+	if (cff_flashinfo->raw_flashinfo.datacrc !=
+		image_get_dcrc(&(cff_flashinfo->raw_flashinfo.header))) {
+		printf("FPGA: Bad Data Checksum.\n");
+		return -8;
+	}
+#endif
+}
+	return 0;
+}
+
+static int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
+	u32 *buffer_sizebytes)
+{
+	int ret = 0;
+	/* To avoid from keeping re-read the contents */
+	size_t buffer_size = sizeof(cff_flashinfo->buffer);
+	u32 *buffer_ptr = cff_flashinfo->buffer;
+	struct spi_flash *flash = cff_flashinfo->raw_flashinfo.flash;
+	u32 flash_addr = cff_flashinfo->flash_offset;
+
+	/* Initialize the flash controller */
+	if (NULL == flash) {
+		ret = cff_flash_probe(cff_flashinfo);
+
+		if (0 >= ret) {
+			puts("Flash probe failed.\n");
+			return ret;
+		}
+	}
+
+	/* Buffer allocated in OCRAM */
+	/* Read the data by small chunk by chunk. */
+	if (cff_flashinfo->remaining > buffer_size)
+		cff_flashinfo->remaining -= buffer_size;
+	else {
+		/* Buffer allocated in DDR, larger than rbf data most
+		  of the time */
+		buffer_size = cff_flashinfo->remaining;
+		cff_flashinfo->remaining = 0;
+	}
+
+	flash_read(cff_flashinfo, flash_addr, buffer_size, buffer_ptr);
+
+#ifdef CONFIG_CHECK_FPGA_DATA_CRC
+	cff_flashinfo->raw_flashinfo.datacrc =
+		crc32(cff_flashinfo->raw_flashinfo.datacrc,
+			(unsigned char *)buffer_ptr, buffer_size);
+#endif
+
+if (0 == (cff_flashinfo->remaining)) {
+#ifdef CONFIG_CHECK_FPGA_DATA_CRC
+	if (cff_flashinfo->raw_flashinfo.datacrc !=
+		image_get_dcrc(&(cff_flashinfo->raw_flashinfo.header))) {
+		printf("FPGA: Bad Data Checksum.\n");
+		return -8;
+	}
+#endif
+}
+	/* Update next reading rbf data flash offset */
+	flash_addr += buffer_size;
+
+	cff_flashinfo->flash_offset = flash_addr;
+
+	/* Update the starting of rbf data to be programmed into FPGA */
+	*buffer = (u32)buffer_ptr;
+
+	/* Update the size of rbf data to be programmed into FPGA */
+	*buffer_sizebytes = buffer_size;
+
+	return 0;
+}
+
 int cff_from_qspi_env(void)
 {
-	int qspi_rbf_addr = 0;
+	int qspi_rbf_addr = -1;
+	fpga_fs_info fpga_fsinfo;
+	char addrToString[32] = {0};
 
 	qspi_rbf_addr = get_cff_offset(gd->fdt_blob);
 
 	if (0 > qspi_rbf_addr) {
-		printf("Error: No QSPI rbf addrress found\n");
+		printf("Error: No QSPI rbf addrress found.\n");
 		return -1;
 	}
 
-	return cff_from_qspi(qspi_rbf_addr, 1,
-				is_early_release_fpga_config(gd->fdt_blob));
+	sprintf(addrToString, "%x", qspi_rbf_addr);
+
+	fpga_fsinfo.filename = addrToString;
+
+	fpga_fsinfo.interface = "qspi";
+	/* periph rbf image */
+	if (is_early_release_fpga_config(gd->fdt_blob))
+		fpga_fsinfo.rbftype = "periph";
+	else { /* monolithic rbf image */
+		fpga_fsinfo.rbftype = "combined";
+	}
+
+	return cff_from_flash(&fpga_fsinfo);
 }
 #endif /* #ifdef CONFIG_CADENCE_QSPI */
 
@@ -537,6 +719,7 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 		fpga_fs_info *fsinfo)
 {
 	int ret = 0;
+#if defined(CONFIG_MMC)
 	int do_init = 0;
 	int wait_early = 0;
 	rbftosdramaddr = fsinfo->rbftosdramaddr;
@@ -569,7 +752,7 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 	} else {
 		printf("Unsupported raw binary type: %s\n", fsinfo->rbftype);
 	}
-
+#endif
 	/* disable all signals from hps peripheral controller to fpga */
 	writel(0, &system_manager_base->fpgaintf_en_global);
 
@@ -592,10 +775,8 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 			slen, do_init, wait_early);
 	}
 #elif defined(CONFIG_CADENCE_QSPI)
-	if (!strcmp(fsinfo->interface, "qspi")) {
-		u32 rbfaddr = simple_strtoul(fsinfo->filename, NULL, 16);
-		ret = cff_from_qspi(rbfaddr, do_init, wait_early);
-	}
+	if (!strcmp(fsinfo->interface, "qspi"))
+		ret = cff_from_flash(fsinfo);
 #elif defined(CONFIG_NAND_DENALI)
 	if (!strcmp(fsinfo->interface, "nand")) {
 		u32 rbfaddr = simple_strtoul(fsinfo->dev_part, NULL, 16);

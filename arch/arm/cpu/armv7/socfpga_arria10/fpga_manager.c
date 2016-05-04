@@ -450,7 +450,7 @@ int fpgamgr_program_fini(void)
 		return -5;
 	}
 
-	printf("FPGA: Success.\n");
+	printf("Full Configuration Succeeded.\n");
 
 	return 0;
 }
