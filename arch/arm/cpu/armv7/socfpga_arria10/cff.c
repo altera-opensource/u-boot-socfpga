@@ -19,12 +19,10 @@
 #include <watchdog.h>
 #include <fdtdec.h>
 #include <spi_flash.h>
-#include <nand.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 /* Local functions */
-#if defined(CONFIG_CADENCE_QSPI) || defined(CONFIG_MMC)
 static int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 	u32 *buffer_sizebytes);
 static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
@@ -49,6 +47,15 @@ static int cff_flash_probe(struct cff_flash_info *cff_flashinfo)
 		return -2;
 	}
 #endif
+#ifdef CONFIG_NAND_DENALI
+	if (nand_curr_device < 0) {
+		printf("FPGA: NAND device not present or not recognized.\n");
+		return -10;
+	}
+
+	cff_flashinfo->raw_flashinfo.flash =
+		&nand_info[nand_curr_device];
+#endif
 
 	return 1;
 }
@@ -58,7 +65,10 @@ static int flash_read(struct cff_flash_info *cff_flashinfo,
 	size_t size_read,
 	u32 *buffer_ptr)
 {
-	u32 bytesread = 0;
+#ifdef CONFIG_NAND_DENALI
+	int ret = 0;
+#endif
+	size_t bytesread = 1;
 
 #ifdef CONFIG_CADENCE_QSPI
 	spi_flash_read(cff_flashinfo->raw_flashinfo.flash,
@@ -77,10 +87,30 @@ static int flash_read(struct cff_flash_info *cff_flashinfo,
 		return -3;
 	}
 #endif
+#ifdef CONFIG_NAND_DENALI
+	/*
+	 * Load data from NAND into buffer
+	 * nand reads must be page-aligned (4K)
+	 */
+	bytesread = size_read;
 
+	ret = nand_read_skip_bad(cff_flashinfo->raw_flashinfo.flash,
+		flash_offset, &bytesread, NULL, size_read,
+		(u_char *)buffer_ptr);
+
+	if (ret) {
+		printf("FPGA: Failed to read data from NAND %d.\n",
+		       ret);
+		return -1;
+	}
+
+	if (bytesread != size_read) {
+		printf("FPGA: incomplete reading data from NAND.\n");
+		return -12;
+	}
+#endif
 	return bytesread;
 }
-#endif /* #if defined(CONFIG_CADENCE_QSPI) || defined(CONFIG_MMC) */
 
 #if defined(CONFIG_CMD_FPGA_LOADFS)
 static const struct socfpga_system_manager *system_manager_base =
@@ -251,7 +281,6 @@ static int get_cff_offset(const void *fdt)
 }
 #endif /* #ifdef CONFIG_MMC */
 
-#if defined(CONFIG_CADENCE_QSPI) || defined(CONFIG_MMC)
 int cff_from_flash(fpga_fs_info *fpga_fsinfo)
 {
 	u32 buffer = 0;
@@ -337,9 +366,8 @@ int cff_from_flash(fpga_fs_info *fpga_fsinfo)
 	WATCHDOG_RESET();
 	return 1;
 }
-#endif /* #if defined(CONFIG_CADENCE_QSPI) || defined(CONFIG_MMC) */
 
-#ifdef CONFIG_CADENCE_QSPI
+#if defined(CONFIG_CADENCE_QSPI) || defined(CONFIG_NAND_DENALI)
 static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 	fpga_fs_info *fpga_fsinfo, u32 *buffer, u32 *buffer_sizebytes)
 {
@@ -347,6 +375,7 @@ static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 	u32 buffersize_after_header = 0;
 	u32 rbf_header_data_size = 0;
 	int ret = 0;
+	int bytesread = 0;
 	/* To avoid from keeping re-read the contents */
 	struct image_header *header = &(cff_flashinfo->raw_flashinfo.header);
 	size_t buffer_size = sizeof(cff_flashinfo->buffer);
@@ -363,8 +392,14 @@ static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 	}
 
 	 /* Load mkimage header into buffer */
-	flash_read(cff_flashinfo, cff_flashinfo->raw_flashinfo.rbf_offset,
-		sizeof(struct image_header), buffer_ptr);
+	bytesread = flash_read(cff_flashinfo,
+			cff_flashinfo->raw_flashinfo.rbf_offset,
+			sizeof(struct image_header), buffer_ptr);
+
+	if (0 >= bytesread) {
+		printf(" Failed to read mkimage header from flash.\n");
+		return -4;
+	}
 
 	WATCHDOG_RESET();
 
@@ -404,8 +439,15 @@ static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 	}
 
 	/* Loading mkimage header and rbf data into buffer */
-	flash_read(cff_flashinfo, cff_flashinfo->raw_flashinfo.rbf_offset,
-		buffer_size, buffer_ptr);
+	bytesread = flash_read(cff_flashinfo,
+			cff_flashinfo->raw_flashinfo.rbf_offset, buffer_size,
+			buffer_ptr);
+
+	if (0 >= bytesread) {
+		printf(" Failed to read mkimage header and rbf data ");
+		printf("from flash.\n");
+		return -5;
+	}
 
 	/* Getting pointer of rbf data starting address where is it
 	   right after mkimage header */
@@ -445,14 +487,14 @@ static int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 	u32 *buffer_sizebytes)
 {
 	int ret = 0;
+	int bytesread = 0;
 	/* To avoid from keeping re-read the contents */
 	size_t buffer_size = sizeof(cff_flashinfo->buffer);
 	u32 *buffer_ptr = cff_flashinfo->buffer;
-	struct spi_flash *flash = cff_flashinfo->raw_flashinfo.flash;
 	u32 flash_addr = cff_flashinfo->flash_offset;
 
 	/* Initialize the flash controller */
-	if (NULL == flash) {
+	if (NULL == cff_flashinfo->raw_flashinfo.flash) {
 		ret = cff_flash_probe(cff_flashinfo);
 
 		if (0 >= ret) {
@@ -472,7 +514,13 @@ static int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 		cff_flashinfo->remaining = 0;
 	}
 
-	flash_read(cff_flashinfo, flash_addr, buffer_size, buffer_ptr);
+	bytesread = flash_read(cff_flashinfo, flash_addr, buffer_size,
+			buffer_ptr);
+
+	if (0 >= bytesread) {
+		printf(" Failed to read rbf data from flash.\n");
+		return -9;
+	}
 
 #ifdef CONFIG_CHECK_FPGA_DATA_CRC
 	cff_flashinfo->raw_flashinfo.datacrc =
@@ -502,7 +550,9 @@ if (0 == (cff_flashinfo->remaining)) {
 
 	return 0;
 }
+#endif /* #if defined(CONFIG_CADENCE_QSPI) || defined(CONFIG_NAND_DENALI) */
 
+#if defined(CONFIG_CADENCE_QSPI)
 int cff_from_qspi_env(void)
 {
 	int qspi_rbf_addr = -1;
@@ -533,161 +583,11 @@ int cff_from_qspi_env(void)
 #endif /* #ifdef CONFIG_CADENCE_QSPI */
 
 #ifdef CONFIG_NAND_DENALI
-/*
- * This function reads an FPGA image from NAND and programs it
- * into the FPGA.  The seemingly incoherent return codes (negative
- * this, negative that), are actually a clever way to debug
- * errors when there is no serial output, or any output at all.  If
- * this function simply returned -1 for all errors, determing the
- * actual point of failure would be extremely tedious and time-consuming.
- * By examining the return code in a debugger, a developer can quickly
- * determine the cause of failure.
- * Each return code is accompanied by a printf which
- * serves as the description of that failure.
- */
-int cff_from_nand(unsigned long flash_offset)
-{
-	nand_info_t *nand;
-	struct image_header header;
-	u32 flash_addr, status;
-	int ret;
-	u_char temp[16384] __aligned(ARCH_DMA_MINALIGN);
-	u32 remaining = 0;
-	size_t len_read;
-#ifdef CONFIG_CHECK_FPGA_DATA_CRC
-	u32 datacrc = 0;
-#endif
-
-	if (nand_curr_device < 0) {
-		printf("FPGA: NAND device not present or not recognized\n");
-		return -10;
-	}
-	nand = &nand_info[nand_curr_device];
-
-	/*
-	 * Load mkimage header which is on top of rbf file
-	 * nand reads must be page-aligned (4K)
-	 */
-	len_read = sizeof(temp);
-	ret = nand_read_skip_bad(nand, flash_offset,
-				 &len_read, NULL, sizeof(temp), temp);
-	if (ret) {
-		printf("FPGA: failed to read mkimage header from NAND %d\n",
-		       ret);
-		return ret;
-	}
-	if (len_read != sizeof(temp)) {
-		printf("FPGA: incomplete read of mkimage header from NAND\n");
-		return -12;
-	}
-	memcpy(&header, temp, sizeof(header));
-
-	WATCHDOG_RESET();
-
-	if (!image_check_magic(&header)) {
-		printf("FPGA: Bad Magic Number\n");
-		return -6;
-	}
-
-	if (!image_check_hcrc(&header)) {
-		printf("FPGA: Bad Header Checksum\n");
-		return -7;
-	}
-
-	/*
-	 * load rbf data into fpga, start with rbf header, which
-	 * resides just after the mkimage header
-	 */
-	len_read -= sizeof(struct image_header);
-	status = fpgamgr_program_init((u32 *)&temp[sizeof(struct image_header)],
-				      len_read);
-	if (status) {
-		printf("FPGA: Init failed with error code %d\n", status);
-		return -2;
-	}
-#ifdef CONFIG_CHECK_FPGA_DATA_CRC
-	datacrc = crc32(datacrc, &temp[sizeof(struct image_header)],
-		len_read);
-#endif
-
-	/*
-	 * now send the data, starting again with rbf header,
-	 * just after mkimage header
-	 */
-	fpgamgr_program_write((const long unsigned int *)
-			      &temp[sizeof(struct image_header)], len_read);
-
-	/* now we are started, can loop the rest */
-	flash_addr = flash_offset + sizeof(temp);
-	remaining = image_get_data_size(&header);
-	if (remaining < len_read)
-		/* this is unexpected, but could happen... */
-		remaining = 0;
-	else
-		remaining -= len_read;
-
-	while (remaining) {
-		/*
-		 * Read the data by small chunk by chunk. At this stage,
-		 * use the temp as temporary buffer.
-		 */
-		len_read = sizeof(temp);
-		ret = nand_read_skip_bad(nand, flash_addr,
-					 &len_read, NULL, sizeof(temp), temp);
-		if (ret) {
-			printf("FPGA: NAND read failed %d\n", ret);
-			return ret;
-		}
-		if (len_read != sizeof(temp)) {
-			printf("FPGA: incomplete read from NAND\n");
-			return -13;
-		}
-		if (remaining > sizeof(temp)) {
-			/* transfer data to FPGA Manager */
-			fpgamgr_program_write((const long unsigned int *)temp,
-					      sizeof(temp));
-#ifdef CONFIG_CHECK_FPGA_DATA_CRC
-			datacrc = crc32(datacrc, temp, sizeof(temp));
-#endif
-			/* update the counter */
-			remaining -= sizeof(temp);
-			flash_addr += sizeof(temp);
-		}  else {
-			/* transfer data to FPGA Manager */
-			fpgamgr_program_write((const long unsigned int *)temp,
-					      remaining);
-#ifdef CONFIG_CHECK_FPGA_DATA_CRC
-			datacrc = crc32(datacrc, temp, remaining);
-#endif
-			/* set to zero, may have read more than needed */
-			remaining = 0;
-		}
-
-		WATCHDOG_RESET();
-	}
-
-	fpgamgr_program_sync();
-
-#ifdef CONFIG_CHECK_FPGA_DATA_CRC
-	if (datacrc !=  image_get_dcrc(&header)) {
-		printf("FPGA: Bad Data Checksum\n");
-		return -8;
-	}
-#endif
-
-	/* Ensure the FPGA entering config done */
-	status = fpgamgr_program_fini();
-	if (status) {
-		return status;
-	}
-
-	WATCHDOG_RESET();
-	return 1;
-}
-
 int cff_from_nand_env(void)
 {
-	int nand_rbf_addr = 0;
+	int nand_rbf_addr = -1;
+	fpga_fs_info fpga_fsinfo;
+	char addrToString[32] = {0};
 
 	nand_rbf_addr = get_cff_offset(gd->fdt_blob);
 
@@ -696,8 +596,19 @@ int cff_from_nand_env(void)
 		return -1;
 	}
 
-	return cff_from_nand(nand_rbf_addr);
+	sprintf(addrToString, "%x", nand_rbf_addr);
 
+	fpga_fsinfo.filename = addrToString;
+
+	fpga_fsinfo.interface = "nand";
+
+	/* periph rbf image */
+	if (is_early_release_fpga_config(gd->fdt_blob))
+		fpga_fsinfo.rbftype = "periph";
+	else /* monolithic rbf image */
+		fpga_fsinfo.rbftype = "combined";
+
+	return cff_from_flash(&fpga_fsinfo);
 }
 #endif /* CONFIG_NAND_DENALI */
 
@@ -731,10 +642,8 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 	if (!strcmp(fsinfo->interface, "qspi"))
 		ret = cff_from_flash(fsinfo);
 #elif defined(CONFIG_NAND_DENALI)
-	if (!strcmp(fsinfo->interface, "nand")) {
-		u32 rbfaddr = simple_strtoul(fsinfo->dev_part, NULL, 16);
-		ret = cff_from_nand(rbfaddr);
-	}
+	if (!strcmp(fsinfo->interface, "nand"))
+		ret = cff_from_flash(fsinfo);
 #else
 	printf("unsupported interface: %s\n", fsinfo->interface);
 	return FPGA_FAIL;
