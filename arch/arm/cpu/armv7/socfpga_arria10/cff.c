@@ -166,8 +166,8 @@ int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 {
 	int bytesread = 0;
 	int ret = 0;
-	size_t buffer_size = sizeof(cff_flashinfo->buffer);
-	u32 *buffer_ptr = cff_flashinfo->buffer;
+	size_t buffer_size = *buffer_sizebytes;
+	u32 *buffer_ptr = (u32 *)*buffer;
 
 	cff_flashinfo->sdmmc_flashinfo.filename = fpga_fsinfo->filename;
 	cff_flashinfo->sdmmc_flashinfo.dev_part = fpga_fsinfo->dev_part;
@@ -207,10 +207,6 @@ int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 	/* Update next reading rbf data flash offset */
 	cff_flashinfo->flash_offset += bytesread;
 
-	/* Update the starting addr of rbf data to init FPGA & programming
-	   into FPGA */
-	*buffer = (u32)buffer_ptr;
-
 	/* Update the size of rbf data to be programmed into FPGA */
 	*buffer_sizebytes = buffer_size;
 
@@ -227,8 +223,8 @@ int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 	u32 bytesread = 0;
 	/* To avoid from keeping re-read the contents */
 	u32 flash_addr = cff_flashinfo->flash_offset;
-	size_t buffer_size = sizeof(cff_flashinfo->buffer);
-	u32 *buffer_ptr = cff_flashinfo->buffer;
+	size_t buffer_size = *buffer_sizebytes;
+	u32 *buffer_ptr = (u32 *)*buffer;
 
 	/* Read the data by small chunk by chunk. */
 	if (cff_flashinfo->remaining > buffer_size)
@@ -250,9 +246,6 @@ int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 	flash_addr += bytesread;
 
 	cff_flashinfo->flash_offset = flash_addr;
-
-	/* Update the starting of rbf data to be programmed into FPGA */
-	*buffer = (u32)buffer_ptr;
 
 	/* Update the size of rbf data to be programmed into FPGA */
 	*buffer_sizebytes = buffer_size;
@@ -284,7 +277,9 @@ static int get_cff_offset(const void *fdt)
 int cff_from_flash(fpga_fs_info *fpga_fsinfo)
 {
 	u32 buffer = 0;
+	u32 buffer_ori = 0;
 	u32 buffer_sizebytes = 0;
+	u32 buffer_sizebytes_ori = 0;
 	struct cff_flash_info cff_flashinfo;
 	u32 status;
 	int ret = 0;
@@ -305,6 +300,28 @@ int cff_from_flash(fpga_fs_info *fpga_fsinfo)
 
 	WATCHDOG_RESET();
 
+	/* Loading rbf data with DDR, faster than OCRAM,
+	   only for core rbf */
+	if (!strcmp(fpga_fsinfo->rbftype, "core") &&
+		(NULL != fpga_fsinfo->rbftosdramaddr) &&
+		(0 != gd->ram_size)) {
+			/* Loading mkimage header and rbf data into
+			   DDR instead of OCRAM */
+			buffer = buffer_ori = (u32)fpga_fsinfo->rbftosdramaddr;
+
+			/* Calculating available DDR size */
+			buffer_sizebytes = gd->ram_size -
+				(u32)fpga_fsinfo->rbftosdramaddr;
+
+			buffer_sizebytes_ori = buffer_sizebytes;
+	} else {
+		buffer = buffer_ori = (u32)cff_flashinfo.buffer;
+
+		buffer_sizebytes = buffer_sizebytes_ori = sizeof(cff_flashinfo.buffer);
+	}
+
+	/* Note: Both buffer and buffer_sizebytes values can be altered by
+	   function below. */
 	ret = cff_flash_preinit(&cff_flashinfo, fpga_fsinfo, &buffer,
 		&buffer_sizebytes);
 
@@ -332,15 +349,15 @@ int cff_from_flash(fpga_fs_info *fpga_fsinfo)
 	WATCHDOG_RESET();
 
 	while (cff_flashinfo.remaining) {
-		ret = cff_flash_read(&cff_flashinfo, &buffer,
-			&buffer_sizebytes);
+		ret = cff_flash_read(&cff_flashinfo, &buffer_ori,
+			&buffer_sizebytes_ori);
 
 		if (ret)
 			return ret;
 
 		/* transfer data to FPGA Manager */
-		fpgamgr_program_write((const long unsigned int *)buffer,
-			buffer_sizebytes);
+		fpgamgr_program_write((const long unsigned int *)buffer_ori,
+			buffer_sizebytes_ori);
 
 		WATCHDOG_RESET();
 	}
@@ -378,8 +395,8 @@ static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 	int bytesread = 0;
 	/* To avoid from keeping re-read the contents */
 	struct image_header *header = &(cff_flashinfo->raw_flashinfo.header);
-	size_t buffer_size = sizeof(cff_flashinfo->buffer);
-	u32 *buffer_ptr = cff_flashinfo->buffer;
+	size_t buffer_size = *buffer_sizebytes;
+	u32 *buffer_ptr = (u32 *)*buffer;
 
 	cff_flashinfo->raw_flashinfo.rbf_offset =
 		simple_strtoul(fpga_fsinfo->filename, NULL, 16);
@@ -471,7 +488,7 @@ static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 		(u_char *)bufferptr_after_header,
 		buffersize_after_header);
 #endif
-if (0 == (cff_flashinfo->remaining)) {
+if (0 == cff_flashinfo->remaining) {
 #ifdef CONFIG_CHECK_FPGA_DATA_CRC
 	if (cff_flashinfo->raw_flashinfo.datacrc !=
 		image_get_dcrc(&(cff_flashinfo->raw_flashinfo.header))) {
@@ -489,8 +506,8 @@ static int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 	int ret = 0;
 	int bytesread = 0;
 	/* To avoid from keeping re-read the contents */
-	size_t buffer_size = sizeof(cff_flashinfo->buffer);
-	u32 *buffer_ptr = cff_flashinfo->buffer;
+	size_t buffer_size = *buffer_sizebytes;
+	u32 *buffer_ptr = (u32 *)*buffer;
 	u32 flash_addr = cff_flashinfo->flash_offset;
 
 	/* Initialize the flash controller */
@@ -528,7 +545,7 @@ static int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 			(unsigned char *)buffer_ptr, buffer_size);
 #endif
 
-if (0 == (cff_flashinfo->remaining)) {
+if (0 == cff_flashinfo->remaining) {
 #ifdef CONFIG_CHECK_FPGA_DATA_CRC
 	if (cff_flashinfo->raw_flashinfo.datacrc !=
 		image_get_dcrc(&(cff_flashinfo->raw_flashinfo.header))) {
@@ -541,9 +558,6 @@ if (0 == (cff_flashinfo->remaining)) {
 	flash_addr += buffer_size;
 
 	cff_flashinfo->flash_offset = flash_addr;
-
-	/* Update the starting of rbf data to be programmed into FPGA */
-	*buffer = (u32)buffer_ptr;
 
 	/* Update the size of rbf data to be programmed into FPGA */
 	*buffer_sizebytes = buffer_size;
