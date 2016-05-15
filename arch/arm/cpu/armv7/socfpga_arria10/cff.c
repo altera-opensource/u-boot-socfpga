@@ -22,6 +22,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+static const const char *boot_flash_type = CONFIG_BOOT_FLASH_TYPE;
+
 /* Local functions */
 static int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 	u32 *buffer_sizebytes);
@@ -632,6 +634,19 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 {
 	int ret = 0;
 
+	if (strcmp(fsinfo->interface, boot_flash_type)) {
+		printf("unsupported flash type: %s != %s\n",
+			fsinfo->interface, boot_flash_type);
+		return FPGA_FAIL;
+	}
+
+	if (!strcmp(fsinfo->rbftype, "core") &&
+		!(is_fpgamgr_early_user_mode() &&
+		!is_fpgamgr_user_mode())) {
+		printf("FPGA must be in Early Release mode to program core.\n");
+		return FPGA_FAIL;
+	}
+
 	/* disable all signals from hps peripheral controller to fpga */
 	writel(0, &system_manager_base->fpgaintf_en_global);
 
@@ -642,26 +657,7 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 
 	reset_assert_fpga_connected_peripherals();
 
-#if defined(CONFIG_MMC)
-	if (!strcmp(fsinfo->interface, "mmc")) {
-		int i, slen = strlen(fsinfo->filename) + 1;
-
-		for (i = 0; i < slen; i++)
-			if (fsinfo->filename[i] == ',')
-				fsinfo->filename[i] = 0;
-
-		ret = cff_from_flash(fsinfo);
-	}
-#elif defined(CONFIG_CADENCE_QSPI)
-	if (!strcmp(fsinfo->interface, "qspi"))
-		ret = cff_from_flash(fsinfo);
-#elif defined(CONFIG_NAND_DENALI)
-	if (!strcmp(fsinfo->interface, "nand"))
-		ret = cff_from_flash(fsinfo);
-#else
-	printf("unsupported interface: %s\n", fsinfo->interface);
-	return FPGA_FAIL;
-#endif
+	ret = cff_from_flash(fsinfo);
 
 	if (ret > 0) {
 		config_shared_fpga_pins(gd->fdt_blob);
@@ -669,6 +665,7 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 		reset_deassert_fpga_connected_peripherals();
 		return FPGA_SUCCESS;
 	}
+
 	return FPGA_FAIL;
 }
 #endif

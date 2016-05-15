@@ -497,6 +497,7 @@
 #define CONFIG_SOCFPGA_DWMMC_BUS_WIDTH	4
 /* requird for dw_mmc driver */
 #define CONFIG_BOUNCE_BUFFER
+#define CONFIG_BOOT_FLASH_TYPE "mmc"
 #endif	/* CONFIG_MMC */
 
 /*
@@ -530,6 +531,7 @@
 #define CONFIG_ENV_OFFSET		0x710000
 #define CONFIG_ENV_SIZE			(4 * 1024)
 #define CONFIG_ENV_SECT_SIZE		(4 * 1024)
+#define CONFIG_BOOT_FLASH_TYPE "qspi"
 #endif	/* CONFIG_CADENCE_QSPI */
 
 /*
@@ -593,6 +595,7 @@ CONFIG_NAND_DENALI is also defined.
 #define CONFIG_SYS_NAND_BASE	        CONFIG_SYS_NAND_REGS_BASE
 /* The ECC size which either 512 or 1024 */
 #define CONFIG_NAND_DENALI_ECC_SIZE			(512)
+#define CONFIG_BOOT_FLASH_TYPE "nand"
 #endif /* CONFIG_NAND_DENALI */
 
 /*
