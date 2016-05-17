@@ -932,18 +932,19 @@ int dram_init(void)
 #error "unsupported config"
 #endif
 		if (rval > 0) {
-			reset_assert_uart();
-			config_shared_fpga_pins(gd->fdt_blob);
-			reset_deassert_uart();
+			config_pins(gd->fdt_blob, "shared");
 
 			reset_deassert_shared_connected_peripherals();
-			reset_deassert_fpga_connected_peripherals();
 			NS16550_init((NS16550_t)CONFIG_SYS_NS16550_COM1,
 				     ns16550_calc_divisor(
 					     (NS16550_t)CONFIG_SYS_NS16550_COM1,
 					     CONFIG_SYS_NS16550_CLK,
 					     CONFIG_BAUDRATE));
 
+			if (!is_early_release_fpga_config(gd->fdt_blob)) {
+				config_pins(gd->fdt_blob, "fpga");
+				reset_deassert_fpga_connected_peripherals();
+			}
 			ddr_calibration_sequence();
 		}
 	}

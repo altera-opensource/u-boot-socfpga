@@ -633,6 +633,12 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 		fpga_fs_info *fsinfo)
 {
 	int ret = 0;
+	int programming_core;
+
+	if (!strcmp(fsinfo->rbftype, "core"))
+		programming_core = 1;
+	else
+		programming_core = 0;
 
 	if (strcmp(fsinfo->interface, boot_flash_type)) {
 		printf("unsupported flash type: %s != %s\n",
@@ -640,9 +646,8 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 		return FPGA_FAIL;
 	}
 
-	if (!strcmp(fsinfo->rbftype, "core") &&
-		!(is_fpgamgr_early_user_mode() &&
-		!is_fpgamgr_user_mode())) {
+	if (programming_core &&
+		!(is_fpgamgr_early_user_mode() && !is_fpgamgr_user_mode())) {
 		printf("FPGA must be in Early Release mode to program core.\n");
 		return FPGA_FAIL;
 	}
@@ -653,16 +658,26 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 	/* disable all axi bridge (hps2fpga, lwhps2fpga & fpga2hps) */
 	reset_assert_all_bridges();
 
-	reset_assert_shared_connected_peripherals();
+	if (!programming_core)
+		reset_assert_shared_connected_peripherals();
 
 	reset_assert_fpga_connected_peripherals();
 
 	ret = cff_from_flash(fsinfo);
 
 	if (ret > 0) {
-		config_shared_fpga_pins(gd->fdt_blob);
-		reset_deassert_shared_connected_peripherals();
-		reset_deassert_fpga_connected_peripherals();
+
+		/* programming periph or combined */
+		if (!programming_core) {
+			config_pins(gd->fdt_blob, "shared");
+			reset_deassert_shared_connected_peripherals();
+		}
+
+		/* programming core or combined */
+		if (strcmp(fsinfo->rbftype, "periph")) {
+			config_pins(gd->fdt_blob, "fpga");
+			reset_deassert_fpga_connected_peripherals();
+		}
 		return FPGA_SUCCESS;
 	}
 

@@ -46,7 +46,7 @@ static int __do_pinctr_pins(const void *blob, int child, const char *node_name)
 	}
 	return 1;
 }
-int do_pinctrl_pins(const void *blob, int node, char *child_name)
+static int do_pinctrl_pins(const void *blob, int node, const char *child_name)
 {
 	int child, len;
 	const char *node_name;
@@ -92,7 +92,7 @@ int config_dedicated_pins(const void *blob)
 	return 0;
 }
 
-int config_shared_fpga_pins(const void *blob)
+int config_pins(const void *blob, const char *pin_grp)
 {
 	int node;
 
@@ -101,11 +101,8 @@ int config_shared_fpga_pins(const void *blob)
 	if (node < 0)
 		return 1;
 
-	if (do_pinctrl_pins(blob, node, "shared"))
-		return 4;
-
-	if (do_pinctrl_pins(blob, node, "fpga"))
-		return 5;
+	if (do_pinctrl_pins(blob, node, pin_grp))
+		return 2;
 
 	return 0;
 }
@@ -214,7 +211,8 @@ void s_init(void)
 		while (!is_fpgamgr_user_mode())
 			;
 
-		config_shared_fpga_pins(gd->fdt_blob);
+		config_pins(gd->fdt_blob, "shared");
+		config_pins(gd->fdt_blob, "fpga");
 		reset_deassert_shared_connected_peripherals();
 		reset_deassert_fpga_connected_peripherals();
 	}
