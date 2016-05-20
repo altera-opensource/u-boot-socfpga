@@ -511,6 +511,71 @@ static u32 cm_calc_handoff_noc_clk_hz(struct mainpll_cfg *main_cfg,
 	clk_hz /= (main_cfg->nocclk_cnt + 1);
 	return clk_hz;
 }
+
+/* return 1 if PLL ramp is required */
+static int cm_is_pll_ramp_required(int main0periph1,
+				   struct mainpll_cfg *main_cfg,
+				   struct perpll_cfg *per_cfg)
+{
+
+	/* Check for main PLL */
+	if (main0periph1 == 0) {
+		/*
+		 * PLL ramp is not required if both MPU clock and NOC clock are
+		 * not sourced from main PLL
+		 */
+		if (main_cfg->mpuclk_src != CLKMGR_MAINPLL_MPUCLK_SRC_MAIN &&
+		    main_cfg->nocclk_src != CLKMGR_MAINPLL_NOCCLK_SRC_MAIN)
+			return 0;
+
+		/*
+		 * PLL ramp is required if MPU clock is sourced from main PLL
+		 * and MPU clock is over 900MHz (as advised by HW team)
+		 */
+		if (main_cfg->mpuclk_src == CLKMGR_MAINPLL_MPUCLK_SRC_MAIN &&
+		    (cm_calc_handoff_mpu_clk_hz(main_cfg, per_cfg) >
+		     CLKMGR_PLL_RAMP_MPUCLK_THRESHOLD_HZ))
+			return 1;
+
+		/*
+		 * PLL ramp is required if NOC clock is sourced from main PLL
+		 * and NOC clock is over 300MHz (as advised by HW team)
+		 */
+		if (main_cfg->nocclk_src == CLKMGR_MAINPLL_NOCCLK_SRC_MAIN &&
+		    (cm_calc_handoff_noc_clk_hz(main_cfg, per_cfg) >
+		     CLKMGR_PLL_RAMP_NOCCLK_THRESHOLD_HZ))
+			return 1;
+
+	} else if (main0periph1 == 1) {
+		/*
+		 * PLL ramp is not required if both MPU clock and NOC clock are
+		 * not sourced from periph PLL
+		 */
+		if (main_cfg->mpuclk_src != CLKMGR_MAINPLL_MPUCLK_SRC_PERI &&
+		    main_cfg->nocclk_src != CLKMGR_MAINPLL_NOCCLK_SRC_PERI)
+			return 0;
+
+		/*
+		 * PLL ramp is required if MPU clock are source from periph PLL
+		 * and MPU clock is over 900MHz (as advised by HW team)
+		 */
+		if (main_cfg->mpuclk_src == CLKMGR_MAINPLL_MPUCLK_SRC_PERI &&
+		    (cm_calc_handoff_mpu_clk_hz(main_cfg, per_cfg) >
+		     CLKMGR_PLL_RAMP_MPUCLK_THRESHOLD_HZ))
+			return 1;
+
+		/*
+		 * PLL ramp is required if NOC clock are source from periph PLL
+		 * and NOC clock is over 300MHz (as advised by HW team)
+		 */
+		if (main_cfg->nocclk_src == CLKMGR_MAINPLL_NOCCLK_SRC_PERI &&
+		    (cm_calc_handoff_noc_clk_hz(main_cfg, per_cfg) >
+		     CLKMGR_PLL_RAMP_NOCCLK_THRESHOLD_HZ))
+			return 1;
+	}
+	return 0;
+}
+
 /*
  * Setup clocks while making no assumptions of the
  * previous state of the clocks.
