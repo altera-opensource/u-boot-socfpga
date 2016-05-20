@@ -774,6 +774,8 @@ static void cm_pll_ramp_periph(struct mainpll_cfg *main_cfg,
 
 static int cm_full_cfg(struct mainpll_cfg *main_cfg, struct perpll_cfg *per_cfg)
 {
+	u32 pll_ramp_main_hz = 0, pll_ramp_periph_hz = 0;
+
 #ifndef TEST_AT_ASIMOV
 	/* gate off all mainpll clock excpet HW managed clock */
 	writel(CLKMGR_MAINPLL_EN_S2FUSER0CLKEN_SET_MSK |
@@ -822,15 +824,39 @@ static int cm_full_cfg(struct mainpll_cfg *main_cfg, struct perpll_cfg *per_cfg)
 		CLKMGR_CLKMGR_INTR_PERPLLACHIEVED_SET_MSK,
 		&clock_manager_base->intr);
 
-	/* Program VCO “Numerator” and “Denominator” */
-	writel((main_cfg->vco1_denom <<
-		CLKMGR_MAINPLL_VCO1_DENOM_LSB) |
-		main_cfg->vco1_numer,
-		&clock_manager_base->main_pll_vco1);
-	writel((per_cfg->vco1_denom <<
-		CLKMGR_PERPLL_VCO1_DENOM_LSB) |
-		per_cfg->vco1_numer,
-		&clock_manager_base->per_pll_vco1);
+	/* Program VCO “Numerator” and “Denominator” for main PLL */
+	if (cm_is_pll_ramp_required(0, main_cfg, per_cfg)) {
+		/* set main PLL to safe starting threshold frequency */
+		if (main_cfg->mpuclk_src == CLKMGR_MAINPLL_MPUCLK_SRC_MAIN)
+			pll_ramp_main_hz = CLKMGR_PLL_RAMP_MPUCLK_THRESHOLD_HZ;
+		else if (main_cfg->nocclk_src == CLKMGR_MAINPLL_NOCCLK_SRC_MAIN)
+			pll_ramp_main_hz = CLKMGR_PLL_RAMP_NOCCLK_THRESHOLD_HZ;
+
+		writel((main_cfg->vco1_denom << CLKMGR_MAINPLL_VCO1_DENOM_LSB) |
+			cm_calc_safe_pll_numer(0, main_cfg, per_cfg,
+			pll_ramp_main_hz), &clock_manager_base->main_pll_vco1);
+	} else
+		writel((main_cfg->vco1_denom << CLKMGR_MAINPLL_VCO1_DENOM_LSB) |
+			main_cfg->vco1_numer,
+			&clock_manager_base->main_pll_vco1);
+
+	/* Program VCO “Numerator” and “Denominator” for periph PLL */
+	if (cm_is_pll_ramp_required(1, main_cfg, per_cfg)) {
+		/* set periph PLL to safe starting threshold frequency */
+		if (main_cfg->mpuclk_src == CLKMGR_MAINPLL_MPUCLK_SRC_PERI)
+			pll_ramp_periph_hz =
+				CLKMGR_PLL_RAMP_MPUCLK_THRESHOLD_HZ;
+		else if (main_cfg->nocclk_src == CLKMGR_MAINPLL_NOCCLK_SRC_PERI)
+			pll_ramp_periph_hz =
+				CLKMGR_PLL_RAMP_NOCCLK_THRESHOLD_HZ;
+
+		writel((per_cfg->vco1_denom << CLKMGR_PERPLL_VCO1_DENOM_LSB) |
+			cm_calc_safe_pll_numer(1, main_cfg, per_cfg,
+			pll_ramp_periph_hz), &clock_manager_base->per_pll_vco1);
+	} else
+		writel((per_cfg->vco1_denom << CLKMGR_PERPLL_VCO1_DENOM_LSB) |
+			per_cfg->vco1_numer,
+			&clock_manager_base->per_pll_vco1);
 
 	/* Wait for at least 5 us */
 	udelay(5);
@@ -994,6 +1020,12 @@ static int cm_full_cfg(struct mainpll_cfg *main_cfg, struct perpll_cfg *per_cfg)
 		CLKMGR_CLKMGR_CTL_BOOTMOD_SET_MSK);
 	/* wait till Clock Manager is not busy */
 	cm_wait4fsm();
+
+	/* At here, we need to ramp to final value if needed */
+	if (pll_ramp_main_hz != 0)
+		cm_pll_ramp_main(main_cfg, per_cfg, pll_ramp_main_hz);
+	if (pll_ramp_periph_hz != 0)
+		cm_pll_ramp_periph(main_cfg, per_cfg, pll_ramp_periph_hz);
 
 	/* Now ungate non-hw-managed clocks */
 	writel(CLKMGR_MAINPLL_EN_S2FUSER0CLKEN_SET_MSK |
