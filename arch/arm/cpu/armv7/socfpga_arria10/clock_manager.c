@@ -673,6 +673,66 @@ static u32 cm_calc_safe_pll_numer(int main0periph1,
 	return clk_hz;
 }
 
+/* ramping the main PLL to final value */
+static void cm_pll_ramp_main(struct mainpll_cfg *main_cfg,
+			    struct perpll_cfg *per_cfg,
+			    u32 pll_ramp_main_hz)
+{
+	u32 clk_hz = 0, clk_incr_hz = 0, clk_final_hz = 0;
+
+	/* find out the increment value */
+	if (main_cfg->mpuclk_src == CLKMGR_MAINPLL_MPUCLK_SRC_MAIN) {
+		clk_incr_hz = CLKMGR_PLL_RAMP_MPUCLK_INCREMENT_HZ;
+		clk_final_hz = cm_calc_handoff_mpu_clk_hz(main_cfg, per_cfg);
+	} else if (main_cfg->nocclk_src == CLKMGR_MAINPLL_NOCCLK_SRC_MAIN) {
+		clk_incr_hz = CLKMGR_PLL_RAMP_NOCCLK_INCREMENT_HZ;
+		clk_final_hz = cm_calc_handoff_noc_clk_hz(main_cfg, per_cfg);
+	}
+	/* execute the ramping here */
+	for (clk_hz = pll_ramp_main_hz + clk_incr_hz;
+	     clk_hz < clk_final_hz; clk_hz += clk_incr_hz) {
+		writel((main_cfg->vco1_denom << CLKMGR_MAINPLL_VCO1_DENOM_LSB) |
+			cm_calc_safe_pll_numer(0, main_cfg, per_cfg, clk_hz),
+			&clock_manager_base->main_pll_vco1);
+		udelay(1000);
+		cm_wait_for_lock(LOCKED_MASK);
+	}
+	writel((main_cfg->vco1_denom << CLKMGR_MAINPLL_VCO1_DENOM_LSB) |
+		main_cfg->vco1_numer, &clock_manager_base->main_pll_vco1);
+	udelay(1000);
+	cm_wait_for_lock(LOCKED_MASK);
+}
+
+/* ramping the periph PLL to final value */
+static void cm_pll_ramp_periph(struct mainpll_cfg *main_cfg,
+			      struct perpll_cfg *per_cfg,
+			      u32 pll_ramp_periph_hz)
+{
+	u32 clk_hz = 0, clk_incr_hz = 0, clk_final_hz = 0;
+
+	/* find out the increment value */
+	if (main_cfg->mpuclk_src == CLKMGR_MAINPLL_MPUCLK_SRC_PERI) {
+		clk_incr_hz = CLKMGR_PLL_RAMP_MPUCLK_INCREMENT_HZ;
+		clk_final_hz = cm_calc_handoff_mpu_clk_hz(main_cfg, per_cfg);
+	} else if (main_cfg->nocclk_src == CLKMGR_MAINPLL_NOCCLK_SRC_PERI) {
+		clk_incr_hz = CLKMGR_PLL_RAMP_NOCCLK_INCREMENT_HZ;
+		clk_final_hz = cm_calc_handoff_noc_clk_hz(main_cfg, per_cfg);
+	}
+	/* execute the ramping here */
+	for (clk_hz = pll_ramp_periph_hz + clk_incr_hz;
+	     clk_hz < clk_final_hz; clk_hz += clk_incr_hz) {
+		writel((per_cfg->vco1_denom << CLKMGR_PERPLL_VCO1_DENOM_LSB) |
+			cm_calc_safe_pll_numer(1, main_cfg, per_cfg, clk_hz),
+			&clock_manager_base->per_pll_vco1);
+		udelay(1000);
+		cm_wait_for_lock(LOCKED_MASK);
+	}
+	writel((per_cfg->vco1_denom << CLKMGR_PERPLL_VCO1_DENOM_LSB) |
+		per_cfg->vco1_numer, &clock_manager_base->per_pll_vco1);
+	udelay(1000);
+	cm_wait_for_lock(LOCKED_MASK);
+}
+
 /*
  * Setup clocks while making no assumptions of the
  * previous state of the clocks.
