@@ -380,6 +380,137 @@ int of_get_clk_cfg(const void *blob, struct mainpll_cfg *main_cfg,
 	return 0;
 }
 
+
+/* calculate the intended main VCO frequency based on handoff */
+static u32 cm_calc_handoff_main_vco_clk_hz(struct mainpll_cfg *main_cfg)
+{
+	u32 clk_hz;
+
+	/* Check main VCO clock source: eosc, intosc or f2s? */
+	switch (main_cfg->vco0_psrc) {
+	case CLKMGR_MAINPLL_VCO0_PSRC_EOSC:
+		clk_hz = eosc1_hz;
+		break;
+	case CLKMGR_MAINPLL_VCO0_PSRC_E_INTOSC:
+		clk_hz = cb_intosc_hz;
+		break;
+	case CLKMGR_MAINPLL_VCO0_PSRC_F2S:
+		clk_hz = f2s_free_hz;
+		break;
+	default:
+		return 0;
+	}
+
+	/* calculate the VCO frequency */
+	clk_hz /= (1 + main_cfg->vco1_denom);
+	clk_hz *= (1 + main_cfg->vco1_numer);
+
+	return clk_hz;
+}
+
+/* calculate the intended periph VCO frequency based on handoff */
+static u32 cm_calc_handoff_periph_vco_clk_hz(struct mainpll_cfg *main_cfg,
+				      struct perpll_cfg *per_cfg)
+{
+	u32 clk_hz;
+
+	/* Check periph VCO clock source: eosc, intosc, f2s or mainpll? */
+	switch (per_cfg->vco0_psrc) {
+	case CLKMGR_PERPLL_VCO0_PSRC_EOSC:
+		clk_hz = eosc1_hz;
+		break;
+	case CLKMGR_PERPLL_VCO0_PSRC_E_INTOSC:
+		clk_hz = cb_intosc_hz;
+		break;
+	case CLKMGR_PERPLL_VCO0_PSRC_F2S:
+		clk_hz = f2s_free_hz;
+		break;
+	case CLKMGR_PERPLL_VCO0_PSRC_MAIN:
+		clk_hz = cm_calc_handoff_main_vco_clk_hz(main_cfg);
+		clk_hz /= main_cfg->cntr15clk_cnt;
+		break;
+	default:
+		return 0;
+	}
+
+	/* calculate the VCO frequency */
+	clk_hz /= (1 + per_cfg->vco1_denom);
+	clk_hz *= (1 + per_cfg->vco1_numer);
+
+	return clk_hz;
+}
+
+/* calculate the intended MPU clock frequency based on handoff */
+static u32 cm_calc_handoff_mpu_clk_hz(struct mainpll_cfg *main_cfg,
+			       struct perpll_cfg *per_cfg)
+{
+	u32 clk_hz;
+
+	/* Check MPU clock source: main, periph, osc1, intosc or f2s? */
+	switch (main_cfg->mpuclk_src) {
+	case CLKMGR_MAINPLL_MPUCLK_SRC_MAIN:
+		clk_hz = cm_calc_handoff_main_vco_clk_hz(main_cfg);
+		clk_hz /= ((main_cfg->mpuclk & CLKMGR_MAINPLL_MPUCLK_CNT_MSK)
+			   + 1);
+		break;
+	case CLKMGR_MAINPLL_MPUCLK_SRC_PERI:
+		clk_hz = cm_calc_handoff_periph_vco_clk_hz(main_cfg, per_cfg);
+		clk_hz /= (((main_cfg->mpuclk >>
+			   CLKMGR_MAINPLL_MPUCLK_PERICNT_LSB) &
+			   CLKMGR_MAINPLL_MPUCLK_CNT_MSK) + 1);
+		break;
+	case CLKMGR_MAINPLL_MPUCLK_SRC_OSC1:
+		clk_hz = eosc1_hz;
+		break;
+	case CLKMGR_MAINPLL_MPUCLK_SRC_INTOSC:
+		clk_hz = cb_intosc_hz;
+		break;
+	case CLKMGR_MAINPLL_MPUCLK_SRC_FPGA:
+		clk_hz = f2s_free_hz;
+		break;
+	default:
+		return 0;
+	}
+
+	clk_hz /= (main_cfg->mpuclk_cnt + 1);
+	return clk_hz;
+}
+
+/* calculate the intended NOC clock frequency based on handoff */
+static u32 cm_calc_handoff_noc_clk_hz(struct mainpll_cfg *main_cfg,
+			       struct perpll_cfg *per_cfg)
+{
+	u32 clk_hz;
+
+	/* Check MPU clock source: main, periph, osc1, intosc or f2s? */
+	switch (main_cfg->nocclk_src) {
+	case CLKMGR_MAINPLL_NOCCLK_SRC_MAIN:
+		clk_hz = cm_calc_handoff_main_vco_clk_hz(main_cfg);
+		clk_hz /= ((main_cfg->nocclk & CLKMGR_MAINPLL_NOCCLK_CNT_MSK)
+			   + 1);
+		break;
+	case CLKMGR_MAINPLL_NOCCLK_SRC_PERI:
+		clk_hz = cm_calc_handoff_periph_vco_clk_hz(main_cfg, per_cfg);
+		clk_hz /= (((main_cfg->nocclk >>
+			   CLKMGR_MAINPLL_NOCCLK_PERICNT_LSB) &
+			   CLKMGR_MAINPLL_NOCCLK_CNT_MSK) + 1);
+		break;
+	case CLKMGR_MAINPLL_NOCCLK_SRC_OSC1:
+		clk_hz = eosc1_hz;
+		break;
+	case CLKMGR_MAINPLL_NOCCLK_SRC_INTOSC:
+		clk_hz = cb_intosc_hz;
+		break;
+	case CLKMGR_MAINPLL_NOCCLK_SRC_FPGA:
+		clk_hz = f2s_free_hz;
+		break;
+	default:
+		return 0;
+	}
+
+	clk_hz /= (main_cfg->nocclk_cnt + 1);
+	return clk_hz;
+}
 /*
  * Setup clocks while making no assumptions of the
  * previous state of the clocks.
