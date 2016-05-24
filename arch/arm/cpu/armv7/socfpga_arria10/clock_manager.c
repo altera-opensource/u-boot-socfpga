@@ -577,6 +577,103 @@ static int cm_is_pll_ramp_required(int main0periph1,
 }
 
 /*
+ * Calculate the new PLL numerator which is based on existing DTS hand off and
+ * intended safe frequency (safe_hz). Note that PLL ramp is only modifying the
+ * numerator while maintaining denominator as denominator will influence the
+ * jitter condition. Please refer A10 HPS TRM for the jitter guide. Note final
+ * value for numerator is minus with 1 to cater our register value
+ * representation.
+ */
+static u32 cm_calc_safe_pll_numer(int main0periph1,
+				  struct mainpll_cfg *main_cfg,
+				  struct perpll_cfg *per_cfg, u32 safe_hz)
+{
+	u32 clk_hz = 0;
+
+	/* Check for main PLL */
+	if (main0periph1 == 0) {
+		/* Check main VCO clock source: eosc, intosc or f2s? */
+		switch (main_cfg->vco0_psrc) {
+		case CLKMGR_MAINPLL_VCO0_PSRC_EOSC:
+			clk_hz = eosc1_hz;
+			break;
+		case CLKMGR_MAINPLL_VCO0_PSRC_E_INTOSC:
+			clk_hz = cb_intosc_hz;
+			break;
+		case CLKMGR_MAINPLL_VCO0_PSRC_F2S:
+			clk_hz = f2s_free_hz;
+			break;
+		default:
+			return 0;
+		}
+		/* Applicable if MPU clock is from main PLL */
+		if (main_cfg->mpuclk_src == CLKMGR_MAINPLL_MPUCLK_SRC_MAIN) {
+			/* calculate the safe numer value */
+			clk_hz = (safe_hz / clk_hz) *
+				(main_cfg->mpuclk_cnt + 1) *
+				((main_cfg->mpuclk &
+				  CLKMGR_MAINPLL_MPUCLK_CNT_MSK) + 1) *
+				(1 + main_cfg->vco1_denom) - 1;
+		}
+		/* Reach here if MPU clk not from main PLL but NOC clk is */
+		else if (main_cfg->nocclk_src ==
+			 CLKMGR_MAINPLL_NOCCLK_SRC_MAIN) {
+			/* calculate the safe numer value */
+			clk_hz = (safe_hz / clk_hz) *
+				(main_cfg->nocclk_cnt + 1) *
+				((main_cfg->nocclk &
+				  CLKMGR_MAINPLL_NOCCLK_CNT_MSK) + 1) *
+				(1 + main_cfg->vco1_denom) - 1;
+		} else
+			clk_hz = 0;
+
+	} else if (main0periph1 == 1) {
+		/* Check periph VCO clock source: eosc, intosc, f2s, mainpll */
+		switch (per_cfg->vco0_psrc) {
+		case CLKMGR_PERPLL_VCO0_PSRC_EOSC:
+			clk_hz = eosc1_hz;
+			break;
+		case CLKMGR_PERPLL_VCO0_PSRC_E_INTOSC:
+			clk_hz = cb_intosc_hz;
+			break;
+		case CLKMGR_PERPLL_VCO0_PSRC_F2S:
+			clk_hz = f2s_free_hz;
+			break;
+		case CLKMGR_PERPLL_VCO0_PSRC_MAIN:
+			clk_hz = cm_calc_handoff_main_vco_clk_hz(
+				 main_cfg);
+			clk_hz /= main_cfg->cntr15clk_cnt;
+			break;
+		default:
+			return 0;
+		}
+		/* Applicable if MPU clock is from periph PLL */
+		if (main_cfg->mpuclk_src == CLKMGR_MAINPLL_MPUCLK_SRC_PERI) {
+			/* calculate the safe numer value */
+			clk_hz = (safe_hz / clk_hz) *
+				(main_cfg->mpuclk_cnt + 1) *
+				(((main_cfg->mpuclk >>
+				  CLKMGR_MAINPLL_MPUCLK_PERICNT_LSB) &
+				  CLKMGR_MAINPLL_MPUCLK_CNT_MSK) + 1) *
+				(1 + per_cfg->vco1_denom) - 1;
+		}
+		/* Reach here if MPU clk not from periph PLL but NOC clk is */
+		else if (main_cfg->nocclk_src ==
+			 CLKMGR_MAINPLL_NOCCLK_SRC_PERI) {
+			/* calculate the safe numer value */
+			clk_hz = (safe_hz / clk_hz) *
+				(main_cfg->nocclk_cnt + 1) *
+				(((main_cfg->nocclk >>
+				  CLKMGR_MAINPLL_NOCCLK_PERICNT_LSB) &
+				  CLKMGR_MAINPLL_NOCCLK_CNT_MSK) + 1) *
+				(1 + per_cfg->vco1_denom) - 1;
+		} else
+			clk_hz = 0;
+	}
+	return clk_hz;
+}
+
+/*
  * Setup clocks while making no assumptions of the
  * previous state of the clocks.
  *
