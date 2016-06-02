@@ -584,6 +584,7 @@ CONFIG_NAND_DENALI is also defined.
 #define CONFIG_ENV_IS_NOWHERE
 #define CONFIG_NAND_RBF_ADDR		0x720000
 #define CONFIG_CMD_NAND
+#define CONFIG_CMD_NAND_TRIMFFS		1
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 /* the following, when defined, requries 128K from malloc! */
 #undef CONFIG_SYS_NAND_USE_FLASH_BBT
