@@ -84,10 +84,10 @@ ASSERT((__bss_start - start) < CONFIG_U_BOOT_BINARY_MAX_SIZE, \
 
 /*
  * This compile time check to ensure all the memory region used during
- * run time doesn't exceed the total memory space available in OCRAM
- * 0x4000 is for MMU page table and 0xc0 is for gd.
+ * run time doesn't exceed the total memory space available in OCRAM.
  */
-ASSERT(((__bss_end - start) + 0x4000 + CONFIG_OCRAM_STACK_SIZE + \
-CONFIG_OCRAM_MALLOC_SIZE + 0xC0 + CONFIG_STACKSIZE_IRQ + \
-CONFIG_STACKSIZE_FIQ) < CONFIG_SYS_INIT_RAM_SIZE, \
+ASSERT(((__bss_end - start) + SIZEOF_MMUPAGETABLE + \
+CONFIG_OCRAM_STACK_SIZE + CONFIG_PRE_CON_BUF_SZ + CONFIG_OCRAM_MALLOC_SIZE + \
+SIZEOF_GD + CONFIG_STACKSIZE_IRQ + CONFIG_STACKSIZE_FIQ) < \
+CONFIG_SYS_INIT_RAM_SIZE, \
 "*** [size check error] U-Boot run time consume more than OCRAM size");

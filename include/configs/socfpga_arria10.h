@@ -15,6 +15,10 @@
 
 #define CONFIG_SOCFPGA_ARRIA10
 #define CONFIG_SOCFPGA_COMMON 1
+
+/* Global data */
+#define SIZEOF_GD	(0xc0)
+
 /*
  * Device tree info
  */
@@ -69,9 +73,11 @@
 #define CONFIG_SYS_INIT_RAM_ADDR	CONFIG_SYS_TEXT_BASE
 /* Reserving 0x400 space at back of scratch RAM for debug info */
 #define CONFIG_SYS_INIT_RAM_SIZE	(256 * 1024)
+/* Reserving 16kB for MMU page table */
+#define SIZEOF_MMUPAGETABLE	(0x4000)
 /* Stack pointer at on-chip RAM, leave 16kB behind for page table */
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_INIT_RAM_ADDR + \
-					 CONFIG_SYS_INIT_RAM_SIZE  - 0x4000)
+					 CONFIG_SYS_INIT_RAM_SIZE  - SIZEOF_MMUPAGETABLE)
 /* Default load address */
 #define CONFIG_SYS_LOAD_ADDR		0x8000
 
@@ -328,6 +334,22 @@
 
 /* Boot Argument Buffer Size */
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
+
+/* Enable pre-console buffer */
+#define CONFIG_PRE_CONSOLE_BUFFER
+
+/* Size of pre-console buffer (in bytes) */
+#define CONFIG_PRE_CON_BUF_SZ 256
+
+/* Base address of pre-console buffer, print_pre_console_buffer()
+   would need this macro for compilation */
+#define CONFIG_PRE_CON_BUF_ADDR (CONFIG_SYS_INIT_SP_ADDR - \
+					CONFIG_OCRAM_STACK_SIZE - \
+					CONFIG_OCRAM_MALLOC_SIZE - \
+					SIZEOF_GD - \
+					CONFIG_STACKSIZE_IRQ - \
+					CONFIG_STACKSIZE_FIQ - \
+					CONFIG_PRE_CON_BUF_SZ)
 
 /*
  * Hardware drivers
