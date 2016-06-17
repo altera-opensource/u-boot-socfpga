@@ -255,8 +255,10 @@
 	"nandrbfcoreimage=0x820000\0" \
 	"nandroot=/dev/mtdblock1\0" \
 	"nandrootfstype=jffs2\0" \
-	"nandrbfcore_rbf_prog=fpga loadfs 0 nand 0:0 ${nandrbfcoreimage} core\0 "\
-	"ramboot=setenv bootargs " CONFIG_BOOTARGS " printk.time=1 debug mem=${fdt_high} " \
+	"nandrbfcore_rbf_prog=" \
+		"fpga loadfs 0 nand 0:0 ${nandrbfcoreimage} core\0" \
+	"ramboot=setenv bootargs " CONFIG_BOOTARGS \
+		" printk.time=1 debug mem=${fdt_high} " \
 		"lpj=3977216;fpgabr 1; bootz ${loadaddr} - ${fdtaddr}\0" \
 	"mmcload=mmc rescan;" \
 		"${mmcloadcmd} mmc 0:${mmcloadpart} ${loadaddr} ${bootimage};" \
@@ -265,19 +267,20 @@
 		" root=${mmcroot} rw rootwait;" \
 		"fpgabr 1;" \
 		"bootz ${loadaddr} - ${fdtaddr}\0" \
-	"netboot=dhcp ${bootimage} ; " \
+	"netboot=dhcp ${bootimage};" \
 		"tftp ${fdtaddr} ${fdtimage} ; run ramboot\0" \
 	"qspiload=sf probe ${qspiloadcs};" \
 		"sf read ${loadaddr} ${qspibootimageaddr} ${bootimagesize};" \
 		"sf read ${fdtaddr} ${qspifdtaddr} ${fdtimagesize};\0" \
 	"qspiboot=setenv bootargs " CONFIG_BOOTARGS \
-		" root=${qspiroot} rw rootfstype=${qspirootfstype};"\
+		" root=${qspiroot} rw rootfstype=${qspirootfstype};" \
 		"fpgabr 1;" \
 		"bootz ${loadaddr} - ${fdtaddr}\0" \
-	"nandload=nand read ${loadaddr} ${nandbootimageaddr} ${bootimagesize};"\
+	"nandload=" \
+		"nand read ${loadaddr} ${nandbootimageaddr} ${bootimagesize};" \
 		"nand read ${fdtaddr} ${nandfdtaddr} ${fdtimagesize}\0" \
 	"nandboot=setenv bootargs " CONFIG_BOOTARGS \
-		" root=${nandroot} rw rootfstype=${nandrootfstype};"\
+		" root=${nandroot} rw rootfstype=${nandrootfstype};" \
 		"fpgabr 1;" \
 		"bootz ${loadaddr} - ${fdtaddr}\0" \
 	"bootcmd=" CONFIG_BOOTCOMMAND "\0" \
@@ -295,18 +298,19 @@
 	"rbftosdramaddr=0x40\0" \
 	"rbfcoreimage=ghrd_10as066n2.core.rbf\0" \
 	"qspirbfcoreimage=0x820000\0" \
-	"qspirbfcore_rbf_prog=fpga loadfs 0 qspi 0:0 ${qspirbfcoreimage} core\0 "\
-	"core_rbf_prog=fpga loadfs 0 mmc 0:1 ${rbfcoreimage} core\0 "\
+	"qspirbfcore_rbf_prog=" \
+		"fpga loadfs 0 qspi 0:0 ${qspirbfcoreimage} core\0" \
+	"core_rbf_prog=fpga loadfs 0 mmc 0:1 ${rbfcoreimage} core\0" \
 	CONFIG_KSZ9021_CLK_SKEW_ENV "=" \
 		__stringify(CONFIG_KSZ9021_CLK_SKEW_VAL) "\0" \
 	CONFIG_KSZ9021_DATA_SKEW_ENV "=" \
 		__stringify(CONFIG_KSZ9021_DATA_SKEW_VAL) "\0" \
 	"scriptfile=u-boot.scr\0" \
 	"callscript=if fatload mmc 0:1 $fpgadata $scriptfile;" \
-			"then source $fpgadata; " \
-		"else " \
-			"echo Optional boot script not found. " \
-			"Continuing to boot normally; " \
+			"then source $fpgadata;" \
+		"else" \
+			"echo Optional boot script not found." \
+			"Continuing to boot normally;" \
 		"fi;\0"
 
 /*
