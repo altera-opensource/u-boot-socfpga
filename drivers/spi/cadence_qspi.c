@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012
+ * Copyright (C) 2012-2016
  * Altera Corporation <www.altera.com>
  *
  * See file CREDITS for list of people who contributed to this
@@ -35,6 +35,10 @@
 static int qspi_is_init;
 static unsigned int qspi_calibrated_hz;
 static unsigned int qspi_calibrated_cs;
+static unsigned int qspi_lowermem_cs;
+#ifdef CONFIG_SF_DUAL_FLASH
+static unsigned int qspi_uppermem_cs;
+#endif
 
 struct cadence_qspi_slave {
 	struct spi_slave slave;
@@ -68,6 +72,9 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 		unsigned int max_hz, unsigned int mode)
 {
 	struct cadence_qspi_slave *cadence_qspi;
+#ifdef CONFIG_SF_DUAL_FLASH
+	char *qspi_upage_cs = NULL;
+#endif
 
 	debug("%s: bus %d cs %d max_hz %dMHz mode %d\n", __func__,
 		bus, cs, max_hz/1000000, mode);
@@ -83,7 +90,24 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	}
 
 	cadence_qspi->slave.bus = bus;
-	cadence_qspi->slave.cs = cs;
+	qspi_lowermem_cs = cadence_qspi->slave.cs = cs;
+	cadence_qspi->slave.flags &= ~SPI_XFER_U_PAGE;
+	cadence_qspi->slave.option = SF_SINGLE_FLASH;
+#ifdef CONFIG_SF_DUAL_FLASH
+	cadence_qspi->slave.option = SF_DUAL_STACKED_FLASH;
+	qspi_upage_cs = getenv("qspi_upage_cs");
+
+	if (!qspi_upage_cs) {
+		printf("** No chip select for upper ");
+		printf("flash memory specified **\n");
+		return NULL;
+	}
+
+	qspi_uppermem_cs = simple_strtoul(qspi_upage_cs, NULL, 16);
+
+	if (qspi_uppermem_cs == cadence_qspi->slave.cs)
+		cadence_qspi->slave.flags |= SPI_XFER_U_PAGE;
+#endif
 #if (CONFIG_SPI_FLASH_QUAD == 1)
 	cadence_qspi->slave.op_mode_rx = QUAD_OUTPUT_FAST;
 #endif
@@ -206,8 +230,16 @@ int spi_claim_bus(struct spi_slave *slave)
 	/* Disable QSPI */
 	cadence_qspi_apb_controller_disable(base);
 
+#ifdef CONFIG_SF_DUAL_FLASH
+	if (SPI_XFER_U_PAGE & slave->flags)
+		slave->cs = qspi_uppermem_cs;
+	else
+		slave->cs = qspi_lowermem_cs;
+#endif
+
 	/* Set Chip select */
-	cadence_qspi_apb_chipselect(base, slave->cs, CONFIG_CQSPI_DECODER);
+	cadence_qspi_apb_chipselect(base, slave->cs,
+		CONFIG_CQSPI_DECODER);
 
 	/* Set SPI mode */
 	cadence_qspi_apb_set_clk_mode(base, clk_pol, clk_pha);
@@ -251,7 +283,7 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *data_out,
 		memcpy(cmd_buf, data_out, cadence_qspi->cmd_len);
 	}
 
-	if (flags == (SPI_XFER_BEGIN | SPI_XFER_END)) {
+	if ((SPI_XFER_BEGIN & flags) && (SPI_XFER_END & flags)) {
 		/* if start and end bit are set, the data bytes is 0. */
 		data_bytes = 0;
 	} else {
@@ -259,7 +291,6 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *data_out,
 	}
 
 	if ((flags & SPI_XFER_END) || (flags == 0)) {
-
 		if (cadence_qspi->cmd_len == 0) {
 			printf("QSPI: Error, command is empty.\n");
 			return -1;

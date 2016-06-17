@@ -243,6 +243,7 @@
 	"mmcloadcmd=fatload\0" \
 	"mmcloadpart=1\0" \
 	"mmcroot=/dev/mmcblk0p2\0" \
+	"qspi_upage_cs=2\0" \
 	"qspiloadcs=0\0" \
 	"qspibootimageaddr=0x120000\0" \
 	"qspifdtaddr=0x100000\0" \
@@ -528,6 +529,8 @@
 #define CONFIG_CQSPI_BASE		(SOCFPGA_QSPIREGS_ADDRESS)
 #define CONFIG_CQSPI_AHB_BASE		(SOCFPGA_QSPIDATA_ADDRESS)
 #ifdef CONFIG_CADENCE_QSPI
+/* Enable it if you want to use dual-stacked mode */
+#undef CONFIG_SF_DUAL_FLASH
 #define CONFIG_QSPI_RBF_ADDR 		0x720000
 #define CONFIG_SPI_FLASH		/* SPI flash subsystem */
 #define CONFIG_SPI_FLASH_STMICRO	/* Micron/Numonyx flash */
