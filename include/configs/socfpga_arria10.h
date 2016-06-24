@@ -297,6 +297,7 @@
 	"fpgadatasize=0x700000\0" \
 	"rbftosdramaddr=0x40\0" \
 	"rbfcoreimage=ghrd_10as066n2.core.rbf\0" \
+	"cff_devsel_partition=0:1\0" \
 	"qspirbfcoreimage=0x820000\0" \
 	"qspirbfcore_rbf_prog=" \
 		"fpga loadfs 0 qspi 0:0 ${qspirbfcoreimage} core\0" \

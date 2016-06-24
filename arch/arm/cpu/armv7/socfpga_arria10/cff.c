@@ -150,7 +150,14 @@ int cff_from_sdmmc_env(void)
 
 		fpga_fsinfo.interface = "sdmmc";
 
-		fpga_fsinfo.dev_part = "0:1";
+		fpga_fsinfo.dev_part = getenv("cff_devsel_partition");
+
+		if (NULL == fpga_fsinfo.dev_part) {
+			fpga_fsinfo.dev_part = "0:1";
+
+			printf("No SD/MMC partition found in environment. ");
+			printf("Assuming 0:1.\n");
+		}
 
 		if (is_early_release_fpga_config(gd->fdt_blob))
 			fpga_fsinfo.rbftype = "periph";
