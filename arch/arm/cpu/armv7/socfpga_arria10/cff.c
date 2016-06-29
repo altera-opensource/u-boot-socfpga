@@ -63,7 +63,6 @@ static int cff_flash_probe(struct cff_flash_info *cff_flashinfo)
 }
 
 static int flash_read(struct cff_flash_info *cff_flashinfo,
-	u32 flash_offset,
 	size_t size_read,
 	u32 *buffer_ptr)
 {
@@ -74,13 +73,13 @@ static int flash_read(struct cff_flash_info *cff_flashinfo,
 
 #ifdef CONFIG_CADENCE_QSPI
 	spi_flash_read(cff_flashinfo->raw_flashinfo.flash,
-		flash_offset,
+		cff_flashinfo->flash_offset,
 		size_read,
 		buffer_ptr);
 #endif
 #ifdef CONFIG_MMC
 	bytesread = file_fat_read_at(cff_flashinfo->sdmmc_flashinfo.filename,
-			flash_offset, buffer_ptr, size_read);
+			cff_flashinfo->flash_offset, buffer_ptr, size_read);
 
 	if (bytesread != size_read) {
 		printf("Failed to read %s from FAT %d ",
@@ -97,7 +96,7 @@ static int flash_read(struct cff_flash_info *cff_flashinfo,
 	bytesread = size_read;
 
 	ret = nand_read_skip_bad(cff_flashinfo->raw_flashinfo.flash,
-		flash_offset, &bytesread, NULL, size_read,
+		cff_flashinfo->flash_offset, &bytesread, NULL, size_read,
 		(u_char *)buffer_ptr);
 
 	if (ret) {
@@ -180,6 +179,7 @@ int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 
 	cff_flashinfo->sdmmc_flashinfo.filename = fpga_fsinfo->filename;
 	cff_flashinfo->sdmmc_flashinfo.dev_part = fpga_fsinfo->dev_part;
+	cff_flashinfo->flash_offset = 0;
 
 	ret = cff_flash_probe(cff_flashinfo);
 
@@ -205,8 +205,7 @@ int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 		cff_flashinfo->remaining = 0;
 	}
 
-	bytesread = flash_read(cff_flashinfo, 0, buffer_size,
-			buffer_ptr);
+	bytesread = flash_read(cff_flashinfo, buffer_size, buffer_ptr);
 
 	if (0 >= bytesread) {
 		printf(" Failed to read rbf header from FAT.\n");
@@ -243,8 +242,7 @@ int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 		cff_flashinfo->remaining = 0;
 	}
 
-	bytesread = flash_read(cff_flashinfo, flash_addr, buffer_size,
-			buffer_ptr);
+	bytesread = flash_read(cff_flashinfo, buffer_size, buffer_ptr);
 
 	if (0 >= bytesread) {
 		printf(" Failed to read rbf data from FAT.\n");
@@ -407,7 +405,7 @@ static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 	size_t buffer_size = *buffer_sizebytes;
 	u32 *buffer_ptr = (u32 *)*buffer;
 
-	cff_flashinfo->raw_flashinfo.rbf_offset =
+	cff_flashinfo->flash_offset =
 		simple_strtoul(fpga_fsinfo->filename, NULL, 16);
 
 	ret = cff_flash_probe(cff_flashinfo);
@@ -419,7 +417,6 @@ static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 
 	 /* Load mkimage header into buffer */
 	bytesread = flash_read(cff_flashinfo,
-			cff_flashinfo->raw_flashinfo.rbf_offset,
 			sizeof(struct image_header), buffer_ptr);
 
 	if (0 >= bytesread) {
@@ -465,9 +462,7 @@ static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 	}
 
 	/* Loading mkimage header and rbf data into buffer */
-	bytesread = flash_read(cff_flashinfo,
-			cff_flashinfo->raw_flashinfo.rbf_offset, buffer_size,
-			buffer_ptr);
+	bytesread = flash_read(cff_flashinfo, buffer_size, buffer_ptr);
 
 	if (0 >= bytesread) {
 		printf(" Failed to read mkimage header and rbf data ");
@@ -481,8 +476,7 @@ static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 		(u32 *)((u_char *)buffer_ptr + sizeof(struct image_header));
 
 	/* Update next reading rbf data flash offset */
-	cff_flashinfo->flash_offset = cff_flashinfo->raw_flashinfo.rbf_offset +
-					buffer_size;
+	cff_flashinfo->flash_offset += buffer_size;
 
 	/* Update the starting addr of rbf data to init FPGA & programming
 	   into FPGA */
@@ -492,15 +486,15 @@ static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 	*buffer_sizebytes = buffersize_after_header;
 
 #ifdef CONFIG_CHECK_FPGA_DATA_CRC
-	cff_flashinfo->raw_flashinfo.datacrc =
+	cff_flashinfo->datacrc =
 		crc32(cff_flashinfo->raw_flashinfo.datacrc,
 		(u_char *)bufferptr_after_header,
 		buffersize_after_header);
 #endif
 if (0 == cff_flashinfo->remaining) {
 #ifdef CONFIG_CHECK_FPGA_DATA_CRC
-	if (cff_flashinfo->raw_flashinfo.datacrc !=
-		image_get_dcrc(&(cff_flashinfo->raw_flashinfo.header))) {
+	if (cff_flashinfo->datacrc !=
+		image_get_dcrc(&((cff_flashinfo->raw_flashinfo.header))) {
 		printf("FPGA: Bad Data Checksum.\n");
 		return -8;
 	}
@@ -512,22 +506,11 @@ if (0 == cff_flashinfo->remaining) {
 static int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 	u32 *buffer_sizebytes)
 {
-	int ret = 0;
 	int bytesread = 0;
 	/* To avoid from keeping re-read the contents */
 	size_t buffer_size = *buffer_sizebytes;
 	u32 *buffer_ptr = (u32 *)*buffer;
 	u32 flash_addr = cff_flashinfo->flash_offset;
-
-	/* Initialize the flash controller */
-	if (NULL == cff_flashinfo->raw_flashinfo.flash) {
-		ret = cff_flash_probe(cff_flashinfo);
-
-		if (0 >= ret) {
-			puts("Flash probe failed.\n");
-			return ret;
-		}
-	}
 
 	/* Buffer allocated in OCRAM */
 	/* Read the data by small chunk by chunk. */
@@ -540,8 +523,7 @@ static int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 		cff_flashinfo->remaining = 0;
 	}
 
-	bytesread = flash_read(cff_flashinfo, flash_addr, buffer_size,
-			buffer_ptr);
+	bytesread = flash_read(cff_flashinfo, buffer_size, buffer_ptr);
 
 	if (0 >= bytesread) {
 		printf(" Failed to read rbf data from flash.\n");
@@ -549,7 +531,7 @@ static int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 	}
 
 #ifdef CONFIG_CHECK_FPGA_DATA_CRC
-	cff_flashinfo->raw_flashinfo.datacrc =
+	cff_flashinfo->datacrc =
 		crc32(cff_flashinfo->raw_flashinfo.datacrc,
 			(unsigned char *)buffer_ptr, buffer_size);
 #endif

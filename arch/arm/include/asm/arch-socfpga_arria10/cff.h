@@ -12,7 +12,6 @@
 #ifndef __ASSEMBLY_
 #if defined(CONFIG_CADENCE_QSPI) || defined(CONFIG_NAND_DENALI)
 struct raw_flash_info {
-	u32 rbf_offset;
 	struct image_header header;
 #if defined(CONFIG_CADENCE_QSPI)
 	struct spi_flash *flash;
