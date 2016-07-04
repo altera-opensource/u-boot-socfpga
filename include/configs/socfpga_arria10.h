@@ -15,7 +15,15 @@
 
 #define CONFIG_SOCFPGA_ARRIA10
 #define CONFIG_SOCFPGA_COMMON 1
+/* Undef to increase boot performance, if you want checksum
+ checking on FPGA image, enable it */
+#undef CONFIG_CHECK_FPGA_DATA_CRC
 
+#if	defined(CONFIG_CHECK_FPGA_DATA_CRC)
+#define RBFCOREIMAGE "ghrd_10as066n2.core.rbf.mkimage\0"
+#else
+#define RBFCOREIMAGE "ghrd_10as066n2.core.rbf\0"
+#endif
 /* Global data */
 #define SIZEOF_GD	(0xc0)
 
@@ -296,7 +304,7 @@
 	"fpgadata=0x2000000\0" \
 	"fpgadatasize=0x700000\0" \
 	"rbftosdramaddr=0x40\0" \
-	"rbfcoreimage=ghrd_10as066n2.core.rbf\0" \
+	"rbfcoreimage=" RBFCOREIMAGE \
 	"cff_devsel_partition=0:1\0" \
 	"qspirbfcoreimage=0x820000\0" \
 	"qspirbfcore_rbf_prog=" \
