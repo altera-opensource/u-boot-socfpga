@@ -67,7 +67,7 @@
 		mainpll {
 			vco0-psrc = <0>;	/* Field: vco0.psrc */
 			vco1-denom = <1>;	/* Field: vco1.denom */
-			vco1-numer = <191>;	/* Field: vco1.numer */
+			vco1-numer = <159>;	/* Field: vco1.numer */
 			mpuclk-cnt = <0>;	/* Field: mpuclk.cnt */
 			mpuclk-src = <0>;	/* Field: mpuclk.src */
 			nocclk-cnt = <0>;	/* Field: nocclk.cnt */
@@ -118,7 +118,7 @@
 
 		/* Address Block: soc_clock_manager_OCP_SLV.i_clk_mgr_alteragrp */
 		alteragrp {
-			nocclk = <0x0384000b>;	/* Register: nocclk */
+			nocclk = <0x03840009>;	/* Register: nocclk */
 			mpuclk = <0x03840001>;	/* Register: mpuclk */
 		};
 	};
