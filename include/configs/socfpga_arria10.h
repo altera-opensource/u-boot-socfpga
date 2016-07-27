@@ -666,6 +666,7 @@ CONFIG_NAND_DENALI is also defined.
 #else
 #define CONFIG_OCRAM_MALLOC_SIZE	(16 * 1024)
 #endif
+#define CONFIG_SYS_MALLOC_F_LEN		CONFIG_OCRAM_MALLOC_SIZE
 
 #define CONFIG_OCRAM_STACK_SIZE		(20 * 1024)
 
@@ -674,8 +675,7 @@ CONFIG_NAND_DENALI is also defined.
 #define CONFIG_ENV_SIZE			4096
 #endif
 /* Size of DRAM reserved for malloc() use */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_OCRAM_MALLOC_SIZE - \
-					CONFIG_ENV_SIZE)
+#define CONFIG_SYS_MALLOC_LEN		(1 * 1024 * 1024)
 
 /*
  * DMA support

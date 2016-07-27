@@ -914,9 +914,6 @@ int dram_init(void)
 #endif
 
 	WATCHDOG_RESET();
-	u32 malloc_start = CONFIG_SYS_INIT_SP_ADDR
-		- CONFIG_OCRAM_STACK_SIZE - CONFIG_OCRAM_MALLOC_SIZE;
-	mem_malloc_init(malloc_start, CONFIG_OCRAM_MALLOC_SIZE);
 
 	if (is_external_fpga_config(gd->fdt_blob)) {
 		ddr_calibration_sequence();
