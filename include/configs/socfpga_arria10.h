@@ -526,7 +526,7 @@
 #define CONFIG_DWMMC
 #define CONFIG_SOCFPGA_DWMMC
 #define CONFIG_SOCFPGA_DWMMC_DRVSEL     3
-#define CONFIG_SOCFPGA_DWMMC_SMPSEL     0
+#define CONFIG_SOCFPGA_DWMMC_SMPSEL     2
 #define CONFIG_SOCFPGA_DWMMC_FIFO_DEPTH	1024
 /* using smaller max blk cnt to avoid flooding the limited stack we have */
 #define CONFIG_SOCFPGA_DWMMC_BUS_HZ	CONFIG_HPS_CLK_SDMMC_HZ
