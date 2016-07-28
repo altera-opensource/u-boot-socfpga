@@ -796,6 +796,7 @@ void spl_board_init(void)
 	 * Then it will program the FPGA with the loaded RBF file
 	 */
 	puts("FPGA : Programming FPGA\n");
+	reset_assert_all_bridges();
 #if defined(CONFIG_SPL_SPI_SUPPORT)
 	/* rbf file located within Quad SPI */
 	spl_program_fpga_qspi();
