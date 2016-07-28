@@ -544,7 +544,7 @@ static int cm_is_pll_ramp_required(int main0periph1,
 		if (main_cfg->nocclk_src == CLKMGR_MAINPLL_NOCCLK_SRC_MAIN &&
 		    (cm_calc_handoff_noc_clk_hz(main_cfg, per_cfg) >
 		     CLKMGR_PLL_RAMP_NOCCLK_THRESHOLD_HZ))
-			return 1;
+			return 2;
 
 	} else if (main0periph1 == 1) {
 		/*
@@ -571,7 +571,7 @@ static int cm_is_pll_ramp_required(int main0periph1,
 		if (main_cfg->nocclk_src == CLKMGR_MAINPLL_NOCCLK_SRC_PERI &&
 		    (cm_calc_handoff_noc_clk_hz(main_cfg, per_cfg) >
 		     CLKMGR_PLL_RAMP_NOCCLK_THRESHOLD_HZ))
-			return 1;
+			return 2;
 	}
 	return 0;
 }
@@ -774,7 +774,7 @@ static void cm_pll_ramp_periph(struct mainpll_cfg *main_cfg,
 
 static int cm_full_cfg(struct mainpll_cfg *main_cfg, struct perpll_cfg *per_cfg)
 {
-	u32 pll_ramp_main_hz = 0, pll_ramp_periph_hz = 0;
+	u32 pll_ramp_main_hz = 0, pll_ramp_periph_hz = 0, ramp_required;
 
 #ifndef TEST_AT_ASIMOV
 	/* gate off all mainpll clock excpet HW managed clock */
@@ -825,11 +825,12 @@ static int cm_full_cfg(struct mainpll_cfg *main_cfg, struct perpll_cfg *per_cfg)
 		&clock_manager_base->intr);
 
 	/* Program VCO “Numerator” and “Denominator” for main PLL */
-	if (cm_is_pll_ramp_required(0, main_cfg, per_cfg)) {
+	ramp_required = cm_is_pll_ramp_required(0, main_cfg, per_cfg);
+	if (ramp_required) {
 		/* set main PLL to safe starting threshold frequency */
-		if (main_cfg->mpuclk_src == CLKMGR_MAINPLL_MPUCLK_SRC_MAIN)
+		if (ramp_required == 1)
 			pll_ramp_main_hz = CLKMGR_PLL_RAMP_MPUCLK_THRESHOLD_HZ;
-		else if (main_cfg->nocclk_src == CLKMGR_MAINPLL_NOCCLK_SRC_MAIN)
+		else if (ramp_required == 2)
 			pll_ramp_main_hz = CLKMGR_PLL_RAMP_NOCCLK_THRESHOLD_HZ;
 
 		writel((main_cfg->vco1_denom << CLKMGR_MAINPLL_VCO1_DENOM_LSB) |
@@ -841,12 +842,13 @@ static int cm_full_cfg(struct mainpll_cfg *main_cfg, struct perpll_cfg *per_cfg)
 			&clock_manager_base->main_pll_vco1);
 
 	/* Program VCO “Numerator” and “Denominator” for periph PLL */
-	if (cm_is_pll_ramp_required(1, main_cfg, per_cfg)) {
+	ramp_required = cm_is_pll_ramp_required(1, main_cfg, per_cfg);
+	if (ramp_required) {
 		/* set periph PLL to safe starting threshold frequency */
-		if (main_cfg->mpuclk_src == CLKMGR_MAINPLL_MPUCLK_SRC_PERI)
+		if (ramp_required == 1)
 			pll_ramp_periph_hz =
 				CLKMGR_PLL_RAMP_MPUCLK_THRESHOLD_HZ;
-		else if (main_cfg->nocclk_src == CLKMGR_MAINPLL_NOCCLK_SRC_PERI)
+		else if (ramp_required == 2)
 			pll_ramp_periph_hz =
 				CLKMGR_PLL_RAMP_NOCCLK_THRESHOLD_HZ;
 
