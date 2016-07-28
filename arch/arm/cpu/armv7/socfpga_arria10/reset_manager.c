@@ -14,7 +14,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-unsigned long rst_mgr_status;
+u32 rst_mgr_status __attribute__ ((section(".data")));
 
 static const struct socfpga_reset_manager *reset_manager_base =
 		(void *)SOCFPGA_RSTMGR_ADDRESS;
