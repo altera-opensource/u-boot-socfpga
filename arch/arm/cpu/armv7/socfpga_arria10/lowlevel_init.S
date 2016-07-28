@@ -17,7 +17,8 @@ save_boot_params:
 
 #ifndef TEST_AT_ASIMOV
 	/* get the reset manager status register passed by BootROM */
-	add	r5, r0,#0x124
+	ldr	r5, =0x438
+	add	r5, r0, r5
 
 	/* for debugging scenario as r0 would be random value. Ensure
 	it always point back to OCRAM (0xffe0_0000 to 0xffe3_ffff) */
