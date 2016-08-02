@@ -2845,6 +2845,12 @@ Void_t* mEMALIGn(alignment, bytes) size_t alignment; size_t bytes;
 
   if ((long)bytes < 0) return NULL;
 
+#ifdef CONFIG_SYS_MALLOC_F_LEN
+	/* Implement simple malloc for memalign too */
+	if (!(gd->flags & GD_FLG_RELOC))
+		return mALLOc(bytes);
+#endif
+
   /* If need less alignment than we give anyway, just relay to malloc */
 
   if (alignment <= MALLOC_ALIGNMENT) return mALLOc(bytes);
