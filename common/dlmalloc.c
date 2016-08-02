@@ -2191,6 +2191,17 @@ Void_t* mALLOc(bytes) size_t bytes;
 		if (new_ptr > gd->malloc_limit)
 			panic("Out of pre-reloc memory");
 		ptr = map_sysmem(gd->malloc_base + gd->malloc_ptr, bytes);
+
+		if (gd->malloc_free_addr[0] != 0) {
+			/* shifting as we are storing depth of 2 */
+			gd->malloc_free_addr[1] = gd->malloc_free_addr[0];
+			gd->malloc_free_ptr[1] = gd->malloc_free_ptr[0];
+		}
+		/* saving last malloc address for malloc free */
+		gd->malloc_free_addr[0] = ptr;
+		/* saving last malloc_ptr prior allocation for malloc free */
+		gd->malloc_free_ptr[0] = gd->malloc_ptr;
+
 		gd->malloc_ptr = ALIGN(new_ptr, sizeof(new_ptr));
 		return ptr;
 	}
@@ -2460,9 +2471,19 @@ void fREe(mem) Void_t* mem;
   int       islr;      /* track whether merging with last_remainder */
 
 #ifdef CONFIG_SYS_MALLOC_F_LEN
-	/* free() is a no-op - all the memory will be freed on relocation */
-	if (!(gd->flags & GD_FLG_RELOC))
+	/*
+	 * Implement a simple free mechanism where we shall release the
+	 * memory if free is called after the malloc.
+	 */
+	if (!(gd->flags & GD_FLG_RELOC)) {
+		if (mem == gd->malloc_free_addr[0]) {
+			gd->malloc_ptr = gd->malloc_free_ptr[0];
+			/* shifting as we are storing depth of 2 */
+			gd->malloc_free_addr[0] = gd->malloc_free_addr[1];
+			gd->malloc_free_ptr[0] = gd->malloc_free_ptr[1];
+		}
 		return;
+	}
 #endif
 
   if (mem == NULL)                              /* free(0) has no effect */

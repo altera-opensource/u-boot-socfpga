@@ -90,6 +90,8 @@ typedef struct global_data {
 	unsigned long malloc_base;	/* base address of early malloc() */
 	unsigned long malloc_limit;	/* limit address */
 	unsigned long malloc_ptr;	/* current address */
+	void *malloc_free_addr[2];	/* Last malloc pointer address*/
+	unsigned long malloc_free_ptr[2];	/* Last malloc_ptr */
 #endif
 	struct arch_global_data arch;	/* architecture-specific data */
 } gd_t;
