@@ -12,14 +12,10 @@
 #ifndef __ASSEMBLY_
 #if defined(CONFIG_CADENCE_QSPI) || defined(CONFIG_NAND_DENALI)
 struct raw_flash_info {
-	struct image_header header;
 #if defined(CONFIG_CADENCE_QSPI)
 	struct spi_flash *flash;
 #elif defined(CONFIG_NAND_DENALI)
 	nand_info_t *flash;
-#endif
-#ifdef CONFIG_CHECK_FPGA_DATA_CRC
-	u32 datacrc;
 #endif
 };
 #endif
@@ -41,6 +37,10 @@ struct cff_flash_info {
 	u32 remaining;
 	u32 buffer[4096] __aligned(ARCH_DMA_MINALIGN);
 	u32 flash_offset;
+#ifdef CONFIG_CHECK_FPGA_DATA_CRC
+	u32 datacrc;
+#endif
+	struct image_header header;
 };
 
 int cff_from_sdmmc_env(void);

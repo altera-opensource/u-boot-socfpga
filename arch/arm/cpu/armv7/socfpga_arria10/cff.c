@@ -169,6 +169,11 @@ int cff_from_sdmmc_env(void)
 	return rval;
 }
 
+#if !defined(CONFIG_CHECK_FPGA_DATA_CRC)
+/*
+ * This function is called when the optional checksum checking on SDMMC FPGA
+ * image is not required.
+ */
 int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 	fpga_fs_info *fpga_fsinfo, u32 *buffer, u32 *buffer_sizebytes)
 {
@@ -225,6 +230,10 @@ int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 	return 0;
 }
 
+/*
+ * This function is called when the optional checksum checking on SDMMC FPGA
+ * image is not required.
+ */
 int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 	u32 *buffer_sizebytes)
 {
@@ -259,6 +268,7 @@ int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 
 	return 0;
 }
+#endif /* #if !defined(CONFIG_CHECK_FPGA_DATA_CRC) */
 #else /* helper function supports both QSPI and NAND */
 static int get_cff_offset(const void *fdt)
 {
@@ -391,7 +401,12 @@ int cff_from_flash(fpga_fs_info *fpga_fsinfo)
 	return 1;
 }
 
-#if defined(CONFIG_CADENCE_QSPI) || defined(CONFIG_NAND_DENALI)
+#if defined(CONFIG_CADENCE_QSPI) || defined(CONFIG_NAND_DENALI) || \
++(defined(CONFIG_MMC) && defined(CONFIG_CHECK_FPGA_DATA_CRC))
+/*
+ * This function is called when the optional checksum checking on SDMMC, QSPI,
+ * and NAND FPGA image are required
+ */
 static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 	fpga_fs_info *fpga_fsinfo, u32 *buffer, u32 *buffer_sizebytes)
 {
@@ -401,12 +416,20 @@ static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 	int ret = 0;
 	int bytesread = 0;
 	/* To avoid from keeping re-read the contents */
-	struct image_header *header = &(cff_flashinfo->raw_flashinfo.header);
+	struct image_header *header = &(cff_flashinfo->header);
 	size_t buffer_size = *buffer_sizebytes;
 	u32 *buffer_ptr = (u32 *)*buffer;
 
+#if defined(CONFIG_CADENCE_QSPI) || defined(CONFIG_NAND_DENALI)
 	cff_flashinfo->flash_offset =
 		simple_strtoul(fpga_fsinfo->filename, NULL, 16);
+#elif defined(CONFIG_MMC)
+	cff_flashinfo->sdmmc_flashinfo.filename = fpga_fsinfo->filename;
+	cff_flashinfo->sdmmc_flashinfo.dev_part = fpga_fsinfo->dev_part;
+	cff_flashinfo->flash_offset = 0;
+#else
+#error "Unknown Flash type!"
+#endif
 
 	ret = cff_flash_probe(cff_flashinfo);
 
@@ -487,14 +510,14 @@ static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 
 #ifdef CONFIG_CHECK_FPGA_DATA_CRC
 	cff_flashinfo->datacrc =
-		crc32(cff_flashinfo->raw_flashinfo.datacrc,
+		crc32(cff_flashinfo->datacrc,
 		(u_char *)bufferptr_after_header,
 		buffersize_after_header);
 #endif
 if (0 == cff_flashinfo->remaining) {
 #ifdef CONFIG_CHECK_FPGA_DATA_CRC
 	if (cff_flashinfo->datacrc !=
-		image_get_dcrc(&((cff_flashinfo->raw_flashinfo.header))) {
+		image_get_dcrc(&(cff_flashinfo->header))) {
 		printf("FPGA: Bad Data Checksum.\n");
 		return -8;
 	}
@@ -503,6 +526,10 @@ if (0 == cff_flashinfo->remaining) {
 	return 0;
 }
 
+/*
+ * This function is called when the optional checksum checking on SDMMC, QSPI,
+ * and NAND FPGA image are required.
+ */
 static int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 	u32 *buffer_sizebytes)
 {
@@ -532,14 +559,14 @@ static int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 
 #ifdef CONFIG_CHECK_FPGA_DATA_CRC
 	cff_flashinfo->datacrc =
-		crc32(cff_flashinfo->raw_flashinfo.datacrc,
+		crc32(cff_flashinfo->datacrc,
 			(unsigned char *)buffer_ptr, buffer_size);
 #endif
 
 if (0 == cff_flashinfo->remaining) {
 #ifdef CONFIG_CHECK_FPGA_DATA_CRC
-	if (cff_flashinfo->raw_flashinfo.datacrc !=
-		image_get_dcrc(&(cff_flashinfo->raw_flashinfo.header))) {
+	if (cff_flashinfo->datacrc !=
+		image_get_dcrc(&(cff_flashinfo->header))) {
 		printf("FPGA: Bad Data Checksum.\n");
 		return -8;
 	}
@@ -555,7 +582,8 @@ if (0 == cff_flashinfo->remaining) {
 
 	return 0;
 }
-#endif /* #if defined(CONFIG_CADENCE_QSPI) || defined(CONFIG_NAND_DENALI) */
+#endif /* #if defined(CONFIG_CADENCE_QSPI) || defined(CONFIG_NAND_DENALI) || \
+(defined(CONFIG_MMC) && defined(CONFIG_CHECK_FPGA_DATA_CRC)) */
 
 #if defined(CONFIG_CADENCE_QSPI)
 int cff_from_qspi_env(void)
