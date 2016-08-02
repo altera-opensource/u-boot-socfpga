@@ -24,6 +24,8 @@ static const struct socfpga_system_manager *system_manager_base =
 		(void *)SOCFPGA_SYSMGR_ADDRESS;
 #endif
 
+static void fpgamgr_set_cd_ratio(unsigned long ratio);
+
 static uint32_t fpgamgr_get_msel(void)
 {
 	uint32_t reg;
@@ -81,6 +83,15 @@ int fpgamgr_wait_early_user_mode(void)
 	u32 sync_data = 0xffffffff;
 	u32 i = 0;
 	unsigned start = get_timer(0);
+	unsigned long cd_ratio;
+
+	/* Getting existing CDRATIO */
+	cd_ratio = (readl(&fpga_manager_base->imgcfg_ctrl_02) &
+		ALT_FPGAMGR_IMGCFG_CTL_02_CDRATIO_SET_MSK) >>
+		ALT_FPGAMGR_IMGCFG_CTL_02_CDRATIO_LSB;
+
+	/* Using CDRATIO_X1 for better compatibility */
+	fpgamgr_set_cd_ratio(CDRATIO_x1);
 
 	while (!(is_fpgamgr_early_user_mode())) {
 		if (get_timer(start) > FPGA_TIMEOUT_MSEC)
@@ -92,6 +103,10 @@ int fpgamgr_wait_early_user_mode(void)
 	}
 
 	debug("Additional %i sync word needed\n", i);
+
+	/* restoring original CDRATIO */
+	fpgamgr_set_cd_ratio(cd_ratio);
+
 	return 0;
 }
 
