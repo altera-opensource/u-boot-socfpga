@@ -659,16 +659,18 @@ CONFIG_NAND_DENALI is also defined.
  */
 
 /* size of stack and malloc in ocram */
-#ifdef CONFIG_DESIGNWARE_ETH
-#define CONFIG_OCRAM_MALLOC_SIZE	(42 * 1024)
-#elif defined(CONFIG_NAND_DENALI)
-#define CONFIG_OCRAM_MALLOC_SIZE	(45 * 1024)
+#if defined(CONFIG_NAND_DENALI)
+#define CONFIG_OCRAM_MALLOC_SIZE	(32 * 1024)
 #else
-#define CONFIG_OCRAM_MALLOC_SIZE	(16 * 1024)
+#define CONFIG_OCRAM_MALLOC_SIZE	(8 * 1024)
 #endif
 #define CONFIG_SYS_MALLOC_F_LEN		CONFIG_OCRAM_MALLOC_SIZE
 
+#if defined(CONFIG_MMC)
 #define CONFIG_OCRAM_STACK_SIZE		(20 * 1024)
+#else
+#define CONFIG_OCRAM_STACK_SIZE		(12 * 1024)
+#endif
 
 /* Room required on the stack for the environment data */
 #ifndef CONFIG_ENV_SIZE
