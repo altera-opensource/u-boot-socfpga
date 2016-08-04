@@ -217,12 +217,15 @@
 #elif defined(CONFIG_MMC)
 #define CONFIG_BOOTCOMMAND " run core_rbf_prog; run callscript; run mmcload;" \
 	"run set_initswstate; run mmcboot"
+#define CONFIG_LINUX_DTB_NAME	socfpga_arria10_socdk_sdmmc.dtb
 #elif defined(CONFIG_CADENCE_QSPI)
 #define CONFIG_BOOTCOMMAND "run qspirbfcore_rbf_prog; run qspiload;" \
 	"run set_initswstate; run qspiboot"
+#define CONFIG_LINUX_DTB_NAME	socfpga_arria10_socdk_qspi.dtb
 #elif defined(CONFIG_NAND_DENALI)
 #define CONFIG_BOOTCOMMAND "run nandrbfcore_rbf_prog; run nandload;" \
 	"run set_initswstate; run nandboot"
+#define CONFIG_LINUX_DTB_NAME	socfpga_arria10_socdk_nand.dtb
 #else
 #error "unsupported configuration"
 #endif
@@ -245,7 +248,7 @@
 	"fdtaddr=" __stringify(CONFIG_SYS_DTB_ADDR) "\0" \
 	"bootimage=zImage\0" \
 	"bootimagesize=0x5F0000\0" \
-	"fdtimage=socfpga_arria10_socdk.dtb\0" \
+	"fdtimage=" __stringify(CONFIG_LINUX_DTB_NAME) "\0" \
 	"fdtimagesize=" __stringify(MAX_DTB_SIZE_IN_RAM) "\0" \
 	"fdt_high=0x2000000\0" \
 	"mmcloadcmd=fatload\0" \
