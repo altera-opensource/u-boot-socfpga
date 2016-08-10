@@ -308,12 +308,6 @@ void reset_deassert_dedicated_peripherals(void)
 
 	mask = ALT_RSTMGR_PER1MODRST_L4SYSTMR0_SET_MSK;
 
-#if (CONFIG_SYS_NS16550_COM1 == SOCFPGA_UART1_ADDRESS)
-	mask |= ALT_RSTMGR_PER1MODRST_UART1_SET_MSK;
-#elif (CONFIG_SYS_NS16550_COM1 == SOCFPGA_UART0_ADDRESS)
-	mask |= ALT_RSTMGR_PER1MODRST_UART0_SET_MSK;
-#endif
-
 	clrbits_le32(&reset_manager_base->per1modrst, mask);
 
 	/* start with 4 as first 3 registers are reserved */

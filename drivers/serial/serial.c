@@ -35,6 +35,16 @@ static void serial_null(void)
 }
 
 /**
+ * is_uart_console_true() - This is weak function, the definition should be
+ *                          executed in architecture specific file. The default
+ *                          value return 1 to maintain exisiting design flow.
+ */
+__weak unsigned int is_uart_console_true(const void *blob)
+{
+	return 1;
+}
+
+/**
  * on_baudrate() - Update the actual baudrate when the env var changes
  *
  * This will check for a valid baudrate and only apply it if valid.
@@ -421,8 +431,17 @@ static struct serial_device *get_current(void)
  */
 int serial_init(void)
 {
-	gd->flags |= GD_FLG_SERIAL_READY;
-	return get_current()->start();
+	if (is_uart_console_true(gd->fdt_blob))
+		gd->uart_ready_for_console = 1;
+	else
+		gd->uart_ready_for_console = 0;
+
+	if (gd->uart_ready_for_console) {
+		gd->flags |= GD_FLG_SERIAL_READY;
+		return get_current()->start();
+	}
+
+	return 0;
 }
 
 /**

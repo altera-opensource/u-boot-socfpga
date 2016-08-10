@@ -19,8 +19,14 @@
 #include <mmc.h>
 #include <netdev.h>
 #include <phy.h>
+#include <serial.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+static int find_peripheral_uart(const void *blob,
+	int child, const char *node_name);
+static int is_peripheral_uart_true(const void *blob,
+	int node, const char *child_name);
 
 /* FPGA programming support for SoC FPGA Cyclone V */
 Altera_desc altera_fpga[CONFIG_FPGA_COUNT] = {
@@ -194,4 +200,102 @@ int is_early_release_fpga_config(const void *blob)
 	static const char *name = "early-release-fpga-config";
 
 	return is_chosen_boolean_true(blob, name);
+}
+
+/*
+ * This function looking the 1st encounter UART peripheral,
+ * and then return its offset of the dedicated/shared IO pin
+ * mux. offset value (zero and above).
+ */
+static int find_peripheral_uart(const void *blob,
+	int child, const char *node_name)
+{
+	int len;
+	fdt_addr_t base_addr = 0;
+	fdt_size_t size;
+	const u32 *cell;
+	u32 value, offset = 0;
+
+	base_addr = fdtdec_get_addr_size(blob, child, "reg", &size);
+	if (base_addr != FDT_ADDR_T_NONE) {
+		debug("subnode %s %x:%x\n",
+			node_name, base_addr, size);
+
+		cell = fdt_getprop(blob, child, "pinctrl-single,pins",
+			&len);
+		if (cell != NULL) {
+			debug("%p %d\n", cell, len);
+			for (; len > 0; len -= (2 * sizeof(u32))) {
+				offset = fdt32_to_cpu(*cell++);
+				value = fdt32_to_cpu(*cell++);
+				debug("<0x%x>\n", value);
+				/* Found UART peripheral */
+				if (0x0D == value)
+					return offset;
+			}
+		}
+	}
+	return -1;
+}
+
+/*
+ * This function looking the 1st encounter UART peripheral,
+ * and then return its offset of the dedicated/shared IO pin
+ * mux. UART peripheral is found if the offset is not in negative
+ * value.
+ */
+static int is_peripheral_uart_true(const void *blob,
+	int node, const char *child_name)
+{
+	int child, len;
+	const char *node_name;
+
+	child = fdt_first_subnode(blob, node);
+
+	if (child < 0)
+		return -1;
+
+	node_name = fdt_get_name(blob, child, &len);
+
+	while (node_name) {
+		if (!strcmp(child_name, node_name))
+			return find_peripheral_uart(blob, child, node_name);
+
+		child = fdt_next_subnode(blob, child);
+
+		if (child < 0)
+			break;
+
+		node_name = fdt_get_name(blob, child, &len);
+	}
+
+	return -1;
+}
+
+/*
+ * This function looking the 1st encounter UART dedicated IO peripheral,
+ * and then return based address of the 1st encounter UART dedicated
+ * IO peripheral.
+ */
+unsigned int dedicated_uart_com_port(const void *blob)
+{
+	int node;
+
+	node = fdtdec_next_compatible(blob, 0, COMPAT_PINCTRL_SINGLE);
+
+	if (node < 0)
+		return 0;
+
+	if (0 <= is_peripheral_uart_true(blob, node, "dedicated"))
+		return SOCFPGA_UART1_ADDRESS;
+	else
+		return 0;
+}
+
+/*
+ * UART is connected to console, if based address is not zero.
+ */
+unsigned int is_uart_console_true(const void *blob)
+{
+	return dedicated_uart_com_port(blob) ? 1 : 0;
 }

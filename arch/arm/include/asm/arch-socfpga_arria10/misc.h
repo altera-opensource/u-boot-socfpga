@@ -13,7 +13,7 @@ int is_chosen_boolean_true(const void *blob, const char *name);
 int is_external_fpga_config(const void *blob);
 int is_early_release_fpga_config(const void *blob);
 int config_pins(const void *blob, const char *pin_grp);
-
+unsigned int dedicated_uart_com_port(const void *blob);
 #endif /* __ASSEMBLY__ */
 
 #endif /* _SOCFPGA_MISC_H_ */

@@ -687,14 +687,15 @@ int console_assign(int file, const char *devname)
 /* Called before relocation - use serial functions */
 int console_init_f(void)
 {
-	gd->have_console = 1;
-
+	if (gd->uart_ready_for_console) {
+		gd->have_console = 1;
 #ifdef CONFIG_SILENT_CONSOLE
-	if (getenv("silent") != NULL)
-		gd->flags |= GD_FLG_SILENT;
+		if (getenv("silent") != NULL)
+			gd->flags |= GD_FLG_SILENT;
 #endif
 
-	print_pre_console_buffer();
+		print_pre_console_buffer();
+	}
 
 	return 0;
 }

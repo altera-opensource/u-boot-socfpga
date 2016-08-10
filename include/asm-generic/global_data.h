@@ -43,6 +43,7 @@ typedef struct global_data {
 #ifdef CONFIG_BOARD_TYPES
 	unsigned long board_type;
 #endif
+	unsigned long uart_ready_for_console; /* UART ready to support */
 	unsigned long have_console;	/* serial_init() was called */
 #ifdef CONFIG_PRE_CONSOLE_BUFFER
 	unsigned long precon_buf_idx;	/* Pre-Console buffer index */
