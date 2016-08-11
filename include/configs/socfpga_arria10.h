@@ -424,6 +424,10 @@
 #define CONFIG_SYS_NS16550_MEM32
 #define CONFIG_SYS_NS16550_REG_SIZE	-4
 #define CONFIG_CONS_INDEX               1
+/*
+ * This is default UART base address, but it can be changed through
+ * set_serial_port() during run time
+ */
 #define CONFIG_SYS_NS16550_COM1		SOCFPGA_UART1_ADDRESS
 #define CONFIG_SYS_BAUDRATE_TABLE {4800, 9600, 19200, 38400, 57600, 115200}
 #define CONFIG_SYS_NS16550_CLK		(cm_l4_sp_clk_hz)

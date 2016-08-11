@@ -360,3 +360,19 @@ unsigned int is_uart_console_true(const void *blob)
 {
 	return dedicated_uart_com_port(blob) ? 1 : 0;
 }
+
+/*
+ * This function looking the 1st encounter UART peripheral, and then return
+ * base address of the 1st encounter UART peripheral.
+ */
+unsigned int uart_com_port(const void *blob)
+{
+	unsigned int ret;
+
+	ret = dedicated_uart_com_port(blob);
+
+	if (ret)
+		return ret;
+
+	return shared_uart_com_port(blob);
+}

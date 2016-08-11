@@ -9,6 +9,7 @@
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/system_manager.h>
 #include <asm/arch/fpga_manager.h>
+#include <asm/arch/misc.h>
 #include <fdtdec.h>
 #include <errno.h>
 
@@ -362,11 +363,14 @@ void reset_deassert_dedicated_peripherals(void)
 void reset_assert_uart(void)
 {
 	u32 mask = 0;
-#if (CONFIG_SYS_NS16550_COM1 == SOCFPGA_UART1_ADDRESS)
-	mask |= ALT_RSTMGR_PER1MODRST_UART1_SET_MSK;
-#elif (CONFIG_SYS_NS16550_COM1 == SOCFPGA_UART0_ADDRESS)
-	mask |= ALT_RSTMGR_PER1MODRST_UART0_SET_MSK;
-#endif
+	unsigned int com_port;
+
+	com_port = uart_com_port(gd->fdt_blob);
+
+	if (SOCFPGA_UART1_ADDRESS == com_port)
+		mask |= ALT_RSTMGR_PER1MODRST_UART1_SET_MSK;
+	else if (SOCFPGA_UART0_ADDRESS == com_port)
+		mask |= ALT_RSTMGR_PER1MODRST_UART0_SET_MSK;
 
 	setbits_le32(&reset_manager_base->per1modrst, mask);
 }
@@ -374,11 +378,14 @@ void reset_assert_uart(void)
 void reset_deassert_uart(void)
 {
 	u32 mask = 0;
-#if (CONFIG_SYS_NS16550_COM1 == SOCFPGA_UART1_ADDRESS)
-	mask |= ALT_RSTMGR_PER1MODRST_UART1_SET_MSK;
-#elif (CONFIG_SYS_NS16550_COM1 == SOCFPGA_UART0_ADDRESS)
-	mask |= ALT_RSTMGR_PER1MODRST_UART0_SET_MSK;
-#endif
+	unsigned int com_port;
+
+	com_port = uart_com_port(gd->fdt_blob);
+
+	if (SOCFPGA_UART1_ADDRESS == com_port)
+		mask |= ALT_RSTMGR_PER1MODRST_UART1_SET_MSK;
+	else if (SOCFPGA_UART0_ADDRESS == com_port)
+		mask |= ALT_RSTMGR_PER1MODRST_UART0_SET_MSK;
 
 	clrbits_le32(&reset_manager_base->per1modrst, mask);
 }

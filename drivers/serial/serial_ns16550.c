@@ -119,6 +119,13 @@ static NS16550_t serial_ports[6] = {
 	.puts	= eserial##port##_puts,		\
 }
 
+/* Port number starting from 1, array index starting from 0 */
+void
+set_serial_port(unsigned port, int base_address)
+{
+	serial_ports[port-1] = (NS16550_t)base_address;
+}
+
 void
 _serial_putc(const char c,const int port)
 {

@@ -16,6 +16,7 @@ int config_pins(const void *blob, const char *pin_grp);
 unsigned int dedicated_uart_com_port(const void *blob);
 unsigned int shared_uart_com_port(const void *blob);
 void shared_uart_buffer_to_console(void);
+unsigned int uart_com_port(const void *blob);
 #endif /* __ASSEMBLY__ */
 
 #endif /* _SOCFPGA_MISC_H_ */

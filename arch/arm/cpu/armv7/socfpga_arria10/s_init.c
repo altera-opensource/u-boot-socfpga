@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Altera Corporation <www.altera.com>
+ * Copyright (C) 2014-2016 Altera Corporation <www.altera.com>
  *
  * SPDX-License-Identifier:	GPL-2.0
  */
@@ -16,6 +16,7 @@
 #include <asm/arch/sdram.h>
 #include <asm/sections.h>
 #include <fdtdec.h>
+#include <ns16550.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 static int __do_pinctr_pins(const void *blob, int child, const char *node_name)
@@ -152,6 +153,8 @@ arria10_mask_ecc_errors(void)
  */
 void s_init(void)
 {
+	unsigned int com_port;
+
 	/*
 	 * Configure Clock Manager to use intosc clock instead external osc to
 	 * ensure success watchdog operation. We do it as early as possible.
@@ -200,6 +203,25 @@ void s_init(void)
 	/* configuring the clock based on handoff */
 	cm_basic_init(gd->fdt_blob);
 	WATCHDOG_RESET();
+
+	/* Setting serial port based on 1st encounter UART in handoff */
+	com_port = uart_com_port(gd->fdt_blob);
+
+	if (com_port) {
+#ifdef CONFIG_SYS_NS16550_COM1
+		set_serial_port(1, com_port);
+#elif CONFIG_SYS_NS16550_COM2
+		set_serial_port(2, com_port);
+#elif CONFIG_SYS_NS16550_COM3
+		set_serial_port(3, com_port);
+#elif CONFIG_SYS_NS16550_COM4
+		set_serial_port(4, com_port);
+#elif CONFIG_SYS_NS16550_COM5
+		set_serial_port(5, com_port);
+#elif CONFIG_SYS_NS16550_COM6
+		set_serial_port(6, com_port);
+#endif
+	}
 
 	config_dedicated_pins(gd->fdt_blob);
 	WATCHDOG_RESET();
