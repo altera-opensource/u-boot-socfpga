@@ -20,6 +20,14 @@
 #include <netdev.h>
 #include <phy.h>
 #include <serial.h>
+#include <ns16550.h>
+
+#define PINMUX_UART0_TX_SHARED_IO_OFFSET_Q1_3	0x08
+#define PINMUX_UART0_TX_SHARED_IO_OFFSET_Q2_11	0x58
+#define PINMUX_UART0_TX_SHARED_IO_OFFSET_Q3_3	0x68
+#define PINMUX_UART1_TX_SHARED_IO_OFFSET_Q1_7	0x18
+#define PINMUX_UART1_TX_SHARED_IO_OFFSET_Q3_7	0x78
+#define PINMUX_UART1_TX_SHARED_IO_OFFSET_Q4_3	0x98
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -290,6 +298,59 @@ unsigned int dedicated_uart_com_port(const void *blob)
 		return SOCFPGA_UART1_ADDRESS;
 	else
 		return 0;
+}
+
+/*
+ * This function looking the 1st encounter UART shared IO peripheral, and then
+ * return based address of the 1st encounter UART shared IO peripheral.
+ */
+unsigned int shared_uart_com_port(const void *blob)
+{
+	int node, ret;
+
+	node = fdtdec_next_compatible(blob, 0, COMPAT_PINCTRL_SINGLE);
+
+	if (node < 0)
+		return 0;
+
+	ret = is_peripheral_uart_true(blob, node, "shared");
+
+	if (PINMUX_UART0_TX_SHARED_IO_OFFSET_Q1_3 == ret ||
+		PINMUX_UART0_TX_SHARED_IO_OFFSET_Q2_11 == ret ||
+		PINMUX_UART0_TX_SHARED_IO_OFFSET_Q3_3 == ret)
+		return SOCFPGA_UART0_ADDRESS;
+	else if (PINMUX_UART1_TX_SHARED_IO_OFFSET_Q1_7 == ret ||
+		PINMUX_UART1_TX_SHARED_IO_OFFSET_Q3_7 == ret ||
+		PINMUX_UART1_TX_SHARED_IO_OFFSET_Q4_3 == ret)
+		return SOCFPGA_UART1_ADDRESS;
+	else
+		return 0;
+}
+
+/*
+ * This function initializes shared IO UART, and printing out all buffer
+ * store messages to console after UART initialization done.
+ */
+void shared_uart_buffer_to_console(void)
+{
+	unsigned int com_port = shared_uart_com_port(gd->fdt_blob);
+
+	/* UART console is connected with shared IO */
+	if (com_port) {
+		if (!gd->uart_ready_for_console) {
+			gd->uart_ready_for_console = 1;
+			NS16550_init((NS16550_t)com_port,
+				ns16550_calc_divisor(
+				(NS16550_t)com_port,
+				CONFIG_SYS_NS16550_CLK,
+				CONFIG_BAUDRATE));
+			/*
+			 * Print out all buffer store messages
+			 * after shared IO configuration done.
+			*/
+			console_init_f();
+		}
+	}
 }
 
 /*

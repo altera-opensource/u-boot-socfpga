@@ -651,6 +651,7 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 {
 	int ret = 0;
 	int programming_core;
+	unsigned int com_port = 0;
 
 	if (!strcmp(fsinfo->rbftype, "core"))
 		programming_core = 1;
@@ -675,8 +676,15 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 	/* disable all axi bridge (hps2fpga, lwhps2fpga & fpga2hps) */
 	reset_assert_all_bridges();
 
-	if (!programming_core)
+	if (!programming_core) {
+		com_port = dedicated_uart_com_port(gd->fdt_blob);
+		/* UART console is not connected with dedicated IO */
+		if (!com_port) {
+			gd->uart_ready_for_console = 0;
+			gd->have_console = 0;
+		}
 		reset_assert_shared_connected_peripherals();
+	}
 
 	reset_assert_fpga_connected_peripherals();
 
@@ -688,6 +696,7 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 		if (!programming_core) {
 			config_pins(gd->fdt_blob, "shared");
 			reset_deassert_shared_connected_peripherals();
+			shared_uart_buffer_to_console();
 		}
 
 		/* programming core or combined */

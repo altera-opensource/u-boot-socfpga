@@ -932,12 +932,11 @@ int dram_init(void)
 			config_pins(gd->fdt_blob, "shared");
 
 			reset_deassert_shared_connected_peripherals();
-			NS16550_init((NS16550_t)CONFIG_SYS_NS16550_COM1,
-				     ns16550_calc_divisor(
-					     (NS16550_t)CONFIG_SYS_NS16550_COM1,
-					     CONFIG_SYS_NS16550_CLK,
-					     CONFIG_BAUDRATE));
-
+			/*
+			 * If UART shared IO pin mux is found, print out all
+			 * buffer stored messages to console.
+			 */
+			shared_uart_buffer_to_console();
 			if (!is_early_release_fpga_config(gd->fdt_blob)) {
 				config_pins(gd->fdt_blob, "fpga");
 				reset_deassert_fpga_connected_peripherals();

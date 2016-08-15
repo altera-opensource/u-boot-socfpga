@@ -14,6 +14,8 @@ int is_external_fpga_config(const void *blob);
 int is_early_release_fpga_config(const void *blob);
 int config_pins(const void *blob, const char *pin_grp);
 unsigned int dedicated_uart_com_port(const void *blob);
+unsigned int shared_uart_com_port(const void *blob);
+void shared_uart_buffer_to_console(void);
 #endif /* __ASSEMBLY__ */
 
 #endif /* _SOCFPGA_MISC_H_ */
