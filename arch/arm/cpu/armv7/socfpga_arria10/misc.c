@@ -358,7 +358,11 @@ void shared_uart_buffer_to_console(void)
  */
 unsigned int is_uart_console_true(const void *blob)
 {
-	return dedicated_uart_com_port(blob) ? 1 : 0;
+	if (dedicated_uart_com_port(blob) ||
+		is_external_fpga_config(blob))
+		return 1;
+	else
+		return 0;
 }
 
 /*
