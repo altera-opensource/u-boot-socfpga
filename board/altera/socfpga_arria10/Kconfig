@@ -15,4 +15,7 @@ config SYS_SOC
 config SYS_CONFIG_NAME
 	default "socfpga_arria10"
 
+config UBOOT_EXE_ON_FPGA
+	bool "Support socfpga_arria10_fpga"
+
 endif
