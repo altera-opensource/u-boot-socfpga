@@ -915,8 +915,12 @@ int dram_init(void)
 
 	WATCHDOG_RESET();
 
-	if (is_external_fpga_config(gd->fdt_blob)) {
+	if (is_external_fpga_config(gd->fdt_blob) ||
+		CONFIG_UBOOT_EXE_ON_FPGA) {
 		ddr_calibration_sequence();
+#if defined(CONFIG_MMC)
+		mmc_initialize(gd->bd);
+#endif
 	} else {
 #if defined(CONFIG_MMC)
 		rval = cff_from_sdmmc_env();
