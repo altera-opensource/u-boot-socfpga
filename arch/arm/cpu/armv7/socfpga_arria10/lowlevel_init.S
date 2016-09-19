@@ -36,6 +36,50 @@ save_boot_params:
 	mcr	p15, 0, r5, c1, c0, 2	@ Clear CP15 CPACR Register
 #endif
 
+#if (CONFIG_UBOOT_EXE_ON_FPGA == 1)
+	/* relocate the .data section to support U-boot execute on FPGA */
+	ldr	r0, =__data_start
+	ldr	r1, =CONFIG_FPGA_DATA_BASE
+	ldr	r2, =__data_reloc_end
+relocate_loop:
+	ldmia	r0!, {r3}		/* copy from source address [r0] */
+	stmia	r1!, {r3}		/* copy to   target address [r1] */
+	cmp	r1, r2			/* until target end address [r2] */
+	blo	relocate_loop
+
+/*
+ * Clearing the OCRAM memory that wasn't initialized during the write
+ * of the data section
+ */
+	ldr	r0, =__data_reloc_end	/* start of remaining region out of
+						U-boot data section */
+	ldr	r1, = CONFIG_FPGA_DATA_BASE	/* start of OCRAM */
+	ldr r2, = CONFIG_SYS_INIT_RAM_SIZE 	/* size of OCRAM */
+	add r1, r1, r2			/* end of OCRAM */
+	sub r1, r1, #1
+	mov	r2, #0x00000000		/* prepare zero to clear BSS */
+clrrmn:
+	cmp	r0, r1			/* while not at end of OCRAM */
+	strlo	r2, [r0]		/* clear 32-bit word length */
+	addlo	r0, r0, #4		/* move to next */
+	blo	clrrmn
+
+/*
+ * Clearing the bss section
+ */
+	ldr	r0, =__bss_start	/* start of remaining region out of
+						U-boot binary image */
+	ldr	r1, = __bss_end	/* end of bss */
+	mov	r2, #0x00000000		/* prepare zero to clear bss */
+clrbss:
+	cmp	r0, r1			/* while not at end of bss */
+	strlo	r2, [r0]		/* clear 32-bit word length */
+	addlo	r0, r0, #4		/* move to next */
+	blo	clrbss
+
+	bx	lr
+#endif	/* CONFIG_UBOOT_EXE_ON_FPGA */
+
 #if (CONFIG_PRELOADER_EXE_ON_FPGA == 1)
 	/* relocate the .data section to supprt preloader execute on FPGA */
 	ldr	r0, =__data_start
@@ -48,6 +92,7 @@ relocate_loop:
 	blo	relocate_loop
 #endif	/* CONFIG_PRELOADER_EXE_ON_FPGA */
 
+#if (CONFIG_UBOOT_EXE_ON_FPGA == 0)
 	/*
 	 * Clearing the OCRAM memory that wasn't initialized during the write
 	 * of the U-Boot image
@@ -66,8 +111,7 @@ clrrmn:
 	blo	clrrmn
 
 	bx	lr
-
-
+#endif
 
 /*
  * Write RBF data in burst form to FPGA Manager
