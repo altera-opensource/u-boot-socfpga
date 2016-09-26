@@ -73,6 +73,8 @@ void sdram_ecc_init(void);
 #define SDR_CTRLGRP_LOWPWRTIMING_ADDRESS 0x5014
 /* Register: sdr.ctrlgrp.dramodt                                           */
 #define SDR_CTRLGRP_DRAMODT_ADDRESS 0x5018
+/* Register: sdr.ctrlgrp.extratime1                                        */
+#define SDR_CTRLGRP_EXTRATIME1_ADDRESS 0x501C
 /* Register: sdr.ctrlgrp.dramaddrw                                         */
 #define SDR_CTRLGRP_DRAMADDRW_ADDRESS 0x502c
 /* Register: sdr.ctrlgrp.dramifwidth                                       */
@@ -449,6 +451,13 @@ SDR_CTRLGRP_MPTHRESHOLDRST_MPTHRESHOLDRST_2_THRESHOLDRSTCYCLES_79_64_MASK \
 /* Field instance: sdr::ctrlgrp::dramsts                                   */
 #define SDR_CTRLGRP_DRAMSTS_DBEERR_MASK 0x00000008
 #define SDR_CTRLGRP_DRAMSTS_SBEERR_MASK 0x00000004
+/* Register template: sdr::ctrlgrp::extratime1                             */
+#define SDR_CTRLGRP_EXTRATIME1_RD_TO_WR_LSB 20
+#define SDR_CTRLGRP_EXTRATIME1_RD_TO_WR_MASK 0x00f00000
+#define SDR_CTRLGRP_EXTRATIME1_RD_TO_WR_BC_LSB 24
+#define SDR_CTRLGRP_EXTRATIME1_RD_TO_WR_BC_MASK 0x0f000000
+#define SDR_CTRLGRP_EXTRATIME1_RD_TO_WR_DIFF_LSB 28
+#define SDR_CTRLGRP_EXTRATIME1_RD_TO_WR_DIFF_MASK 0xf0000000
 
 /* To determine the duration of SDRAM test */
 /* quick test which run around 5s */
