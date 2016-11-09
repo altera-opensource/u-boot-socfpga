@@ -15,6 +15,11 @@
 
 #define CONFIG_SOCFPGA_ARRIA10
 #define CONFIG_SOCFPGA_COMMON 1
+
+#ifndef CONFIG_UBOOT_EXE_ON_FPGA
+#define CONFIG_UBOOT_EXE_ON_FPGA	0
+#endif
+
 /* Undef to increase boot performance, if you want checksum
  checking on FPGA image, enable it */
 #undef CONFIG_CHECK_FPGA_DATA_CRC
@@ -55,11 +60,29 @@
 #define CONFIG_SYS_L2_PL310
 #define CONFIG_SYS_PL310_BASE		SOCFPGA_MPUL2_ADDRESS
 
-/* base address for .text section. Ensure located start of OCRAM */
+/* Base address for .text section. */
+/* Ensure located start of FPGA OCRAM */
+#if (1 == CONFIG_UBOOT_EXE_ON_FPGA)
+#define CONFIG_SYS_TEXT_BASE		0xc0000000
+#else
+/* Ensure located start of HPS OCRAM */
 #define CONFIG_SYS_TEXT_BASE		0xFFE00000
+#endif
 
 /* using linker to check all image sections fit OCRAM */
+#if (1 == CONFIG_UBOOT_EXE_ON_FPGA)
+/* Linker script for U-boot image boot from FPGA */
+#define CONFIG_SYS_LDSCRIPT \
+	"arch/arm/cpu/armv7/socfpga_arria10/u-boot-fpga.lds"
+/*
+ * Data segment relocated to HPS OCRAM, this prevent data segment corrupted
+ * at FPGA OCRAM when warm reset is triggered.
+ */
+#define CONFIG_FPGA_DATA_BASE	0xffe00000
+#define CONFIG_FPGA_DATA_MAX_SIZE	0x10000
+#else
 #define CONFIG_SYS_LDSCRIPT		$(TOPDIR)/$(CPUDIR)/$(SOC)/u-boot.lds
+#endif
 #define CONFIG_U_BOOT_BINARY_MAX_SIZE	(200 * 1024)
 
 /*
