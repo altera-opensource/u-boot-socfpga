@@ -343,6 +343,9 @@
 /*
  * Environment setup
  */
+#define CONFIG_SILENT_CONSOLE
+#define CONFIG_SYS_DEVICE_NULLDEV
+#define CONFIG_SILENT_U_BOOT_ONLY
 /* using environment setting for stdin, stdout, stderr */
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 /* Enable the call to overwrite_console() */
