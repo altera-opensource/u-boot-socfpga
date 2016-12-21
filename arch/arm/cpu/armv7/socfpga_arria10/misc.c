@@ -28,6 +28,7 @@
 #define PINMUX_UART1_TX_SHARED_IO_OFFSET_Q1_7	0x18
 #define PINMUX_UART1_TX_SHARED_IO_OFFSET_Q3_7	0x78
 #define PINMUX_UART1_TX_SHARED_IO_OFFSET_Q4_3	0x98
+#define REGULAR_BOOT_MAGIC	0xd15ea5e
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -35,6 +36,9 @@ static int find_peripheral_uart(const void *blob,
 	int child, const char *node_name);
 static int is_peripheral_uart_true(const void *blob,
 	int node, const char *child_name);
+
+static const struct socfpga_system_manager *system_manager_base =
+		(void *)SOCFPGA_SYSMGR_ADDRESS;
 
 /* FPGA programming support for SoC FPGA Cyclone V */
 Altera_desc altera_fpga[CONFIG_FPGA_COUNT] = {
@@ -379,4 +383,36 @@ unsigned int uart_com_port(const void *blob)
 		return ret;
 
 	return shared_uart_com_port(blob);
+}
+
+/*
+ * This function set/unset magic number "0xd15ea5e" to
+ * handoff register isw_handoff[7] - 0xffd0624c
+ * This magic number is part of boot progress tracking
+ * and required by boot to initialize HW.
+ */
+void set_regular_boot(unsigned int status)
+{
+	if (status)
+		writel(REGULAR_BOOT_MAGIC,
+			&system_manager_base->isw_handoff[7]);
+	else
+		writel(0, &system_manager_base->isw_handoff[7]);
+}
+
+/*
+ * This function is used to check whether
+ * handoff register isw_handoff[7] contains
+ * magic number "0xd15ea5e".
+ */
+unsigned int is_regular_boot(void)
+{
+	unsigned int status;
+
+	status = readl(&system_manager_base->isw_handoff[7]);
+
+	if (REGULAR_BOOT_MAGIC == status)
+		return 1;
+	else
+		return 0;
 }
