@@ -234,6 +234,14 @@ void s_init(void)
 		while (!is_fpgamgr_user_mode())
 			;
 
+		if (is_regular_boot())
+			set_regular_boot(false);
+		else {
+			set_regular_boot(true);
+			udelay(10000);
+			reset_cpu(0);
+		}
+
 		config_pins(gd->fdt_blob, "shared");
 		config_pins(gd->fdt_blob, "fpga");
 		reset_deassert_shared_connected_peripherals();

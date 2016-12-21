@@ -10,6 +10,7 @@
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/system_manager.h>
 #include <asm/arch/sdram.h>
+#include <asm/arch/misc.h>
 #include <altera.h>
 #include <errno.h>
 #include <watchdog.h>
@@ -423,9 +424,11 @@ int fpgamgr_program_init(u32 * rbf_data, u32 rbf_size)
 		return -4;
 
 	/* Step 8 */
-	ret = fpgamgr_reset();
-	if (ret)
-		return ret;
+	if (!is_regular_boot()) {
+		ret = fpgamgr_reset();
+		if (ret)
+			return ret;
+	}
 
 	/*
 	 * Step 9:

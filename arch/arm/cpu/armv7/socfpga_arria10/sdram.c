@@ -932,6 +932,7 @@ int dram_init(void)
 #else
 #error "unsupported config"
 #endif
+
 		if (rval > 0) {
 			config_pins(gd->fdt_blob, "shared");
 
@@ -945,6 +946,12 @@ int dram_init(void)
 				config_pins(gd->fdt_blob, "fpga");
 				reset_deassert_fpga_connected_peripherals();
 			}
+
+			if (is_regular_boot()) {
+				udelay(10000);
+				reset_cpu(0);
+			}
+
 			ddr_calibration_sequence();
 		}
 	}

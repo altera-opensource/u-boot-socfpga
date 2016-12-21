@@ -359,6 +359,11 @@ int cff_from_flash(fpga_fs_info *fpga_fsinfo)
 
 	WATCHDOG_RESET();
 
+	if (is_regular_boot()) {
+		set_regular_boot(false);
+		return 1;
+	}
+
 	/* transfer data to FPGA Manager */
 	fpgamgr_program_write((const long unsigned int *)buffer,
 		buffer_sizebytes);
@@ -381,6 +386,7 @@ int cff_from_flash(fpga_fs_info *fpga_fsinfo)
 
 	if (!strcmp(fpga_fsinfo->rbftype, "periph")) {
 		if (-ETIMEDOUT != fpgamgr_wait_early_user_mode()) {
+			set_regular_boot(true);
 			printf("FPGA: Early Release Succeeded.\n");
 		} else {
 			printf("FPGA: Failed to see Early Release.\n");
@@ -392,6 +398,9 @@ int cff_from_flash(fpga_fs_info *fpga_fsinfo)
 		status = fpgamgr_program_fini();
 		if (status)
 			return status;
+
+		if (!strcmp(fpga_fsinfo->rbftype, "combined"))
+			set_regular_boot(true);
 	} else {
 		printf("Config Error: Unsupported FGPA raw binary type.\n");
 		return -1;
