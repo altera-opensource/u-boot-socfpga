@@ -239,6 +239,9 @@ void s_init(void)
 		else {
 			set_regular_boot(true);
 			udelay(10000);
+#if defined(CONFIG_CADENCE_QSPI)
+			qspi_software_reset();
+#endif
 			reset_cpu(0);
 		}
 

@@ -572,6 +572,8 @@
 #define CONFIG_SF_DEFAULT_SPEED		(50000000)
 #define CONFIG_SF_DEFAULT_MODE		SPI_MODE_3
 #define CONFIG_SPI_FLASH_QUAD		(1)
+#define CONFIG_SPI_FLASH_BUS		0
+#define CONFIG_SPI_FLASH_CS		0
 /* QSPI reference clock */
 #define CONFIG_CQSPI_REF_CLK		(cm_l4_main_clk_hz)
 /* QSPI page size and block size */

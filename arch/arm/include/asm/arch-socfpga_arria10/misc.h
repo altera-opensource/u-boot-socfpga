@@ -19,6 +19,7 @@ void shared_uart_buffer_to_console(void);
 unsigned int uart_com_port(const void *blob);
 void set_regular_boot(unsigned int status);
 unsigned int is_regular_boot(void);
+int qspi_software_reset(void);
 #endif /* __ASSEMBLY__ */
 
 #endif /* _SOCFPGA_MISC_H_ */

@@ -21,6 +21,7 @@
 #include <phy.h>
 #include <serial.h>
 #include <ns16550.h>
+#include <spi_flash.h>
 
 #define PINMUX_UART0_TX_SHARED_IO_OFFSET_Q1_3	0x08
 #define PINMUX_UART0_TX_SHARED_IO_OFFSET_Q2_11	0x58
@@ -29,6 +30,9 @@
 #define PINMUX_UART1_TX_SHARED_IO_OFFSET_Q3_7	0x78
 #define PINMUX_UART1_TX_SHARED_IO_OFFSET_Q4_3	0x98
 #define REGULAR_BOOT_MAGIC	0xd15ea5e
+#define QSPI_S25FL_SOFT_RESET_COMMAND	0x00f0ff82
+#define QSPI_N25_SOFT_RESET_COMMAND	0x00000001
+#define QSPI_NO_SOFT_RESET	0x00000000
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -416,3 +420,36 @@ unsigned int is_regular_boot(void)
 	else
 		return 0;
 }
+
+#if defined(CONFIG_CADENCE_QSPI)
+/* This function is used to trigger software reset
+ * to the QSPI. On some boards, the QSPI reset may
+ * not be connected to the HPS warm reset.
+ */
+int qspi_software_reset(void)
+{
+	/* QSPI software reset command, for the case where
+		no HPS reset connected to QSPI reset */
+	struct spi_flash *flash;
+	/* Get the flash info */
+	flash = spi_flash_probe(CONFIG_SPI_FLASH_BUS, CONFIG_SPI_FLASH_CS,
+		 CONFIG_SF_DEFAULT_SPEED, SPI_MODE_3);
+
+	if (!(flash)) {
+		puts("SPI probe failed.\n");
+		return -1;
+	}
+
+	if (!memcmp(flash->name, "N25", 3))
+		writel(QSPI_N25_SOFT_RESET_COMMAND,
+			&system_manager_base->romcode_qspiresetcommand);
+	else if (!memcmp(flash->name, "S25FL", 5))
+		writel(QSPI_S25FL_SOFT_RESET_COMMAND,
+			&system_manager_base->romcode_qspiresetcommand);
+	else /* No software reset */
+		writel(QSPI_NO_SOFT_RESET,
+			&system_manager_base->romcode_qspiresetcommand);
+
+	return 0;
+}
+#endif

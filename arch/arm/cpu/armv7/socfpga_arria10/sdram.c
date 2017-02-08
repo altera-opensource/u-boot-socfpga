@@ -949,6 +949,9 @@ int dram_init(void)
 
 			if (is_regular_boot()) {
 				udelay(10000);
+#if defined(CONFIG_CADENCE_QSPI)
+				qspi_software_reset();
+#endif
 				reset_cpu(0);
 			} else
 				gd->flags &= ~(GD_FLG_SILENT |

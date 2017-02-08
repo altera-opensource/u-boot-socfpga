@@ -224,7 +224,7 @@ struct socfpga_system_manager {
 	volatile uint32_t  _pad_0x110_0x200[60];
 	volatile uint32_t  romhw_ctrl;
 	volatile uint32_t  romcode_ctrl;
-	volatile uint32_t  romcode_cpu1startaddr;
+	volatile uint32_t  romcode_qspiresetcommand;
 	volatile uint32_t  romcode_initswstate;
 	volatile uint32_t  romcode_initswlastld;
 	volatile uint32_t  _pad_0x214_0x217;
