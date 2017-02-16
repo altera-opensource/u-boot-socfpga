@@ -120,6 +120,7 @@ struct socfpga_reset_manager {
 #define ALT_RSTMGR_HDSKEN_FPGAHSEN_SET_MSK	0x00000004
 #define ALT_RSTMGR_HDSKEN_ETRSTALLEN_SET_MSK	0x00000008
 
+#define ALT_RSTMGR_SYSWARMMASK_S2F_SET_MSK	0x00000010
 
 #ifndef __ASSEMBLY__
 void reset_deassert_noc_ddr_scheduler(void);

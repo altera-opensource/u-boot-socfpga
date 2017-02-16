@@ -44,6 +44,9 @@ static int is_peripheral_uart_true(const void *blob,
 static const struct socfpga_system_manager *system_manager_base =
 		(void *)SOCFPGA_SYSMGR_ADDRESS;
 
+static const struct socfpga_reset_manager *reset_manager_base =
+		(void *)SOCFPGA_RSTMGR_ADDRESS;
+
 /* FPGA programming support for SoC FPGA Cyclone V */
 Altera_desc altera_fpga[CONFIG_FPGA_COUNT] = {
 	{Altera_SoCFPGA, 	/* family */
@@ -397,11 +400,28 @@ unsigned int uart_com_port(const void *blob)
  */
 void set_regular_boot(unsigned int status)
 {
-	if (status)
+	unsigned int ret = 0;
+
+	if (status) {
+		if (!is_early_release_fpga_config(gd->fdt_blob)) {
+			ret = readl(&reset_manager_base->syswarmmask);
+			/* Masking s2f module reset */
+			writel(ret & (~ALT_RSTMGR_SYSWARMMASK_S2F_SET_MSK),
+				 &reset_manager_base->syswarmmask);
+		}
+
 		writel(REGULAR_BOOT_MAGIC,
 			&system_manager_base->isw_handoff[7]);
-	else
+	} else {
+		if (!is_early_release_fpga_config(gd->fdt_blob)) {
+			ret = readl(&reset_manager_base->syswarmmask);
+			/* Unmasking s2f module reset */
+			writel(ret | ALT_RSTMGR_SYSWARMMASK_S2F_SET_MSK,
+				&reset_manager_base->syswarmmask);
+		}
+
 		writel(0, &system_manager_base->isw_handoff[7]);
+	}
 }
 
 /*
