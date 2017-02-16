@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2014-2016 Altera Corporation <www.altera.com>
+ *  Copyright (C) 2014-2017 Intel Corporation <www.intel.com>
  *
  * SPDX-License-Identifier:	GPL-2.0
  */
@@ -97,7 +97,8 @@
 /* Reserving 0x400 space at back of scratch RAM for debug info */
 #define CONFIG_SYS_INIT_RAM_SIZE	(256 * 1024)
 /* Reserving 16kB for MMU page table */
-#define SIZEOF_MMUPAGETABLE	(0x4000)
+/* Set to zero for saving memory space */
+#define SIZEOF_MMUPAGETABLE	(0)
 /* Stack pointer at on-chip RAM, leave 16kB behind for page table */
 #define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_INIT_RAM_ADDR + \
 					 CONFIG_SYS_INIT_RAM_SIZE  - SIZEOF_MMUPAGETABLE)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Altera Corporation <www.altera.com>
+ * Copyright (C) 2014-2017 Intel Corporation <www.intel.com>
  *
  * SPDX-License-Identifier:	GPL-2.0
  */
@@ -7,6 +7,7 @@
 #include <common.h>
 #include <asm/io.h>
 #include <asm/sections.h>
+#include <asm/arch/misc.h>
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/system_manager.h>
 #include <asm/arch/interrupts.h>
@@ -29,7 +30,6 @@
 #define PINMUX_UART1_TX_SHARED_IO_OFFSET_Q1_7	0x18
 #define PINMUX_UART1_TX_SHARED_IO_OFFSET_Q3_7	0x78
 #define PINMUX_UART1_TX_SHARED_IO_OFFSET_Q4_3	0x98
-#define REGULAR_BOOT_MAGIC	0xd15ea5e
 #define QSPI_S25FL_SOFT_RESET_COMMAND	0x00f0ff82
 #define QSPI_N25_SOFT_RESET_COMMAND	0x00000001
 #define QSPI_NO_SOFT_RESET	0x00000000
@@ -419,6 +419,22 @@ unsigned int is_regular_boot(void)
 		return 1;
 	else
 		return 0;
+}
+
+/*
+ * This function is used to enable/disable RAM boot with magic value and
+ * setting U-boot re-entrance location.
+ */
+void enable_ram_boot(unsigned int enable, unsigned long reentrance_loc)
+{
+	/*
+	 * Write magic value into magic register to unlock support for
+	 * issuing warm reset.
+	 */
+	writel(enable,
+		&system_manager_base->warmram_enable);
+	writel(reentrance_loc,
+			 &system_manager_base->warmram_execution);
 }
 
 #if defined(CONFIG_CADENCE_QSPI)

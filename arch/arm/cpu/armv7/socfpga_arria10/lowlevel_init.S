@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Altera Corporation <www.altera.com>
+ * Copyright (C) 2014-2017 Intel Corporation <www.intel.com>
  *
  * SPDX-License-Identifier:	GPL-2.0
  */
@@ -8,8 +8,9 @@
 #include <config.h>
 #include <linux/linkage.h>
 #include <asm/arch/reset_manager.h>
+#include <asm/arch/misc.h>
 
-
+#define	ISW_HANDOFF7	0xFFD0624C
 
 /* Save the parameter pass in by previous boot loader */
 .global save_boot_params
@@ -78,21 +79,33 @@ clrbss:
 	blo	clrbss
 
 	bx	lr
-#endif	/* CONFIG_UBOOT_EXE_ON_FPGA */
+#else
+	/* Loading isw_handoff[7] reg value */
+	ldr	r0, = ISW_HANDOFF7
+	ldr	r1, [r0]
+	ldr	r2, = REGULAR_BOOT_MAGIC
 
-#if (CONFIG_PRELOADER_EXE_ON_FPGA == 1)
-	/* relocate the .data section to supprt preloader execute on FPGA */
+	cmp	r1, r2
+	blo	preserve_datasect
+
+	/* restore .data section */
+	ldr	r0, =__preserve_data_start
+	ldr	r1, =__data_start
+	ldr	r2, =__data_end
+	b	relocate_loop
+
+preserve_datasect:
+	/* preserve .data section */
 	ldr	r0, =__data_start
-	ldr	r1, =CONFIG_FPGA_DATA_BASE
-	ldr	r2, =__image_copy_end
+	ldr	r1, =__preserve_data_start
+	ldr	r2, =__preserve_data_end
+
 relocate_loop:
 	ldmia	r0!, {r3}		/* copy from source address [r0] */
 	stmia	r1!, {r3}		/* copy to   target address [r1] */
-	cmp	r1, r2			/* until target end addreee [r2] */
+	cmp	r1, r2			/* until target end address [r2] */
 	blo	relocate_loop
-#endif	/* CONFIG_PRELOADER_EXE_ON_FPGA */
 
-#if (CONFIG_UBOOT_EXE_ON_FPGA == 0)
 	/*
 	 * Clearing the OCRAM memory that wasn't initialized during the write
 	 * of the U-Boot image
@@ -111,7 +124,19 @@ clrrmn:
 	blo	clrrmn
 
 	bx	lr
-#endif
+#endif	/* CONFIG_UBOOT_EXE_ON_FPGA */
+
+#if (CONFIG_PRELOADER_EXE_ON_FPGA == 1)
+	/* relocate the .data section to supprt preloader execute on FPGA */
+	ldr	r0, =__data_start
+	ldr	r1, =CONFIG_FPGA_DATA_BASE
+	ldr	r2, =__image_copy_end
+relocate_loop:
+	ldmia	r0!, {r3}		/* copy from source address [r0] */
+	stmia	r1!, {r3}		/* copy to   target address [r1] */
+	cmp	r1, r2			/* until target end addreee [r2] */
+	blo	relocate_loop
+#endif	/* CONFIG_PRELOADER_EXE_ON_FPGA */
 
 /*
  * Write RBF data in burst form to FPGA Manager

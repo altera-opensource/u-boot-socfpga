@@ -1,11 +1,14 @@
 /*
- * Copyright (C) 2014-2016 Altera Corporation <www.altera.com>
+ * Copyright (C) 2014-2017 Intel Corporation <www.intel.com>
  *
  * SPDX-License-Identifier:	GPL-2.0
  */
 
 #ifndef	_SOCFPGA_MISC_H_
 #define	_SOCFPGA_MISC_H_
+
+#define	REGULAR_BOOT_MAGIC	0xd15ea5e
+#define	RAM_BOOT_EN_MAGIC	0xae9efebc
 
 #ifndef __ASSEMBLY__
 void skip_relocation(void);
@@ -20,6 +23,7 @@ unsigned int uart_com_port(const void *blob);
 void set_regular_boot(unsigned int status);
 unsigned int is_regular_boot(void);
 int qspi_software_reset(void);
+void enable_ram_boot(unsigned int status, unsigned long reentrance_loc);
 #endif /* __ASSEMBLY__ */
 
 #endif /* _SOCFPGA_MISC_H_ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Altera Corporation <www.altera.com>
+ * Copyright (C) 2014-2017 Intel Corporation <www.intel.com>
  *
  * SPDX-License-Identifier:	GPL-2.0
  */
@@ -19,6 +19,7 @@
 #include <ns16550.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
 static int __do_pinctr_pins(const void *blob, int child, const char *node_name)
 {
 	int len;
@@ -234,11 +235,23 @@ void s_init(void)
 		while (!is_fpgamgr_user_mode())
 			;
 
-		if (is_regular_boot())
+		if (is_regular_boot()) {
 			set_regular_boot(false);
+/* Skip RAM Boot when booting from FPGA */
+#if (CONFIG_UBOOT_EXE_ON_FPGA == 0)
+			/* Disable RAM boot */
+			enable_ram_boot(0, CONFIG_SYS_TEXT_BASE);
+#endif
+		}
 		else {
 			set_regular_boot(true);
 			udelay(10000);
+/* Skip RAM Boot when booting from FPGA */
+#if (CONFIG_UBOOT_EXE_ON_FPGA == 0)
+			/* Enable RAM boot */
+			enable_ram_boot(RAM_BOOT_EN_MAGIC,
+				 CONFIG_SYS_TEXT_BASE);
+#endif
 #if defined(CONFIG_CADENCE_QSPI)
 			qspi_software_reset();
 #endif

@@ -30,12 +30,23 @@ SECTIONS
 	.rodata : { *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*))) }
 
 	. = ALIGN(4);
+	/* Run time .data section starting at this location */
+	__data_start = .;
 	.data : {
 		*(.data*)
 	}
+	/* Run time .data section ending at this location */
+	__data_end = .;
 
 	. = ALIGN(4);
-	.u_boot_list : {
+	/* Preserve original .data section starting at this location */
+	__preserve_data_start = .;
+	. = __preserve_data_start + (__data_end - __data_start);
+	/* Preserve original .data section ending at this location */
+	__preserve_data_end = .;
+
+	. = ALIGN(4);
+	.u_boot_list . : {
 		KEEP(*(SORT(.u_boot_list*)));
 	}
 
