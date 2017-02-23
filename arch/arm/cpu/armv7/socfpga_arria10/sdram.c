@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Altera Corporation <www.altera.com>
+ * Copyright (C) 2014-2017 Intel Corporation <www.intel.com>
  *
  * SPDX-License-Identifier:	GPL-2.0
  */
@@ -50,7 +50,7 @@ unsigned long irq_cnt_ecc_sdram = 0;
 #define CORE2SEQ_INT_REQ	0xF
 #define SEQ2CORE_INT_RESP_BIT	3
 
-#define DDR_ECC_DMA_SIZE	1500
+#define DDR_ECC_DMA_SIZE	2500
 #define DDR_READ_LATENCY_DELAY	40
 
 static const struct socfpga_ecc_hmc *socfpga_ecc_hmc_base =
