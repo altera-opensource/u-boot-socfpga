@@ -7,6 +7,7 @@
 #include <common.h>
 #include <asm/io.h>
 #include <watchdog.h>
+#include <asm/armv7.h>
 #include <asm/arch/fpga_manager.h>
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/system_manager.h>
@@ -263,4 +264,6 @@ void s_init(void)
 		reset_deassert_shared_connected_peripherals();
 		reset_deassert_fpga_connected_peripherals();
 	}
+
+	v7_outer_cache_enable();
 }
