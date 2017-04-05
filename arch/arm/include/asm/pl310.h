@@ -83,5 +83,6 @@ void pl310_inval_all(void);
 void pl310_clean_inval_all(void);
 void pl310_inval_range(u32 start, u32 end);
 void pl310_clean_inval_range(u32 start, u32 end);
+void v7_outer_cache_configuration(void);
 
 #endif

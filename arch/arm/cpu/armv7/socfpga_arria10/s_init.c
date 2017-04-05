@@ -7,7 +7,6 @@
 #include <common.h>
 #include <asm/io.h>
 #include <watchdog.h>
-#include <asm/armv7.h>
 #include <asm/arch/fpga_manager.h>
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/system_manager.h>
@@ -15,6 +14,7 @@
 #include <asm/arch/ecc_ram.h>
 #include <asm/arch/misc.h>
 #include <asm/arch/sdram.h>
+#include <asm/pl310.h>
 #include <asm/sections.h>
 #include <fdtdec.h>
 #include <ns16550.h>
@@ -265,5 +265,5 @@ void s_init(void)
 		reset_deassert_fpga_connected_peripherals();
 	}
 
-	v7_outer_cache_enable();
+	v7_outer_cache_configuration();
 }
