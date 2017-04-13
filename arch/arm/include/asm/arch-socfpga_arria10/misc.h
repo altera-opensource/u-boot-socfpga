@@ -8,6 +8,8 @@
 #define	_SOCFPGA_MISC_H_
 
 #define	REGULAR_BOOT_MAGIC	0xd15ea5e
+/* For restoring s2f module of syswarmmask register to default state */
+#define REGULAR_BOOT_S2FWARMRESET_RESTORE_MAGIC	0xd15ea5f
 #define	RAM_BOOT_EN_MAGIC	0xae9efebc
 
 #ifndef __ASSEMBLY__
@@ -20,10 +22,10 @@ unsigned int dedicated_uart_com_port(const void *blob);
 unsigned int shared_uart_com_port(const void *blob);
 void shared_uart_buffer_to_console(void);
 unsigned int uart_com_port(const void *blob);
-void set_regular_boot(unsigned int status);
+void set_regular_boot(unsigned int set);
 unsigned int is_regular_boot(void);
 int qspi_software_reset(void);
-void enable_ram_boot(unsigned int status, unsigned long reentrance_loc);
+void enable_ram_boot(unsigned int enable, unsigned long reentrance_loc);
 #endif /* __ASSEMBLY__ */
 
 #endif /* _SOCFPGA_MISC_H_ */

@@ -33,6 +33,7 @@
 #define QSPI_S25FL_SOFT_RESET_COMMAND	0x00f0ff82
 #define QSPI_N25_SOFT_RESET_COMMAND	0x00000001
 #define QSPI_NO_SOFT_RESET	0x00000000
+#define MPFE_RESET_RECOVERY_REG	7
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -398,44 +399,61 @@ unsigned int uart_com_port(const void *blob)
  * This magic number is part of boot progress tracking
  * and required by boot to initialize HW.
  */
-void set_regular_boot(unsigned int status)
+void set_regular_boot(unsigned int set)
 {
-	unsigned int ret = 0;
+	unsigned int ret =
+			readl(&reset_manager_base->syswarmmask);
+	unsigned int s2f_ret =
+			readl(&system_manager_base->
+				isw_handoff[MPFE_RESET_RECOVERY_REG]);
 
-	if (status) {
-		if (!is_early_release_fpga_config(gd->fdt_blob)) {
-			ret = readl(&reset_manager_base->syswarmmask);
+	if (set) {
+		if ((ret & ALT_RSTMGR_SYSWARMMASK_S2F_SET_MSK) &&
+			!is_early_release_fpga_config(gd->fdt_blob)) {
 			/* Masking s2f module reset */
 			writel(ret & (~ALT_RSTMGR_SYSWARMMASK_S2F_SET_MSK),
 				 &reset_manager_base->syswarmmask);
-		}
 
-		writel(REGULAR_BOOT_MAGIC,
-			&system_manager_base->isw_handoff[7]);
+			/*
+			 * Signal for restoring s2f user setting after
+			 * warm reset
+			 */
+			writel(REGULAR_BOOT_S2FWARMRESET_RESTORE_MAGIC,
+				&system_manager_base->
+					isw_handoff[MPFE_RESET_RECOVERY_REG]);
+		} else {
+			writel(REGULAR_BOOT_MAGIC,
+				&system_manager_base->
+					isw_handoff[MPFE_RESET_RECOVERY_REG]);
+		}
 	} else {
-		if (!is_early_release_fpga_config(gd->fdt_blob)) {
-			ret = readl(&reset_manager_base->syswarmmask);
+		if ((s2f_ret == REGULAR_BOOT_S2FWARMRESET_RESTORE_MAGIC) &&
+			!is_early_release_fpga_config(gd->fdt_blob)) {
 			/* Unmasking s2f module reset */
 			writel(ret | ALT_RSTMGR_SYSWARMMASK_S2F_SET_MSK,
 				&reset_manager_base->syswarmmask);
 		}
 
-		writel(0, &system_manager_base->isw_handoff[7]);
+		writel(0, &system_manager_base->
+				isw_handoff[MPFE_RESET_RECOVERY_REG]);
 	}
 }
 
 /*
  * This function is used to check whether
  * handoff register isw_handoff[7] contains
- * magic number "0xd15ea5e".
+ * magic number "0xd15ea5e" or s2f warm reset
+ * restore magic number "0xd15ea5f".
  */
 unsigned int is_regular_boot(void)
 {
 	unsigned int status;
 
-	status = readl(&system_manager_base->isw_handoff[7]);
+	status = readl(&system_manager_base->
+				isw_handoff[MPFE_RESET_RECOVERY_REG]);
 
-	if (REGULAR_BOOT_MAGIC == status)
+	if (status == REGULAR_BOOT_MAGIC ||
+		status == REGULAR_BOOT_S2FWARMRESET_RESTORE_MAGIC)
 		return 1;
 	else
 		return 0;
