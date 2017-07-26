@@ -22,7 +22,7 @@ void do_irq (struct pt_regs *pt_regs)
 	intrID = gic_cpu_get_pending_intr();
 
 	/* check whether interrupt ID is registered of not */
-	for (i = 0; i < (MAX_INT_VECTORS + 1); i++) {
+	for (i = 0; i < MAX_INT_VECTORS; i++) {
 		if (interrupt_vectors[i].intrID == intrID)
 			break;
 	}
