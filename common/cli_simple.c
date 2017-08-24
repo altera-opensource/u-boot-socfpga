@@ -13,6 +13,7 @@
 #include <bootretry.h>
 #include <cli.h>
 #include <linux/ctype.h>
+#include <linux/string.h>
 
 #define DEBUG_PARSER	0	/* set to 1 to debug */
 
@@ -275,7 +276,8 @@ void cli_simple_loop(void)
 
 		flag = 0;	/* assume no special flags for now */
 		if (len > 0)
-			strcpy(lastcommand, console_buffer);
+			strlcpy(lastcommand, console_buffer,
+				CONFIG_SYS_CBSIZE + 1);
 		else if (len == 0)
 			flag |= CMD_FLAG_REPEAT;
 #ifdef CONFIG_BOOT_RETRY_TIME
