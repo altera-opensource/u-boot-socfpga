@@ -371,8 +371,10 @@
 /* Boot Argument Buffer Size */
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 
+#ifndef CONFIG_SEMIHOSTING
 /* Enable pre-console buffer */
 #define CONFIG_PRE_CONSOLE_BUFFER
+#endif
 
 /* Size of pre-console buffer (in bytes) */
 #define CONFIG_PRE_CON_BUF_SZ 256

@@ -13,6 +13,7 @@
  * for them.
  */
 #include <common.h>
+#include <command.h>
 #include <asm/semihosting.h>
 
 #define SYSOPEN		0x01
@@ -259,3 +260,72 @@ int smh_getc(void)
 {
 	return smh_trap(SYSREADC, NULL);
 }
+
+static int smh_load_file(const char * const name, ulong load_addr,
+			 ulong *end_addr)
+{
+	long fd;
+	long len;
+	long ret;
+
+	fd = smh_open(name, "rb");
+	if (fd == -1)
+		return -1;
+
+	len = smh_len_fd(fd);
+	if (len < 0) {
+		smh_close(fd);
+		return -1;
+	}
+
+	ret = smh_read(fd, (void *)load_addr, len);
+	smh_close(fd);
+
+	if (ret == 0) {
+		*end_addr = load_addr + len - 1;
+		printf("loaded file %s from %08lX to %08lX, %08lX bytes\n",
+		       name,
+		       load_addr,
+		       *end_addr,
+		       len);
+	} else {
+		printf("read failed\n");
+		return 0;
+	}
+
+	return 0;
+}
+
+static int do_smhload(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	if (argc == 3 || argc == 4) {
+		ulong load_addr;
+		ulong end_addr = 0;
+		int ret;
+		char end_str[64];
+
+		load_addr = simple_strtoul(argv[2], NULL, 16);
+		if (!load_addr)
+			return -1;
+
+		ret = smh_load_file(argv[1], load_addr, &end_addr);
+		if (ret < 0)
+			return CMD_RET_FAILURE;
+
+		/* Optionally save returned end to the environment */
+		if (argc == 4) {
+			sprintf(end_str, "0x%08lx", end_addr);
+			setenv(argv[3], end_str);
+		}
+	} else {
+		return CMD_RET_USAGE;
+	}
+	return 0;
+}
+
+U_BOOT_CMD(smhload, 4, 0, do_smhload, "load a file using semihosting",
+	   "<file> 0x<address> [end var]\n"
+	   "    - load a semihosted file to the address specified\n"
+	   "      if the optional [end var] is specified, the end\n"
+	   "      address of the file will be stored in this environment\n"
+	   "      variable.\n");
