@@ -20,8 +20,13 @@ static const struct socfpga_reset_manager *reset_manager_base =
 void reset_cpu(ulong addr)
 {
 	/* request a warm reset */
+#if defined(CONFIG_TARGET_SOCFPGA_STRATIX10)
+	writel((1 << RSTMGR_MPUMODRST_CORE0),
+		&reset_manager_base->mpu_mod_reset);
+#else
 	writel(1 << RSTMGR_CTRL_SWWARMRSTREQ_LSB,
 	       &reset_manager_base->ctrl);
+#endif
 	/*
 	 * infinite loop here as watchdog will trigger and reset
 	 * the processor
