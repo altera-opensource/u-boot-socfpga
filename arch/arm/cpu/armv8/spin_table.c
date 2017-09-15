@@ -8,6 +8,7 @@
 #include <common.h>
 #include <libfdt.h>
 #include <asm/spin_table.h>
+#include <asm/io.h>
 
 int spin_table_update_dt(void *fdt)
 {
@@ -55,6 +56,9 @@ int spin_table_update_dt(void *fdt)
 	ret = fdt_add_mem_rsv(fdt, rsv_addr, rsv_size);
 	if (ret)
 		return -ENOSPC;
+
+	/* update the spin loop table start address to cpu_release_addr */
+	writeq(rsv_addr, CPU_RELEASE_ADDR);
 
 	printf("   Reserved memory region for spin-table: addr=%lx size=%lx\n",
 	       rsv_addr, rsv_size);
