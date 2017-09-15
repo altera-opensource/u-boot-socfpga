@@ -1,0 +1,141 @@
+/*
+ * Copyright (C) 2016-2017 Intel Corporation <www.intel.com>
+ *
+ * SPDX-License-Identifier:	GPL-2.0
+ */
+
+/dts-v1/;
+#include "skeleton.dtsi"
+#include <dt-bindings/reset/altr,rst-mgr-s10.h>
+
+/ {
+	model = "Intel SOCFPGA Stratix 10 SoC Development Kit";
+	compatible = "altr,socfpga-stratix10", "altr,socfpga";
+
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	chosen {
+		bootargs = "console=ttyS0,115200";
+	};
+
+	aliases {
+		ethernet0 = &gmac0;
+		spi0 = &qspi;
+	};
+
+	memory {
+		name = "memory";
+		device_type = "memory";
+		reg = <0x0 0x80000000>; /* 2GB */
+	};
+
+	regulator_3_3v: 3-3-v-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "3.3V";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+	};
+
+	soc {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "simple-bus";
+		device_type = "soc";
+		ranges;
+		u-boot,dm-pre-reloc;
+
+		rst: rstmgr@ffd11000 {
+			#reset-cells = <1>;
+			compatible = "altr,rst-mgr";
+			reg = <0xffd11000 0x100>;
+			altr,modrst-offset = <0x20>;
+		};
+
+		gmac0: ethernet@ff800000 {
+			compatible = "altr,socfpga-stmmac", "snps,dwmac-3.74a", "snps,dwmac";
+			reg = <0xff800000 0x2000>;
+			interrupts = <0 90 4>;
+			interrupt-names = "macirq";
+			mac-address = [00 00 00 00 00 00];
+			resets = <&rst EMAC0_RESET>;
+			reset-names = "stmmaceth";
+			phy-mode = "rgmii";
+			phy-addr = <0xffffffff>; /* probe for phy addr */
+			max-speed = <1000>;
+			txd0-skew-ps = <0>; /* -420ps */
+			txd1-skew-ps = <0>; /* -420ps */
+			txd2-skew-ps = <0>; /* -420ps */
+			txd3-skew-ps = <0>; /* -420ps */
+			rxd0-skew-ps = <420>; /* 0ps */
+			rxd1-skew-ps = <420>; /* 0ps */
+			rxd2-skew-ps = <420>; /* 0ps */
+			rxd3-skew-ps = <420>; /* 0ps */
+			txen-skew-ps = <0>; /* -420ps */
+			txc-skew-ps = <1860>; /* 960ps */
+			rxdv-skew-ps = <420>; /* 0ps */
+			rxc-skew-ps = <1680>; /* 780ps */
+			status = "okay";
+		};
+
+		mmc0: dwmmc0@0xff808000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "altr,socfpga-dw-mshc";
+			reg = <0xff808000 0x1000>;
+			interrupts = <0 96 4>;
+			num-slots = <1>;
+			broken-cd;
+			bus-width = <4>;
+			fifo-depth = <0x400>;
+			cap-mmc-highspeed;
+			cap-sd-highspeed;
+			drvsel = <3>;
+			smplsel = <0>;
+			status = "okay";
+			u-boot,dm-pre-reloc;
+			vmmc-supply = <&regulator_3_3v>;
+			vqmmc-supply = <&regulator_3_3v>;
+		};
+
+		uart0: serial0@ffc02000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0xffc02000 0x1000>;
+			interrupts = <0 108 4>;
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			status = "okay";
+		};
+
+		qspi: spi@ff8d2000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "cadence,qspi";
+			reg = <0xff8d2000 0x100>,
+				<0xff900000 0x100000>;
+			interrupts = <0 98 4>;
+			sram-size = <1024>;
+			bus-num = <0>;
+			spi-max-frequency = <50000000>;
+			spi-tx-bus-width = <1>;
+			spi-rx-bus-width = <4>;
+			status = "okay";
+			u-boot,dm-pre-reloc;
+
+			flash0: n25q1024a@0 {
+				u-boot,dm-pre-reloc;
+				#address-cells = <1>;
+				#size-cells = <1>;
+				compatible = "stmicro,n25q1024a";
+				reg = <0>;      /* chip select */
+				spi-max-frequency = <50000000>;
+				page-size = <256>;
+				block-size = <16>; /* 2^16, 64KB */
+				tshsl-ns = <50>;
+				tsd2d-ns = <50>;
+				tchsh-ns = <4>;
+				tslch-ns = <4>;
+			};
+		};
+	};
+};
