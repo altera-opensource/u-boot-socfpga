@@ -560,8 +560,7 @@ int cadence_qspi_apb_indirect_read_setup(struct cadence_spi_platdata *plat,
 		addr_bytes = cmdlen - 1;
 
 	/* Setup the indirect trigger address */
-	writel((u32)plat->ahbbase,
-	       plat->regbase + CQSPI_REG_INDIRECTTRIGGER);
+	writel(0, plat->regbase + CQSPI_REG_INDIRECTTRIGGER);
 
 	/* Configure the opcode */
 	rd_reg = cmdbuf[0] << CQSPI_REG_RD_INSTR_OPCODE_LSB;
@@ -710,8 +709,7 @@ int cadence_qspi_apb_indirect_write_setup(struct cadence_spi_platdata *plat,
 		return -EINVAL;
 	}
 	/* Setup the indirect trigger address */
-	writel((u32)plat->ahbbase,
-	       plat->regbase + CQSPI_REG_INDIRECTTRIGGER);
+	writel(0, plat->regbase + CQSPI_REG_INDIRECTTRIGGER);
 
 	/* Configure the opcode */
 	reg = cmdbuf[0] << CQSPI_REG_WR_INSTR_OPCODE_LSB;
