@@ -105,6 +105,9 @@ void board_init_f(ulong dummy)
 	/* enables nonsecure access to clock mgr */
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->clock_manager);
 
+	/* enables nonsecure access to reset mgr */
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->reset_manager);
+
 	/* enables nonsecure access to OCRAM */
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->ocram_ecc);
 
