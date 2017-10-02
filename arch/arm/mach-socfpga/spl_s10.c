@@ -102,6 +102,10 @@ void board_init_f(ulong dummy)
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->usb0);
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->usb1);
 
+	/* enables nonsecure access to gpio0 and gpio1 */
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->gpio0);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->gpio1);
+
 	/* disable lwsocf2fpga and soc2fpga bridge security */
 	writel(FIREWALL_BRIDGE_DISABLE_ALL, SOCFPGA_FIREWALL_SOC2FPGA);
 	writel(FIREWALL_BRIDGE_DISABLE_ALL, SOCFPGA_FIREWALL_LWSOC2FPGA);
