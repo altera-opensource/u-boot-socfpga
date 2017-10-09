@@ -80,10 +80,46 @@ void board_init_f(ulong dummy)
 	/* enable PL330 DMA */
 	socfpga_per_reset(SOCFPGA_RESET(DMA), 0);
 
-	/* enable all EMACs */
+	/*
+	 * The following lines of code will enable non-secure access
+	 * to nand, usb, spi, emac, sdmmc, gpio, i2c, and timers. This
+	 * is needed as most OS run in non-secure mode. Thus we need to
+	 * enable non-secure access to these peripherals in order for the
+	 * OS to use these peripherals.
+	 */
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->nand);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->nand_data);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->usb0);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->usb1);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->spim0);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->spim1);
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->emac0);
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->emac1);
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->emac2);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->sdmmc);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->sdmmc_ecc);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->gpio0);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->gpio1);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->i2c0);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->i2c1);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->i2c2);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->i2c3);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->i2c4);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->timer0);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->timer1);
+
+	/* enables nonsecure access to clock mgr */
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->clock_manager);
+
+	/* enables nonsecure access to reset mgr */
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->reset_manager);
+
+	/* enables nonsecure access to system mgr */
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->system_manager);
+
+	/* enables nonsecure access to OCRAM */
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->ocram_ecc);
+
 	/* enables nonsecure access to all the emacs */
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->emac0rx_ecc);
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->emac0tx_ecc);
@@ -95,37 +131,12 @@ void board_init_f(ulong dummy)
 	/* enables SDMMC */
 	socfpga_per_reset(SOCFPGA_RESET(SDMMC_OCP), 0);
 	socfpga_per_reset(SOCFPGA_RESET(SDMMC), 0);
-	/* Enables nonsecure access to SDMMC */
-	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->sdmmc);
-	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->sdmmc_ecc);
-
 	/* enable i2c0 and i2c1 */
 	socfpga_per_reset(SOCFPGA_RESET(I2C0), 0);
 	socfpga_per_reset(SOCFPGA_RESET(I2C1), 0);
-	/* enables nonsecure access to i2c0 and i2c1 */
-	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->i2c0);
-	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->i2c1);
-
-	/* enables nonsecure access to usb0 and usb1 */
-	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->usb0);
-	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->usb1);
-
-	/* enables nonsecure access to gpio0 and gpio1 */
-	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->gpio0);
-	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->gpio1);
-
 	/* disable lwsocf2fpga and soc2fpga bridge security */
 	writel(FIREWALL_BRIDGE_DISABLE_ALL, SOCFPGA_FIREWALL_SOC2FPGA);
 	writel(FIREWALL_BRIDGE_DISABLE_ALL, SOCFPGA_FIREWALL_LWSOC2FPGA);
-
-	/* enables nonsecure access to clock mgr */
-	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->clock_manager);
-
-	/* enables nonsecure access to reset mgr */
-	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->reset_manager);
-
-	/* enables nonsecure access to OCRAM */
-	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->ocram_ecc);
 
 	/* disable ocram security at CCU for non secure access */
 	clrbits_le32(CCU_CPU0_MPRT_ADMASK_MEM_RAM0_ADDR,
