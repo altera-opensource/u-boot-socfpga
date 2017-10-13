@@ -76,6 +76,8 @@ void board_init_f(ulong dummy)
 
 	/* enable non-secure interface to PL330 DMA */
 	writel(SYSMGR_DMA_IRQ_NS | SYSMGR_DMA_MGR_NS, &sysmgr_regs->dma);
+	/* enable PL330 DMA */
+	socfpga_per_reset(SOCFPGA_RESET(DMA), 0);
 
 	/* enable all EMACs */
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->emac0);
