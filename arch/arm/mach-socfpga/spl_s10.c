@@ -23,6 +23,8 @@ static const struct socfpga_firwall_l4_per *firwall_l4_per_base =
 	(struct socfpga_firwall_l4_per *)SOCFPGA_FIREWALL_L4_PER;
 static const struct socfpga_firwall_l4_sys *firwall_l4_sys_base =
 	(struct socfpga_firwall_l4_sys *)SOCFPGA_FIREWALL_L4_SYS;
+static struct socfpga_system_manager *sysmgr_regs =
+	(struct socfpga_system_manager *)SOCFPGA_SYSMGR_ADDRESS;
 
 u32 spl_boot_device(void)
 {
@@ -71,6 +73,9 @@ void board_init_f(ulong dummy)
 
 	preloader_console_init();
 	cm_print_clock_quick_summary();
+
+	/* enable non-secure interface to PL330 DMA */
+	writel(SYSMGR_DMA_IRQ_NS | SYSMGR_DMA_MGR_NS, &sysmgr_regs->dma);
 
 	/* enable all EMACs */
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->emac0);

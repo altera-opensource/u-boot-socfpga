@@ -166,4 +166,7 @@ struct socfpga_system_manager {
 #define SYSMGR_NOC_LWH2F_MSK		0x00000010
 #define SYSMGR_HMC_CLK_STATUS_MSK	0x00000001
 
+#define SYSMGR_DMA_IRQ_NS		0xFF000000
+#define SYSMGR_DMA_MGR_NS		0x00010000
+
 #endif /* _SYSTEM_MANAGER_S10_ */
