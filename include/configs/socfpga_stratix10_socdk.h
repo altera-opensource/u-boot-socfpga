@@ -19,6 +19,7 @@
 #define CONFIG_REMAKE_ELF
 #define CPU_RELEASE_ADDR		0x80
 #define CONFIG_SYS_CACHELINE_SIZE 	64
+#define CONFIG_SYS_MEM_RESERVE_SECURE	0	/* using OCRAM, not DDR */
 
 /*
  * U-Boot console configurations
