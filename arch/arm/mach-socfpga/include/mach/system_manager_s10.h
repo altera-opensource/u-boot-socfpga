@@ -169,4 +169,6 @@ struct socfpga_system_manager {
 #define SYSMGR_DMA_IRQ_NS		0xFF000000
 #define SYSMGR_DMA_MGR_NS		0x00010000
 
+#define SYSMGR_DMAPERIPH_ALL_NS		0xFFFFFFFF
+
 #endif /* _SYSTEM_MANAGER_S10_ */

@@ -74,8 +74,9 @@ void board_init_f(ulong dummy)
 	preloader_console_init();
 	cm_print_clock_quick_summary();
 
-	/* enable non-secure interface to PL330 DMA */
+	/* enable non-secure interface to PL330 DMA and peripherals */
 	writel(SYSMGR_DMA_IRQ_NS | SYSMGR_DMA_MGR_NS, &sysmgr_regs->dma);
+	writel(SYSMGR_DMAPERIPH_ALL_NS, &sysmgr_regs->dma_periph);
 	/* enable PL330 DMA */
 	socfpga_per_reset(SOCFPGA_RESET(DMA), 0);
 
