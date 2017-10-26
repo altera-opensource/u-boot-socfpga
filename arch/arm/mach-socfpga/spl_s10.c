@@ -131,9 +131,7 @@ void board_init_f(ulong dummy)
 	/* enables SDMMC */
 	socfpga_per_reset(SOCFPGA_RESET(SDMMC_OCP), 0);
 	socfpga_per_reset(SOCFPGA_RESET(SDMMC), 0);
-	/* enable i2c0 and i2c1 */
-	socfpga_per_reset(SOCFPGA_RESET(I2C0), 0);
-	socfpga_per_reset(SOCFPGA_RESET(I2C1), 0);
+
 	/* disable lwsocf2fpga and soc2fpga bridge security */
 	writel(FIREWALL_BRIDGE_DISABLE_ALL, SOCFPGA_FIREWALL_SOC2FPGA);
 	writel(FIREWALL_BRIDGE_DISABLE_ALL, SOCFPGA_FIREWALL_LWSOC2FPGA);
