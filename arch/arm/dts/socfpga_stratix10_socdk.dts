@@ -107,6 +107,21 @@
 			status = "okay";
 		};
 
+		usbphy0: usbphy@0 {
+			#phy-cells = <0>;
+			compatible = "usb-nop-xceiv";
+			status = "okay";
+		};
+
+		usb0: usb@ffb00000 {
+			compatible = "snps,dwc2";
+			reg = <0xffb00000 0xffff>;
+			interrupts = <0 93 4>;
+			phys = <&usbphy0>;
+			phy-names = "usb2-phy";
+			status = "okay";
+		};
+
 		qspi: spi@ff8d2000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
