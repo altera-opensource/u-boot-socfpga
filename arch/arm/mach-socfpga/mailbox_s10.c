@@ -216,8 +216,17 @@ int mbox_qspi_open(void)
 	int ret;
 
 	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_QSPI_OPEN, 0, NULL, 0, 0, NULL);
-	if (ret)
-		return ret;
+	if (ret) {
+		/* retry again by closing and reopen the QSPI again */
+		ret = mbox_qspi_close();
+		if (ret)
+			return ret;
+
+		ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_QSPI_OPEN, 0, NULL, 0,
+				    0, NULL);
+		if (ret)
+			return ret;
+	}
 
 	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_QSPI_DIRECT, 0, NULL, 0, 0, NULL);
 	if (ret)
