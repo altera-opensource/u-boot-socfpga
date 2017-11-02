@@ -88,7 +88,7 @@ void board_init_f(ulong dummy)
 	 * OS to use these peripherals.
 	 */
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->nand);
-	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->nand_data);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->nand_data);
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->usb0);
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->usb1);
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->spim0);
