@@ -130,8 +130,43 @@ int arch_misc_init(void)
 }
 #endif
 
+#ifdef CONFIG_FPGA
+/*
+ * FPGA programming support for SoC FPGA Stratix 10
+ */
+static Altera_desc altera_fpga[] = {
+	{
+		/* Family */
+		Intel_FPGA_Stratix10,
+		/* Interface type */
+		secure_device_manager_mailbox,
+		/* No limitation as additional data will be ignored */
+		-1,
+		/* No device function table */
+		NULL,
+		/* Base interface address specified in driver */
+		NULL,
+		/* No cookie implementation */
+		0
+	},
+};
+
+/* add device descriptor to FPGA device table */
+static void socfpga_fpga_add(void)
+{
+	int i;
+	fpga_init();
+	for (i = 0; i < ARRAY_SIZE(altera_fpga); i++)
+		fpga_add(fpga_altera, &altera_fpga[i]);
+}
+#endif
+
 int arch_early_init_r(void)
 {
+#ifdef CONFIG_FPGA
+	socfpga_fpga_add();
+#endif
+
 	return 0;
 }
 

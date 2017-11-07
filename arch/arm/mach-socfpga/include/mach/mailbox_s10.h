@@ -74,6 +74,9 @@ typedef enum
 
 /* Mailbox command list */
 #define MBOX_RESTART		2
+#define MBOX_CONFIG_STATUS	4
+#define MBOX_RECONFIG_MSEL	7
+#define MBOX_RECONFIG_STATUS	9
 #define MBOX_QSPI_OPEN		50
 #define MBOX_QSPI_CLOSE		51
 #define MBOX_QSPI_DIRECT	59
@@ -98,6 +101,8 @@ struct socfpga_mailbox {
 #define MBOX_DOORBELL_TO_SDM_REG	(SOCFPGA_MAILBOX_ADDRESS + 0x400)
 #define MBOX_DOORBELL_FROM_SDM_REG	(SOCFPGA_MAILBOX_ADDRESS + 0x480)
 
+int mbox_send_cmd(u8 id, u32 cmd, u32 len, u32 *arg, u8 urgent,
+			u32 *resp_buf_len, u32 *resp_buf);
 int mbox_init(void);
 
 #ifdef CONFIG_CADENCE_QSPI
