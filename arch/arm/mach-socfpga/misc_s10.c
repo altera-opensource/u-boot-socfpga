@@ -126,6 +126,11 @@ int print_cpuinfo(void)
 #ifdef CONFIG_ARCH_MISC_INIT
 int arch_misc_init(void)
 {
+	char qspi_string[13];
+
+	sprintf(qspi_string, "<0x%08x>", cm_get_qspi_controller_clk_hz());
+	env_set("qspi_clock", qspi_string);
+
 	return socfpga_eth_reset();
 }
 #endif
