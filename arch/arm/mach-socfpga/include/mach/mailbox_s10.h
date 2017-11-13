@@ -77,6 +77,7 @@ typedef enum
 #define MBOX_QSPI_OPEN		50
 #define MBOX_QSPI_CLOSE		51
 #define MBOX_QSPI_DIRECT	59
+#define MBOX_REBOOT_HPS		71
 
 struct socfpga_mailbox {
 	u32 cin;		/* command valid offset */
@@ -103,5 +104,7 @@ int mbox_init(void);
 int mbox_qspi_close(void);
 int mbox_qspi_open(void);
 #endif
+
+int mbox_reset_cold(void);
 
 #endif /* _MAILBOX_S10_H_ */

@@ -9,10 +9,16 @@
 #include <asm/io.h>
 #include <asm/arch/reset_manager.h>
 
+#if defined(CONFIG_TARGET_SOCFPGA_STRATIX10)
+#include <asm/arch/mailbox_s10.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
+#if !defined(CONFIG_TARGET_SOCFPGA_STRATIX10)
 static const struct socfpga_reset_manager *reset_manager_base =
 		(void *)SOCFPGA_RSTMGR_ADDRESS;
+#endif
 
 /*
  * Write the reset manager register to cause reset
@@ -21,8 +27,8 @@ void reset_cpu(ulong addr)
 {
 	/* request a warm reset */
 #if defined(CONFIG_TARGET_SOCFPGA_STRATIX10)
-	writel((1 << RSTMGR_MPUMODRST_CORE0),
-		&reset_manager_base->mpu_mod_reset);
+	puts("Mailbox: Issuing mailbox cmd REBOOT_HPS\n");
+	mbox_reset_cold();
 #else
 	writel(1 << RSTMGR_CTRL_SWWARMRSTREQ_LSB,
 	       &reset_manager_base->ctrl);

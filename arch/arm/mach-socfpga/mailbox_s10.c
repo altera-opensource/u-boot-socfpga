@@ -232,3 +232,17 @@ error:
 }
 #endif /* CONFIG_CADENCE_QSPI */
 
+int mbox_reset_cold(void)
+{
+	int ret;
+
+	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_REBOOT_HPS, 0, NULL, 0, 0,
+			    NULL);
+	if (ret) {
+		/* mailbox sent failure, wait for watchdog to kick in */
+		while (1)
+			;
+	}
+	return 0;
+}
+
