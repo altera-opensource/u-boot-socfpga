@@ -8,11 +8,14 @@
 #include <wait_bit.h>
 #include <asm/io.h>
 #include <asm/arch/mailbox_s10.h>
+#include <asm/arch/system_manager.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 static const struct socfpga_mailbox *mbox_base =
 		(void *)SOCFPGA_MAILBOX_ADDRESS;
+static const struct socfpga_system_manager *sysmgr_regs =
+		(struct socfpga_system_manager *)SOCFPGA_SYSMGR_ADDRESS;
 
 #define MBOX_POLL_RESP_TIMEOUT		50 /* ms */
 
@@ -214,6 +217,8 @@ int mbox_qspi_close(void)
 int mbox_qspi_open(void)
 {
 	int ret;
+	u32 resp_buf[1];
+	u32 resp_buf_len;
 
 	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_QSPI_OPEN, 0, NULL, 0, 0, NULL);
 	if (ret) {
@@ -228,11 +233,18 @@ int mbox_qspi_open(void)
 			return ret;
 	}
 
-	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_QSPI_DIRECT, 0, NULL, 0, 0, NULL);
+	/* HPS will directly control the QSPI controller, no longer mailbox */
+	resp_buf_len = 1;
+	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_QSPI_DIRECT, 0, NULL, 0,
+			    (u32 *)&resp_buf_len, (u32 *)&resp_buf);
 	if (ret)
 		goto error;
 
-	return ret;
+	/* We are getting QSPI ref clock and set into sysmgr boot register */
+	printf("QSPI: Reference clock at %d Hz\n", resp_buf[0]);
+	writel(resp_buf[0], &sysmgr_regs->boot_scratch_cold0);
+
+	return 0;
 
 error:
 	mbox_qspi_close();

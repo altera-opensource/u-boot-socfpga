@@ -8,11 +8,14 @@
 #include <asm/io.h>
 #include <asm/arch/clock_manager.h>
 #include <asm/arch/handoff_s10.h>
+#include <asm/arch/system_manager.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 static const struct socfpga_clock_manager *clock_manager_base =
 	(struct socfpga_clock_manager *)SOCFPGA_CLKMGR_ADDRESS;
+static const struct socfpga_system_manager *sysmgr_regs =
+		(struct socfpga_system_manager *)SOCFPGA_SYSMGR_ADDRESS;
 
 /*
  * function to write the bypass register which requires a poll of the
@@ -343,6 +346,11 @@ unsigned int cm_get_l4_sp_clk_hz(void)
 	clock /= (1 << ((readl(&clock_manager_base->main_pll.nocdiv) >>
 		  CLKMGR_NOCDIV_L4SPCLK_OFFSET) & CLKMGR_CLKCNT_MSK));
 	return clock;
+}
+
+unsigned int cm_get_qspi_controller_clk_hz(void)
+{
+	return readl(&sysmgr_regs->boot_scratch_cold0);
 }
 
 void cm_print_clock_quick_summary(void)
