@@ -147,6 +147,9 @@ void board_init_f(ulong dummy)
 	clrbits_le32(CCU_IOM_MPRT_ADMASK_MEM_RAM0_ADDR,
 		     CCU_ADMASK_P_MASK | CCU_ADMASK_NS_MASK);
 
+	/* enable i2c1 */
+	socfpga_per_reset(SOCFPGA_RESET(I2C1), 0);
+
 	puts("DDR: Initializing Hard Memory Controller\n");
 	if (sdram_mmr_init_full(0)) {
 		puts("DDR: Initialization failed.\n");

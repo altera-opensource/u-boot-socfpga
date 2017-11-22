@@ -184,6 +184,16 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 #define CONFIG_PHY_GIGE
 #endif /* CONFIG_CMD_NET */
 
+/*
+ * I2C support
+ */
+#ifdef CONFIG_SYS_I2C_DW
+#ifndef __ASSEMBLY__
+/* Clock supplied to I2C controller in unit of MHz */
+unsigned int cm_get_l4_sp_clk_hz(void);
+#define IC_CLK                         (cm_get_l4_sp_clk_hz() / 1000000)
+#endif
+#endif /* CONFIG_SYS_I2C_DW */
 
 /*
  * SPL memory layout
