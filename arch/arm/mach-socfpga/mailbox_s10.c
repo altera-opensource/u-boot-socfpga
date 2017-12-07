@@ -103,6 +103,8 @@ int mbox_send_cmd(u8 id, u32 cmd, u32 len, u32 *arg, u8 urgent,
 		return ret;
 
 	if (urgent) {
+		/* Read status because it is toggled */
+		status = readl(&mbox_base->status) & MBOX_STATUS_UA_MSK;
 		/* Send command as urgent command */
 		writel(1, &mbox_base->urg);
 	}
@@ -123,10 +125,11 @@ int mbox_send_cmd(u8 id, u32 cmd, u32 len, u32 *arg, u8 urgent,
 		writel(0, MBOX_DOORBELL_FROM_SDM_REG);
 
 		if (urgent) {
-			/* urgent command doesn't has response */
+			u32 new_status = readl(&mbox_base->status);
+			/* urgent command doesn't have response */
 			writel(0, &mbox_base->urg);
-			status = readl(&mbox_base->status);
-			if (status & MBOX_STATUS_UA_MSK)
+			/* Urgent ACK is toggled */
+			if ((new_status & MBOX_STATUS_UA_MSK) ^ status)
 				return 0;
 
 			error("mailbox: cmd %d no urgent ACK\n", cmd);
