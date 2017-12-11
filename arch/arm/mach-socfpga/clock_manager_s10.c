@@ -60,7 +60,7 @@ void cm_basic_init(const struct cm_config * const cfg)
 		CLKMGR_FDBCK_MDIV_MASK;
 	refclkdiv = (cfg->main_pll_pllglob >> CLKMGR_PLLGLOB_REFCLKDIV_OFFSET) &
 		     CLKMGR_PLLGLOB_REFCLKDIV_MASK;
-	mscnt = 200 / (6 + mdiv) / refclkdiv;
+	mscnt = 200 / (6 + (mdiv / refclkdiv));
 	hscnt = (mdiv + 6) * mscnt / refclkdiv - 9;
 	vcocalib = (hscnt & CLKMGR_VCOCALIB_HSCNT_MASK) |
 		   ((mscnt & CLKMGR_VCOCALIB_MSCNT_MASK) <<
@@ -80,7 +80,7 @@ void cm_basic_init(const struct cm_config * const cfg)
 		CLKMGR_FDBCK_MDIV_MASK;
 	refclkdiv = (cfg->per_pll_pllglob >> CLKMGR_PLLGLOB_REFCLKDIV_OFFSET) &
 		     CLKMGR_PLLGLOB_REFCLKDIV_MASK;
-	mscnt = 200 / (6 + mdiv) / refclkdiv;
+	mscnt = 200 / (6 + (mdiv / refclkdiv));
 	hscnt = (mdiv + 6) * mscnt / refclkdiv - 9;
 	vcocalib = (hscnt & CLKMGR_VCOCALIB_HSCNT_MASK) |
 		   ((mscnt & CLKMGR_VCOCALIB_MSCNT_MASK) <<
