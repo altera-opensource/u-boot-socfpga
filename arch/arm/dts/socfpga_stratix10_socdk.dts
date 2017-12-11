@@ -22,6 +22,7 @@
 	aliases {
 		ethernet0 = &gmac0;
 		spi0 = &qspi;
+		i2c0 = &i2c;
 	};
 
 	memory {
@@ -151,6 +152,15 @@
 				tchsh-ns = <4>;
 				tslch-ns = <4>;
 			};
+		};
+
+		i2c: i2c@ffc02900 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "snps,designware-i2c";
+			reg = <0xffc02900 0x100>;
+			interrupts = <0 104 0x4>;
+			status = "okay";
 		};
 	};
 };
