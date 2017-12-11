@@ -9,48 +9,42 @@
 #include <asm/io.h>
 #include <asm/arch/mailbox_s10.h>
 #include <asm/arch/system_manager.h>
+#include <asm/secure.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static const struct socfpga_mailbox *mbox_base =
-		(void *)SOCFPGA_MAILBOX_ADDRESS;
-static const struct socfpga_system_manager *sysmgr_regs =
-		(struct socfpga_system_manager *)SOCFPGA_SYSMGR_ADDRESS;
-
-#define MBOX_POLL_RESP_TIMEOUT		50 /* ms */
-
-static int mbox_polling_resp(u32 rout)
+static __always_inline int mbox_polling_resp(u32 rout)
 {
+	static const struct socfpga_mailbox *mbox_base =
+					(void *)SOCFPGA_MAILBOX_ADDRESS;
 	u32 rin;
-	unsigned long start = get_timer(0);
+	unsigned long i = ~0;
 
-	while(1) {
+	while (i) {
 		rin = readl(&mbox_base->rin);
 		if (rout != rin)
 			return 0;
 
-		if (get_timer(start) > MBOX_POLL_RESP_TIMEOUT)
-			break;
-
-		udelay(1);
+		i--;
 	}
 
-	debug("mailbox: polling response timeout\n");
 	return -ETIMEDOUT;
 }
 
 /* Check for available slot and write to circular buffer.
  * It also update command valid offset (cin) register.
  */
-static int mbox_fill_cmd_circular_buff(u32 header, u32 len, u32 *arg)
+static __always_inline int mbox_fill_cmd_circular_buff(u32 header, u32 len,
+						     u32 *arg)
 {
+	static const struct socfpga_mailbox *mbox_base =
+					(void *)SOCFPGA_MAILBOX_ADDRESS;
 	u32 cmd_free_offset;
 	u32 i;
 
 	/* checking available command free slot */
 	cmd_free_offset = readl(&mbox_base->cout);
 	if (cmd_free_offset >= MBOX_CMD_BUFFER_SIZE) {
-		error("ERROR: Not enough space, cout %d\n", cmd_free_offset);
 		return -ENOMEM;
 	}
 
@@ -72,9 +66,12 @@ static int mbox_fill_cmd_circular_buff(u32 header, u32 len, u32 *arg)
 }
 
 /* Support one command and up to 31 words argument length only */
-int mbox_send_cmd(u8 id, u32 cmd, u32 len, u32 *arg, u8 urgent,
-			u32 *resp_buf_len, u32 *resp_buf)
+static __always_inline int __mbox_send_cmd(u8 id, u32 cmd, u32 len, u32 *arg,
+				u8 urgent, u32 *resp_buf_len, u32 *resp_buf)
 {
+	static const struct socfpga_mailbox *mbox_base =
+					(void *)SOCFPGA_MAILBOX_ADDRESS;
+
 	u32 header;
 	u32 rin;
 	u32 resp;
@@ -86,13 +83,10 @@ int mbox_send_cmd(u8 id, u32 cmd, u32 len, u32 *arg, u8 urgent,
 
 	/* Total lenght is command + argument length */
 	if ((len + 1) > MBOX_CMD_BUFFER_SIZE) {
-		error("ERROR: command %d arguments too long, max %d\n", cmd,
-			MBOX_CMD_BUFFER_SIZE - 1);
 		return -EINVAL;
 	}
 
 	if (cmd > MBOX_MAX_CMD_INDEX) {
-		error("ERROR: Unsupported command index %d\n", cmd);
 		return -EINVAL;
 	}
 
@@ -113,12 +107,13 @@ int mbox_send_cmd(u8 id, u32 cmd, u32 len, u32 *arg, u8 urgent,
 	writel(1, MBOX_DOORBELL_TO_SDM_REG);
 
 	while (1) {
+		ret = ~0;
+
 		/* Wait for doorbell from SDM */
-		ret = wait_for_bit(__func__, (const u32 *)MBOX_DOORBELL_FROM_SDM_REG,
-			   1, true, 500000, false);
-		if (ret) {
-			error("mailbox: timeout from SDM\n");
-			return ret;
+		while (!readl(MBOX_DOORBELL_FROM_SDM_REG) && ret--)
+			;
+		if (!ret) {
+			return -ETIMEDOUT;
 		}
 
 		/* clear interrupt */
@@ -132,8 +127,7 @@ int mbox_send_cmd(u8 id, u32 cmd, u32 len, u32 *arg, u8 urgent,
 			if ((new_status & MBOX_STATUS_UA_MSK) ^ status)
 				return 0;
 
-			error("mailbox: cmd %d no urgent ACK\n", cmd);
-			return -1;
+			return -ECOMM;
 		}
 
 		/* read current response offset */
@@ -156,8 +150,6 @@ int mbox_send_cmd(u8 id, u32 cmd, u32 len, u32 *arg, u8 urgent,
 			     (MBOX_RESP_ID_GET(resp) == id)) {
 				ret = MBOX_RESP_ERR_GET(resp);
 				if (ret) {
-					error("mailbox send command %d error %d\n",
-						cmd, ret);
 					return ret;
 				}
 
@@ -196,6 +188,8 @@ int mbox_send_cmd(u8 id, u32 cmd, u32 len, u32 *arg, u8 urgent,
 
 int mbox_init(void)
 {
+	static const struct socfpga_mailbox *mbox_base =
+					(void *)SOCFPGA_MAILBOX_ADDRESS;
 	int ret;
 
 	/* enable mailbox interrupts */
@@ -225,6 +219,9 @@ int mbox_qspi_close(void)
 
 int mbox_qspi_open(void)
 {
+	static const struct socfpga_system_manager *sysmgr_regs =
+		(struct socfpga_system_manager *)SOCFPGA_SYSMGR_ADDRESS;
+
 	int ret;
 	u32 resp_buf[1];
 	u32 resp_buf_len;
@@ -276,3 +273,16 @@ int mbox_reset_cold(void)
 	return 0;
 }
 
+int mbox_send_cmd(u8 id, u32 cmd, u32 len, u32 *arg, u8 urgent,
+		  u32 *resp_buf_len, u32 *resp_buf)
+{
+	return __mbox_send_cmd(id, cmd, len, arg, urgent, resp_buf_len,
+			       resp_buf);
+}
+
+int __secure mbox_send_cmd_psci(u8 id, u32 cmd, u32 len, u32 *arg,
+				u8 urgent, u32 *resp_buf_len, u32 *resp_buf)
+{
+	return __mbox_send_cmd(id, cmd, len, arg, urgent, resp_buf_len,
+			       resp_buf);
+}

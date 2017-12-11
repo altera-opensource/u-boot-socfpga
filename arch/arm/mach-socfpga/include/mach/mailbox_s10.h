@@ -103,6 +103,8 @@ struct socfpga_mailbox {
 
 int mbox_send_cmd(u8 id, u32 cmd, u32 len, u32 *arg, u8 urgent,
 			u32 *resp_buf_len, u32 *resp_buf);
+int mbox_send_cmd_psci(u8 id, u32 cmd, u32 len, u32 *arg, u8 urgent,
+			u32 *resp_buf_len, u32 *resp_buf);
 int mbox_init(void);
 
 #ifdef CONFIG_CADENCE_QSPI
