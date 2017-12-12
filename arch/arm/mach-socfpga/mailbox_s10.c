@@ -201,6 +201,12 @@ int mbox_init(void)
 	/* enable mailbox interrupts */
 	writel(MBOX_ALL_INTRS, &mbox_base->flags);
 
+	/* Ensure urgent request is cleared */
+	writel(0, &mbox_base->urg);
+
+	/* Ensure the Doorbell Interrupt is cleared */
+	writel(0, MBOX_DOORBELL_FROM_SDM_REG);
+
 	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_RESTART, 0, NULL, 1, 0, NULL);
 	if (ret)
 		return ret;
