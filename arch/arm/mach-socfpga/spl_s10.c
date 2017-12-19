@@ -139,6 +139,8 @@ void board_init_f(ulong dummy)
 	socfpga_per_reset(SOCFPGA_RESET(USB1), 0);
 	socfpga_per_reset(SOCFPGA_RESET(USB0_OCP), 0);
 	socfpga_per_reset(SOCFPGA_RESET(USB1_OCP), 0);
+	/* enable SPIM1 */
+	socfpga_per_reset(SOCFPGA_RESET(SPIM1), 0);
 
 	/* disable lwsocf2fpga and soc2fpga bridge security */
 	writel(FIREWALL_BRIDGE_DISABLE_ALL, SOCFPGA_FIREWALL_SOC2FPGA);
