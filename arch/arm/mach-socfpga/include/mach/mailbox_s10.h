@@ -79,7 +79,9 @@ typedef enum
 /* Mailbox command list */
 #define MBOX_RESTART		2
 #define MBOX_CONFIG_STATUS	4
+#define MBOX_RECONFIG		6
 #define MBOX_RECONFIG_MSEL	7
+#define MBOX_RECONFIG_DATA	8
 #define MBOX_RECONFIG_STATUS	9
 #define MBOX_QSPI_OPEN		50
 #define MBOX_QSPI_CLOSE		51
