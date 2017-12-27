@@ -66,8 +66,9 @@ static __always_inline int mbox_fill_cmd_circular_buff(u32 header, u32 len,
 }
 
 /* Support one command and up to 31 words argument length only */
-static __always_inline int __mbox_send_cmd(u8 id, u32 cmd, u32 len, u32 *arg,
-				u8 urgent, u32 *resp_buf_len, u32 *resp_buf)
+static __always_inline int __mbox_send_cmd(u8 id, u32 cmd, u8 is_indirect,
+					   u32 len, u32 *arg, u8 urgent,
+					   u32 *resp_buf_len, u32 *resp_buf)
 {
 	static const struct socfpga_mailbox *mbox_base =
 					(void *)SOCFPGA_MAILBOX_ADDRESS;
@@ -90,7 +91,8 @@ static __always_inline int __mbox_send_cmd(u8 id, u32 cmd, u32 len, u32 *arg,
 		return -EINVAL;
 	}
 
-	header = MBOX_CMD_HEADER(MBOX_CLIENT_ID_UBOOT, id , len, cmd);
+	header = MBOX_CMD_HEADER(MBOX_CLIENT_ID_UBOOT, id , len,
+				 (is_indirect) ? 1 : 0, cmd);
 
 	ret = mbox_fill_cmd_circular_buff(header, len, arg);
 	if (ret)
@@ -201,7 +203,8 @@ int mbox_init(void)
 	/* Ensure the Doorbell Interrupt is cleared */
 	writel(0, MBOX_DOORBELL_FROM_SDM_REG);
 
-	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_RESTART, 0, NULL, 1, 0, NULL);
+	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_RESTART, MBOX_CMD_DIRECT, 0,
+			    NULL, 1, 0, NULL);
 	if (ret)
 		return ret;
 
@@ -214,7 +217,8 @@ int mbox_init(void)
 #ifdef CONFIG_CADENCE_QSPI
 int mbox_qspi_close(void)
 {
-	return mbox_send_cmd(MBOX_ID_UBOOT, MBOX_QSPI_CLOSE, 0, NULL, 0, 0, NULL);
+	return mbox_send_cmd(MBOX_ID_UBOOT, MBOX_QSPI_CLOSE, MBOX_CMD_DIRECT,
+			     0, NULL, 0, 0, NULL);
 }
 
 int mbox_qspi_open(void)
@@ -226,23 +230,25 @@ int mbox_qspi_open(void)
 	u32 resp_buf[1];
 	u32 resp_buf_len;
 
-	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_QSPI_OPEN, 0, NULL, 0, 0, NULL);
+	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_QSPI_OPEN, MBOX_CMD_DIRECT,
+			    0, NULL, 0, 0, NULL);
 	if (ret) {
 		/* retry again by closing and reopen the QSPI again */
 		ret = mbox_qspi_close();
 		if (ret)
 			return ret;
 
-		ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_QSPI_OPEN, 0, NULL, 0,
-				    0, NULL);
+		ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_QSPI_OPEN,
+				    MBOX_CMD_DIRECT, 0, NULL, 0, 0, NULL);
 		if (ret)
 			return ret;
 	}
 
 	/* HPS will directly control the QSPI controller, no longer mailbox */
 	resp_buf_len = 1;
-	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_QSPI_DIRECT, 0, NULL, 0,
-			    (u32 *)&resp_buf_len, (u32 *)&resp_buf);
+	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_QSPI_DIRECT, MBOX_CMD_DIRECT,
+			    0, NULL, 0, (u32 *)&resp_buf_len,
+			    (u32 *)&resp_buf);
 	if (ret)
 		goto error;
 
@@ -263,8 +269,8 @@ int mbox_reset_cold(void)
 {
 	int ret;
 
-	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_REBOOT_HPS, 0, NULL, 0, 0,
-			    NULL);
+	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_REBOOT_HPS, MBOX_CMD_DIRECT,
+			    0, NULL, 0, 0, NULL);
 	if (ret) {
 		/* mailbox sent failure, wait for watchdog to kick in */
 		while (1)
@@ -273,16 +279,17 @@ int mbox_reset_cold(void)
 	return 0;
 }
 
-int mbox_send_cmd(u8 id, u32 cmd, u32 len, u32 *arg, u8 urgent,
-		  u32 *resp_buf_len, u32 *resp_buf)
+int mbox_send_cmd(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg,
+		  u8 urgent, u32 *resp_buf_len, u32 *resp_buf)
 {
-	return __mbox_send_cmd(id, cmd, len, arg, urgent, resp_buf_len,
-			       resp_buf);
+	return __mbox_send_cmd(id, cmd, is_indirect, len, arg, urgent,
+			       resp_buf_len, resp_buf);
 }
 
-int __secure mbox_send_cmd_psci(u8 id, u32 cmd, u32 len, u32 *arg,
-				u8 urgent, u32 *resp_buf_len, u32 *resp_buf)
+int __secure mbox_send_cmd_psci(u8 id, u32 cmd, u8 is_indirect, u32 len,
+				u32 *arg, u8 urgent, u32 *resp_buf_len,
+				u32 *resp_buf)
 {
-	return __mbox_send_cmd(id, cmd, len, arg, urgent, resp_buf_len,
-			       resp_buf);
+	return __mbox_send_cmd(id, cmd, is_indirect, len, arg, urgent,
+			       resp_buf_len, resp_buf);
 }

@@ -82,9 +82,10 @@ static int reconfig_status_polling_resp(void)
 
 	while (1) {
 		reconfig_status_resp_len = RECONFIG_STATUS_RESPONSE_LEN;
-		ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_RECONFIG_STATUS, 0,
-				      NULL, 0, &reconfig_status_resp_len,
-				      reconfig_status_resp);
+		ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_RECONFIG_STATUS,
+				    MBOX_CMD_DIRECT, 0, NULL, 0,
+				    &reconfig_status_resp_len,
+				    reconfig_status_resp);
 
 		if (ret) {
 			error("Failure in reconfig status mailbox command!\n");
@@ -138,8 +139,8 @@ int stratix10_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size)
 	reconfig_msel_args[0] = (u32)rbf_data;
 	reconfig_msel_args[1] = (u32)rbf_size;
 
-	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_RECONFIG_MSEL, 2,
-			      reconfig_msel_args, 0, 0, NULL);
+	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_RECONFIG_MSEL, MBOX_CMD_DIRECT,
+			    2, reconfig_msel_args, 0, 0, NULL);
 	if (ret) {
 		error("FPGA reconfiguration failed!\n");
 		goto getqspi;

@@ -10,6 +10,9 @@
 #define MBOX_CLIENT_ID_UBOOT	0xB
 #define MBOX_ID_UBOOT		0x1
 
+#define MBOX_CMD_DIRECT	0
+#define MBOX_CMD_INDIRECT	1
+
 #define MBOX_MAX_CMD_INDEX	2047
 #define MBOX_CMD_BUFFER_SIZE	32
 #define MBOX_RESP_BUFFER_SIZE	16
@@ -36,11 +39,12 @@
 /* Status */
 #define MBOX_STATUS_UA_MSK	BIT(8)
 
-#define MBOX_CMD_HEADER(client, id, len, cmd)		   \
-	(((cmd) << MBOX_HDR_CMD_LSB) & MBOX_HDR_CMD_MSK) | \
-	(((len) << MBOX_HDR_LEN_LSB) & MBOX_HDR_LEN_MSK) | \
-	(((id) << MBOX_HDR_ID_LSB) & MBOX_HDR_ID_MSK) 	 | \
-	(((client) << MBOX_HDR_CLIENT_LSB) & MBOX_HDR_CLIENT_MSK)
+#define MBOX_CMD_HEADER(client, id, len, indirect, cmd)     \
+	((((cmd) << MBOX_HDR_CMD_LSB) & MBOX_HDR_CMD_MSK) | \
+	(((indirect) << MBOX_HDR_I_LSB) & MBOX_HDR_I_MSK) | \
+	(((len) << MBOX_HDR_LEN_LSB) & MBOX_HDR_LEN_MSK)  | \
+	(((id) << MBOX_HDR_ID_LSB) & MBOX_HDR_ID_MSK)     | \
+	(((client) << MBOX_HDR_CLIENT_LSB) & MBOX_HDR_CLIENT_MSK))
 
 #define MBOX_RESP_ERR_GET(resp)				\
 	(((resp) & MBOX_HDR_CMD_MSK) >> MBOX_HDR_CMD_LSB)
@@ -101,10 +105,10 @@ struct socfpga_mailbox {
 #define MBOX_DOORBELL_TO_SDM_REG	(SOCFPGA_MAILBOX_ADDRESS + 0x400)
 #define MBOX_DOORBELL_FROM_SDM_REG	(SOCFPGA_MAILBOX_ADDRESS + 0x480)
 
-int mbox_send_cmd(u8 id, u32 cmd, u32 len, u32 *arg, u8 urgent,
-			u32 *resp_buf_len, u32 *resp_buf);
-int mbox_send_cmd_psci(u8 id, u32 cmd, u32 len, u32 *arg, u8 urgent,
-			u32 *resp_buf_len, u32 *resp_buf);
+int mbox_send_cmd(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg, u8 urgent,
+		  u32 *resp_buf_len, u32 *resp_buf);
+int mbox_send_cmd_psci(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg,
+		       u8 urgent, u32 *resp_buf_len, u32 *resp_buf);
 int mbox_init(void);
 
 #ifdef CONFIG_CADENCE_QSPI
