@@ -39,47 +39,44 @@ static __always_inline int mbox_fill_cmd_circular_buff(u32 header, u32 len,
 {
 	static const struct socfpga_mailbox *mbox_base =
 					(void *)SOCFPGA_MAILBOX_ADDRESS;
-	u32 cmd_free_offset;
+	u32 cin;
+	u32 cout;
 	u32 i;
 
-	/* checking available command free slot */
-	cmd_free_offset = readl(&mbox_base->cout);
-	if (cmd_free_offset >= MBOX_CMD_BUFFER_SIZE) {
+	cin = readl(&mbox_base->cin) % MBOX_CMD_BUFFER_SIZE;
+	cout = readl(&mbox_base->cout) % MBOX_CMD_BUFFER_SIZE;
+
+	/* if command buffer is full or not enough free space
+	   to fit the data */
+	if (((cin + 1) % MBOX_CMD_BUFFER_SIZE) == cout ||
+	    ((MBOX_CMD_BUFFER_SIZE - cin + cout - 1) %
+	     MBOX_CMD_BUFFER_SIZE) < len)
 		return -ENOMEM;
-	}
 
 	/* write header to circular buffer */
-	writel(header, &mbox_base->cmd_buf[cmd_free_offset++]);
+	writel(header, &mbox_base->cmd_buf[cin++]);
 	/* wrapping around when it reach the buffer size */
-	cmd_free_offset %= MBOX_CMD_BUFFER_SIZE;
+	cin %= MBOX_CMD_BUFFER_SIZE;
 
 	/* write arguments */
 	for (i = 0; i < len; i++) {
-		writel(arg[i], &mbox_base->cmd_buf[cmd_free_offset++]);
+		writel(arg[i], &mbox_base->cmd_buf[cin++]);
 		/* wrapping around when it reach the buffer size */
-		cmd_free_offset %= MBOX_CMD_BUFFER_SIZE;
+		cin %= MBOX_CMD_BUFFER_SIZE;
 	}
 
 	/* write command valid offset */
-	writel(cmd_free_offset, &mbox_base->cin);
+	writel(cin, &mbox_base->cin);
+
 	return 0;
 }
 
-/* Support one command and up to 31 words argument length only */
-static __always_inline int __mbox_send_cmd(u8 id, u32 cmd, u8 is_indirect,
-					   u32 len, u32 *arg, u8 urgent,
-					   u32 *resp_buf_len, u32 *resp_buf)
+/* Check the command and fill it into circular buffer */
+static __always_inline int mbox_prepare_cmd_only(u8 id, u32 cmd,
+						 u8 is_indirect, u32 len,
+						 u32 *arg)
 {
-	static const struct socfpga_mailbox *mbox_base =
-					(void *)SOCFPGA_MAILBOX_ADDRESS;
-
 	u32 header;
-	u32 rin;
-	u32 resp;
-	u32 rout;
-	u32 status;
-	u32 resp_len;
-	u32 buf_len;
 	int ret;
 
 	/* Total lenght is command + argument length */
@@ -95,6 +92,72 @@ static __always_inline int __mbox_send_cmd(u8 id, u32 cmd, u8 is_indirect,
 				 (is_indirect) ? 1 : 0, cmd);
 
 	ret = mbox_fill_cmd_circular_buff(header, len, arg);
+
+	return ret;
+}
+
+/* Send command only without waiting for responses from SDM */
+static __always_inline int __mbox_send_cmd_only(u8 id, u32 cmd,
+						u8 is_indirect, u32 len,
+						u32 *arg)
+{
+	int ret = mbox_prepare_cmd_only(id, cmd, is_indirect, len, arg);
+	/* write doorbell */
+	writel(1, MBOX_DOORBELL_TO_SDM_REG);
+
+	return ret;
+}
+
+/* Return number of responses received in buffer */
+static __always_inline int __mbox_rcv_resp(u32 *resp_buf, u32 resp_buf_max_len)
+{
+	static const struct socfpga_mailbox *mbox_base =
+					(void *)SOCFPGA_MAILBOX_ADDRESS;
+	u32 rin;
+	u32 rout;
+	u32 resp_len = 0;
+
+	/* clear doorbell from SDM if it was SET */
+	if (readl((const u32 *)MBOX_DOORBELL_FROM_SDM_REG) & 1)
+		writel(0, MBOX_DOORBELL_FROM_SDM_REG);
+
+	/* read current response offset */
+	rout = readl(&mbox_base->rout);
+	/* read response valid offset */
+	rin = readl(&mbox_base->rin);
+
+	while (rin != rout && (resp_len < resp_buf_max_len)) {
+		/* Response received */
+		if (resp_buf)
+			resp_buf[resp_len++] =
+				readl(&mbox_base->resp_buf[rout]);
+		rout++;
+		/* wrapping around when it reach the buffer size */
+		rout %= MBOX_RESP_BUFFER_SIZE;
+		/* update next ROUT */
+		writel(rout, &mbox_base->rout);
+	}
+
+	return resp_len;
+}
+
+/* Support one command and up to 31 words argument length only */
+static __always_inline int __mbox_send_cmd(u8 id, u32 cmd, u8 is_indirect,
+					   u32 len, u32 *arg, u8 urgent,
+					   u32 *resp_buf_len, u32 *resp_buf)
+{
+	static const struct socfpga_mailbox *mbox_base =
+					(void *)SOCFPGA_MAILBOX_ADDRESS;
+
+	u32 rin;
+	u32 resp;
+	u32 rout;
+	u32 status;
+	u32 resp_len;
+	u32 buf_len;
+	int ret;
+
+	ret = mbox_prepare_cmd_only(id, cmd, is_indirect, len, arg);
 	if (ret)
 		return ret;
 
@@ -292,4 +355,25 @@ int __secure mbox_send_cmd_psci(u8 id, u32 cmd, u8 is_indirect, u32 len,
 {
 	return __mbox_send_cmd(id, cmd, is_indirect, len, arg, urgent,
 			       resp_buf_len, resp_buf);
+}
+
+int mbox_send_cmd_only(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg)
+{
+	return __mbox_send_cmd_only(id, cmd, is_indirect, len, arg);
+}
+
+int __secure mbox_send_cmd_only_psci(u8 id, u32 cmd, u8 is_indirect, u32 len,
+				     u32 *arg)
+{
+	return __mbox_send_cmd_only(id, cmd, is_indirect, len, arg);
+}
+
+int mbox_rcv_resp(u32 *resp_buf, u32 resp_buf_max_len)
+{
+	return __mbox_rcv_resp(resp_buf, resp_buf_max_len);
+}
+
+int __secure mbox_rcv_resp_psci(u32 *resp_buf, u32 resp_buf_max_len)
+{
+	return __mbox_rcv_resp(resp_buf, resp_buf_max_len);
 }

@@ -111,6 +111,10 @@ int mbox_send_cmd(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg, u8 urgent,
 		  u32 *resp_buf_len, u32 *resp_buf);
 int mbox_send_cmd_psci(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg,
 		       u8 urgent, u32 *resp_buf_len, u32 *resp_buf);
+int mbox_send_cmd_only(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg);
+int mbox_send_cmd_only_psci(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg);
+int mbox_rcv_resp(u32 *resp_buf, u32 resp_buf_max_len);
+int mbox_rcv_resp_psci(u32 *resp_buf, u32 resp_buf_max_len);
 int mbox_init(void);
 
 #ifdef CONFIG_CADENCE_QSPI
