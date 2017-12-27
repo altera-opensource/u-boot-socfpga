@@ -52,6 +52,9 @@ void board_init_f(ulong dummy)
 {
 	const struct cm_config *cm_default_cfg = cm_get_default_config();
 
+	/* ensure all processors are not released prior Linux boot */
+	writeq(0, CPU_RELEASE_ADDR);
+
 	socfpga_per_reset(SOCFPGA_RESET(OSC1TIMER0), 0);
 	timer_init();
 

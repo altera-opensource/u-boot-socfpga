@@ -17,7 +17,8 @@
 #define CONFIG_LOADADDR			0x80000
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 #define CONFIG_REMAKE_ELF
-#define CPU_RELEASE_ADDR		0x80
+/* sysmgr.boot_scratch_cold4 & 5 (64bit) will be used for PSCI_CPU_ON call */
+#define CPU_RELEASE_ADDR		0xFFD12210
 #define CONFIG_SYS_CACHELINE_SIZE 	64
 #define CONFIG_SYS_MEM_RESERVE_SECURE	0	/* using OCRAM, not DDR */
 
