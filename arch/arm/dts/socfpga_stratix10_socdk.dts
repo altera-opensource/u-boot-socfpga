@@ -162,5 +162,45 @@
 			interrupts = <0 104 0x4>;
 			status = "okay";
 		};
+
+		gpio0: gpio@ffc03200 {
+			#address-cells = <2>;
+			#size-cells = <0>;
+			compatible = "snps,dw-apb-gpio";
+			reg = <0x0 0xffc03200 0x100>;
+			status = "disabled";
+
+			porta: gpio-controller@0 {
+				compatible = "snps,dw-apb-gpio-port";
+				bank-name = "porta";
+				gpio-controller;
+				#gpio-cells = <2>;
+				snps,nr-gpios = <24>;
+				reg = <0>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				interrupts = <0 110 4>;
+			};
+		};
+
+		gpio1: gpio@ffc03300 {
+			#address-cells = <2>;
+			#size-cells = <0>;
+			compatible = "snps,dw-apb-gpio";
+			reg = <0x0 0xffc03300 0x100>;
+			status = "okay";
+
+			portb: gpio-controller@0 {
+				compatible = "snps,dw-apb-gpio-port";
+				bank-name = "portb";
+				gpio-controller;
+				#gpio-cells = <2>;
+				snps,nr-gpios = <24>;
+				reg = <0>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				interrupts = <0 111 4>;
+			};
+		};
 	};
 };

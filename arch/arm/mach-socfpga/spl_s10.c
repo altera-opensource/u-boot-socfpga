@@ -153,6 +153,10 @@ void board_init_f(ulong dummy)
 	/* enable i2c1 */
 	socfpga_per_reset(SOCFPGA_RESET(I2C1), 0);
 
+	/* Take GPIO0 & GPIO1 out of reset */
+	socfpga_per_reset(SOCFPGA_RESET(GPIO0), 0);
+	socfpga_per_reset(SOCFPGA_RESET(GPIO1), 0);
+
 	puts("DDR: Initializing Hard Memory Controller\n");
 	if (sdram_mmr_init_full(0)) {
 		puts("DDR: Initialization failed.\n");
