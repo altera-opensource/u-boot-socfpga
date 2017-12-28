@@ -107,6 +107,30 @@ struct socfpga_mailbox {
 #define MBOX_DOORBELL_TO_SDM_REG	(SOCFPGA_MAILBOX_ADDRESS + 0x400)
 #define MBOX_DOORBELL_FROM_SDM_REG	(SOCFPGA_MAILBOX_ADDRESS + 0x480)
 
+/******** Status and bit information returned by RECONFIG_STATUS ********/
+#define RECONFIG_STATUS_RESPONSE_LEN			6
+#define RECONFIG_STATUS_STATE				0
+#define RECONFIG_STATUS_PIN_STATUS			2
+#define RECONFIG_STATUS_SOFTFUNC_STATUS			3
+
+#define MBOX_CFGSTAT_STATE_IDLE				0x00000000
+#define MBOX_CFGSTAT_STATE_CONFIG			0x10000000
+#define MBOX_CFGSTAT_STATE_FAILACK			0x08000000
+#define MBOX_CFGSTAT_STATE_ERROR_INVALID		0xf0000001
+#define MBOX_CFGSTAT_STATE_ERROR_CORRUPT		0xf0000002
+#define MBOX_CFGSTAT_STATE_ERROR_AUTH			0xf0000003
+#define MBOX_CFGSTAT_STATE_ERROR_CORE_IO		0xf0000004
+#define MBOX_CFGSTAT_STATE_ERROR_HARDWARE		0xf0000005
+#define MBOX_CFGSTAT_STATE_ERROR_FAKE			0xf0000006
+#define MBOX_CFGSTAT_STATE_ERROR_BOOT_INFO		0xf0000007
+#define MBOX_CFGSTAT_STATE_ERROR_QSPI_ERROR		0xf0000008
+
+#define RCF_SOFTFUNC_STATUS_CONF_DONE			BIT(0)
+#define RCF_SOFTFUNC_STATUS_INIT_DONE			BIT(1)
+#define RCF_SOFTFUNC_STATUS_SEU_ERROR			BIT(3)
+#define RCF_PIN_STATUS_NSTATUS				BIT(31)
+/************************************************************************/
+
 int mbox_send_cmd(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg, u8 urgent,
 		  u32 *resp_buf_len, u32 *resp_buf);
 int mbox_send_cmd_psci(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg,
