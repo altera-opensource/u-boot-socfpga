@@ -14,7 +14,7 @@
  */
 #define CONFIG_SYS_TEXT_BASE		0x1000
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
-#define CONFIG_LOADADDR			0x80000
+#define CONFIG_LOADADDR			0x2000000
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 #define CONFIG_REMAKE_ELF
 /* sysmgr.boot_scratch_cold4 & 5 (64bit) will be used for PSCI_CPU_ON call */
