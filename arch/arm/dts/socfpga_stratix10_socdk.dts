@@ -12,7 +12,7 @@
 	model = "Intel SOCFPGA Stratix 10 SoC Development Kit";
 	compatible = "altr,socfpga-stratix10", "altr,socfpga";
 
-	#address-cells = <1>;
+	#address-cells = <2>;
 	#size-cells = <1>;
 
 	chosen {
@@ -28,7 +28,7 @@
 	memory {
 		name = "memory";
 		device_type = "memory";
-		reg = <0x0 0x80000000>; /* 2GB */
+		reg = <0x0 0x0 0x80000000>; /* 2GB */
 	};
 
 	regulator_3_3v: 3-3-v-regulator {
@@ -39,7 +39,7 @@
 	};
 
 	soc {
-		#address-cells = <1>;
+		#address-cells = <2>;
 		#size-cells = <1>;
 		compatible = "simple-bus";
 		device_type = "soc";
@@ -49,13 +49,13 @@
 		rst: rstmgr@ffd11000 {
 			#reset-cells = <1>;
 			compatible = "altr,rst-mgr";
-			reg = <0xffd11000 0x100>;
+			reg = <0x0 0xffd11000 0x100>;
 			altr,modrst-offset = <0x20>;
 		};
 
 		gmac0: ethernet@ff800000 {
 			compatible = "altr,socfpga-stmmac", "snps,dwmac-3.74a", "snps,dwmac";
-			reg = <0xff800000 0x2000>;
+			reg = <0x0 0xff800000 0x2000>;
 			interrupts = <0 90 4>;
 			interrupt-names = "macirq";
 			mac-address = [00 00 00 00 00 00];
@@ -80,10 +80,8 @@
 		};
 
 		mmc0: dwmmc0@0xff808000 {
-			#address-cells = <1>;
-			#size-cells = <0>;
 			compatible = "altr,socfpga-dw-mshc";
-			reg = <0xff808000 0x1000>;
+			reg = <0x0 0xff808000 0x1000>;
 			interrupts = <0 96 4>;
 			num-slots = <1>;
 			broken-cd;
@@ -101,7 +99,7 @@
 
 		uart0: serial0@ffc02000 {
 			compatible = "snps,dw-apb-uart";
-			reg = <0xffc02000 0x1000>;
+			reg = <0x0 0xffc02000 0x1000>;
 			interrupts = <0 108 4>;
 			reg-shift = <2>;
 			reg-io-width = <4>;
@@ -116,7 +114,7 @@
 
 		usb0: usb@ffb00000 {
 			compatible = "snps,dwc2";
-			reg = <0xffb00000 0xffff>;
+			reg = <0x0 0xffb00000 0xffff>;
 			interrupts = <0 93 4>;
 			phys = <&usbphy0>;
 			phy-names = "usb2-phy";
@@ -127,8 +125,8 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			compatible = "cadence,qspi";
-			reg = <0xff8d2000 0x100>,
-				<0xff900000 0x100000>;
+			reg = <0x0 0xff8d2000 0x100>,
+				<0x0 0xff900000 0x100000>;
 			interrupts = <0 98 4>;
 			sram-size = <1024>;
 			bus-num = <0>;
@@ -140,8 +138,6 @@
 
 			flash0: n25q1024a@0 {
 				u-boot,dm-pre-reloc;
-				#address-cells = <1>;
-				#size-cells = <1>;
 				compatible = "stmicro,n25q1024a";
 				reg = <0>;      /* chip select */
 				spi-max-frequency = <50000000>;
@@ -158,13 +154,13 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			compatible = "snps,designware-i2c";
-			reg = <0xffc02900 0x100>;
+			reg = <0x0 0xffc02900 0x100>;
 			interrupts = <0 104 0x4>;
 			status = "okay";
 		};
 
 		gpio0: gpio@ffc03200 {
-			#address-cells = <2>;
+			#address-cells = <1>;
 			#size-cells = <0>;
 			compatible = "snps,dw-apb-gpio";
 			reg = <0x0 0xffc03200 0x100>;
@@ -184,7 +180,7 @@
 		};
 
 		gpio1: gpio@ffc03300 {
-			#address-cells = <2>;
+			#address-cells = <1>;
 			#size-cells = <0>;
 			compatible = "snps,dw-apb-gpio";
 			reg = <0x0 0xffc03300 0x100>;
