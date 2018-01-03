@@ -159,6 +159,10 @@ void board_init_f(ulong dummy)
 	socfpga_per_reset(SOCFPGA_RESET(GPIO0), 0);
 	socfpga_per_reset(SOCFPGA_RESET(GPIO1), 0);
 
+	/* enable SPIM0 and SPIM1 */
+	socfpga_per_reset(SOCFPGA_RESET(SPIM0), 0);
+	socfpga_per_reset(SOCFPGA_RESET(SPIM1), 0);
+
 	puts("DDR: Initializing Hard Memory Controller\n");
 	if (sdram_mmr_init_full(0)) {
 		puts("DDR: Initialization failed.\n");

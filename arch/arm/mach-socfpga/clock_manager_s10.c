@@ -353,6 +353,15 @@ unsigned int cm_get_qspi_controller_clk_hz(void)
 	return readl(&sysmgr_regs->boot_scratch_cold0);
 }
 
+unsigned int cm_get_spi_controller_clk_hz(void)
+{
+	uint32_t clock = cm_get_l3_main_clk_hz();
+
+	clock /= (1 << ((readl(&clock_manager_base->main_pll.nocdiv) >>
+		  CLKMGR_NOCDIV_L4MAIN_OFFSET) & CLKMGR_CLKCNT_MSK));
+	return clock;
+}
+
 void cm_print_clock_quick_summary(void)
 {
 	printf("MPU         %d kHz\n", (u32)(cm_get_mpu_clk_hz() / 1000));

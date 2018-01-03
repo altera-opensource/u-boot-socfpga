@@ -23,6 +23,8 @@
 		ethernet0 = &gmac0;
 		spi0 = &qspi;
 		i2c0 = &i2c;
+		spi1 = &spim0;
+		spi2 = &spim1;
 	};
 
 	memory {
@@ -197,6 +199,30 @@
 				#interrupt-cells = <2>;
 				interrupts = <0 111 4>;
 			};
+		};
+
+		spim0: spi@ffda4000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "snps,dw-apb-ssi";
+			reg = <0x0 0xffda4000 0x1000>;
+			interrupts = <0 99 4>;
+			num-cs = <1>;
+			bus-num = <0>;
+			spi-max-frequency = <25000000>;
+			status = "okay";
+		};
+
+		spim1: spi@ffda5000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "snps,dw-apb-ssi";
+			reg = <0x0 0xffda5000 0x1000>;
+			interrupts = <0 100 4>;
+			num-cs = <1>;
+			bus-num = <0>;
+			spi-max-frequency = <25000000>;
+			status = "disabled";
 		};
 	};
 };
