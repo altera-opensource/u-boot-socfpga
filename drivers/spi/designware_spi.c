@@ -165,13 +165,13 @@ static void spi_hw_init(struct dw_spi_priv *priv)
 		u32 fifo;
 
 		for (fifo = 1; fifo < 256; fifo++) {
-			dw_writew(priv, DW_SPI_TXFLTR, fifo);
-			if (fifo != dw_readw(priv, DW_SPI_TXFLTR))
+			dw_writel(priv, DW_SPI_TXFLTR, fifo);
+			if (fifo != dw_readl(priv, DW_SPI_TXFLTR))
 				break;
 		}
 
 		priv->fifo_len = (fifo == 1) ? 0 : fifo;
-		dw_writew(priv, DW_SPI_TXFLTR, 0);
+		dw_writel(priv, DW_SPI_TXFLTR, 0);
 	}
 	debug("%s: fifo_len=%d\n", __func__, priv->fifo_len);
 }
@@ -201,7 +201,7 @@ static inline u32 tx_max(struct dw_spi_priv *priv)
 	u32 tx_left, tx_room, rxtx_gap;
 
 	tx_left = (priv->tx_end - priv->tx) / (priv->bits_per_word >> 3);
-	tx_room = priv->fifo_len - dw_readw(priv, DW_SPI_TXFLR);
+	tx_room = priv->fifo_len - dw_readl(priv, DW_SPI_TXFLR);
 
 	/*
 	 * Another concern is about the tx/rx mismatch, we
@@ -222,7 +222,7 @@ static inline u32 rx_max(struct dw_spi_priv *priv)
 {
 	u32 rx_left = (priv->rx_end - priv->rx) / (priv->bits_per_word >> 3);
 
-	return min_t(u32, rx_left, dw_readw(priv, DW_SPI_RXFLR));
+	return min_t(u32, rx_left, dw_readl(priv, DW_SPI_RXFLR));
 }
 
 static void dw_writer(struct dw_spi_priv *priv)
@@ -238,7 +238,7 @@ static void dw_writer(struct dw_spi_priv *priv)
 			else
 				txw = *(u16 *)(priv->tx);
 		}
-		dw_writew(priv, DW_SPI_DR, txw);
+		dw_writel(priv, DW_SPI_DR, txw);
 		debug("%s: tx=0x%02x\n", __func__, txw);
 		priv->tx += priv->bits_per_word >> 3;
 	}
@@ -259,7 +259,7 @@ static int dw_reader(struct dw_spi_priv *priv)
 	max = rx_max(priv);
 
 	while (max--) {
-		rxw = dw_readw(priv, DW_SPI_DR);
+		rxw = dw_readl(priv, DW_SPI_DR);
 		debug("%s: rx=0x%02x\n", __func__, rxw);
 
 		/*
@@ -337,7 +337,7 @@ static int dw_spi_xfer(struct udevice *dev, unsigned int bitlen,
 	debug("%s: cr0=%08x\n", __func__, cr0);
 	/* Reprogram cr0 only if changed */
 	if (dw_readw(priv, DW_SPI_CTRL0) != cr0)
-		dw_writew(priv, DW_SPI_CTRL0, cr0);
+		dw_writel(priv, DW_SPI_CTRL0, cr0);
 
 	/*
 	 * Configure the desired SS (slave select 0...3) in the controller
