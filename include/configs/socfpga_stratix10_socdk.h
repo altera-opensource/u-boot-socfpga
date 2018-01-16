@@ -104,7 +104,8 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
  * Do note the value will overide also the chosen node in FDT blob.
  */
 #define CONFIG_BOOTARGS "earlycon"
-#define CONFIG_BOOTCOMMAND "run mmcload; run linux_qspi_enable; run mmcboot"
+#define CONFIG_BOOTCOMMAND "run fatscript; run mmcload;run linux_qspi_enable;" \
+			   "run mmcboot"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"loadaddr=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
@@ -123,7 +124,11 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 		"fdt addr ${fdt_addr}; fdt resize;" \
 		"fdt set /soc/spi@ff8d2000 status okay;" \
 		"fdt set /soc/clkmgr/clocks/qspi_clk clock-frequency " \
-		" ${qspi_clock}; fi; \0"
+		" ${qspi_clock}; fi; \0" \
+	"scriptaddr=0x02100000\0" \
+	"scriptfile=u-boot.scr\0" \
+	"fatscript=if fatload mmc 0:1 ${scriptaddr} ${scriptfile};" \
+		   "then source ${scriptaddr}; fi\0"
 
 /*
  * Generic Interrupt Controller Definitions
