@@ -41,12 +41,14 @@ void __secure psci_cpu_on_64_mpidr(void)
 
 int __secure psci_cpu_on_64(u32 function_id, u64 cpuid, u64 entry_point)
 {
+	/* Releases all secondary CPUs to jump into psci_cpu_on_64_mpidr */
+	writeq(0, &psci_cpu_on_64_cpuid);
+	writeq(0, &psci_cpu_on_64_entry_point);
+	writeq((u64)&psci_cpu_on_64_mpidr, CPU_RELEASE_ADDR);
+
 	/* to store in global so psci_cpu_on_64_mpidr function can refer */
 	writeq(cpuid, &psci_cpu_on_64_cpuid);
 	writeq(entry_point, &psci_cpu_on_64_entry_point);
-
-	/* Now releases all secondary CPUs to jump into psci_cpu_on_64_mpidr */
-	writeq((u64)&psci_cpu_on_64_mpidr, CPU_RELEASE_ADDR);
 	asm volatile("sev");
 
 	return ARM_PSCI_RET_SUCCESS;
