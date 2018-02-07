@@ -14,6 +14,7 @@ unsigned int cm_get_l4_sp_clk_hz(void);
 unsigned int cm_get_mmc_controller_clk_hz(void);
 unsigned int cm_get_qspi_controller_clk_hz(void);
 unsigned int cm_get_spi_controller_clk_hz(void);
+unsigned int cm_get_l4_sys_free_clk_hz(void);
 const unsigned int cm_get_osc_clk_hz(const int osc);
 const unsigned int cm_get_f2s_per_ref_clk_hz(void);
 const unsigned int cm_get_f2s_sdr_ref_clk_hz(void);

@@ -362,6 +362,11 @@ unsigned int cm_get_spi_controller_clk_hz(void)
 	return clock;
 }
 
+unsigned int cm_get_l4_sys_free_clk_hz(void)
+{
+	return cm_get_l3_main_clk_hz() / 4;
+}
+
 void cm_print_clock_quick_summary(void)
 {
 	printf("MPU         %d kHz\n", (u32)(cm_get_mpu_clk_hz() / 1000));
