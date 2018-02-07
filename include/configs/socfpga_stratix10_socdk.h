@@ -203,6 +203,20 @@ unsigned int cm_get_l4_sp_clk_hz(void);
 #endif /* CONFIG_SYS_I2C_DW */
 
 /*
+ * L4 Watchdog
+ */
+#ifdef CONFIG_SPL_BUILD
+#define CONFIG_HW_WATCHDOG
+#define CONFIG_DESIGNWARE_WATCHDOG
+#define CONFIG_DW_WDT_BASE		SOCFPGA_L4WD0_ADDRESS
+#ifndef __ASSEMBLY__
+unsigned int cm_get_l4_sys_free_clk_hz(void);
+#define CONFIG_DW_WDT_CLOCK_KHZ		(cm_get_l4_sys_free_clk_hz() / 1000)
+#endif
+#define CONFIG_WATCHDOG_TIMEOUT_MSECS	3000
+#endif
+
+/*
  * SPL memory layout
  *
  * On chip RAM

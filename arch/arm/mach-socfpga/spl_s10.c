@@ -16,6 +16,7 @@
 #include <asm/arch/sdram_s10.h>
 #include <asm/arch/mailbox_s10.h>
 #include <asm/arch/firewall_s10.h>
+#include <watchdog.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -51,6 +52,13 @@ u32 spl_boot_mode(const u32 boot_device)
 void board_init_f(ulong dummy)
 {
 	const struct cm_config *cm_default_cfg = cm_get_default_config();
+
+#ifdef CONFIG_HW_WATCHDOG
+	/* Enable watchdog before initializing the HW */
+	socfpga_per_reset(SOCFPGA_RESET(L4WD0), 1);
+	socfpga_per_reset(SOCFPGA_RESET(L4WD0), 0);
+	hw_watchdog_init();
+#endif
 
 	/* ensure all processors are not released prior Linux boot */
 	writeq(0, CPU_RELEASE_ADDR);
