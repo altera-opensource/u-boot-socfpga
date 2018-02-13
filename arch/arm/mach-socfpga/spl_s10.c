@@ -131,6 +131,9 @@ void board_init_f(ulong dummy)
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->emac2rx_ecc);
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->emac2tx_ecc);
 
+	/* enables nonsecure access to SMMU */
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->io_manager);
+
 	/* enables SDMMC */
 	socfpga_per_reset(SOCFPGA_RESET(SDMMC_OCP), 0);
 	socfpga_per_reset(SOCFPGA_RESET(SDMMC), 0);
@@ -145,6 +148,9 @@ void board_init_f(ulong dummy)
 	/* disable lwsocf2fpga and soc2fpga bridge security */
 	writel(FIREWALL_BRIDGE_DISABLE_ALL, SOCFPGA_FIREWALL_SOC2FPGA);
 	writel(FIREWALL_BRIDGE_DISABLE_ALL, SOCFPGA_FIREWALL_LWSOC2FPGA);
+
+	/* disable SMMU security */
+	writel(FIREWALL_L4_DISABLE_ALL, SOCFPGA_FIREWALL_TCU);
 
 	/* disable ocram security at CCU for non secure access */
 	clrbits_le32(CCU_CPU0_MPRT_ADMASK_MEM_RAM0_ADDR,
