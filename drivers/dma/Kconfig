@@ -19,4 +19,8 @@ config TI_EDMA3
 	  This driver support data transfer between memory
 	  regions.
 
+config DMA330_DMA
+	bool "PL330/DMA-330 DMA Controller(DMAC) driver"
+	help
+	 Enable the DMA controller driver for both PL330 and DMA-330 products.
 endmenu # menu "DMA Support"
