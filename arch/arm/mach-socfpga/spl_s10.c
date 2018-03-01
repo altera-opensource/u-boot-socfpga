@@ -134,6 +134,12 @@ void board_init_f(ulong dummy)
 	/* enables nonsecure access to SMMU */
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->io_manager);
 
+	/* enables nonsecure access to watchdog */
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->watchdog0);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->watchdog1);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->watchdog2);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->watchdog3);
+
 	/* enables SDMMC */
 	socfpga_per_reset(SOCFPGA_RESET(SDMMC_OCP), 0);
 	socfpga_per_reset(SOCFPGA_RESET(SDMMC), 0);
