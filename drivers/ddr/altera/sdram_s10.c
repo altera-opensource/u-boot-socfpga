@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2017 Intel Corporation <www.intel.com>
+ * Copyright (C) 2016-2018 Intel Corporation <www.intel.com>
  *
  * SPDX-License-Identifier:	GPL-2.0
  */
@@ -9,6 +9,7 @@
 #include <div64.h>
 #include <asm/io.h>
 #include <watchdog.h>
+#include <dma330.h>
 #include <asm/arch/sdram_s10.h>
 #include <asm/arch/system_manager.h>
 #include <asm/arch/reset_manager.h>
@@ -25,6 +26,7 @@ static const struct socfpga_system_manager *sysmgr_regs =
 		(void *)SOCFPGA_SYSMGR_ADDRESS;
 
 #define DDR_CONFIG(A, B, C, R)	((A<<24)|(B<<16)|(C<<8)|R)
+#define DDR_ECC_DMA_SIZE	2500
 
 /* The followring are the supported configurations */
 u32 ddr_config[] = {
@@ -141,6 +143,57 @@ static int poll_hmc_clock_status(void)
 		WATCHDOG_RESET();
 	}
 	return status;
+}
+
+/* Initialize SDRAM ECC bits to avoid false DBE */
+void sdram_init_ecc_bits(void)
+{
+	struct dma330_transfer_struct dma330;
+	unsigned int start;
+#ifdef CONFIG_DMA330_DMA
+	u8 buf[DDR_ECC_DMA_SIZE];
+
+	dma330.buf_size = sizeof(buf);
+	dma330.buf = (u32 *)buf;
+	dma330.channel_num = 0;
+#endif
+	dma330.dst_addr = CONFIG_SYS_SDRAM_BASE;
+	dma330.size_byte = gd->ram_size;
+
+	printf("SDRAM: Initializing ECC 0x%08x - 0x%08x\n",
+	      dma330.dst_addr, dma330.dst_addr + dma330.size_byte);
+
+	start = get_timer(0);
+
+#ifdef CONFIG_DMA330_DMA
+	if ((readl(&sysmgr_regs->dma) &
+	   (SYSMGR_DMA_IRQ_NS | SYSMGR_DMA_MGR_NS)) ||
+	   (readl(&sysmgr_regs->dma_periph) & SYSMGR_DMAPERIPH_ALL_NS)) {
+		dma330.reg_base = SOCFPGA_DMANONSECURE_ADDRESS;
+	} else {
+		dma330.reg_base = SOCFPGA_DMASECURE_ADDRESS;
+	}
+
+	if (dma330_transfer_zeroes(&dma330)) {
+		debug("ERROR - DMA setup failed\n");
+		hang();
+	}
+
+	if (dma330_transfer_start(&dma330)) {
+		debug("ERROR - DMA start failed\n");
+		hang();
+	}
+
+	if (dma330_transfer_finish(&dma330)) {
+		debug("ERROR - DMA finish failed\n");
+		hang();
+	}
+#else
+	memset((void *)(uintptr_t)dma330.dst_addr, 0, dma330.size_byte);
+#endif
+
+	printf("SDRAM-ECC: Initialized success with %d ms\n",
+	       (unsigned)get_timer(start));
 }
 
 /**
@@ -332,6 +385,14 @@ int sdram_mmr_init_full(unsigned int unused)
 			DDR_SCHED_DEVTODEV_BUSWRTORD_OFFSET)),
 	       &socfpga_noc_ddr_scheduler_base->main_scheduler_devtodev);
 
+	/* assigning the SDRAM size */
+	unsigned long long size = sdram_calculate_size();
+	/* If the size is invalid, use default Config size */
+	if (size <= 0)
+		gd->ram_size = PHYS_SDRAM_1_SIZE;
+	else
+		gd->ram_size = size;
+
 	/* Enable or disable the SDRAM ECC */
 	if (ctrlcfg1.cfg_ctrl_enable_ecc) {
 		setbits_le32(&socfpga_ecc_hmc_base->eccctrl,
@@ -344,6 +405,10 @@ int sdram_mmr_init_full(unsigned int unused)
 		setbits_le32(&socfpga_ecc_hmc_base->eccctrl2,
 			     (DDR_HMC_ECCCTL2_RMW_EN_SET_MSK |
 			      DDR_HMC_ECCCTL2_AWB_EN_SET_MSK));
+		setbits_le32(&socfpga_ecc_hmc_base->errinten,
+			      DDR_HMC_ERRINTEN_DERRINTEN_EN_SET_MSK);
+
+		sdram_init_ecc_bits();
 	} else {
 		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl,
 			     (DDR_HMC_ECCCTL_AWB_CNT_RST_SET_MSK |
