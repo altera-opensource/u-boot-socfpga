@@ -10,6 +10,15 @@
 unsigned long sdram_calculate_size(void);
 int sdram_mmr_init_full(unsigned int sdr_phy_reg);
 int sdram_calibration_full(void);
+#ifdef CONFIG_SOCFPGA_SDRAM_SBE_ECC_CHECKING
+void sdram_sbe_ecc_checking(void);
+#endif
+#ifdef CONFIG_SOCFPGA_SDRAM_DBE_ECC_CHECKING
+void sdram_dbe_ecc_checking(void);
+#endif
+#ifdef CONFIG_SOCFPGA_SDRAM_ADDR_MISMATCH_ECC_CHECKING
+void sdram_addr_mismatch_ecc_checking(void);
+#endif
 
 #define DDR_TWR				15
 #define DDR_READ_LATENCY_DELAY		40

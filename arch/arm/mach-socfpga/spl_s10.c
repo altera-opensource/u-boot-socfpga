@@ -189,6 +189,18 @@ void board_init_f(ulong dummy)
 		hang();
 	}
 
+#ifdef CONFIG_SOCFPGA_SDRAM_SBE_ECC_CHECKING
+	sdram_sbe_ecc_checking();
+#endif
+
+#ifdef CONFIG_SOCFPGA_SDRAM_DBE_ECC_CHECKING
+	sdram_dbe_ecc_checking();
+#endif
+
+#ifdef CONFIG_SOCFPGA_SDRAM_ADDR_MISMATCH_ECC_CHECKING
+	sdram_addr_mismatch_ecc_checking();
+#endif
+
 	gd->ram_size = sdram_calculate_size();
 	printf("DDR: %d MiB\n", (int)(gd->ram_size >> 20));
 

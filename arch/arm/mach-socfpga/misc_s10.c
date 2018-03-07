@@ -14,6 +14,7 @@
 #include <netdev.h>
 #include <watchdog.h>
 #include <asm/arch/reset_manager.h>
+#include <asm/arch/sdram_s10.h>
 #include <asm/arch/system_manager.h>
 #include <asm/pl310.h>
 
@@ -23,6 +24,117 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static struct socfpga_system_manager *sysmgr_regs =
 	(struct socfpga_system_manager *)SOCFPGA_SYSMGR_ADDRESS;
+#if defined(CONFIG_SOCFPGA_SDRAM_SBE_ECC_CHECKING) || \
+defined(CONFIG_SOCFPGA_SDRAM_DBE_ECC_CHECKING) || \
+defined(CONFIG_SOCFPGA_SDRAM_DBE_ECC_CHECKING)
+static const struct socfpga_ecc_hmc *socfpga_ecc_hmc_base =
+		(void *)SOCFPGA_SDR_ADDRESS;
+#endif
+
+#ifdef CONFIG_SOCFPGA_SDRAM_SBE_ECC_CHECKING
+void sdram_sbe_ecc_checking(void)
+{
+	u32 ecc_data = 0x6db7d7d3;
+	u32 data = 0x11223344;
+	u32 location = 0x800000;
+	u32 sbe_data = 0x11223345;
+
+	printf("SDRAM single bit error test starting . . .\n");
+	printf("Enable SBE interrupt . . .\n");
+	setbits_le32(&socfpga_ecc_hmc_base->errinten,
+		     DDR_HMC_ERRINTEN_SERRINTEN_EN_SET_MSK);
+	setbits_le32(&socfpga_ecc_hmc_base->intmode,
+		     (DDR_HMC_INTMODE_INTMODE_SET_MSK));
+	printf("Writing data %x into SDRAM address %lx\n", data,
+	       (uintptr_t)location);
+	writel(data, (uintptr_t)location);
+	printf("%lx: %x\n", (uintptr_t)location, readl((uintptr_t)location));
+	printf("Writing ecc data %x into ecc_reg2wreccdatabus register\n",
+	       ecc_data);
+	writel(ecc_data, &socfpga_ecc_hmc_base->ecc_reg2wreccdatabus);
+	printf("Enable eccdiagon AND wrdiagon at ecc_diagon  . . .\n");
+	setbits_le32(&socfpga_ecc_hmc_base->ecc_diagon,
+		     (DDR_HMC_ECC_DIAGON_ECCDIAGON_EN_SET_MSK |
+		      DDR_HMC_ECC_DIAGON_WRDIAGON_EN_SET_MSK));
+	printf("Injecting SBE data %x into SDRAM address %lx\n", sbe_data,
+	       (uintptr_t)location);
+	writel(sbe_data, (uintptr_t)location);
+	printf("Reading data at SDRAM address %lx: %x\n", (uintptr_t)location,
+	       readl((uintptr_t)location));
+
+	if (readl(&socfpga_ecc_hmc_base->ecc_decstat) & 0x1) {
+		printf("Decoder for data [63:0] has detected SBE\n");
+
+		printf("Corrected SDRAM ECC @ 0x%08x\n",
+		       readl(&socfpga_ecc_hmc_base->autowb_corraddr));
+
+		if (readl(&socfpga_ecc_hmc_base->intstat) & 0x1) {
+			printf("SBE interrupt is pending . . .\n");
+			printf("Clearing the pending SBE\n");
+			setbits_le32(&socfpga_ecc_hmc_base->intstat,
+				     DDR_HMC_INTSTAT_SERRPENA_SET_MSK);
+		}
+	}
+
+	printf("Disable eccdiagon AND wrdiagon at ecc_diagon  . . .\n");
+	clrbits_le32(&socfpga_ecc_hmc_base->ecc_diagon,
+		     (DDR_HMC_ECC_DIAGON_ECCDIAGON_EN_SET_MSK |
+		      DDR_HMC_ECC_DIAGON_WRDIAGON_EN_SET_MSK));
+}
+#endif
+
+#ifdef CONFIG_SOCFPGA_SDRAM_DBE_ECC_CHECKING
+void sdram_dbe_ecc_checking(void)
+{
+	u32 ecc_data = 0x6db7d7d3;
+	u32 data = 0x11223344;
+	u32 location = 0x800000;
+	u32 dbe_data = 0x11003344;
+
+	printf("SDRAM double bit error test starting . . .\n");
+	printf("Writing data %x into SDRAM address %lx\n", data,
+	       (uintptr_t)location);
+	writel(data, (uintptr_t)location);
+	printf("%lx: %x\n", (uintptr_t)location, readl((uintptr_t)location));
+	printf("Writing ecc data %x into ecc_reg2wreccdatabus register\n",
+	       ecc_data);
+	writel(ecc_data, &socfpga_ecc_hmc_base->ecc_reg2wreccdatabus);
+	printf("Enable eccdiagon AND wrdiagon at ecc_diagon  . . .\n");
+	setbits_le32(&socfpga_ecc_hmc_base->ecc_diagon,
+		     (DDR_HMC_ECC_DIAGON_ECCDIAGON_EN_SET_MSK |
+		      DDR_HMC_ECC_DIAGON_WRDIAGON_EN_SET_MSK));
+	printf("Injecting DBE data %x into SDRAM address %lx\n", dbe_data,
+	       (uintptr_t)location);
+	writel(dbe_data, (uintptr_t)location);
+}
+#endif
+
+#ifdef CONFIG_SOCFPGA_SDRAM_ADDR_MISMATCH_ECC_CHECKING
+void sdram_addr_mismatch_ecc_checking(void)
+{
+	u32 ecc_data = 0x88523236;
+	u32 data = 0x11223344;
+	u32 location = 0x800000;
+
+	printf("ECC address mismatch test starting . . .\n");
+	printf("Writing data %x into SDRAM address %lx\n", data,
+	       (uintptr_t)location);
+	writel(data, (uintptr_t)location);
+	printf("%lx: %x\n", (uintptr_t)location, readl((uintptr_t)location));
+	printf("Writing ecc data %x into ecc_reg2wreccdatabus register\n",
+	       ecc_data);
+	writel(ecc_data, &socfpga_ecc_hmc_base->ecc_reg2wreccdatabus);
+	printf("Enable eccdiagon AND wrdiagon at ecc_diagon  . . .\n");
+	setbits_le32(&socfpga_ecc_hmc_base->ecc_diagon,
+		     (DDR_HMC_ECC_DIAGON_ECCDIAGON_EN_SET_MSK |
+		      DDR_HMC_ECC_DIAGON_WRDIAGON_EN_SET_MSK));
+	printf("First write %x into SDRAM address %lx after ecc_diagon is on\n",
+	       data, (uintptr_t)location);
+	writel(data, (uintptr_t)location);
+	printf("Reading data at SDRAM address %lx: %x\n", (uintptr_t)location,
+	       readl((uintptr_t)location));
+}
+#endif
 
 /*
  * DesignWare Ethernet initialization

@@ -1,5 +1,30 @@
 if ARCH_SOCFPGA
 
+config SOCFPGA_SDRAM_SBE_ECC_CHECKING
+	bool "SDRAM single bit error ECC checking"
+	help
+	 Enable SDRAM single bit error ECC checking.
+	 There are a few combination you can run:
+	 1. sdram_sbe_ecc_checking only.
+	 2. sdram_sbe_ecc_checking -> sdram_dbe_ecc_checking.
+	 3. sdram_sbe_ecc_checking -> sdram_addr_mismatch_ecc_checking.
+
+config SOCFPGA_SDRAM_DBE_ECC_CHECKING
+	bool "SDRAM double bit error ECC checking"
+	help
+	 Enable SDRAM double bit error ECC checking.
+	 There are a few combination you can run:
+	 1. sdram_dbe_ecc_checking only.
+	 2. sdram_sbe_ecc_checking -> sdram_dbe_ecc_checking.
+
+config SOCFPGA_SDRAM_ADDR_MISMATCH_ECC_CHECKING
+	bool "SDRAM address mismatch ECC checking"
+	help
+	 Enable SDRAM address mismatch ECC checking.
+	 There are a few combination you can run:
+	 1. sdram_addr_mismatch_ecc_checking only.
+	 2. sdram_sbe_ecc_checking -> sdram_addr_mismatch_ecc_checking.
+
 config SPL_LIBCOMMON_SUPPORT
 	default y
 
