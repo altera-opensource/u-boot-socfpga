@@ -131,6 +131,10 @@ config TARGET_SOCFPGA_STRATIX10_SOCDK
 	bool "Intel SOCFPGA SoCDK (Stratix 10)"
 	select TARGET_SOCFPGA_STRATIX10
 
+config STRATIX10_FPGA_RECONFIG
+	bool "Intel Stratix 10 FPGA configuration support"
+	depends on TARGET_SOCFPGA_STRATIX10_SOCDK
+
 config TARGET_SOCFPGA_TERASIC_DE0_NANO
 	bool "Terasic DE0-Nano-Atlas (Cyclone V)"
 	select TARGET_SOCFPGA_CYCLONE5
