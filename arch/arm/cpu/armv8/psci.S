@@ -162,8 +162,8 @@ handle_svc:
 	subs	x12, x10, x9	/* Get number of entries in table */
 	b.eq	2f		/* Make sure SiP function table is not empty */
 	psci_enter
-1:	ldr w10, [x9]		/* Load SiP function table */
-	ldr w11, [x9, #4]
+1:	ldr x10, [x9]		/* Load SiP function table */
+	ldr x11, [x9, #8]
 	cmp	w10, w0
 	b.eq	2b		/* SiP service function found */
 	add x9, x9, #SECURE_SVC_TBL_OFFSET	/* Move to next entry */

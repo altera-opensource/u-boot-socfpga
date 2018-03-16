@@ -46,6 +46,7 @@ SECTIONS
 		AT(ADDR(.__secure_start) + SIZEOF(.__secure_start))
 	{
 		*(._secure.text)
+		. = ALIGN(8);
 		__secure_svc_tbl_start = .;
 		KEEP(*(._secure_svc_tbl_entries))
 		__secure_svc_tbl_end = .;

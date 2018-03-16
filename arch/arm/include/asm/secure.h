@@ -8,8 +8,11 @@
 
 #ifndef __ASSEMBLY__
 
-typedef struct __attribute__ ((packed, aligned(4))) secure_svc_tbl {
+typedef struct secure_svc_tbl {
 	u32	id;
+#ifdef CONFIG_ARMV8_PSCI
+	u8	pad[4];
+#endif
 	void	*func;
 } secure_svc_tbl_t;
 
@@ -26,7 +29,7 @@ typedef struct __attribute__ ((packed, aligned(4))) secure_svc_tbl {
 #else
 
 #ifdef CONFIG_ARMV8_PSCI
-#define SECURE_SVC_TBL_OFFSET		12
+#define SECURE_SVC_TBL_OFFSET		16
 #else
 #define SECURE_SVC_TBL_OFFSET		8
 
