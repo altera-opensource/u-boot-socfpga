@@ -171,4 +171,6 @@ struct socfpga_system_manager {
 
 #define SYSMGR_DMAPERIPH_ALL_NS		0xFFFFFFFF
 
+#define SYSMGR_WDDBG_PAUSE_ALL_CPU	0x0F0F0F0F
+
 #endif /* _SYSTEM_MANAGER_S10_ */

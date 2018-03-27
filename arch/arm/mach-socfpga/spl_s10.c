@@ -54,6 +54,9 @@ void board_init_f(ulong dummy)
 	const struct cm_config *cm_default_cfg = cm_get_default_config();
 
 #ifdef CONFIG_HW_WATCHDOG
+	/* Ensure watchdog is paused when debugging is happening */
+	writel(SYSMGR_WDDBG_PAUSE_ALL_CPU, &sysmgr_regs->wddbg);
+
 	/* Enable watchdog before initializing the HW */
 	socfpga_per_reset(SOCFPGA_RESET(L4WD0), 1);
 	socfpga_per_reset(SOCFPGA_RESET(L4WD0), 0);
