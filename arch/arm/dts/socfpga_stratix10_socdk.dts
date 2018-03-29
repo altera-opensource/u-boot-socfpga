@@ -140,7 +140,7 @@
 
 			flash0: n25q1024a@0 {
 				u-boot,dm-pre-reloc;
-				compatible = "stmicro,n25q1024a";
+				compatible = "stmicro,n25q1024a","spi-flash";
 				reg = <0>;      /* chip select */
 				spi-max-frequency = <50000000>;
 				page-size = <256>;
