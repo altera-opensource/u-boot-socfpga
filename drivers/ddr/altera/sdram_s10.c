@@ -204,6 +204,8 @@ void sdram_init_ecc_bits(void)
 			       size_byte);
 			dma330.dst_addr += size_byte;
 		}
+
+		WATCHDOG_RESET();
 		dma330.size_byte -= size_byte;
 	}
 #endif
