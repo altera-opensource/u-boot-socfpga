@@ -195,26 +195,58 @@ void sdram_dbe_ecc_checking(void)
 void sdram_addr_mismatch_ecc_checking(void)
 {
 	u32 ecc_data = 0x88523236;
-	u32 data = 0x11223344;
 	u32 location = 0x800000;
+	u64 data;
+	u32 hmc_size = readl(&socfpga_ecc_hmc_base->ddrioctrl);
 
+	/* DDIR IO x64 */
+	if (hmc_size == 2) {
+		data = 0x1122334455667788ULL;
+	} else { /* DDR IO x32 */
+		data = 0x11223344;
+	}
+
+	printf("***********************************************************\n");
 	printf("ECC address mismatch test starting . . .\n");
-	printf("Writing data %x into SDRAM address %lx\n", data,
-	       (uintptr_t)location);
-	writel(data, (uintptr_t)location);
-	printf("%lx: %x\n", (uintptr_t)location, readl((uintptr_t)location));
-	printf("Writing ecc data %x into ecc_reg2wreccdatabus register\n",
+	printf("Writing data 0x%x%x into SDRAM address 0x%lx\n",
+	       (u32)(data >> 32), (u32)data, (uintptr_t)location);
+
+	/* DDIR IO x64 */
+	if (hmc_size == 2) {
+		writeq(data, (uintptr_t)location);
+	} else { /* DDR IO x32 */
+		writel(data, (uintptr_t)location);
+	}
+
+	printf("Reading data at SDRAM address 0x%lx\n", (uintptr_t)location);
+	printf("0x%lx: 0x%x\n", (uintptr_t)location,
+	       readl((uintptr_t)location));
+	if (hmc_size == 2)
+		printf("0x%lx: 0x%x\n", (uintptr_t)(location+4),
+		       readl((uintptr_t)(location+4)));
+	printf("Writing ecc data 0x%x into ecc_reg2wreccdatabus register\n",
 	       ecc_data);
 	writel(ecc_data, &socfpga_ecc_hmc_base->ecc_reg2wreccdatabus);
-	printf("Enable eccdiagon AND wrdiagon at ecc_diagon  . . .\n");
+	printf("Enable eccdiagon AND wrdiagon at ecc_diagon\n");
 	setbits_le32(&socfpga_ecc_hmc_base->ecc_diagon,
 		     (DDR_HMC_ECC_DIAGON_ECCDIAGON_EN_SET_MSK |
 		      DDR_HMC_ECC_DIAGON_WRDIAGON_EN_SET_MSK));
-	printf("First write %x into SDRAM address %lx after ecc_diagon is on\n",
-	       data, (uintptr_t)location);
-	writel(data, (uintptr_t)location);
-	printf("Reading data at SDRAM address %lx: %x\n", (uintptr_t)location,
+	printf("First write 0x%x%x into SDRAM address 0x%lx after ",
+	       (u32)(data >> 32), (u32)data, (uintptr_t)location);
+	printf("ecc_diagon is on\n");
+	/* DDIR IO x64 */
+	if (hmc_size == 2) {
+		writeq(data, (uintptr_t)location);
+	} else { /* DDR IO x32 */
+		writel(data, (uintptr_t)location);
+	}
+	printf("Reading data at SDRAM address 0x%lx\n", (uintptr_t)location);
+	printf("0x%lx: 0x%x\n", (uintptr_t)location,
 	       readl((uintptr_t)location));
+	if (hmc_size == 2)
+		printf("0x%lx: 0x%x\n", (uintptr_t)(location+4),
+		       readl((uintptr_t)(location+4)));
+	printf("***********************************************************\n");
 }
 #endif
 
