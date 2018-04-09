@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2017 Intel Corporation <www.intel.com>
+ * Copyright (C) 2016-2018 Intel Corporation <www.intel.com>
  *
  * SPDX-License-Identifier:    GPL-2.0
  */
@@ -34,38 +34,77 @@ static const struct socfpga_ecc_hmc *socfpga_ecc_hmc_base =
 #ifdef CONFIG_SOCFPGA_SDRAM_SBE_ECC_CHECKING
 void sdram_sbe_ecc_checking(void)
 {
-	u32 ecc_data = 0x6db7d7d3;
-	u32 data = 0x11223344;
-	u32 location = 0x800000;
-	u32 sbe_data = 0x11223345;
+	u32 ecc_data, location, read_data_lo;
+	u32 read_data_hi = 0;
+	u64 data, sbe_data;
+	u32 hmc_size = readl(&socfpga_ecc_hmc_base->ddrioctrl);
 
+	/* DDIR IO x64 */
+	if (hmc_size == 2) {
+		ecc_data = 0x5C86E6E1;
+		data = 0x1122334455667788ULL;
+		location = 0x810000;
+		sbe_data = 0x1122334455667789ULL;
+	} else { /* DDR IO x32 */
+		ecc_data = 0x6db7d7d3;
+		data = 0x11223344;
+		location = 0x800000;
+		sbe_data = 0x11223345;
+	}
+
+	printf("***********************************************************\n");
 	printf("SDRAM single bit error test starting . . .\n");
-	printf("Enable SBE interrupt . . .\n");
+	printf("Enable SBE interrupt\n");
 	setbits_le32(&socfpga_ecc_hmc_base->errinten,
 		     DDR_HMC_ERRINTEN_SERRINTEN_EN_SET_MSK);
 	setbits_le32(&socfpga_ecc_hmc_base->intmode,
 		     (DDR_HMC_INTMODE_INTMODE_SET_MSK));
-	printf("Writing data %x into SDRAM address %lx\n", data,
-	       (uintptr_t)location);
-	writel(data, (uintptr_t)location);
-	printf("%lx: %x\n", (uintptr_t)location, readl((uintptr_t)location));
-	printf("Writing ecc data %x into ecc_reg2wreccdatabus register\n",
+	printf("Writing data 0x%x%x into SDRAM address 0x%lx\n",
+	       (u32)(data >> 32), (u32)data, (uintptr_t)location);
+
+	/* DDIR IO x64 */
+	if (hmc_size == 2) {
+		writeq(data, (uintptr_t)location);
+	} else { /* DDR IO x32 */
+		writel(data, (uintptr_t)location);
+	}
+
+	printf("Reading data at SDRAM address 0x%lx\n", (uintptr_t)location);
+	printf("0x%lx: 0x%x\n", (uintptr_t)location,
+	       readl((uintptr_t)location));
+	if (hmc_size == 2)
+		printf("0x%lx: 0x%x\n", (uintptr_t)(location+4),
+		       readl((uintptr_t)(location+4)));
+	printf("Writing ecc data 0x%x into ecc_reg2wreccdatabus register\n",
 	       ecc_data);
 	writel(ecc_data, &socfpga_ecc_hmc_base->ecc_reg2wreccdatabus);
-	printf("Enable eccdiagon AND wrdiagon at ecc_diagon  . . .\n");
+	printf("Enable eccdiagon AND wrdiagon at ecc_diagon\n");
 	setbits_le32(&socfpga_ecc_hmc_base->ecc_diagon,
 		     (DDR_HMC_ECC_DIAGON_ECCDIAGON_EN_SET_MSK |
 		      DDR_HMC_ECC_DIAGON_WRDIAGON_EN_SET_MSK));
-	printf("Injecting SBE data %x into SDRAM address %lx\n", sbe_data,
-	       (uintptr_t)location);
-	writel(sbe_data, (uintptr_t)location);
-	printf("Reading data at SDRAM address %lx: %x\n", (uintptr_t)location,
-	       readl((uintptr_t)location));
+	printf("Injecting SBE data 0x%x%x into SDRAM address 0x%lx\n",
+	       (u32)(sbe_data >> 32), (u32)sbe_data, (uintptr_t)location);
+
+	/* DDIR IO x64 */
+	if (hmc_size == 2) {
+		writeq(sbe_data, (uintptr_t)location);
+	} else { /* DDR IO x32 */
+		writel(sbe_data, (uintptr_t)location);
+	}
+
+	read_data_lo = readl((uintptr_t)location);
+	printf("Reading data at SDRAM address\n0x%lx: 0x%x\n",
+	       (uintptr_t)location, read_data_lo);
+	if (hmc_size == 2) {
+		read_data_hi = readl((uintptr_t)(location+4));
+		printf("0x%lx: 0x%x\n", (uintptr_t)(location+4),
+		       read_data_hi);
+	}
 
 	if (readl(&socfpga_ecc_hmc_base->ecc_decstat) & 0x1) {
-		printf("Decoder for data [63:0] has detected SBE\n");
+		printf("ECC decoder for data [63:0] has detected SBE\n");
 
-		printf("Corrected SDRAM ECC @ 0x%08x\n",
+		printf("SBE check Passed: Corrected SDRAM ECC @ 0x%08x\n",
 		       readl(&socfpga_ecc_hmc_base->autowb_corraddr));
 
 		if (readl(&socfpga_ecc_hmc_base->intstat) & 0x1) {
@@ -74,9 +113,20 @@ void sdram_sbe_ecc_checking(void)
 			setbits_le32(&socfpga_ecc_hmc_base->intstat,
 				     DDR_HMC_INTSTAT_SERRPENA_SET_MSK);
 		}
+	} else {
+		if (read_data_lo != (u32)data) {
+			printf("SBE Error: Did not read correct data 0x%x%x: ",
+			       read_data_hi, read_data_lo);
+			printf("expected 0x%x%x\n", (u32)(data >> 32),
+			       (u32)data);
+		} else {
+			printf("SBE Error: Suspect ECC decoder failed to ");
+			printf("detect data [63:0]\n");
+		}
 	}
 
-	printf("Disable eccdiagon AND wrdiagon at ecc_diagon  . . .\n");
+	printf("Disable eccdiagon AND wrdiagon at ecc_diagon\n");
+	printf("***********************************************************\n");
 	clrbits_le32(&socfpga_ecc_hmc_base->ecc_diagon,
 		     (DDR_HMC_ECC_DIAGON_ECCDIAGON_EN_SET_MSK |
 		      DDR_HMC_ECC_DIAGON_WRDIAGON_EN_SET_MSK));
