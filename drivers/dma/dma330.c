@@ -193,7 +193,9 @@
 #define SZ_DMAGO		6
 
 /* Use this _only_ to wait on transient states */
-#define UNTIL(t, s)	do {} while (!(dma330_getstate((t)) & (s)));
+#define UNTIL(t, s)	do { \
+				WATCHDOG_RESET(); \
+			} while (!(dma330_getstate((t)) & (s)));
 
 static unsigned cmd_line;
 
@@ -203,6 +205,7 @@ static unsigned cmd_line;
 						printf("%x:", cmd_line); \
 						printf((x)); \
 						cmd_line += (off); \
+						WATCHDOG_RESET(); \
 					} while (0)
 #else
 #define DMA330_DBGCMD_DUMP(off, x...)	do {} while (0)
@@ -1035,6 +1038,9 @@ int dma330_transfer_setup(struct dma330_transfer_struct *dma330)
 				dma330->peripheral_id);
 		/* DMALD */
 		off += _emit_ld(&buf[off], ALWAYS);
+
+		WATCHDOG_RESET();
+
 		/* DMARMB */
 		off += _emit_rmb(&buf[off]);
 		/* DMASTPB peripheral_id */
@@ -1307,6 +1313,9 @@ int dma330_transfer_zeroes(struct dma330_transfer_struct *dma330)
 		loopjmp0 = off;
 		/* DMALSTZ */
 		off += _emit_stz(&buf[off]);
+
+		WATCHDOG_RESET();
+
 		/* DMALP0END */
 		struct _arg_lpend lpend;
 		lpend.cond = ALWAYS;
