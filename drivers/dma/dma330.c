@@ -1178,6 +1178,8 @@ int dma330_transfer_finish(struct dma330_transfer_struct *dma330)
 		return -EINVAL;
 	}
 
+	dma330->channel0_manager1 = 0;
+
 	/* Wait until finish execution to ensure we compared correct result*/
 	UNTIL(dma330, DMA330_STATE_STOPPED | DMA330_STATE_FAULTING);
 
@@ -1200,12 +1202,15 @@ int dma330_transfer_finish(struct dma330_transfer_struct *dma330)
  * dma330_transfer_zeroes - DMA transfer zeroes.
  *
  * @dma330: Pointer to struct dma330_transfer_struct.
+ * @dest_addr: Destination to fill up with zeroes.
+ * @size_byte: Number bytes of zero to write.
  *
  * Used to write zeroes to a memory chunk for memory scrubbing purpose.
  *
  * Return: Negative value for error or not successful. 0 for successful.
  */
-int dma330_transfer_zeroes(struct dma330_transfer_struct *dma330)
+int dma330_transfer_zeroes(struct dma330_transfer_struct *dma330, u32 dest_addr,
+			   u32 size_byte)
 {
 	/* Variable declaration */
 	/* Buffer offset clear to 0 */
@@ -1217,7 +1222,7 @@ int dma330_transfer_zeroes(struct dma330_transfer_struct *dma330)
 	/* Loop count 1 */
 	unsigned lcnt1 = 0;
 	unsigned burst_size = 0;
-	unsigned data_size_byte = dma330->size_byte;
+	unsigned data_size_byte = size_byte;
 	/* Strong order memory is required to store microcode command list */
 	u8 *buf = (u8 *)dma330->buf;
 	/* Channel Control Register */
@@ -1230,7 +1235,7 @@ int dma330_transfer_zeroes(struct dma330_transfer_struct *dma330)
 	}
 
 	debug("INFO: Write zeroes -> ");
-	debug("0x%08x size=0x%08x\n", dma330->dst_addr, data_size_byte);
+	debug("0x%08x size=0x%08x\n", dest_addr, data_size_byte);
 
 	/* for burst, always use the maximum burst size and length */
 	dma330->brst_size = DMA330_MAX_BURST_SIZE;
@@ -1242,7 +1247,7 @@ int dma330_transfer_zeroes(struct dma330_transfer_struct *dma330)
 
 	/* Setup the command list */
 	/* DMAMOV DAR, x->dst_addr */
-	off += _emit_mov(&buf[off], DAR, dma330->dst_addr);
+	off += _emit_mov(&buf[off], DAR, dest_addr);
 
 	/* Preparing the CCR value */
 	/* Enable auto increment */

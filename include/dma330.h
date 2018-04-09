@@ -132,6 +132,7 @@ void dma330_stop(struct dma330_transfer_struct *dma330, u32 timeout_ms);
 int dma330_transfer_setup(struct dma330_transfer_struct *dma330);
 int dma330_transfer_start(struct dma330_transfer_struct *dma330);
 int dma330_transfer_finish(struct dma330_transfer_struct *dma330);
-int dma330_transfer_zeroes(struct dma330_transfer_struct *dma330);
+int dma330_transfer_zeroes(struct dma330_transfer_struct *dma330, u32 dest_addr,
+			   u32 size_byte);
 
 #endif	/* __DMA330_CORE_H */

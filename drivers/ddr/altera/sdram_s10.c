@@ -151,17 +151,18 @@ void sdram_init_ecc_bits(void)
 {
 	struct dma330_transfer_struct dma330;
 	unsigned int start;
+	/* 64MB per chunk */
+	u32 size_byte = SZ_64M;
 
 #ifdef CONFIG_DMA330_DMA
 	u8 buf[DDR_ECC_DMA_SIZE];
+	u32 dest_addr;
 
 	dma330.buf_size = sizeof(buf);
 	dma330.buf = (u32 *)buf;
 	dma330.channel_num = 0;
-#else
-	/* 64MB per chunk */
-	u32 size_byte = SZ_64M;
 #endif
+
 	dma330.dst_addr = CONFIG_SYS_SDRAM_BASE;
 	dma330.size_byte = gd->ram_size;
 
@@ -179,19 +180,35 @@ void sdram_init_ecc_bits(void)
 		dma330.reg_base = SOCFPGA_DMASECURE_ADDRESS;
 	}
 
-	if (dma330_transfer_zeroes(&dma330)) {
-		debug("ERROR - DMA setup failed\n");
+	dest_addr = dma330.dst_addr;
+
+	if (dma330.size_byte % size_byte) {
+		debug("Chunk transfer size %d bytes need to be ",
+		      size_byte);
+		debug("alligned with DDR size %d bytes\n",
+		      dma330.size_byte);
 		hang();
 	}
 
-	if (dma330_transfer_start(&dma330)) {
-		debug("ERROR - DMA start failed\n");
-		hang();
-	}
+	while (dest_addr < dma330.size_byte) {
+		/* Writing zeroes with size 64MB chunk by chunk */
+		if (dma330_transfer_zeroes(&dma330, dest_addr, size_byte)) {
+			debug("ERROR - DMA setup failed\n");
+			hang();
+		}
 
-	if (dma330_transfer_finish(&dma330)) {
-		debug("ERROR - DMA finish failed\n");
-		hang();
+		WATCHDOG_RESET();
+		if (dma330_transfer_start(&dma330)) {
+			debug("ERROR - DMA start failed\n");
+			hang();
+		}
+
+		if (dma330_transfer_finish(&dma330)) {
+			debug("ERROR - DMA finish failed\n");
+			hang();
+		}
+
+		dest_addr += size_byte;
 	}
 #else
 	while (dma330.size_byte) {
