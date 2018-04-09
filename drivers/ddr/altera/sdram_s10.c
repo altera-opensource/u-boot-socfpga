@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <div64.h>
 #include <asm/io.h>
+#include <linux/sizes.h>
 #include <watchdog.h>
 #include <dma330.h>
 #include <asm/arch/sdram_s10.h>
@@ -150,12 +151,16 @@ void sdram_init_ecc_bits(void)
 {
 	struct dma330_transfer_struct dma330;
 	unsigned int start;
+
 #ifdef CONFIG_DMA330_DMA
 	u8 buf[DDR_ECC_DMA_SIZE];
 
 	dma330.buf_size = sizeof(buf);
 	dma330.buf = (u32 *)buf;
 	dma330.channel_num = 0;
+#else
+	/* 64MB per chunk */
+	u32 size_byte = SZ_64M;
 #endif
 	dma330.dst_addr = CONFIG_SYS_SDRAM_BASE;
 	dma330.size_byte = gd->ram_size;
@@ -189,7 +194,18 @@ void sdram_init_ecc_bits(void)
 		hang();
 	}
 #else
-	memset((void *)(uintptr_t)dma330.dst_addr, 0, dma330.size_byte);
+	while (dma330.size_byte) {
+		if (dma330.size_byte <= size_byte) {
+			memset((void *)(uintptr_t)dma330.dst_addr, 0,
+			       dma330.size_byte);
+			break;
+		} else {
+			memset((void *)(uintptr_t)dma330.dst_addr, 0,
+			       size_byte);
+			dma330.dst_addr += size_byte;
+		}
+		dma330.size_byte -= size_byte;
+	}
 #endif
 
 	printf("SDRAM-ECC: Initialized success with %d ms\n",
