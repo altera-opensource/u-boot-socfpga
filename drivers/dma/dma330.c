@@ -197,14 +197,11 @@
 				WATCHDOG_RESET(); \
 			} while (!(dma330_getstate((t)) & (s)));
 
-static unsigned cmd_line;
-
 /* debug message printout */
 #ifdef DEBUG
 #define DMA330_DBGCMD_DUMP(off, x...)	do { \
-						printf("%x:", cmd_line); \
-						printf((x)); \
-						cmd_line += (off); \
+						printf("%x bytes:", off); \
+						printf(x); \
 						WATCHDOG_RESET(); \
 					} while (0)
 #else
@@ -889,7 +886,6 @@ int dma330_transfer_setup(struct dma330_transfer_struct *dma330)
 	/* Channel Control Register */
 	u32 ccr = 0;
 	struct dma330_reqcfg reqcfg;
-	cmd_line = 0;
 
 	if (!buf) {
 		debug("ERROR DMA330 : DMA Microcode buffer pointer is NULL\n");
@@ -1227,7 +1223,6 @@ int dma330_transfer_zeroes(struct dma330_transfer_struct *dma330)
 	/* Channel Control Register */
 	u32 ccr = 0;
 	struct dma330_reqcfg reqcfg;
-	cmd_line = 0;
 
 	if (!buf) {
 		debug("ERROR DMA330 : DMA Microcode buffer pointer is NULL\n");
