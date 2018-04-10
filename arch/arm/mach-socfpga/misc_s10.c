@@ -29,6 +29,26 @@ defined(CONFIG_SOCFPGA_SDRAM_DBE_ECC_CHECKING) || \
 defined(CONFIG_SOCFPGA_SDRAM_DBE_ECC_CHECKING)
 static const struct socfpga_ecc_hmc *socfpga_ecc_hmc_base =
 		(void *)SOCFPGA_SDR_ADDRESS;
+
+static void write_read_DDR(u64 data, u32 location, u32 *read_lo, u32 *read_hi)
+{
+	u32 hmc_size = readl(&socfpga_ecc_hmc_base->ddrioctrl);
+
+	/* DDIR IO x64 */
+	if (hmc_size == 2) {
+		writeq(data, (uintptr_t)location);
+	} else { /* DDR IO x32 */
+		writel(data, (uintptr_t)location);
+	}
+
+	printf("Reading data at SDRAM address 0x%lx\n", (uintptr_t)location);
+	*read_lo = readl((uintptr_t)location);
+	printf("0x%lx: 0x%x\n", (uintptr_t)location, *read_lo);
+	if (hmc_size == 2) {
+		*read_hi = readl((uintptr_t)(location+4));
+		printf("0x%lx: 0x%x\n", (uintptr_t)(location+4), *read_hi);
+	}
+}
 #endif
 
 #ifdef CONFIG_SOCFPGA_SDRAM_SBE_ECC_CHECKING
@@ -61,20 +81,7 @@ void sdram_sbe_ecc_checking(void)
 		     (DDR_HMC_INTMODE_INTMODE_SET_MSK));
 	printf("Writing data 0x%x%x into SDRAM address 0x%lx\n",
 	       (u32)(data >> 32), (u32)data, (uintptr_t)location);
-
-	/* DDIR IO x64 */
-	if (hmc_size == 2) {
-		writeq(data, (uintptr_t)location);
-	} else { /* DDR IO x32 */
-		writel(data, (uintptr_t)location);
-	}
-
-	printf("Reading data at SDRAM address 0x%lx\n", (uintptr_t)location);
-	printf("0x%lx: 0x%x\n", (uintptr_t)location,
-	       readl((uintptr_t)location));
-	if (hmc_size == 2)
-		printf("0x%lx: 0x%x\n", (uintptr_t)(location+4),
-		       readl((uintptr_t)(location+4)));
+	write_read_DDR(data, location, &read_data_lo, &read_data_hi);
 	printf("Writing ecc data 0x%x into ecc_reg2wreccdatabus register\n",
 	       ecc_data);
 	writel(ecc_data, &socfpga_ecc_hmc_base->ecc_reg2wreccdatabus);
@@ -84,23 +91,7 @@ void sdram_sbe_ecc_checking(void)
 		      DDR_HMC_ECC_DIAGON_WRDIAGON_EN_SET_MSK));
 	printf("Injecting SBE data 0x%x%x into SDRAM address 0x%lx\n",
 	       (u32)(sbe_data >> 32), (u32)sbe_data, (uintptr_t)location);
-
-	/* DDIR IO x64 */
-	if (hmc_size == 2) {
-		writeq(sbe_data, (uintptr_t)location);
-	} else { /* DDR IO x32 */
-		writel(sbe_data, (uintptr_t)location);
-	}
-
-	read_data_lo = readl((uintptr_t)location);
-	printf("Reading data at SDRAM address\n0x%lx: 0x%x\n",
-	       (uintptr_t)location, read_data_lo);
-	if (hmc_size == 2) {
-		read_data_hi = readl((uintptr_t)(location+4));
-		printf("0x%lx: 0x%x\n", (uintptr_t)(location+4),
-		       read_data_hi);
-	}
-
+	write_read_DDR(sbe_data, location, &read_data_lo, &read_data_hi);
 	if (readl(&socfpga_ecc_hmc_base->ecc_decstat) & 0x1) {
 		printf("ECC decoder for data [63:0] has detected SBE\n");
 
@@ -136,7 +127,8 @@ void sdram_sbe_ecc_checking(void)
 #ifdef CONFIG_SOCFPGA_SDRAM_DBE_ECC_CHECKING
 void sdram_dbe_ecc_checking(void)
 {
-	u32 ecc_data, location;
+	u32 ecc_data, location, read_data_lo;
+	u32 read_data_hi = 0;
 	u64 data, dbe_data;
 	u32 hmc_size = readl(&socfpga_ecc_hmc_base->ddrioctrl);
 
@@ -157,21 +149,7 @@ void sdram_dbe_ecc_checking(void)
 	printf("SDRAM double bit error test starting . . .\n");
 	printf("Writing data 0x%x%x into SDRAM address 0x%lx\n",
 	       (u32)(data >> 32), (u32)data, (uintptr_t)location);
-
-	/* DDIR IO x64 */
-	if (hmc_size == 2) {
-		writeq(data, (uintptr_t)location);
-	} else { /* DDR IO x32 */
-		writel(data, (uintptr_t)location);
-	}
-
-	printf("Reading data at SDRAM address 0x%lx\n", (uintptr_t)location);
-	printf("0x%lx: 0x%x\n", (uintptr_t)location,
-	       readl((uintptr_t)location));
-	if (hmc_size == 2)
-		printf("0x%lx: 0x%x\n", (uintptr_t)(location+4),
-		       readl((uintptr_t)(location+4)));
-
+	write_read_DDR(data, location, &read_data_lo, &read_data_hi);
 	printf("Writing ecc data 0x%x into ecc_reg2wreccdatabus register\n",
 	       ecc_data);
 	writel(ecc_data, &socfpga_ecc_hmc_base->ecc_reg2wreccdatabus);
@@ -197,6 +175,8 @@ void sdram_addr_mismatch_ecc_checking(void)
 	u32 ecc_data = 0x88523236;
 	u32 location = 0x800000;
 	u64 data;
+	u32 read_data_lo;
+	u32 read_data_hi = 0;
 	u32 hmc_size = readl(&socfpga_ecc_hmc_base->ddrioctrl);
 
 	/* DDIR IO x64 */
@@ -210,20 +190,7 @@ void sdram_addr_mismatch_ecc_checking(void)
 	printf("ECC address mismatch test starting . . .\n");
 	printf("Writing data 0x%x%x into SDRAM address 0x%lx\n",
 	       (u32)(data >> 32), (u32)data, (uintptr_t)location);
-
-	/* DDIR IO x64 */
-	if (hmc_size == 2) {
-		writeq(data, (uintptr_t)location);
-	} else { /* DDR IO x32 */
-		writel(data, (uintptr_t)location);
-	}
-
-	printf("Reading data at SDRAM address 0x%lx\n", (uintptr_t)location);
-	printf("0x%lx: 0x%x\n", (uintptr_t)location,
-	       readl((uintptr_t)location));
-	if (hmc_size == 2)
-		printf("0x%lx: 0x%x\n", (uintptr_t)(location+4),
-		       readl((uintptr_t)(location+4)));
+	write_read_DDR(data, location, &read_data_lo, &read_data_hi);
 	printf("Writing ecc data 0x%x into ecc_reg2wreccdatabus register\n",
 	       ecc_data);
 	writel(ecc_data, &socfpga_ecc_hmc_base->ecc_reg2wreccdatabus);
@@ -234,18 +201,7 @@ void sdram_addr_mismatch_ecc_checking(void)
 	printf("First write 0x%x%x into SDRAM address 0x%lx after ",
 	       (u32)(data >> 32), (u32)data, (uintptr_t)location);
 	printf("ecc_diagon is on\n");
-	/* DDIR IO x64 */
-	if (hmc_size == 2) {
-		writeq(data, (uintptr_t)location);
-	} else { /* DDR IO x32 */
-		writel(data, (uintptr_t)location);
-	}
-	printf("Reading data at SDRAM address 0x%lx\n", (uintptr_t)location);
-	printf("0x%lx: 0x%x\n", (uintptr_t)location,
-	       readl((uintptr_t)location));
-	if (hmc_size == 2)
-		printf("0x%lx: 0x%x\n", (uintptr_t)(location+4),
-		       readl((uintptr_t)(location+4)));
+	write_read_DDR(data, location, &read_data_lo, &read_data_hi);
 	printf("***********************************************************\n");
 }
 #endif
