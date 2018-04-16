@@ -349,18 +349,6 @@ int mbox_rsu_get_spt_offset(u32 *resp_buf, u32 resp_buf_len)
 			     (u32 *)resp_buf);
 }
 
-int mbox_rsu_status(u32 *resp_buf, u32 resp_buf_len)
-{
-	return mbox_send_cmd(MBOX_ID_UBOOT, MBOX_RSU_STATUS, MBOX_CMD_DIRECT, 0,
-			     NULL, 0, (u32 *)&resp_buf_len, (u32 *)resp_buf);
-}
-
-int mbox_rsu_update(u32 *flash_offset)
-{
-	return mbox_send_cmd(MBOX_ID_UBOOT, MBOX_RSU_UPDATE, MBOX_CMD_DIRECT, 2,
-			     (u32 *)flash_offset, 0, 0, NULL);
-}
-
 int mbox_send_cmd(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg,
 		  u8 urgent, u32 *resp_buf_len, u32 *resp_buf)
 {
@@ -374,6 +362,32 @@ int __secure mbox_send_cmd_psci(u8 id, u32 cmd, u8 is_indirect, u32 len,
 {
 	return __mbox_send_cmd(id, cmd, is_indirect, len, arg, urgent,
 			       resp_buf_len, resp_buf);
+}
+
+int mbox_rsu_status(u32 *resp_buf, u32 resp_buf_len)
+{
+	return mbox_send_cmd(MBOX_ID_UBOOT, MBOX_RSU_STATUS, MBOX_CMD_DIRECT, 0,
+			     NULL, 0, (u32 *)&resp_buf_len, (u32 *)resp_buf);
+}
+
+int __secure mbox_rsu_status_psci(u32 *resp_buf, u32 resp_buf_len)
+{
+	return mbox_send_cmd_psci(MBOX_ID_UBOOT, MBOX_RSU_STATUS,
+				  MBOX_CMD_DIRECT, 0, NULL, 0,
+				  (u32 *)&resp_buf_len, (u32 *)resp_buf);
+}
+
+int mbox_rsu_update(u32 *flash_offset)
+{
+	return mbox_send_cmd(MBOX_ID_UBOOT, MBOX_RSU_UPDATE, MBOX_CMD_DIRECT, 2,
+			     (u32 *)flash_offset, 0, 0, NULL);
+}
+
+int __secure mbox_rsu_update_psci(u32 *flash_offset)
+{
+	return mbox_send_cmd_psci(MBOX_ID_UBOOT, MBOX_RSU_UPDATE,
+				  MBOX_CMD_DIRECT, 2, (u32 *)flash_offset,
+				  0, 0, NULL);
 }
 
 int mbox_send_cmd_only(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg)

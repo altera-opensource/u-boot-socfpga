@@ -152,6 +152,8 @@ int mbox_qspi_open(void);
 int mbox_reset_cold(void);
 int mbox_rsu_get_spt_offset(u32 *resp_buf, u32 resp_buf_len);
 int mbox_rsu_status(u32 *resp_buf, u32 resp_buf_len);
+int mbox_rsu_status_psci(u32 *resp_buf, u32 resp_buf_len);
 int mbox_rsu_update(u32 *flash_offset);
+int mbox_rsu_update_psci(u32 *flash_offset);
 
 #endif /* _MAILBOX_S10_H_ */
