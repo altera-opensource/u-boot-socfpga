@@ -27,7 +27,7 @@ static const struct socfpga_system_manager *sysmgr_regs =
 		(void *)SOCFPGA_SYSMGR_ADDRESS;
 
 #define DDR_CONFIG(A, B, C, R)	((A<<24)|(B<<16)|(C<<8)|R)
-#define DDR_ECC_DMA_SIZE	2500
+#define DDR_ECC_DMA_SIZE	256
 
 /* The followring are the supported configurations */
 u32 ddr_config[] = {
