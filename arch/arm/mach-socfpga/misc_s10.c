@@ -26,7 +26,7 @@ static struct socfpga_system_manager *sysmgr_regs =
 	(struct socfpga_system_manager *)SOCFPGA_SYSMGR_ADDRESS;
 #if defined(CONFIG_SOCFPGA_SDRAM_SBE_ECC_CHECKING) || \
 defined(CONFIG_SOCFPGA_SDRAM_DBE_ECC_CHECKING) || \
-defined(CONFIG_SOCFPGA_SDRAM_DBE_ECC_CHECKING)
+defined(CONFIG_SOCFPGA_SDRAM_ADDR_MISMATCH_ECC_CHECKING)
 static const struct socfpga_ecc_hmc *socfpga_ecc_hmc_base =
 		(void *)SOCFPGA_SDR_ADDRESS;
 
