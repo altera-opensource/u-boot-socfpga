@@ -67,20 +67,16 @@
  * INTEL_SIP_SMC_FPGA_CONFIG_STATUS_ERROR:
  * There is error during the FPGA configuration process.
  *
- * INTEL_SIP_SMC_SYSMAN_ERROR:
- * There is error during a read or write operation of the System Manager
+ * INTEL_SIP_SMC_REG_ERROR:
+ * There is error during a read or write operation of the protected
  * registers.
- *
- * INTEL_SIP_SMC_ECC_ERROR:
- * There is error during a read or write operation of the ECC registers.
  */
 #define INTEL_SIP_SMC_RETURN_UNKNOWN_FUNCTION		0xFFFFFFFF
 #define INTEL_SIP_SMC_STATUS_OK				0x0
 #define INTEL_SIP_SMC_FPGA_CONFIG_STATUS_BUSY		0x1
 #define INTEL_SIP_SMC_FPGA_CONFIG_STATUS_REJECTED       0x2
 #define INTEL_SIP_SMC_FPGA_CONFIG_STATUS_ERROR		0x4
-#define INTEL_SIP_SMC_SYSMAN_ERROR			0x5
-#define INTEL_SIP_SMC_ECC_ERROR				0x6
+#define INTEL_SIP_SMC_REG_ERROR				0x5
 
 /*
  * Request INTEL_SIP_SMC_FPGA_CONFIG_START
@@ -212,85 +208,62 @@ INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_FPGA_CONFIG_COMPLETED_WRITE)
 	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_FPGA_CONFIG_LOOPBACK)
 
 /*
- * Request INTEL_SIP_SMC_SYSMAN_READ
+ * Request INTEL_SIP_SMC_REG_READ
  *
- * Read a register in the system manager at a fixed offset.
+ * Read a protected register using SMCCC
  *
  * Call register usage:
- * a0: INTEL_SIP_SMC_FUNCID_SYSMAN_READ.
- * a1: register offset from beginning of System Manager block.
+ * a0: INTEL_SIP_SMC_REG_READ.
+ * a1: register address.
  * a2-7: not used.
  *
  * Return status:
- * a0: INTEL_SIP_SMC_STATUS_OK or INTEL_SIP_SMC_SYSMAN_ERROR.
+ * a0: INTEL_SIP_SMC_STATUS_OK or INTEL_SIP_SMC_REG_ERROR.
  * a1: Value in the register
  * a2-3: not used.
  */
-#define INTEL_SIP_SMC_FUNCID_SYSMAN_READ 7
-#define INTEL_SIP_SMC_SYSMAN_READ \
-	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_SYSMAN_READ)
+#define INTEL_SIP_SMC_FUNCID_REG_READ 7
+#define INTEL_SIP_SMC_REG_READ \
+	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_REG_READ)
 
 /*
- * Request INTEL_SIP_SMC_SYSMAN_WRITE
+ * Request INTEL_SIP_SMC_REG_WRITE
  *
- * Write a register in the system manager at a fixed offset.
+ * Write a protected register using SMCCC
  *
  * Call register usage:
- * a0: INTEL_SIP_SMC_FUNCID_SYSMAN_WRITE.
- * a1: register offset from beginning of System Manager block.
- * a2: mask to indicate which bits change.
- * a3: value to program into register.
- * a4-7: not used.
+ * a0: INTEL_SIP_SMC_REG_WRITE.
+ * a1: register address
+ * a2: value to program into register.
+ * a3-7: not used.
  *
  * Return status:
- * a0: INTEL_SIP_SMC_STATUS_OK or INTEL_SIP_SMC_SYSMAN_ERROR.
- * a1: Value in the register
- * a2-3: not used.
+ * a0: INTEL_SIP_SMC_STATUS_OK or INTEL_SIP_SMC_REG_ERROR.
+ * a1-3: not used.
  */
-#define INTEL_SIP_SMC_FUNCID_SYSMAN_WRITE 8
-#define INTEL_SIP_SMC_SYSMAN_WRITE \
-	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_SYSMAN_WRITE)
+#define INTEL_SIP_SMC_FUNCID_REG_WRITE 8
+#define INTEL_SIP_SMC_REG_WRITE \
+	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_REG_WRITE)
 
 /*
- * Request INTEL_SIP_SMC_ECC_HMC_READ
+ * Request INTEL_SIP_SMC_FUNCID_REG_UPDATE
  *
- * For ECC operation, we need to read the Hard Memory controller ECC
- * registers.
- *
- * Call register usage:
- * a0: INTEL_SIP_SMC_FUNCID_ECC_HMC_READ.
- * a1: Byte offset from ECC_CTRL1 (up to 0xC0)
- * a2-7: not used.
- *
- * Return status:
- * a0: INTEL_SIP_SMC_STATUS_OK or INTEL_SIP_SMC_ECC_ERROR.
- * a1: Value in the HMC ECC Offset register
- * a2-3: Not used.
- */
-#define INTEL_SIP_SMC_FUNCID_ECC_HMC_READ 9
-#define INTEL_SIP_SMC_ECC_HMC_READ \
-	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_ECC_HMC_READ)
-
-/*
- * Request INTEL_SIP_SMC_ECC_HMC_WRITE
- *
- * For ECC operation, we need to write the Hard Memory controller ECC
- * registers.
+ * Update one or more bits in a protected register using a
+ * read-modify-write operation.
  *
  * Call register usage:
- * a0: INTEL_SIP_SMC_FUNCID_ECC_HMC_WRITE.
- * a1: Byte offset from ECC_CTRL1 (up to 0xC0)
+ * a0: INTEL_SIP_SMC_REG_UPDATE.
+ * a1: register address
  * a2: Write Mask.
  * a3: Value to write.
  * a4-7: not used.
  *
  * Return status:
- * a0: INTEL_SIP_SMC_STATUS_OK or INTEL_SIP_SMC_ECC_ERROR.
- * a1: Value in the HMC ECC Offset register
- * a2-3: Not used.
+ * a0: INTEL_SIP_SMC_STATUS_OK or INTEL_SIP_SMC_REG_ERROR.
+ * a1-3: Not used.
  */
-#define INTEL_SIP_SMC_FUNCID_ECC_HMC_WRITE 10
-#define INTEL_SIP_SMC_ECC_HMC_WRITE \
-	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_ECC_HMC_WRITE)
+#define INTEL_SIP_SMC_FUNCID_REG_UPDATE 9
+#define INTEL_SIP_SMC_REG_UPDATE \
+	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_REG_UPDATE)
 
 #endif
