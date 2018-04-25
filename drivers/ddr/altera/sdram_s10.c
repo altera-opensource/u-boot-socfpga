@@ -421,7 +421,7 @@ int sdram_mmr_init_full(unsigned int unused)
 	       &socfpga_noc_ddr_scheduler_base->main_scheduler_devtodev);
 
 	/* assigning the SDRAM size */
-	unsigned long long size = sdram_calculate_size();
+	phys_size_t size = sdram_calculate_size();
 	/* If the size is invalid, use default Config size */
 	if (size <= 0)
 		gd->ram_size = PHYS_SDRAM_1_SIZE;
@@ -464,12 +464,12 @@ int sdram_mmr_init_full(unsigned int unused)
  * Calculate SDRAM device size based on SDRAM controller parameters.
  * Size is specified in bytes.
  */
-unsigned long sdram_calculate_size(void)
+phys_size_t sdram_calculate_size(void)
 {
 	union dramaddrw_reg dramaddrw =
 		(union dramaddrw_reg)readl(&socfpga_io48_mmr_base->dramaddrw);
 
-	u32 size = (1 << (dramaddrw.cfg_cs_addr_width +
+	phys_size_t size = (1 << (dramaddrw.cfg_cs_addr_width +
 		    dramaddrw.cfg_bank_group_addr_width +
 		    dramaddrw.cfg_bank_addr_width +
 		    dramaddrw.cfg_row_addr_width +
