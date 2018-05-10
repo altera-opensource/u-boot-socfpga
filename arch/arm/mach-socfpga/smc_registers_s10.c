@@ -34,6 +34,8 @@ static void __secure smc_socfpga_register_read(unsigned long function_id,
 	case(0xFFD12098):	/* ECC_INT_MASK_CLEAR */
 	case(0xFFD1209C):	/* ECC_INTSTATUS_SERR */
 	case(0xFFD120A0):	/* ECC_INTSTATUS_DERR */
+	case(0xFFD12220):	/* BOOT_SCRATCH_COLD8 */
+	case(0xFFD12224):	/* BOOT_SCRATCH_COLD9 */
 		/* Value at offset */
 		SMC_ASSIGN_REG_MEM(r, SMC_ARG1,
 				   readl(pdata));
@@ -74,6 +76,8 @@ static void __secure smc_socfpga_register_write(unsigned long function_id,
 	case(0xFFD12098):	/* ECC_INT_MASK_CLEAR */
 	case(0xFFD1209C):	/* ECC_INTSTATUS_SERR */
 	case(0xFFD120A0):	/* ECC_INTSTATUS_DERR */
+	case(0xFFD12220):	/* BOOT_SCRATCH_COLD8 */
+	case(0xFFD12224):	/* BOOT_SCRATCH_COLD9 */
 		writel((u32)value, pdata);
 		/* Value at offset */
 		SMC_ASSIGN_REG_MEM(r, SMC_ARG1, readl(pdata));
@@ -115,6 +119,8 @@ static void __secure smc_socfpga_register_update(unsigned long function_id,
 	case(0xFFD12098):	/* ECC_INT_MASK_CLEAR */
 	case(0xFFD1209C):	/* ECC_INTSTATUS_SERR */
 	case(0xFFD120A0):	/* ECC_INTSTATUS_DERR */
+	case(0xFFD12220):	/* BOOT_SCRATCH_COLD8 */
+	case(0xFFD12224):	/* BOOT_SCRATCH_COLD9 */
 		clrsetbits_le32(pdata, (u32)mask, (u32)value);
 		/* Value at offset */
 		SMC_ASSIGN_REG_MEM(r, SMC_ARG1, readl(pdata));
