@@ -17,6 +17,7 @@
 #include <asm/arch/sdram_s10.h>
 #include <asm/arch/system_manager.h>
 #include <asm/pl310.h>
+#include <asm/arch/mailbox_s10.h>
 
 #include <dt-bindings/reset/altr,rst-mgr-s10.h>
 
@@ -385,3 +386,8 @@ U_BOOT_CMD(
 	"bridge disable - Enable HPS-to-FPGA, FPGA-to-HPS, LWHPS-to-FPGA bridges\n"
 	""
 );
+
+void arch_preboot_os(void)
+{
+	mbox_hps_stage_notify(HPS_EXECUTION_STATE_OS);
+}
