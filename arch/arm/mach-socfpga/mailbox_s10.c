@@ -390,6 +390,12 @@ int __secure mbox_rsu_update_psci(u32 *flash_offset)
 				  0, 0, NULL);
 }
 
+int mbox_hps_stage_notify(u32 execution_stage)
+{
+	return mbox_send_cmd(MBOX_ID_UBOOT, MBOX_HPS_STAGE_NOTIFY,
+			     MBOX_CMD_DIRECT, 1, &execution_stage, 0, 0, NULL);
+}
+
 int mbox_send_cmd_only(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg)
 {
 	return __mbox_send_cmd_only(id, cmd, is_indirect, len, arg);
