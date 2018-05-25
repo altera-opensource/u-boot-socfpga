@@ -204,7 +204,7 @@ static void __secure smc_socfpga_config_start(unsigned long function_id,
 		goto ret;
 	}
 
-	/* Init state in buffer list  PGA_CONFIG_RESERVED_MEM_SIZ*/
+	/* Initialize the state of the buffer list */
 	for (i = 0; i < FPGA_CONFIG_BUF_MAX; i++) {
 		fpga_buf_list[i].state = FPGA_BUF_STAT_IDLE;
 		fpga_buf_list[i].buf_id = 0;
