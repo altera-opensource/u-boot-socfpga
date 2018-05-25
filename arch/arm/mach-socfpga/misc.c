@@ -19,6 +19,7 @@
 #include <asm/arch/system_manager.h>
 #include <asm/arch/nic301.h>
 #include <asm/arch/scu.h>
+#include <asm/arch/sdram.h>
 #include <asm/pl310.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -41,7 +42,7 @@ struct bsel bsel_str[] = {
 
 int dram_init(void)
 {
-	gd->ram_size = get_ram_size((long *)PHYS_SDRAM_1, PHYS_SDRAM_1_SIZE);
+	gd->ram_size = sdram_calculate_size();
 	return 0;
 }
 
