@@ -12,6 +12,7 @@
 #include <asm/arch/mailbox_s10.h>
 #include <asm/arch/smc_s10.h>
 #include <linux/intel-smc.h>
+#include <asm/arch/reset_manager.h>
 
 #define FPGA_CONFIG_RESEVED_MEM_START		0x1000
 #define FPGA_CONFIG_RESERVED_MEM_SIZE		0x1000000	/* 16 MB */
@@ -45,6 +46,7 @@ static __secure_data struct fpga_buf_list {
 } fpga_buf_list[FPGA_CONFIG_BUF_MAX];
 
 static u8 __secure_data fpga_error = 1;
+static u8 __secure_data is_partial_reconfig;
 static u8 __secure_data fpga_buf_id = 1;
 static u32 __secure_data fpga_xfer_max = 4;
 static u32 __secure_data fpga_buf_read_index;
@@ -220,6 +222,15 @@ static void __secure smc_socfpga_config_start(unsigned long function_id,
 	fpga_buf_read_index = 0;
 	fpga_buf_write_index = 0;
 	fpga_buf_id = 1;
+
+	is_partial_reconfig = (u8)config_type;
+
+	/* Check whether config type is full reconfiguration */
+	if (!is_partial_reconfig) {
+		/* Disable bridge */
+		socfpga_bridges_reset_psci(0);
+	}
+
 ret:
 	SMC_ASSIGN_REG_MEM(r, SMC_ARG0, INTEL_SIP_SMC_STATUS_OK);
 
@@ -411,6 +422,12 @@ static void __secure smc_socfpga_config_isdone(unsigned long function_id)
 		/* FPGA configuration completed successfully */
 		SMC_ASSIGN_REG_MEM(r, SMC_ARG0,
 				   INTEL_SIP_SMC_STATUS_OK);
+
+		/* Check whether config type is full reconfiguration */
+		if (!is_partial_reconfig) {
+			/* Enable bridge */
+			socfpga_bridges_reset_psci(1);
+		}
 		goto ret;
 	}
 
