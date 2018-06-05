@@ -29,6 +29,8 @@ static void __secure smc_socfpga_register_read(unsigned long function_id,
 	case(0xF8011118):	/* ERRINTENR */
 	case(0xF801111C):	/* INTMODE */
 	case(0xF8011120):	/* INTSTAT */
+	case(0xF8011124):	/* DIAGINTTEST */
+	case(0xF801112C):	/* DERRADDRA */
 	case(0xFFD12090):	/* ECC_INT_MASK_VALUE */
 	case(0xFFD12094):	/* ECC_INT_MASK_SET */
 	case(0xFFD12098):	/* ECC_INT_MASK_CLEAR */
@@ -71,6 +73,7 @@ static void __secure smc_socfpga_register_write(unsigned long function_id,
 	case(0xF801111C):	/* INTMODE */
 	case(0xF8011120):	/* INTSTAT */
 	case(0xF8011124):	/* DIAGINTTEST */
+	case(0xF801112C):	/* DERRADDRA */
 	case(0xFFD12090):	/* ECC_INT_MASK_VALUE */
 	case(0xFFD12094):	/* ECC_INT_MASK_SET */
 	case(0xFFD12098):	/* ECC_INT_MASK_CLEAR */
@@ -114,6 +117,7 @@ static void __secure smc_socfpga_register_update(unsigned long function_id,
 	case(0xF801111C):	/* INTMODE */
 	case(0xF8011120):	/* INTSTAT */
 	case(0xF8011124):	/* DIAGINTTEST */
+	case(0xF801112C):	/* DERRADDRA */
 	case(0xFFD12090):	/* ECC_INT_MASK_VALUE */
 	case(0xFFD12094):	/* ECC_INT_MASK_SET */
 	case(0xFFD12098):	/* ECC_INT_MASK_CLEAR */
