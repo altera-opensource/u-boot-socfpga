@@ -264,6 +264,16 @@ int arch_fixup_memory_node(void *blob);
 int fdt_setup_simplefb_node(void *fdt, int node, u64 base_address, u32 width,
 			    u32 height, u32 stride, const char *format);
 
+/**
+ * fdt_get_cells_len() - Get the length of a type of cell in top-level nodes
+ *
+ * Returns the length of the cell type in bytes (4 or 8).
+ *
+ * @blob: Pointer to device tree blob
+ * @nr_cells_name: Name to lookup, e.g. "#address-cells"
+ */
+int fdt_get_cells_len(const void *blob, char *nr_cells_name);
+
 #endif /* ifdef CONFIG_OF_LIBFDT */
 
 #ifdef USE_HOSTCC
