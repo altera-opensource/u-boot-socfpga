@@ -469,13 +469,13 @@ phys_size_t sdram_calculate_size(void)
 	union dramaddrw_reg dramaddrw =
 		(union dramaddrw_reg)readl(&socfpga_io48_mmr_base->dramaddrw);
 
-	phys_size_t size = (1 << (dramaddrw.cfg_cs_addr_width +
+	phys_size_t size = ((phys_size_t)1 << (dramaddrw.cfg_cs_addr_width +
 		    dramaddrw.cfg_bank_group_addr_width +
 		    dramaddrw.cfg_bank_addr_width +
 		    dramaddrw.cfg_row_addr_width +
 		    dramaddrw.cfg_col_addr_width));
 
-	size *= (2 << (readl(&socfpga_ecc_hmc_base->ddrioctrl) &
+	size *= ((phys_size_t)2 << (readl(&socfpga_ecc_hmc_base->ddrioctrl) &
 		       DDR_HMC_DDRIOCTRL_IOSIZE_MSK));
 
 	return size;
