@@ -44,6 +44,10 @@
 #undef CONFIG_SOCFPGA_VIRTUAL_TARGET
 /* ARMv7 CPU Core */
 #define CONFIG_ARMV7
+/*
+ * Errata configuration
+ */
+#define CONFIG_ARM_ERRATA_845369
 /* Cache policy for CA-9 is write back, write allocate */
 #define CONFIG_SYS_ARM_CACHE_WRITEBACK_WRITEALLOCATE
 /* Support for IRQs - for ocram and SDRAM ECC */
