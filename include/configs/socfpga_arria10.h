@@ -53,6 +53,11 @@
 /* Enable board late init for ECC setup if IRQ enabled */
 #define CONFIG_BOARD_LATE_INIT
 
+/*
+ * Errata configuration
+ */
+#define CONFIG_ARM_ERRATA_845369
+
 /* Cache options */
 #define CONFIG_SYS_DCACHE_OFF
 #define CONFIG_CMD_CACHE
