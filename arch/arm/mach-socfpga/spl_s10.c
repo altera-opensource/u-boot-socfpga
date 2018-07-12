@@ -17,6 +17,7 @@
 #include <asm/arch/mailbox_s10.h>
 #include <asm/arch/firewall_s10.h>
 #include <watchdog.h>
+#include <asm/arch/smmu_s10.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -166,8 +167,8 @@ void board_init_f(ulong dummy)
 	writel(FIREWALL_BRIDGE_DISABLE_ALL, SOCFPGA_FIREWALL_SOC2FPGA);
 	writel(FIREWALL_BRIDGE_DISABLE_ALL, SOCFPGA_FIREWALL_LWSOC2FPGA);
 
-	/* disable SMMU security */
-	writel(FIREWALL_L4_DISABLE_ALL, SOCFPGA_FIREWALL_TCU);
+	/* Setup and Initialize SMMU */
+	socfpga_init_smmu();
 
 	/* disable ocram security at CCU for non secure access */
 	clrbits_le32(CCU_CPU0_MPRT_ADMASK_MEM_RAM0_ADDR,
