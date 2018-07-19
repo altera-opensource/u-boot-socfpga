@@ -157,15 +157,15 @@ static __always_inline int __mbox_send_cmd(u8 id, u32 cmd, u8 is_indirect,
 	u32 buf_len;
 	int ret;
 
-	ret = mbox_prepare_cmd_only(id, cmd, is_indirect, len, arg);
-	if (ret)
-		return ret;
-
 	if (urgent) {
 		/* Read status because it is toggled */
 		status = readl(&mbox_base->status) & MBOX_STATUS_UA_MSK;
-		/* Send command as urgent command */
-		writel(1, &mbox_base->urg);
+		/* Write urgent command to urgent register */
+		writel(cmd, &mbox_base->urg);
+	} else {
+		ret = mbox_prepare_cmd_only(id, cmd, is_indirect, len, arg);
+		if (ret)
+			return ret;
 	}
 
 	/* write doorbell */
@@ -186,8 +186,7 @@ static __always_inline int __mbox_send_cmd(u8 id, u32 cmd, u8 is_indirect,
 
 		if (urgent) {
 			u32 new_status = readl(&mbox_base->status);
-			/* urgent command doesn't have response */
-			writel(0, &mbox_base->urg);
+
 			/* Urgent ACK is toggled */
 			if ((new_status & MBOX_STATUS_UA_MSK) ^ status)
 				return 0;
