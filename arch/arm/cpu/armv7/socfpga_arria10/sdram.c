@@ -409,13 +409,15 @@ unsigned long long sdram_size_calc(void)
 	union dramaddrw_reg dramaddrw =
 		(union dramaddrw_reg)readl(&socfpga_io48_mmr_base->dramaddrw);
 
-	unsigned long long size = (1 << (dramaddrw.cfg_cs_addr_width +
+	unsigned long long size = ((unsigned long long)1 <<
+				(dramaddrw.cfg_cs_addr_width +
 				dramaddrw.cfg_bank_group_addr_width +
 				dramaddrw.cfg_bank_addr_width +
 				dramaddrw.cfg_row_addr_width +
 				dramaddrw.cfg_col_addr_width));
 
-	size *= (2 << (readl(&socfpga_ecc_hmc_base->ddrioctrl) &
+	size *= ((unsigned long long)2 <<
+		       (readl(&socfpga_ecc_hmc_base->ddrioctrl) &
 		       ALT_ECC_HMC_OCP_DDRIOCTRL_IO_SIZE_MSK));
 
 	return size;
