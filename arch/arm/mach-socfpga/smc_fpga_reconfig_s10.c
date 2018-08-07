@@ -364,8 +364,6 @@ ret:
 static void __secure smc_socfpga_config_isdone(unsigned long function_id)
 {
 	SMC_ALLOC_REG_MEM(r);
-	u32 reconfig_status_resp_len;
-	u32 reconfig_status_resp[RECONFIG_STATUS_RESPONSE_LEN];
 	int ret;
 
 	SMC_INIT_REG_MEM(r);
@@ -384,58 +382,23 @@ static void __secure smc_socfpga_config_isdone(unsigned long function_id)
 	if (fpga_xfer_submitted_count)
 		goto ret;
 
-	reconfig_status_resp_len = RECONFIG_STATUS_RESPONSE_LEN;
-	ret = mbox_send_cmd_psci(MBOX_ID_UBOOT, MBOX_RECONFIG_STATUS,
-			    MBOX_CMD_DIRECT, 0, NULL, 0,
-			    &reconfig_status_resp_len,
-			    reconfig_status_resp);
-
+	ret = mbox_get_fpga_config_status_psci(MBOX_RECONFIG_STATUS);
 	if (ret) {
-		SMC_ASSIGN_REG_MEM(r, SMC_ARG0,
-				   INTEL_SIP_SMC_FPGA_CONFIG_STATUS_ERROR);
-		goto ret;
-	}
-
-	/* Check for any error */
-	ret = reconfig_status_resp[RECONFIG_STATUS_STATE];
-	if (ret && ret != MBOX_CFGSTAT_STATE_CONFIG)
-		goto ret;
-
-	/* Make sure nStatus is not 0 */
-	ret = reconfig_status_resp[RECONFIG_STATUS_PIN_STATUS];
-	if (!(ret & RCF_PIN_STATUS_NSTATUS)) {
-		SMC_ASSIGN_REG_MEM(r, SMC_ARG0,
-				   INTEL_SIP_SMC_FPGA_CONFIG_STATUS_ERROR);
-		goto ret;
-	}
-
-	ret = reconfig_status_resp[RECONFIG_STATUS_SOFTFUNC_STATUS];
-	if (ret & RCF_SOFTFUNC_STATUS_SEU_ERROR) {
-		SMC_ASSIGN_REG_MEM(r, SMC_ARG0,
-				   INTEL_SIP_SMC_FPGA_CONFIG_STATUS_ERROR);
-		goto ret;
-	}
-
-	if ((ret & RCF_SOFTFUNC_STATUS_CONF_DONE) &&
-	    (ret & RCF_SOFTFUNC_STATUS_INIT_DONE) &&
-	    !reconfig_status_resp[RECONFIG_STATUS_STATE]) {
-		/* FPGA configuration completed successfully */
-		SMC_ASSIGN_REG_MEM(r, SMC_ARG0,
-				   INTEL_SIP_SMC_STATUS_OK);
-
-		/* Check whether config type is full reconfiguration */
-		if (!is_partial_reconfig) {
-			/* Enable bridge */
-			socfpga_bridges_reset_psci(1);
+		if (ret != MBOX_CFGSTAT_STATE_CONFIG) {
+			SMC_ASSIGN_REG_MEM(r, SMC_ARG0,
+				INTEL_SIP_SMC_FPGA_CONFIG_STATUS_ERROR);
+			fpga_error = 1;
 		}
 		goto ret;
 	}
 
-ret:
-	if (SMC_GET_REG_MEM(r, SMC_ARG0) ==
-	    INTEL_SIP_SMC_FPGA_CONFIG_STATUS_ERROR)
-		fpga_error = 1;
+	/* FPGA configuration completed successfully */
+	SMC_ASSIGN_REG_MEM(r, SMC_ARG0, INTEL_SIP_SMC_STATUS_OK);
 
+	/* Check whether config type is full reconfiguration */
+	if (!is_partial_reconfig)
+		socfpga_bridges_reset_psci(1);	/* Enable bridge */
+ret:
 	SMC_RET_REG_MEM(r);
 }
 
