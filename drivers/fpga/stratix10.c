@@ -61,40 +61,18 @@ static void inc_cmd_id(u8 *id)
  */
 static int reconfig_status_polling_resp(void)
 {
-	u32 reconfig_status_resp_len;
-	u32 reconfig_status_resp[RECONFIG_STATUS_RESPONSE_LEN];
 	int ret;
 	unsigned long start = get_timer(0);
 
 	while (1) {
-		reconfig_status_resp_len = RECONFIG_STATUS_RESPONSE_LEN;
-		ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_RECONFIG_STATUS,
-				    MBOX_CMD_DIRECT, 0, NULL, 0,
-				    &reconfig_status_resp_len,
-				    reconfig_status_resp);
-
+		ret = mbox_get_fpga_config_status(MBOX_RECONFIG_STATUS);
 		if (ret) {
-			error("Failure in reconfig status mailbox command!\n");
-			return ret;
-		}
-
-		/* Check for any error */
-		ret = reconfig_status_resp[RECONFIG_STATUS_STATE];
-		if (ret && ret != MBOX_CFGSTAT_STATE_CONFIG)
-			return ret;
-
-		/* Make sure nStatus is not 0 */
-		ret = reconfig_status_resp[RECONFIG_STATUS_PIN_STATUS];
-		if (!(ret & RCF_PIN_STATUS_NSTATUS))
-			return MBOX_CFGSTAT_STATE_ERROR_HARDWARE;
-
-		ret = reconfig_status_resp[RECONFIG_STATUS_SOFTFUNC_STATUS];
-		if (ret & RCF_SOFTFUNC_STATUS_SEU_ERROR)
-			return MBOX_CFGSTAT_STATE_ERROR_HARDWARE;
-
-		if ((ret & RCF_SOFTFUNC_STATUS_CONF_DONE) &&
-		    (ret & RCF_SOFTFUNC_STATUS_INIT_DONE) &&
-		    !reconfig_status_resp[RECONFIG_STATUS_STATE])
+			if (ret != MBOX_CFGSTAT_STATE_CONFIG) {
+				error("Failure in reconfig status mailbox "
+				      "command!\n");
+				return ret;
+			}
+		} else
 			return 0;	/* configuration success */
 
 		if (get_timer(start) > RECONFIG_STATUS_POLL_RESP_TIMEOUT_MS)
