@@ -348,6 +348,44 @@ int mbox_rsu_get_spt_offset(u32 *resp_buf, u32 resp_buf_len)
 			     (u32 *)resp_buf);
 }
 
+/* Accepted commands: CONFIG_STATUS or RECONFIG_STATUS */
+static __always_inline int __mbox_get_fpga_config_status(u32 cmd)
+{
+	u32 reconfig_status_resp_len;
+	u32 reconfig_status_resp[RECONFIG_STATUS_RESPONSE_LEN];
+	int ret;
+
+	reconfig_status_resp_len = RECONFIG_STATUS_RESPONSE_LEN;
+	ret = __mbox_send_cmd(MBOX_ID_UBOOT, cmd,
+			      MBOX_CMD_DIRECT, 0, NULL, 0,
+			      &reconfig_status_resp_len,
+			      reconfig_status_resp);
+	if (!ret) {
+		/* Check for any error */
+		ret = reconfig_status_resp[RECONFIG_STATUS_STATE];
+		if (ret && ret != MBOX_CFGSTAT_STATE_CONFIG)
+			return ret;
+
+		/* Make sure nStatus is not 0 */
+		ret = reconfig_status_resp[RECONFIG_STATUS_PIN_STATUS];
+		if (!(ret & RCF_PIN_STATUS_NSTATUS))
+			return MBOX_CFGSTAT_STATE_ERROR_HARDWARE;
+
+		ret = reconfig_status_resp[RECONFIG_STATUS_SOFTFUNC_STATUS];
+		if (ret & RCF_SOFTFUNC_STATUS_SEU_ERROR)
+			return MBOX_CFGSTAT_STATE_ERROR_HARDWARE;
+
+		if ((ret & RCF_SOFTFUNC_STATUS_CONF_DONE) &&
+		    (ret & RCF_SOFTFUNC_STATUS_INIT_DONE) &&
+		    !reconfig_status_resp[RECONFIG_STATUS_STATE])
+			return 0;	/* configuration success */
+		else
+			return MBOX_CFGSTAT_STATE_CONFIG;
+	}
+
+	return ret;
+}
+
 int mbox_send_cmd(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg,
 		  u8 urgent, u32 *resp_buf_len, u32 *resp_buf)
 {
@@ -393,6 +431,16 @@ int mbox_hps_stage_notify(u32 execution_stage)
 {
 	return mbox_send_cmd(MBOX_ID_UBOOT, MBOX_HPS_STAGE_NOTIFY,
 			     MBOX_CMD_DIRECT, 1, &execution_stage, 0, 0, NULL);
+}
+
+int mbox_get_fpga_config_status(u32 cmd)
+{
+	return __mbox_get_fpga_config_status(cmd);
+}
+
+int __secure mbox_get_fpga_config_status_psci(u32 cmd)
+{
+	return __mbox_get_fpga_config_status(cmd);
 }
 
 int mbox_send_cmd_only(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg)
