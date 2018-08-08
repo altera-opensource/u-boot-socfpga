@@ -451,7 +451,8 @@ int sdram_mmr_init_full(unsigned int unused)
 		setbits_le32(&socfpga_ecc_hmc_base->errinten,
 			      DDR_HMC_ERRINTEN_DERRINTEN_EN_SET_MSK);
 
-		sdram_init_ecc_bits();
+		if (!cpu_has_been_warmreset())
+			sdram_init_ecc_bits();
 	} else {
 		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl,
 			     (DDR_HMC_ECCCTL_AWB_CNT_RST_SET_MSK |
