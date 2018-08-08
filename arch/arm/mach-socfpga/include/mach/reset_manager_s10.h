@@ -9,6 +9,7 @@
 
 void reset_cpu(ulong addr);
 void reset_deassert_peripherals_handoff(void);
+int cpu_has_been_warmreset(void);
 
 void socfpga_bridges_reset(int enable);
 void socfpga_bridges_reset_psci(int enable);
@@ -49,6 +50,8 @@ struct socfpga_reset_manager {
 #define RSTMGR_PER0MODRST_OCP_MASK	0x0020bf00
 #define RSTMGR_BRGMODRST_DDRSCH_MASK	0X00000040
 #define RSTMGR_BRGMODRST_FPGA2SOC_MASK	0x00000004
+/* Watchdogs and MPU warm reset mask */
+#define RSTMGR_L4WD_MPU_WARMRESET_MASK	0x000F0F00
 
 /*
  * Define a reset identifier, from which a permodrst bank ID

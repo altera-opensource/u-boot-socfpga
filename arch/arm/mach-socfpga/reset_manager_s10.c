@@ -160,3 +160,15 @@ void reset_deassert_peripherals_handoff(void)
 	writel(~RSTMGR_PER0MODRST_OCP_MASK, &reset_manager_base->per_mod_reset);
 	writel(0, &reset_manager_base->per_mod_reset);
 }
+
+/*
+ * Return non-zero if the CPU has been warm reset
+ */
+int cpu_has_been_warmreset(void)
+{
+	static const struct socfpga_reset_manager *reset_manager_base =
+			(void *)SOCFPGA_RSTMGR_ADDRESS;
+
+	return readl(&reset_manager_base->status) &
+		RSTMGR_L4WD_MPU_WARMRESET_MASK;
+}
