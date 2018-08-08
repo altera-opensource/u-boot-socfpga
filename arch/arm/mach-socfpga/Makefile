@@ -34,6 +34,7 @@ obj-y	+= mailbox_s10.o
 obj-y	+= misc_s10.o
 obj-y	+= mmu-arm64_s10.o
 obj-y	+= psci.o
+obj-y	+= exception_handler.o
 obj-y	+= reset_manager_s10.o
 ifndef CONFIG_SPL_BUILD
 obj-y	+= rsu_s10.o
