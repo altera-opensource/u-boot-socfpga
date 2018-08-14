@@ -18,13 +18,13 @@ struct socfpga_rsu_s10_cpb rsu_cpb = {0};
 struct socfpga_rsu_s10_spt rsu_spt = {0};
 u32 rsu_spt0_offset = 0, rsu_spt1_offset = 0;
 
-static u32 rsu_print_status(void)
+static int rsu_print_status(void)
 {
 	struct socfpga_rsu_s10_status rsu_status;
 
 	if (mbox_rsu_status((u32 *)&rsu_status, sizeof(rsu_status) / 4)) {
-		puts("RSU: Error from mbox_rsu_status\n");
-		return -ECOMM;
+		puts("RSU: Firmware or flash content not supporting RSU\n");
+		return -ENOTSUPP;
 	}
 	puts("RSU: Remote System Update Status\n");
 	printf("Current Image\t: 0x%08x\n", rsu_status.current_image[0]);
@@ -101,11 +101,13 @@ int rsu_spt_cpb_list(void)
 {
 	u32 spt_offset[4];
 	u32 cpb_offset;
+	int err;
 	struct spi_flash *flash;
 
 	/* print the RSU status */
-	if (rsu_print_status())
-		return -ECOMM;
+	err = rsu_print_status();
+	if (err)
+		return err;
 
 	/* retrieve the sub-partition table (spt) offset from SDM */
 	if (mbox_rsu_get_spt_offset(spt_offset, 4)) {
@@ -196,10 +198,14 @@ int rsu_dtb(int argc, char * const argv[])
 	const char *fdt_flash0;
 	int nodeoffset, len;
 	u32 reg[2];
+	int err;
 
 	/* Extracting RSU info from bitstream */
-	if (rsu_spt_cpb_list())
-		return -ECOMM;
+	err = rsu_spt_cpb_list();
+	if (err == -ENOTSUPP)
+		return 0;
+	else if (err)
+		return err;
 
 	/* Extract the flash0's reg from Linux DTB */
 	nodeoffset = fdt_path_offset(working_fdt, "/__symbols__");
