@@ -26,6 +26,7 @@ static const struct mbox_cfgstat_state {
 	{MBOX_CFGSTAT_STATE_ERROR_FAKE, "Fake error!"},
 	{MBOX_CFGSTAT_STATE_ERROR_BOOT_INFO, "Error in boot info!"},
 	{MBOX_CFGSTAT_STATE_ERROR_QSPI_ERROR, "Error in QSPI!"},
+	{MBOX_RESP_ERROR, "Mailbox general error!"},
 	{-ETIMEDOUT, "I/O timeout error"},
 	{-1, "Unknown error!"}
 };
