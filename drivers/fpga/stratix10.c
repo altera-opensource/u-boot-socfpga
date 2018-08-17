@@ -46,14 +46,49 @@ static const char *mbox_cfgstat_to_str(int err)
 	return mbox_cfgstat_state[MBOX_CFGSTAT_MAX - 1].error_name;
 }
 
-static void inc_cmd_id(u8 *id)
+/*
+ * Add the ongoing transaction's command ID into pending list and return
+ * the command ID for next transfer.
+ */
+static u8 add_transfer(u32 *xfer_pending_list, size_t list_size, u8 id)
 {
-	u8 val = *id + 1;
+	int i;
 
-	if (val > 15)
-		val = 1;
+	for (i = 0; i < list_size; i++) {
+		if (!xfer_pending_list[i]) {
+			xfer_pending_list[i] = id;
+			debug("Added xfer ID = %d\n", id);
+			/*
+			 * Increment command ID for next transaction.
+			 * Valid command ID (4 bits) is from 1 to 15.
+			 */
+			id = (id % 15) + 1;
+			break;
+		}
+	}
 
-	*id = val;
+	return id;
+}
+
+/*
+ * Check whether response ID match the command ID in the transfer
+ * pending list. If a match is found in the transfer pending list,
+ * it clears the transfer pending list and return the matched
+ * command ID.
+ */
+static int get_and_clr_transfer(u32 *xfer_pending_list, size_t list_size,
+				u8 id)
+{
+	int i;
+
+	for (i = 0; i < list_size; i++) {
+		if (id == xfer_pending_list[i]) {
+			xfer_pending_list[i] = 0;
+			return id;
+		}
+	}
+
+	return 0;
 }
 
 /*
@@ -132,6 +167,7 @@ static u32 get_resp_hdr(u32 *r_index, u32 *w_index, u32 *resp_count,
 	return mbox_hdr;
 }
 
+/* Send bit stream data to SDM via RECONFIG_DATA mailbox command */
 static int send_reconfig_data(const void *rbf_data, size_t rbf_size,
 			      u32 xfer_max, u32 buf_size_max)
 {
@@ -144,21 +180,15 @@ static int send_reconfig_data(const void *rbf_data, size_t rbf_size,
 	u32 xfer_count = 0;
 	u32 xfer_pending[MBOX_RESP_BUFFER_SIZE];
 	u32 args[3];
-	int ret = 0;
-	u32 i;
+	int ret;
 
 	debug("SDM xfer_max = %d\n", xfer_max);
 	debug("SDM buf_size_max = %x\n\n", buf_size_max);
 
-	for (i = 0; i < MBOX_RESP_BUFFER_SIZE; i++)
-		xfer_pending[i] = 0;
+	memset(xfer_pending, 0, sizeof(xfer_pending));
 
 	while (rbf_size || xfer_count) {
 		if (!resp_err && rbf_size && xfer_count < xfer_max) {
-			/*
-			 * Argument descriptor for RECONFIG_DATA
-			 * must always be 1.
-			 */
 			args[0] = MBOX_ARG_DESC_COUNT(1);
 			args[1] = (u32)rbf_data;
 			if (rbf_size >= buf_size_max) {
@@ -170,43 +200,29 @@ static int send_reconfig_data(const void *rbf_data, size_t rbf_size,
 				rbf_size = 0;
 			}
 
-			debug("Sending MBOX_RECONFIG_DATA...\n");
-
 			ret = mbox_send_cmd_only(cmd_id, MBOX_RECONFIG_DATA,
-				MBOX_CMD_INDIRECT, 3, args);
+						 MBOX_CMD_INDIRECT, 3, args);
 			if (ret) {
 				resp_err = 1;
 			} else {
 				xfer_count++;
-				for (i = 0; i < MBOX_RESP_BUFFER_SIZE; i++) {
-					if (!xfer_pending[i]) {
-						xfer_pending[i] = cmd_id;
-						inc_cmd_id(&cmd_id);
-						break;
-					}
-				}
-				debug("+xfer_count = %d\n", xfer_count);
-				debug("xfer ID = %d\n", xfer_pending[i]);
-				debug("data offset = %08x\n", args[1]);
-				debug("data size = %08x\n", args[2]);
+				cmd_id = add_transfer(xfer_pending,
+						      MBOX_RESP_BUFFER_SIZE,
+						      cmd_id);
 			}
-#ifndef DEBUG
 			puts(".");
-#endif
 		} else {
-			u32 r_id = 0;
 			u32 resp_hdr = get_resp_hdr(&resp_rindex, &resp_windex,
 						    &resp_count,
 						    response_buffer,
 						    MBOX_RESP_BUFFER_SIZE,
 						    MBOX_CLIENT_ID_UBOOT);
 
-			/* If no valid response header found */
-			if (!resp_hdr)
-				continue;
-
-			/* Expect 0 length from RECONFIG_DATA */
-			if (MBOX_RESP_LEN_GET(resp_hdr))
+			/*
+			 * If no valid response header found or
+			 * non-zero length from RECONFIG_DATA
+			 */
+			if (!resp_hdr || MBOX_RESP_LEN_GET(resp_hdr))
 				continue;
 
 			/* Check for response's status */
@@ -218,20 +234,15 @@ static int send_reconfig_data(const void *rbf_data, size_t rbf_size,
 					resp_err = 1;
 			}
 
-			/* Read the response header's ID */
-			r_id = MBOX_RESP_ID_GET(resp_hdr);
-			for (i = 0; i < MBOX_RESP_BUFFER_SIZE; i++) {
-				if (r_id == xfer_pending[i]) {
-					/* Reclaim ID */
-					cmd_id = (u32)xfer_pending[i];
-					xfer_pending[i] = 0;
-					xfer_count--;
-					break;
-				}
+			ret = get_and_clr_transfer(xfer_pending,
+						   MBOX_RESP_BUFFER_SIZE,
+						   MBOX_RESP_ID_GET(resp_hdr));
+			if (ret) {
+				/* Claim and reuse the ID */
+				cmd_id = (u8)ret;
+				xfer_count--;
 			}
 
-			debug("Reclaimed xfer ID = %d\n", cmd_id);
-			debug("-xfer_count = %d\n", xfer_count);
 			if (resp_err && !xfer_count)
 				return ret;
 		}
