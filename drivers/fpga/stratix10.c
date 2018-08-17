@@ -265,14 +265,14 @@ int stratix10_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size)
 	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_RECONFIG, MBOX_CMD_DIRECT, 0,
 			    NULL, 0, &resp_len, resp_buf);
 	if (ret) {
-		error("Failure in RECONFIG mailbox command!\n");
+		puts("Failure in RECONFIG mailbox command!\n");
 		return ret;
 	}
 
 	ret = send_reconfig_data(rbf_data, rbf_size, resp_buf[0], resp_buf[1]);
 	if (ret) {
-		error("RECONFIG_DATA error: %08x, %s\n", ret,
-		      mbox_cfgstat_to_str(ret));
+		printf("RECONFIG_DATA error: %08x, %s\n", ret,
+		       mbox_cfgstat_to_str(ret));
 		return ret;
 	}
 
@@ -282,7 +282,7 @@ int stratix10_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size)
 	debug("\nPolling with MBOX_RECONFIG_STATUS...\n");
 	ret = reconfig_status_polling_resp();
 	if (ret) {
-		error("%s\n", mbox_cfgstat_to_str(ret));
+		printf("Error: %s\n", mbox_cfgstat_to_str(ret));
 		return ret;
 	}
 
