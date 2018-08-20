@@ -126,7 +126,11 @@ static void __secure do_xfer_buf(void)
 		    IS_BUF_ERROR(fpga_buf_list[i]))
 			break;
 		if (IS_BUF_PENDING(fpga_buf_list[i])) {
-			args[0] = (1 << 8);
+			/*
+			 * Argument descriptor for RECONFIG_DATA
+			 * must always be 1.
+			 */
+			args[0] = MBOX_ARG_DESC_COUNT(1);
 			args[1] = (u32)(fpga_buf_list[i].buf_addr +
 				fpga_buf_list[i].buf_off);
 			if ((fpga_buf_list[i].buf_size -

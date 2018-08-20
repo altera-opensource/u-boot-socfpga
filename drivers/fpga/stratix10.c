@@ -155,7 +155,11 @@ static int send_reconfig_data(const void *rbf_data, size_t rbf_size,
 
 	while (rbf_size || xfer_count) {
 		if (!resp_err && rbf_size && xfer_count < xfer_max) {
-			args[0] = (1 << 8);
+			/*
+			 * Argument descriptor for RECONFIG_DATA
+			 * must always be 1.
+			 */
+			args[0] = MBOX_ARG_DESC_COUNT(1);
 			args[1] = (u32)rbf_data;
 			if (rbf_size >= buf_size_max) {
 				args[2] = buf_size_max;
