@@ -297,7 +297,11 @@ el3_exception_vectors:
 	.align	7
 	b	unhandled_exception	/* FIQ, Current EL using SPx */
 	.align	7
+#ifdef CONFIG_ARMV8_HANDLE_EA_EL3_FIRST
+	b	handle_error		/* SError, Current EL using SPx */
+#else
 	b	unhandled_exception	/* SError, Current EL using SPx */
+#endif
 	.align	7
 	b	handle_sync		/* Sync, Lower EL using AArch64 */
 	.align	7
