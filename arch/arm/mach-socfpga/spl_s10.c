@@ -143,6 +143,12 @@ void board_init_f(ulong dummy)
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->emac2rx_ecc);
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->emac2tx_ecc);
 
+	/* enables nonsecure access to all the eccs */
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->dma_ecc);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->nand_ecc);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->usb0_ecc);
+	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->usb1_ecc);
+
 	/* enables nonsecure access to SMMU */
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_sys_base->io_manager);
 
