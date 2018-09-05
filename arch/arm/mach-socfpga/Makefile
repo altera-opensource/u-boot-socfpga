@@ -33,6 +33,7 @@ obj-y	+= clock_manager_s10.o
 obj-y	+= mailbox_s10.o
 obj-y	+= misc_s10.o
 obj-y	+= mmu-arm64_s10.o
+obj-y	+= psci.o
 obj-y	+= reset_manager_s10.o
 obj-y	+= system_manager_s10.o
 obj-y	+= timer_s10.o
