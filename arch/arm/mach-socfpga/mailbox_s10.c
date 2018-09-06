@@ -11,6 +11,7 @@
 #include <asm/arch/mailbox_s10.h>
 #include <asm/arch/system_manager.h>
 #include <asm/secure.h>
+#include <asm/system.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -422,10 +423,24 @@ int mbox_rsu_status(u32 *resp_buf, u32 resp_buf_len)
 			     NULL, 0, (u32 *)&resp_buf_len, (u32 *)resp_buf);
 }
 
+int __secure mbox_rsu_status_psci(u32 *resp_buf, u32 resp_buf_len)
+{
+	return mbox_send_cmd_psci(MBOX_ID_UBOOT, MBOX_RSU_STATUS,
+				  MBOX_CMD_DIRECT, 0, NULL, 0,
+				  (u32 *)&resp_buf_len, (u32 *)resp_buf);
+}
+
 int mbox_rsu_update(u32 *flash_offset)
 {
 	return mbox_send_cmd(MBOX_ID_UBOOT, MBOX_RSU_UPDATE, MBOX_CMD_DIRECT, 2,
 			     (u32 *)flash_offset, 0, 0, NULL);
+}
+
+int __secure mbox_rsu_update_psci(u32 *flash_offset)
+{
+	return mbox_send_cmd_psci(MBOX_ID_UBOOT, MBOX_RSU_UPDATE,
+				  MBOX_CMD_DIRECT, 2, (u32 *)flash_offset,
+				  0, 0, NULL);
 }
 
 /* Accepted commands: CONFIG_STATUS or RECONFIG_STATUS */
