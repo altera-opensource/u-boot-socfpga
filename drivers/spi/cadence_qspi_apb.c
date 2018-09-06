@@ -676,6 +676,10 @@ int cadence_qspi_apb_indirect_read_execute(struct cadence_spi_platdata *plat,
 	writel(CQSPI_REG_INDIRECTRD_DONE,
 	       plat->regbase + CQSPI_REG_INDIRECTRD);
 
+	/* Wait til QSPI is idle */
+	if (!cadence_qspi_wait_idle(plat->regbase))
+		return -EIO;
+
 	return 0;
 
 failrd:
@@ -782,6 +786,11 @@ int cadence_qspi_apb_indirect_write_execute(struct cadence_spi_platdata *plat,
 	       plat->regbase + CQSPI_REG_INDIRECTWR);
 	if (bounce_buf)
 		free(bounce_buf);
+
+	/* Wait til QSPI is idle */
+	if (!cadence_qspi_wait_idle(plat->regbase))
+		return -EIO;
+
 	return 0;
 
 failwr:
