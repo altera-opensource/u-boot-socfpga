@@ -1,0 +1,97 @@
+/*
+ * Copyright (C) 2018 Intel Corporation. All rights reserved
+ *
+ * SPDX-License-Identifier:    GPL-2.0
+ */
+
+#include <asm-offsets.h>
+#include <config.h>
+#include <linux/linkage.h>
+#include <asm/macro.h>
+
+#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_ARMV8_PSCI)
+.align 3
+_el3_exception_vectors:
+	.word el3_exception_vectors;
+	.word 0
+#endif
+
+ENTRY(lowlevel_init)
+	mov	x29, lr			/* Save LR */
+
+#if defined(CONFIG_GICV2) || defined(CONFIG_GICV3)
+	branch_if_slave x0, 1f
+	ldr	x0, =GICD_BASE
+	bl	gic_init_secure
+1:
+#if defined(CONFIG_GICV3)
+	ldr	x0, =GICR_BASE
+	bl	gic_init_secure_percpu
+#elif defined(CONFIG_GICV2)
+	ldr	x0, =GICD_BASE
+	ldr	x1, =GICC_BASE
+	bl	gic_init_secure_percpu
+#endif
+#endif
+
+#ifdef CONFIG_ARMV8_MULTIENTRY
+	branch_if_master x0, x1, 2f
+
+	/*
+	 * Slave should wait for master clearing spin table.
+	 * This sync prevent slaves observing incorrect
+	 * value of spin table and jumping to wrong place.
+	 */
+#if defined(CONFIG_GICV2) || defined(CONFIG_GICV3)
+#ifdef CONFIG_GICV2
+	ldr	x0, =GICC_BASE
+#endif
+	bl	gic_wait_for_interrupt
+#endif
+
+#ifdef CONFIG_SPL_BUILD
+	/*
+	 * Read the u-boot's PSCI exception handler's vector base
+	 * address from the sysmgr.boot_scratch_cold6 & 7 and update
+	 * their VBAR_EL3 respectively.
+	 */
+wait_vbar_el3:
+	ldr	x4, =VBAR_EL3_BASE_ADDR
+	ldr	x5, [x4]
+	cbz	x5, wait_vbar_el3
+	msr	vbar_el3, x5
+#endif
+	/*
+	 * All slaves will enter EL2 and optionally EL1.
+	 */
+	adr	x4, lowlevel_in_el2
+	ldr	x5, =ES_TO_AARCH64
+	bl	armv8_switch_to_el2
+
+lowlevel_in_el2:
+#ifdef CONFIG_ARMV8_SWITCH_TO_EL1
+	adr	x4, lowlevel_in_el1
+	ldr	x5, =ES_TO_AARCH64
+	bl	armv8_switch_to_el1
+
+lowlevel_in_el1:
+#endif
+
+#endif /* CONFIG_ARMV8_MULTIENTRY */
+
+2:
+#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_ARMV8_PSCI)
+	/*
+	 * Write the u-boot PSCI exception handler's vector base address
+	 * into a sysmgr.boot_scratch_cold6 & 7 so that other slave cpus
+	 * are able to get the vector base address and update their VBAR_EL3
+	 * respectively.
+	 */
+	adr	x0, _el3_exception_vectors
+	ldr	x5, [x0]
+	ldr	x4, =VBAR_EL3_BASE_ADDR
+	str	x5, [x4]
+#endif
+	mov	lr, x29			/* Restore LR */
+	ret
+ENDPROC(lowlevel_init)
