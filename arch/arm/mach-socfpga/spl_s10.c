@@ -92,3 +92,9 @@ void board_init_f(ulong dummy)
 	mbox_qspi_open();
 #endif
 }
+
+/* board specific function prior loading SSBL / U-Boot */
+void spl_board_prepare_for_boot(void)
+{
+	mbox_hps_stage_notify(HPS_EXECUTION_STATE_SSBL);
+}
