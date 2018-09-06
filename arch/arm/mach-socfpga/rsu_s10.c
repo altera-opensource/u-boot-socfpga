@@ -79,6 +79,24 @@ static u32 rsu_spt_slot_find_cpb(void)
 	return 0;
 }
 
+static u32 rsu_get_boot_part_len(void)
+{
+	int i;
+	u32 offset = 0, len = 0;
+
+	/* look for last entry that has largest offset */
+	for (i = 0; i < rsu_spt.entries; i++) {
+		if (rsu_spt.spt_slot[i].offset[0] > offset) {
+			offset = rsu_spt.spt_slot[i].offset[0];
+			len = rsu_spt.spt_slot[i].length;
+		}
+	}
+
+	/* With the len, we shall know the boot partition size */
+	len += offset;
+	return roundup(len, 64 << 10);	/* align to 64kB, flash sector size */
+}
+
 int rsu_spt_cpb_list(void)
 {
 	u32 spt_offset[4];
@@ -172,6 +190,46 @@ int rsu_update(int argc, char * const argv[])
 	return 0;
 }
 
+int rsu_dtb(int argc, char * const argv[])
+{
+	char flash0_string[100];
+	const char *fdt_flash0;
+	int nodeoffset, len;
+	u32 reg[2];
+
+	/* Extracting RSU info from bitstream */
+	if (rsu_spt_cpb_list())
+		return -ECOMM;
+
+	/* Extract the flash0's reg from Linux DTB */
+	nodeoffset = fdt_path_offset(working_fdt, "/__symbols__");
+	if (nodeoffset < 0) {
+		puts("DTB: __symbols__ node not found. Ensure you load kernel"
+		     "dtb and fdt addr\n");
+		return -ENODEV;
+	}
+	fdt_flash0 = fdt_getprop(working_fdt, nodeoffset, "qspi_boot", &len);
+	if (fdt_flash0 == NULL) {
+		puts("DTB: qspi_boot alias node not found. Check your dts\n");
+		return -ENODEV;
+	}
+	strcpy(flash0_string, fdt_flash0);
+	printf("DTB: qspi_boot node at %s\n", flash0_string);
+
+	/* assemble new reg value for boot partition */
+	len = rsu_get_boot_part_len();
+	reg[0] = cpu_to_fdt32(rsu_spt0_offset);
+	reg[1] = cpu_to_fdt32(len  - rsu_spt0_offset);
+
+	/* update back to Linux DTB */
+	nodeoffset = fdt_path_offset(working_fdt, flash0_string);
+	if (nodeoffset < 0) {
+		printf("DTB: %s node not found\n", flash0_string);
+		return -ENODEV;
+	}
+	return fdt_setprop(working_fdt, nodeoffset, "reg", reg, sizeof(reg));
+}
+
 int do_rsu(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	const char *cmd;
@@ -188,6 +246,8 @@ int do_rsu(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 		ret = rsu_spt_cpb_list();
 	else if (strcmp(cmd, "update") == 0)
 		ret = rsu_update(argc, argv);
+	else if (strcmp(cmd, "dtb") == 0)
+		ret = rsu_dtb(argc, argv);
 	else
 		return CMD_RET_USAGE;
 
@@ -200,5 +260,6 @@ U_BOOT_CMD(
 	"list  - List down the available bitstreams in flash\n"
 	"update <flash_offset> - Initiate SDM to load bitstream as specified\n"
 	"		       by flash_offset\n"
+	"dtb   - Update Linux DTB qspi-boot parition offset with spt0 value\n"
 	""
 );
