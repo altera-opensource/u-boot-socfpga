@@ -35,6 +35,9 @@ obj-y	+= misc_s10.o
 obj-y	+= mmu-arm64_s10.o
 obj-y	+= psci.o
 obj-y	+= reset_manager_s10.o
+ifndef CONFIG_SPL_BUILD
+obj-y	+= rsu_s10.o
+endif
 obj-y	+= system_manager_s10.o
 obj-y	+= timer_s10.o
 obj-y	+= wrap_pinmux_config_s10.o
