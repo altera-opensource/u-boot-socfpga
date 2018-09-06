@@ -37,6 +37,7 @@ obj-y	+= system_manager_s10.o
 obj-y	+= timer_s10.o
 obj-y	+= wrap_pinmux_config_s10.o
 obj-y	+= wrap_pll_config_s10.o
+obj-y	+= smc_registers_s10.o
 ifndef CONFIG_SPL_BUILD
 obj-y	+= psci.o
 obj-$	+= smc_fpga_reconfig_s10.o
@@ -53,6 +54,7 @@ obj-y	+= system_manager_s10.o
 obj-y	+= timer_s10.o
 obj-y	+= wrap_pinmux_config_s10.o
 obj-y	+= wrap_pll_config_s10.o
+obj-y	+= smc_registers_s10.o
 ifndef CONFIG_SPL_BUILD
 obj-y	+= psci.o
 obj-$	+= smc_fpga_reconfig_s10.o
