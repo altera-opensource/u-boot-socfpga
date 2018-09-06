@@ -96,7 +96,7 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
  */
 #define CONFIG_BOOTARGS "earlycon"
 #define CONFIG_BOOTCOMMAND "run fatscript; run mmcload;run linux_qspi_enable;" \
-			   "run mmcboot"
+			   "rsu dtb; run mmcboot"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"loadaddr=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
