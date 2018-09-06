@@ -9,6 +9,7 @@
 	model = "SoCFPGA Stratix 10 SoCDK";
 
 	aliases {
+		ethernet0 = &gmac0;
 		serial0 = &uart0;
 	};
 
