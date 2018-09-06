@@ -92,8 +92,8 @@ struct socfpga_system_manager {
 	u32	boot_scratch_cold5;		/* store PSCI_CPU_ON value */
 	u32	boot_scratch_cold6;		/* store VBAR_EL3 value */
 	u32	boot_scratch_cold7;		/* store VBAR_EL3 value */
-	u32	boot_scratch_cold8;
-	u32	boot_scratch_cold9;
+	u32	boot_scratch_cold8;		/* store ECC DBE register */
+	u32	boot_scratch_cold9;		/* store ECC DBE address */
 	u32	_pad_0x228_0xffc[886];
 	/* Pin select and pin control group */
 	u32	pinsel0[40];			/* 0x1000 */
