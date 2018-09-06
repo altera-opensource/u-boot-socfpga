@@ -84,15 +84,15 @@ struct socfpga_system_manager {
 	u32	hps_sdm_spare;
 	u32	_pad_0xfc_0x1fc[65];
 	/* Boot scratch register group */
-	u32	boot_scratch_cold0;		/* 0x200 */
-	u32	boot_scratch_cold1;
-	u32	boot_scratch_cold2;
+	u32	boot_scratch_cold0;		/* store qspi ref clock */
+	u32	boot_scratch_cold1;		/* store osc1 clock freq */
+	u32	boot_scratch_cold2;		/* store fpga clock freq */
 	u32	boot_scratch_cold3;
-	u32	boot_scratch_cold4;		/* 0x210 */
-	u32	boot_scratch_cold5;
-	u32	boot_scratch_cold6;
-	u32	boot_scratch_cold7;
-	u32	boot_scratch_cold8;		/* 0x220 */
+	u32	boot_scratch_cold4;		/* store PSCI_CPU_ON value */
+	u32	boot_scratch_cold5;		/* store PSCI_CPU_ON value */
+	u32	boot_scratch_cold6;		/* store VBAR_EL3 value */
+	u32	boot_scratch_cold7;		/* store VBAR_EL3 value */
+	u32	boot_scratch_cold8;
 	u32	boot_scratch_cold9;
 	u32	_pad_0x228_0xffc[886];
 	/* Pin select and pin control group */
