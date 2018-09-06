@@ -112,17 +112,20 @@ enum ALT_SDM_MBOX_RESP_CODE {
 };
 
 /* Mailbox command list */
-#define MBOX_RESTART		2
-#define MBOX_CONFIG_STATUS	4
-#define MBOX_RECONFIG		6
-#define MBOX_RECONFIG_MSEL	7
-#define MBOX_RECONFIG_DATA	8
-#define MBOX_RECONFIG_STATUS	9
+#define MBOX_RESTART			2
+#define MBOX_CONFIG_STATUS		4
+#define MBOX_RECONFIG			6
+#define MBOX_RECONFIG_MSEL		7
+#define MBOX_RECONFIG_DATA		8
+#define MBOX_RECONFIG_STATUS		9
 #define MBOX_VAB_SRC_CERT		11
-#define MBOX_QSPI_OPEN		50
-#define MBOX_QSPI_CLOSE		51
-#define MBOX_QSPI_DIRECT	59
-#define MBOX_REBOOT_HPS		71
+#define MBOX_QSPI_OPEN			50
+#define MBOX_QSPI_CLOSE			51
+#define MBOX_QSPI_DIRECT		59
+#define MBOX_REBOOT_HPS			71
+#define MBOX_GET_SUBPARTITION_TABLE	90
+#define MBOX_RSU_STATUS			91
+#define MBOX_RSU_UPDATE			92
 
 /* Mailbox registers */
 #define MBOX_CIN			0	/* command valid offset */
@@ -182,6 +185,9 @@ int mbox_qspi_open(void);
 #endif
 
 int mbox_reset_cold(void);
+int mbox_rsu_get_spt_offset(u32 *resp_buf, u32 resp_buf_len);
+int mbox_rsu_status(u32 *resp_buf, u32 resp_buf_len);
+int mbox_rsu_update(u32 *flash_offset);
 int mbox_get_fpga_config_status(u32 cmd);
 int mbox_get_fpga_config_status_psci(u32 cmd);
 #endif /* _MAILBOX_S10_H_ */
