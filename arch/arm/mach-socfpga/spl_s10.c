@@ -94,6 +94,7 @@ void board_init_f(ulong dummy)
 	writel(SYSMGR_DMAPERIPH_ALL_NS, &sysmgr_regs->dma_periph);
 	/* enable DMA330 DMA */
 	socfpga_per_reset(SOCFPGA_RESET(DMA), 0);
+	socfpga_per_reset(SOCFPGA_RESET(DMA_OCP), 0);
 
 	/*
 	 * The following lines of code will enable non-secure access
