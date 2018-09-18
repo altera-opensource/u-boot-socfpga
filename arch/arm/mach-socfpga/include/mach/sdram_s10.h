@@ -354,4 +354,7 @@ union caltiming9_reg {
 
 #define CCU_ADBASE_DI_MASK			0x00000010
 
+#define FW_HMC_ADAPTOR_ADDR			0xf8020004
+#define FW_HMC_ADAPTOR_MASK			0x1
+
 #endif /* _SDRAM_S10_H_ */

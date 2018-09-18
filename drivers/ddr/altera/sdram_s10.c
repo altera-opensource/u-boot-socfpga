@@ -453,6 +453,9 @@ int sdram_mmr_init_full(unsigned int unused)
 
 		if (!cpu_has_been_warmreset())
 			sdram_init_ecc_bits();
+
+		/* Enable Non-Secure writes to HMC Adapter for SDRAM ECC */
+		writel(FW_HMC_ADAPTOR_MASK, FW_HMC_ADAPTOR_ADDR);
 	} else {
 		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl,
 			     (DDR_HMC_ECCCTL_AWB_CNT_RST_SET_MSK |
