@@ -62,7 +62,7 @@ void l2_reset_cpu(void)
 		/* Increase timeout in rstmgr.hdsktimeout */
 		"ldr	x2, =0xFFFFFF\n"
 		"str	w2, [%2, #0x64]\n"
-		"str	w2, [%2, #0x10]\n"
+		"ldr	w2, [%2, #0x10]\n"
 		/*
 		 * Set l2flushen = 1, etrstallen = 1,
 		 * fpgahsen = 1 and sdrselfrefen = 1
