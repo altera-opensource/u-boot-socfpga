@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Altera Corporation <www.altera.com>
+ * Copyright (C) 2014-2018 Altera Corporation <www.altera.com>
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -7,6 +7,7 @@
 #include <common.h>
 #include <asm/io.h>
 #include <watchdog.h>
+#include <asm/arch/fpga_manager.h>
 #include <asm/arch/system_manager.h>
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/misc.h>
@@ -38,6 +39,21 @@ int board_init(void)
 {
 	/* adress of boot parameters for ATAG (if ATAG is used) */
 	gd->bd->bi_boot_params = 0x00000100;
+
+#ifdef CONFIG_FPGAMGR_HPS_JTAG
+	/* Enable HPS JTAG master host and port */
+	fpgamgr_jtag_enable();
+
+	/* Initializing HPS JTAG */
+	fpgamgr_jtag_init();
+
+	/* Print JTAG ID Code */
+	printf("JTAG ID code = 0x%x\n", fpgamgr_jtag_get_idcode());
+
+	/* Disable HPS JTAG master host and port */
+	fpgamgr_jtag_disable();
+#endif
+
 	return 0;
 }
 
