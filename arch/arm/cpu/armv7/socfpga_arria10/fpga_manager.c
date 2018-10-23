@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Altera Corporation <www.altera.com>
+ * Copyright (C) 2014-2018 Altera Corporation <www.altera.com>
  *
  * SPDX-License-Identifier:	GPL-2.0
  */
@@ -472,6 +472,107 @@ int fpgamgr_program_fini(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_FPGAMGR_HPS_JTAG
+static void change_tsm_tdi(u32 tsm_tdi)
+{
+	writel(tsm_tdi, &fpga_manager_base->jtag_data_w);
+
+	/* Start Transfer Session */
+	writel(ALT_FPGAMGR_JTAG_KICK_STARTSESSION_SET_MSK,
+		&fpga_manager_base->jtag_kick);
+
+	/* Ensure there is no ongoing transfer */
+	while (ALT_FPGAMGR_JTAG_STAT_SESSIONSTAT_GET
+		(fpga_manager_base->jtag_status)) {
+		WATCHDOG_RESET();
+	}
+
+	return;
+}
+
+int fpgamgr_jtag_get_idcode(void)
+{
+	u32 reg;
+
+	/* Idle->Select_DR->Select_IR->...->Update_IR->Idle(next) */
+	change_tsm_tdi(0x60030060);
+
+	/* Idle-> elect_DR->Capture_DR->Shift_DR(next) */
+	change_tsm_tdi(0x10000000);
+
+	/* Clear both RX & TX FIFO (Reading register would cause system hang) */
+	writel(ALT_FPGAMGR_JTAG_KICK_CLEAR_RXTX_FIFO_SET_MSK,
+		&fpga_manager_base->jtag_kick);
+
+	/* SHift_DR(Reading low 16 bits)->...->Shift_DR(next) */
+	change_tsm_tdi(0);
+
+	reg = readl(&fpga_manager_base->jtag_data_r);
+
+	/* SHift_DR(Reading high 16 bits)->...->Exit_DR->Update_DR(next) */
+	change_tsm_tdi(0xc0000000);
+	reg |= readl(&fpga_manager_base->jtag_data_r) << 16;
+
+	/* Update_DR -> Idle(next) */
+	change_tsm_tdi(0);
+
+	return reg;
+}
+
+void fpgamgr_jtag_enable(void)
+{
+	/* Clear JTAG config register */
+	writel(0, &fpga_manager_base->jtag_config);
+
+	/*
+	 * Write JTagHostEn=1,JTagPortEn=0
+	 * TDI,TMS,TCK will be driven to 0
+	 * JTAG_EN will be driven to 1
+	 */
+	setbits_le32(&fpga_manager_base->jtag_config,
+		ALT_FPGAMGR_JTAG_CFG_JTAGHOSTEN_SET_MSK);
+
+	clrbits_le32(&fpga_manager_base->jtag_config,
+		ALT_FPGAMGR_JTAG_CFG_JTAGPORTEN_SET_MSK);
+
+	/*
+	 * JTagPortEn=1
+	 * connects the TDI/TCK/TMS
+	 */
+	setbits_le32(&fpga_manager_base->jtag_config,
+		ALT_FPGAMGR_JTAG_CFG_JTAGPORTEN_SET_MSK);
+}
+
+void fpgamgr_jtag_disable(void)
+{
+	clrbits_le32(&fpga_manager_base->jtag_config,
+		ALT_FPGAMGR_JTAG_CFG_JTAGHOSTEN_SET_MSK);
+
+	clrbits_le32(&fpga_manager_base->jtag_config,
+		ALT_FPGAMGR_JTAG_CFG_JTAGPORTEN_SET_MSK);
+}
+
+void fpgamgr_jtag_init(void)
+{
+	/* Write the 16(TX Bits + 1) of TX bits */
+	setbits_le32(&fpga_manager_base->jtag_config,
+		ALT_FPGAMGR_JTAG_CFG_TXSIZE_SET(15));
+
+	/* TCK divide ratio (14.30Mhz) TCK */
+	setbits_le32(&fpga_manager_base->jtag_config,
+		ALT_FPGAMGR_JTAG_CFG_TCKRATIO_SET(7));
+
+	/* Reset -> Idle */
+	change_tsm_tdi(0x1f0000);
+
+	/* Clear both RX & TX FIFO */
+	writel(ALT_FPGAMGR_JTAG_KICK_CLEAR_RXTX_FIFO_SET_MSK,
+		&fpga_manager_base->jtag_kick);
+
+	return;
+}
+#endif
 
 /* Write the RBF data to FPGA Manager */
 void fpgamgr_program_write(const unsigned long *rbf_data,

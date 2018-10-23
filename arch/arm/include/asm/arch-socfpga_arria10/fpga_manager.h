@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Altera Corporation <www.altera.com>
+ * Copyright (C) 2014-2018 Altera Corporation <www.altera.com>
  *
  * SPDX-License-Identifier:	GPL-2.0
  */
@@ -88,6 +88,31 @@ struct socfpga_fpga_manager {
 #define ALT_FPGAMGR_IMGCFG_CTL_02_CFGWIDTH_SET_MSK    		0x01000000
 #define ALT_FPGAMGR_IMGCFG_CTL_02_CDRATIO_LSB        16
 
+#define ALT_SECMGR_JTAG_DBG_EN_SET_MSK				0x00000001
+#define ALT_FPGAMGR_JTAG_CFG_JTAGHOSTEN_SET_MSK			0x00000001
+#define ALT_FPGAMGR_JTAG_CFG_JTAGPORTEN_SET_MSK			0x00000002
+#define ALT_FPGAMGR_JTAG_CFG_TRSTEN_SET_MSK			0x00000010
+#define ALT_FPGAMGR_JTAG_CFG_LOOPBACKEN_SET_MSK			0x00000004
+#define ALT_FPGAMGR_JTAG_STATUS_CONF_DONE_MSK			0x4
+#define ALT_FPGAMGR_JTAG_CFG_TXSIZE_SET(value) (((value) << 16) & 0xffff0000)
+#define ALT_FPGAMGR_JTAG_CFG_TCKRATIO_SET(value) (((value) << 8) & 0x0000ff00)
+#define ALT_FPGAMGR_JTAG_STAT_TXFIFODONESZ_GET(value) \
+	(((value) & 0xffff0000) >> 16)
+#define ALT_FPGAMGR_JTAG_STAT_TXFIFOFULL_GET(value) \
+	(((value) & 0x200) >> 9)
+#define ALT_FPGAMGR_JTAG_STAT_TXFIFOLEVEL_GET(value) \
+	(((value) & 0x0000000f))
+#define ALT_FPGAMGR_JTAG_STAT_SESSIONSTAT_GET(value) \
+	(((value) & 0x8000) >> 15)
+#define ALT_FPGAMGR_JTAG_KICK_CLEAR_RXTX_FIFO_SET_MSK		0x0000000C
+#define ALT_FPGAMGR_JTAG_KICK_STARTSESSION_SET_MSK		0x00000001
+#define ALT_FPGAMGR_JTAG_KICK_STOPSESSION_SET_MSK		0x00000002
+#define ALT_FPGAMGR_JTAG_KICK_STARTSESSION_CLR_MSK		0xfffffffe
+
+#define ALT_FPGA_SECOPT1_OPT_ADDRESS				0xffd0206C
+#define ALT_FPGA_SECOPT1_OPT_EXTJTAG_BYPASS_SET_MSK		0X400
+#define ALT_FPGA_SECOPT1_OPT_HPSJTAG_BYPASS_SET_MSK		0x1000
+
 /* Timeout counter */
 #define FPGA_TIMEOUT_CNT		0x1000000
 #define FPGA_TIMEOUT_MSEC		1000  /* timeout in ms */
@@ -121,6 +146,12 @@ void fpgamgr_axi_write(const unsigned long *rbf_data,
 	const unsigned long fpgamgr_data_addr, unsigned long rbf_size);
 int fpgamgr_wait_early_user_mode(void);
 int is_fpgamgr_early_user_mode(void);
+#ifdef CONFIG_FPGAMGR_HPS_JTAG
+void fpgamgr_jtag_enable(void);
+void fpgamgr_jtag_disable(void);
+void fpgamgr_jtag_init(void);
+int fpgamgr_jtag_get_idcode(void);
+#endif
 #endif /* __ASSEMBLY__ */
 
 #endif /* _SOCFPGA_FPGA_MANAGER_H_ */
