@@ -55,6 +55,7 @@ void reset_cpu(ulong addr)
 		;
 }
 
+#if defined(CONFIG_TARGET_SOCFPGA_STRATIX10)
 void l2_reset_cpu(void)
 {
 	asm volatile(
@@ -88,3 +89,4 @@ void l2_reset_cpu(void)
 		    "r" (SOCFPGA_RSTMGR_ADDRESS)
 		: "x1", "x2", "x3");
 }
+#endif
