@@ -66,6 +66,15 @@ config FPGA_LATTICE
 	  This is used for the lattice FPGAs. Please check the source code as
 	  there is no documentation for this at present.
 
+config FPGA_INTEL_PR
+	bool "Enable Intel FPGA Partial Reconfiguration driver"
+	depends on FPGA_ALTERA
+	help
+	  Say Y here to enable the Intel FPGA Partial Reconfiguration driver
+
+	  This provides basic functionality for partial reconfiguration which
+	  include the freeze controller support.
+
 config FPGA_XILINX
 	bool "Enable Xilinx FPGA drivers"
 	select FPGA
