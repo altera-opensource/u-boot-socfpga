@@ -42,6 +42,15 @@ config FPGA_STRATIX10
 	  Enable FPGA driver for writing bitstream into Altera Stratix10
 	  device.
 
+config FPGA_INTEL_PR
+	bool "Enable Intel FPGA Partial Reconfiguration driver"
+	depends on FPGA_ALTERA
+	help
+	  Say Y here to enable the Intel FPGA Partial Reconfiguration driver
+
+	  This provides basic functionality for partial reconfiguration which
+	  include the freeze controller support.
+
 config FPGA_XILINX
 	bool "Enable Xilinx FPGA drivers"
 	select FPGA
