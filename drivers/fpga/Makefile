@@ -23,4 +23,5 @@ obj-$(CONFIG_FPGA_STRATIX10) += stratix10.o
 obj-$(CONFIG_FPGA_SOCFPGA) += socfpga.o
 obj-$(CONFIG_TARGET_SOCFPGA_GEN5) += socfpga_gen5.o
 obj-$(CONFIG_TARGET_SOCFPGA_ARRIA10) += socfpga_arria10.o
+obj-$(CONFIG_FPGA_INTEL_PR) += intel_pr.o
 endif
