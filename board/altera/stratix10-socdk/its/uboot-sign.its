@@ -1,0 +1,41 @@
+/*
+ * Copyright (C) 2019 Intel Corporation. All rights reserved
+ *
+ * SPDX-License-Identifier: GPL-2.0
+ */
+
+/dts-v1/;
+
+/ {
+	description = "Authenticator";
+	#address-cells = <1>;
+
+	images {
+		standalone {
+			description = "Authenticator binary";
+			data = /incbin/("../../../../u-boot-dtb.bin");
+			type = "standalone";
+			arch = "arm64";
+			compression = "none";
+			load = <0x1000>;
+			entry = <0x1000>;
+			os = "u-boot";
+			hash {
+				algo = "sha256";
+			};
+		};
+	};
+
+	configurations {
+		default = "conf";
+		conf {
+			description = "Authenticator fitImage";
+			standalone = "standalone";
+			signature {
+				algo = "sha256,rsa4096";
+				key-name-hint = "dev";
+				sign-images = "standalone";
+			};
+		};
+	};
+};
