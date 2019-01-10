@@ -126,6 +126,7 @@ enum ALT_SDM_MBOX_RESP_CODE {
 #define MBOX_GET_SUBPARTITION_TABLE	90
 #define MBOX_RSU_STATUS			91
 #define MBOX_RSU_UPDATE			92
+#define MBOX_HPS_STAGE_NOTIFY		93
 
 /* Mailbox registers */
 #define MBOX_CIN			0	/* command valid offset */
@@ -169,6 +170,11 @@ enum ALT_SDM_MBOX_RESP_CODE {
 #define RCF_SOFTFUNC_STATUS_SEU_ERROR			BIT(3)
 #define RCF_PIN_STATUS_NSTATUS				BIT(31)
 
+/* Defines for HPS_STAGE_NOTIFY */
+#define HPS_EXECUTION_STATE_FSBL	0
+#define HPS_EXECUTION_STATE_SSBL	1
+#define HPS_EXECUTION_STATE_OS		2
+
 int mbox_send_cmd(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg, u8 urgent,
 		  u32 *resp_buf_len, u32 *resp_buf);
 int mbox_send_cmd_psci(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg,
@@ -190,6 +196,7 @@ int mbox_rsu_status(u32 *resp_buf, u32 resp_buf_len);
 int mbox_rsu_status_psci(u32 *resp_buf, u32 resp_buf_len);
 int mbox_rsu_update(u32 *flash_offset);
 int mbox_rsu_update_psci(u32 *flash_offset);
+int mbox_hps_stage_notify(u32 execution_stage);
 int mbox_get_fpga_config_status(u32 cmd);
 int mbox_get_fpga_config_status_psci(u32 cmd);
 #endif /* _MAILBOX_S10_H_ */
