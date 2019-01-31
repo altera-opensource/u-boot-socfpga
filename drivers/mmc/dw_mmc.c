@@ -270,8 +270,11 @@ static int dwmci_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 	if (data)
 		flags = dwmci_set_transfer_mode(host, data);
 
-	if ((cmd->resp_type & MMC_RSP_136) && (cmd->resp_type & MMC_RSP_BUSY))
-		return -1;
+	if ((cmd->resp_type & MMC_RSP_136) &&
+	    (cmd->resp_type & MMC_RSP_BUSY)) {
+		ret = -1;
+		goto delay_ret;
+	}
 
 	if (cmd->cmdidx == MMC_CMD_STOP_TRANSMISSION)
 		flags |= DWMCI_CMD_ABORT_STOP;
@@ -320,11 +323,13 @@ static int dwmci_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 		return -ETIMEDOUT;
 	} else if (mask & DWMCI_INTMSK_RE) {
 		debug("%s: Response Error.\n", __func__);
-		return -EIO;
+		ret = -EIO;
+		goto delay_ret;
 	} else if ((cmd->resp_type & MMC_RSP_CRC) &&
 		   (mask & DWMCI_INTMSK_RCRC)) {
 		debug("%s: Response CRC Error.\n", __func__);
-		return -EIO;
+		ret = -EIO;
+		goto delay_ret;
 	}
 
 
@@ -363,6 +368,7 @@ static int dwmci_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 		}
 	}
 
+delay_ret:
 	udelay(100);
 
 	return ret;
