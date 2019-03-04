@@ -25,6 +25,7 @@ static void __secure smc_socfpga_rsu_status_psci(unsigned long function_id)
 
 	if (mbox_rsu_status_psci((u32 *)rsu_status, sizeof(rsu_status) / 4)) {
 		SMC_ASSIGN_REG_MEM(r, SMC_ARG0, INTEL_SIP_SMC_RSU_ERROR);
+		SMC_RET_REG_MEM(r);
 		return;
 	}
 
