@@ -93,7 +93,6 @@ config TARGET_SOCFPGA_STRATIX10
 	select ARMV8_SET_SMPEN
 	select ARMV8_PSCI
 	select ARMV8_SEC_FIRMWARE_SUPPORT
-	select ARMV8_HANDLE_EA_EL3_FIRST
 
 choice
 	prompt "Altera SOCFPGA board select"
