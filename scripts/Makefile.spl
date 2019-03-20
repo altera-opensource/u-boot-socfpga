@@ -216,6 +216,8 @@ ifneq ($(CONFIG_TARGET_SOCFPGA_GEN5)$(CONFIG_TARGET_SOCFPGA_ARRIA10),)
 ALL-y	+= $(obj)/$(SPL_BIN).sfp
 endif
 
+ALL-$(CONFIG_TARGET_SOCFPGA_STRATIX10) += $(obj)/u-boot-spl-dtb.hex
+
 ifdef CONFIG_ARCH_SUNXI
 ALL-y	+= $(obj)/sunxi-spl.bin
 
@@ -342,6 +344,11 @@ MKIMAGEFLAGS_$(SPL_BIN).sfp = -T socfpgaimage
 endif
 $(obj)/$(SPL_BIN).sfp: $(obj)/$(SPL_BIN).bin FORCE
 	$(call if_changed,mkimage)
+
+OBJCOPYFLAGS_u-boot-spl-dtb.hex := -I binary -O ihex --change-address=$(CONFIG_SPL_TEXT_BASE)
+
+$(obj)/u-boot-spl-dtb.hex: $(obj)/u-boot-spl-dtb.bin FORCE
+	$(call if_changed,objcopy)
 
 quiet_cmd_mksunxiboot = MKSUNXI $@
 cmd_mksunxiboot = $(objtree)/tools/mksunxiboot \
