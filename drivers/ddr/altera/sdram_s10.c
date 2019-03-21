@@ -231,6 +231,17 @@ void sdram_init_ecc_bits(void)
 	       (unsigned)get_timer(start));
 }
 
+static void sdram_size_check(void)
+{
+	/* Sanity check ensure correct SDRAM size specified */
+	debug("DDR: Running SDRAM size sanity check\n");
+	if (get_ram_size(0, gd->ram_size) != gd->ram_size) {
+		puts("DDR: SDRAM size check failed!\n");
+		hang();
+	}
+	debug("DDR: SDRAM size check passed!\n");
+}
+
 /**
  * sdram_mmr_init_full() - Function to initialize SDRAM MMR
  *
@@ -436,6 +447,8 @@ int sdram_mmr_init_full(unsigned int unused)
 	else
 		gd->ram_size = size;
 
+	printf("DDR: %lld MiB\n", gd->ram_size >> 20);
+
 	/* Enable or disable the SDRAM ECC */
 	if (ctrlcfg1.cfg_ctrl_enable_ecc) {
 		setbits_le32(&socfpga_ecc_hmc_base->eccctrl,
@@ -466,7 +479,9 @@ int sdram_mmr_init_full(unsigned int unused)
 			      DDR_HMC_ECCCTL2_AWB_EN_SET_MSK));
 	}
 
-	puts("DDR: HMC init success\n");
+	sdram_size_check();
+
+	debug("DDR: HMC init success\n");
 	return 0;
 }
 

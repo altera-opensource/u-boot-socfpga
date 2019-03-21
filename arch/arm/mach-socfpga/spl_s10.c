@@ -212,17 +212,6 @@ void board_init_f(ulong dummy)
 	sdram_addr_mismatch_ecc_checking();
 #endif
 
-	gd->ram_size = sdram_calculate_size();
-	printf("DDR: %d MiB\n", (int)(gd->ram_size >> 20));
-
-	/* Sanity check ensure correct SDRAM size specified */
-	puts("DDR: Running SDRAM size sanity check\n");
-	if (get_ram_size(0, gd->ram_size) != gd->ram_size) {
-		puts("DDR: SDRAM size check failed!\n");
-		hang();
-	}
-	puts("DDR: SDRAM size check passed!\n");
-
 #ifdef CONFIG_CADENCE_QSPI
 	mbox_init();
 	mbox_qspi_open();
