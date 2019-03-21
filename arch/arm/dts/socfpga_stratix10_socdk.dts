@@ -28,9 +28,15 @@
 	};
 
 	memory {
+		#address-cells = <2>;
+		#size-cells = <1>;
+
 		name = "memory";
 		device_type = "memory";
-		reg = <0x0 0x0 0x80000000>; /* 2GB */
+		/* 4GB */
+		reg = <0 0x00000000 0x80000000>,
+		      <1 0x80000000 0x80000000>;
+		u-boot,dm-pre-reloc;
 	};
 
 	regulator_3_3v: 3-3-v-regulator {
