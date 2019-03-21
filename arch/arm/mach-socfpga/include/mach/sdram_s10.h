@@ -24,6 +24,11 @@ void sdram_addr_mismatch_ecc_checking(void);
 #define DDR_READ_LATENCY_DELAY		40
 #define DDR_ACTIVATE_FAWBANK		0x1
 
+#define ERRINTENS			0x114
+
+#define	DDR_HMC_ERRINTEN_INTMASK				\
+		(DDR_HMC_ERRINTEN_SERRINTEN_EN_SET_MSK |	\
+		 DDR_HMC_ERRINTEN_DERRINTEN_EN_SET_MSK)
 
 struct socfpga_ecc_hmc {
 	uint32_t ip_rev_id;
@@ -356,5 +361,9 @@ union caltiming9_reg {
 
 #define FW_HMC_ADAPTOR_ADDR			0xf8020004
 #define FW_HMC_ADAPTOR_MASK			0x1
+
+/* Firewall DDR scheduler MPFE */
+#define FW_HMC_ADAPTOR_REG_ADDR			0xf8020004
+#define FW_HMC_ADAPTOR_MPU_MASK			BIT(0)
 
 #endif /* _SDRAM_S10_H_ */
