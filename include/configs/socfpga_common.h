@@ -165,7 +165,7 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
  * U-Boot environment
  */
 #if !defined(CONFIG_ENV_SIZE)
-#define CONFIG_ENV_SIZE			(8 * 1024)
+#define CONFIG_ENV_SIZE			(64 * 1024)
 #endif
 
 /* Environment for SDMMC boot */
@@ -174,10 +174,14 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 #define CONFIG_ENV_OFFSET		(34 * 512) /* just after the GPT */
 #endif
 
+#define CONFIG_SYS_REDUNDAND_ENVIRONMENT
+
 /* Environment for QSPI boot */
 #if defined(CONFIG_ENV_IS_IN_SPI_FLASH) && !defined(CONFIG_ENV_OFFSET)
-#define CONFIG_ENV_OFFSET		0x00100000
+#define CONFIG_ENV_OFFSET		0x00200000
 #define CONFIG_ENV_SECT_SIZE		(64 * 1024)
+#define CONFIG_ENV_OFFSET_REDUND	(CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
+#define CONFIG_ENV_SIZE_REDUND		CONFIG_ENV_SIZE
 #endif
 
 /*
@@ -271,9 +275,23 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 	"pxefile_addr_r=0x02200000\0" \
 	"ramdisk_addr_r=0x02300000\0" \
 	"socfpga_legacy_reset_compat=1\0" \
+	"kernelfit_addr=0x1200000\0" \
+	"fitimagesize=0x5F0000\0" \
+	"qspiroot=/dev/mtdblock1\0" \
+	"qspirootfstype=jffs2\0" \
+	"qspiload=sf probe; sf read ${scriptaddr} ${kernelfit_addr}\0" \
+	"qspiboot=setenv bootargs " CONFIG_BOOTARGS \
+			"root=${qspiroot} rw rootfstype=${qspirootfstype}; " \
+			"bootm ${scriptaddr}\0" \
 	BOOTENV
 
 #endif
+
+#if defined(CONFIG_QSPI_BOOT)
+#undef CONFIG_BOOTCOMMAND
+#define CONFIG_BOOTCOMMAND "run qspiload; run qspiboot"
+#endif
+
 #endif
 
 #endif	/* __CONFIG_SOCFPGA_COMMON_H__ */
