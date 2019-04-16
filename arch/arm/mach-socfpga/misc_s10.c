@@ -151,7 +151,7 @@ int arch_early_init_r(void)
 	return 0;
 }
 
-void do_bridge_reset(int enable)
+void do_bridge_reset(int enable, unsigned int mask)
 {
 	/* Check FPGA status before bridge enable */
 	if (enable) {
