@@ -76,7 +76,7 @@ config DISTRO_DEFAULTS
 	select CMD_ENV_EXISTS
 	select CMD_EXT2
 	select CMD_EXT4
-	select CMD_FAT
+	imply CMD_FAT
 	select CMD_FS_GENERIC
 	select CMD_PART if PARTITIONS
 	select CMD_PING if CMD_NET
