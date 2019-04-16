@@ -132,3 +132,13 @@ void board_init_f(ulong dummy)
 	config_dedicated_pins(gd->fdt_blob);
 	WATCHDOG_RESET();
 }
+
+#if defined(CONFIG_SPL_LOAD_FIT) && defined(CONFIG_SPL_SPI_LOAD)
+struct image_header *spl_get_load_buffer(int offset, size_t size)
+{
+	if (gd->ram_size)
+		return (struct image_header *)(gd->ram_size / 2);
+	else
+		return NULL;
+}
+#endif
