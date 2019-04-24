@@ -8,6 +8,8 @@
 
 #if defined(CONFIG_TARGET_SOCFPGA_STRATIX10)
 #include <asm/arch/system_manager_s10.h>
+#elif defined(CONFIG_TARGET_SOCFPGA_AGILEX)
+#include <asm/arch/system_manager_agilex.h>
 #else
 #define SYSMGR_ROMCODEGRP_CTRL_WARMRSTCFGPINMUX	BIT(0)
 #define SYSMGR_ROMCODEGRP_CTRL_WARMRSTCFGIO	BIT(1)
