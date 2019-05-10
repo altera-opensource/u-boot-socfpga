@@ -161,6 +161,7 @@ void board_init_f(ulong dummy)
 
 	/* enable PL330 DMA */
 	socfpga_per_reset(SOCFPGA_RESET(DMA), 0);
+	socfpga_per_reset(SOCFPGA_RESET(DMA_OCP), 0);
 
 	spl_disable_firewall_l4_per();
 
