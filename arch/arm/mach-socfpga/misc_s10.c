@@ -21,6 +21,8 @@
 
 #include <dt-bindings/reset/altr,rst-mgr-s10.h>
 
+#define RSU_DEFAULT_LOG_LEVEL	7
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static struct socfpga_system_manager *sysmgr_regs =
@@ -310,9 +312,16 @@ int print_cpuinfo(void)
 int arch_misc_init(void)
 {
 	char qspi_string[13];
+	char level[4];
+
+	snprintf(level, sizeof(level), "%u", RSU_DEFAULT_LOG_LEVEL);
 
 	sprintf(qspi_string, "<0x%08x>", cm_get_qspi_controller_clk_hz());
 	env_set("qspi_clock", qspi_string);
+
+	/* setup for RSU */
+	env_set("rsu_protected_slot", "");
+	env_set("rsu_log_level", level);
 
 	return socfpga_eth_reset();
 }
