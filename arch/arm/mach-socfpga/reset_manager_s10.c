@@ -12,14 +12,11 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static const struct socfpga_reset_manager *reset_manager_base =
-		(void *)SOCFPGA_RSTMGR_ADDRESS;
-static const struct socfpga_system_manager *system_manager_base =
-		(void *)SOCFPGA_SYSMGR_ADDRESS;
-
 /* Assert or de-assert SoCFPGA reset manager reset. */
 void socfpga_per_reset(u32 reset, int set)
 {
+	static const struct socfpga_reset_manager *reset_manager_base =
+			(void *)SOCFPGA_RSTMGR_ADDRESS;
 	const void *reg;
 
 	if (RSTMGR_BANK(reset) == 0)
@@ -46,6 +43,8 @@ void socfpga_per_reset(u32 reset, int set)
  */
 void socfpga_per_reset_all(void)
 {
+	static const struct socfpga_reset_manager *reset_manager_base =
+			(void *)SOCFPGA_RSTMGR_ADDRESS;
 	const u32 l4wd0 = 1 << RSTMGR_RESET(SOCFPGA_RESET(L4WD0));
 
 	/* disable all except OCP and l4wd0. OCP disable later */
@@ -55,8 +54,13 @@ void socfpga_per_reset_all(void)
 	writel(0xffffffff, &reset_manager_base->per1modrst);
 }
 
-void socfpga_bridges_reset(int enable)
+static __always_inline void socfpga_bridges_reset_common(int enable)
 {
+	static const struct socfpga_reset_manager *reset_manager_base =
+			(void *)SOCFPGA_RSTMGR_ADDRESS;
+	static const struct socfpga_system_manager *system_manager_base =
+			(void *)SOCFPGA_SYSMGR_ADDRESS;
+
 	if (enable) {
 		/* clear idle request to all bridges */
 		setbits_le32(&system_manager_base->noc_idlereq_clr, ~0);
@@ -94,11 +98,28 @@ void socfpga_bridges_reset(int enable)
 	}
 }
 
+void socfpga_bridges_reset(int enable)
+{
+	socfpga_bridges_reset_common(enable);
+}
+
+/*
+ * This function will be copied to 'secure' memory region
+ * to support FPGA programming SMC services.
+ */
+void __secure socfpga_bridges_reset_psci(int enable)
+{
+	socfpga_bridges_reset_common(enable);
+}
+
 /*
  * Release peripherals from reset based on handoff
  */
 void reset_deassert_peripherals_handoff(void)
 {
+	static const struct socfpga_reset_manager *reset_manager_base =
+			(void *)SOCFPGA_RSTMGR_ADDRESS;
+
 	writel(0, &reset_manager_base->per1modrst);
 	/* Enable OCP first */
 	writel(~RSTMGR_PER0MODRST_OCP_MASK, &reset_manager_base->per0modrst);
@@ -110,6 +131,9 @@ void reset_deassert_peripherals_handoff(void)
  */
 int cpu_has_been_warmreset(void)
 {
+	static const struct socfpga_reset_manager *reset_manager_base =
+			(void *)SOCFPGA_RSTMGR_ADDRESS;
+
 	return readl(&reset_manager_base->status) &
 		RSTMGR_L4WD_MPU_WARMRESET_MASK;
 }
