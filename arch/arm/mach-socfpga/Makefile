@@ -46,6 +46,7 @@ obj-$(CONFIG_STRATIX10_FPGA_RECONFIG)	+= smc_fpga_reconfig_s10.o
 obj-y	+= smc_registers_s10.o
 obj-y	+= lowlevel_init.o
 obj-y	+= smc_rsu_s10.o
+obj-y	+= smmu_s10.o
 endif
 
 ifdef CONFIG_SPL_BUILD

@@ -16,6 +16,7 @@
 #include <asm/arch/mailbox_s10.h>
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/system_manager.h>
+#include <asm/arch/smmu_s10.h>
 #include <watchdog.h>
 #include <dm/uclass.h>
 
@@ -169,8 +170,8 @@ void board_init_f(ulong dummy)
 	writel(FIREWALL_BRIDGE_DISABLE_ALL, SOCFPGA_FIREWALL_SOC2FPGA);
 	writel(FIREWALL_BRIDGE_DISABLE_ALL, SOCFPGA_FIREWALL_LWSOC2FPGA);
 
-	/* disable SMMU security */
-	writel(FIREWALL_L4_DISABLE_ALL, SOCFPGA_FIREWALL_TCU);
+	/* Setup and Initialize SMMU */
+	socfpga_init_smmu();
 
 	/* disable ocram security at CCU for non secure access */
 	clrbits_le32(CCU_REG_ADDR(CCU_CPU0_MPRT_ADMASK_MEM_RAM0),
