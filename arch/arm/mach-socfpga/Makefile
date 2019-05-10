@@ -39,6 +39,7 @@ obj-y	+= system_manager_s10.o
 obj-y	+= timer_s10.o
 obj-y	+= wrap_pinmux_config_s10.o
 obj-y	+= wrap_pll_config_s10.o
+obj-$(CONFIG_STRATIX10_FPGA_RECONFIG)	+= smc_fpga_reconfig_s10.o
 endif
 
 ifdef CONFIG_SPL_BUILD
