@@ -39,6 +39,9 @@ obj-y	+= psci.o
 obj-y	+= exception_handler.o
 obj-y	+= reset_manager_s10.o
 ifndef CONFIG_SPL_BUILD
+obj-y   += rsu.o
+obj-y   += rsu_ll_qspi.o
+obj-y   += rsu_misc.o
 obj-y	+= rsu_s10.o
 endif
 obj-y	+= system_manager_s10.o
