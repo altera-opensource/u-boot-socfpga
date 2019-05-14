@@ -7,8 +7,6 @@
 #define _RESET_MANAGER_H_
 
 void reset_cpu(ulong addr);
-void l2_reset_cpu(void);
-
 void socfpga_per_reset(u32 reset, int set);
 void socfpga_per_reset_all(void);
 
