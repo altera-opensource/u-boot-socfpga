@@ -12,8 +12,7 @@
 #if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_ARMV8_PSCI)
 .align 3
 _el3_exception_vectors:
-	.word el3_exception_vectors;
-	.word 0
+	.quad el3_exception_vectors;
 #endif
 
 ENTRY(lowlevel_init)
