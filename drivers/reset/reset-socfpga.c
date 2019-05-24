@@ -115,6 +115,9 @@ static int socfpga_reset_remove(struct udevice *dev)
 	if (socfpga_reset_keep_enabled()) {
 		puts("Deasserting all peripheral resets\n");
 		writel(0, data->modrst_base + 4);
+#if defined(CONFIG_TARGET_SOCFPGA_ARRIA10)
+		writel(0, data->modrst_base + 8);
+#endif
 	}
 
 	return 0;
