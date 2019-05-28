@@ -35,6 +35,9 @@
 #define CONFIG_SYS_CACHELINE_SIZE 	64
 #define CONFIG_SYS_MEM_RESERVE_SECURE	0	/* using OCRAM, not DDR */
 
+/* Ensure data abort enter hang, then watchdog timeout cause RSU take effect */
+#define CONFIG_PANIC_HANG
+
 /*
  * U-Boot console configurations
  */
