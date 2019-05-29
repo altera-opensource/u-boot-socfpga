@@ -53,6 +53,10 @@ obj-y	+= smc_rsu_s10.o
 obj-y	+= smmu_s10.o
 endif
 
+ifdef CONFIG_TARGET_SOCFPGA_AGILEX
+obj-y	+= clock_manager_agilex.o
+endif
+
 ifdef CONFIG_SPL_BUILD
 ifdef CONFIG_TARGET_SOCFPGA_GEN5
 obj-y	+= spl_gen5.o

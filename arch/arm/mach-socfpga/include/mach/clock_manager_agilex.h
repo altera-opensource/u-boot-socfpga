@@ -25,6 +25,8 @@ const unsigned int cm_get_osc_clk_hz(void);
 const unsigned int cm_get_intosc_clk_hz(void);
 const unsigned int cm_get_fpga_clk_hz(void);
 
+unsigned long cm_get_mpu_clk_hz(void);
+
 #define CLKMGR_EOSC1_HZ		25000000
 #define CLKMGR_INTOSC_HZ	400000000
 #define CLKMGR_FPGA_CLK_HZ	50000000
