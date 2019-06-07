@@ -325,4 +325,21 @@ INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_FPGA_CONFIG_COMPLETED_WRITE)
 #define INTEL_SIP_SMC_ECC_DBE \
 	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_ECC_DBE)
 
+/*
+* Request INTEL_SIP_SMC_RSU_NOTIFY
+*
+* Sync call used by service driver at EL1 to report HPS software execution stage
+*
+* Call register usage:
+* a0 INTEL_SIP_SMC_RSU_NOTIFY
+* a1 32bit HPS software execution stage
+* a2-7 not used
+*
+* Return status
+ * a0 INTEL_SIP_SMC_STATUS_OK or INTEL_SIP_SMC_REG_ERROR.
+*/
+#define INTEL_SIP_SMC_FUNCID_RSU_NOTIFY 14
+#define INTEL_SIP_SMC_RSU_NOTIFY \
+	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_RSU_NOTIFY)
+
 #endif

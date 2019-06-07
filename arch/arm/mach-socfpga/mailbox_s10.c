@@ -433,6 +433,12 @@ int mbox_hps_stage_notify(u32 execution_stage)
 			     MBOX_CMD_DIRECT, 1, &execution_stage, 0, 0, NULL);
 }
 
+int  __secure mbox_hps_stage_notify_psci(u32 execution_stage)
+{
+	return mbox_send_cmd_psci(MBOX_ID_UBOOT, MBOX_HPS_STAGE_NOTIFY,
+			     MBOX_CMD_DIRECT, 1, &execution_stage, 0, 0, NULL);
+}
+
 int mbox_get_fpga_config_status(u32 cmd)
 {
 	return __mbox_get_fpga_config_status(cmd);
