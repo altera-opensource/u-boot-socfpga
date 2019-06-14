@@ -34,7 +34,7 @@ static struct socfpga_system_manager *sysmgr_regs =
 static Altera_desc altera_fpga[] = {
 	{
 		/* Family */
-		Intel_FPGA_Stratix10,
+		Intel_FPGA_SDM_Mailbox,
 		/* Interface type */
 		secure_device_manager_mailbox,
 		/* No limitation as additional data will be ignored */
