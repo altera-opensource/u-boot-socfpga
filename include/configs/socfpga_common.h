@@ -265,21 +265,8 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 	"pxefile_addr_r=0x02200000\0" \
 	"ramdisk_addr_r=0x02300000\0" \
 	"socfpga_legacy_reset_compat=1\0" \
-	"kernelfit_addr=0x1200000\0" \
-	"fitimagesize=0x5F0000\0" \
-	"qspiroot=/dev/mtdblock1\0" \
-	"qspirootfstype=jffs2\0" \
-	"qspiload=sf probe; sf read ${scriptaddr} ${kernelfit_addr}\0" \
-	"qspiboot=setenv bootargs " CONFIG_BOOTARGS \
-			"root=${qspiroot} rw rootfstype=${qspirootfstype}; " \
-			"bootm ${scriptaddr}\0" \
 	BOOTENV
 
-#endif
-
-#if defined(CONFIG_QSPI_BOOT)
-#undef CONFIG_BOOTCOMMAND
-#define CONFIG_BOOTCOMMAND "run qspiload; run qspiboot"
 #endif
 
 #endif
