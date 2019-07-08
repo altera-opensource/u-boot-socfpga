@@ -121,9 +121,9 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 		"echo Enabling QSPI at Linux DTB...;" \
 		"fdt addr ${fdt_addr}; fdt resize;" \
 		"fdt set /soc/spi@ff8d2000 status okay;" \
-		"if fdt set /soc/clocks/qspi-clk clock-frequency;" \
+		"if fdt set /soc/clocks/qspi-clk clock-frequency" \
 		" ${qspi_clock};" \
-		" else fdt set /soc/clkmgr/clocks/qspi_clk clock-frequency;" \
+		" else fdt set /soc/clkmgr/clocks/qspi_clk clock-frequency" \
 		" ${qspi_clock}; fi\0" \
 	"scriptaddr=0x02100000\0" \
 	"scriptfile=u-boot.scr\0" \
