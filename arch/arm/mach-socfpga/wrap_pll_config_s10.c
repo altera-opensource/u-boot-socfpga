@@ -36,7 +36,8 @@ const struct cm_config * const cm_get_default_config(void)
 const unsigned int cm_get_osc_clk_hz(void)
 {
 #ifdef CONFIG_SPL_BUILD
-	u32 clock = readl(S10_HANDOFF_CLOCK_OSC);
+
+	u32 clock = readl(HANDOFF_CLOCK_OSC);
 
 	writel(clock, &sysmgr_regs->boot_scratch_cold1);
 #endif
@@ -51,7 +52,7 @@ const unsigned int cm_get_intosc_clk_hz(void)
 const unsigned int cm_get_fpga_clk_hz(void)
 {
 #ifdef CONFIG_SPL_BUILD
-	u32 clock = readl(S10_HANDOFF_CLOCK_FPGA);
+	u32 clock = readl(HANDOFF_CLOCK_FPGA);
 
 	writel(clock, &sysmgr_regs->boot_scratch_cold2);
 #endif
