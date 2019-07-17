@@ -658,6 +658,9 @@ static int altera_gen5_sdram_probe(struct udevice *dev)
 	debug("SDRAM: %ld MiB\n", sdram_size >> 20);
 
 	if (sdram_is_ecc_enabled(sdr_ctrl)) {
+		/* Must set USEECCASDATA to 0 if ECC is enabled */
+		clrbits_le32(&sdr_ctrl->static_cfg,
+			     SDR_CTRLGRP_STATICCFG_USEECCASDATA_MASK);
 		sdram_init_ecc_bits(sdram_size);
 	}
 
