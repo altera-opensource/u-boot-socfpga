@@ -595,6 +595,15 @@ config SPL_DM_MAILBOX
 	  this option to build the drivers in drivers/mailbox as part of
 	  SPL build.
 
+config SPL_L2X0_CACHE
+	bool "PL310 cache driver"
+	select CACHE
+	depends on ARM
+	help
+	  This driver is for the PL310 cache controller commonly found on
+	  ARMv7(32-bit) devices. The driver configures the cache settings
+	  found in the device tree.
+
 config SPL_MMC_SUPPORT
 	bool "Support MMC"
 	depends on MMC
