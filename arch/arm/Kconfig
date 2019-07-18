@@ -848,6 +848,7 @@ config ARCH_SOCFPGA
 	imply SPL_SPI_FLASH_SUPPORT
 	imply SPL_SPI_SUPPORT
 	imply L2X0_CACHE
+	imply SPL_L2X0_CACHE
 
 config ARCH_SUNXI
 	bool "Support sunxi (Allwinner) SoCs"

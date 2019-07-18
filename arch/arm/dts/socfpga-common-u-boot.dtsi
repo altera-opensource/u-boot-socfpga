@@ -17,3 +17,7 @@
 &sdr {
 	u-boot,dm-pre-reloc;
 };
+
+&L2 {
+	u-boot,dm-pre-reloc;
+};
