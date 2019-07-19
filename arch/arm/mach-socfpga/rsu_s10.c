@@ -434,6 +434,42 @@ static int slot_program_buf(int argc, char * const argv[])
 	return CMD_RET_SUCCESS;
 }
 
+static int slot_program_factory_update_buf(int argc, char * const argv[])
+{
+	int slot;
+	char *endp;
+	u64 address;
+	int size;
+	int ret;
+	int addr_lo;
+	int addr_hi;
+
+	if (argc != 4)
+		return CMD_RET_USAGE;
+
+	if (!initialized) {
+		if (rsu_init(NULL))
+			return CMD_RET_FAILURE;
+
+		initialized = 1;
+	}
+
+	slot = simple_strtoul(argv[1], &endp, 16);
+	address = simple_strtoul(argv[2], &endp, 16);
+	size = simple_strtoul(argv[3], &endp, 16);
+
+	ret = rsu_slot_program_factory_update_buf(slot, (void *)address, size);
+	if (ret)
+		return CMD_RET_FAILURE;
+
+	addr_hi = upper_32_bits(address);
+	addr_lo = lower_32_bits(address);
+	printf("Slot %d was programmed with buffer=0x%08x%08x size=%d.\n",
+	       slot, addr_hi, addr_lo, size);
+
+	return CMD_RET_SUCCESS;
+}
+
 static int slot_program_buf_raw(int argc, char * const argv[])
 {
 	int slot;
@@ -777,6 +813,7 @@ static const struct func_t rsu_func_t[] = {
 	{"slot_priority", slot_priority},
 	{"slot_program_buf", slot_program_buf},
 	{"slot_program_buf_raw", slot_program_buf_raw},
+	{"slot_program_factory_update_buf", slot_program_factory_update_buf},
 	{"slot_rename", slot_rename},
 	{"slot_size", slot_size},
 	{"slot_verify_buf", slot_verify_buf},
@@ -824,6 +861,7 @@ U_BOOT_CMD(
 	"slot_priority <slot> - display slot priority\n"
 	"slot_program_buf <slot> <buffer> <size> - program buffer into slot, and make it highest priority\n"
 	"slot_program_buf_raw <slot> <buffer> <size> - program raw buffer into slot\n"
+	"slot_program_factory_update_buf <slot> <buffer> <size> - program factory update buffer into slot, and make it highest priority\n"
 	"slot_rename <slot> <name> - rename slot\n"
 	"slot_size <slot> - display slot size\n"
 	"slot_verify_buf <slot> <buffer> <size> - verify slot contents against buffer\n"
