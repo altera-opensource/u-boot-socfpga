@@ -29,12 +29,16 @@ static int cff_flash_read(struct cff_flash_info *cff_flashinfo, u32 *buffer,
 	u32 *buffer_sizebytes);
 static int cff_flash_preinit(struct cff_flash_info *cff_flashinfo,
 	fpga_fs_info *fpga_fsinfo, u32 *buffer, u32 *buffer_sizebytes);
+
+static int fpga_ok = 0;
+
 static int cff_flash_probe(struct cff_flash_info *cff_flashinfo)
 {
 #ifdef CONFIG_CADENCE_QSPI
 	/* initialize the Quad SPI controller */
 	cff_flashinfo->raw_flashinfo.flash =
-		spi_flash_probe(0, 0, CONFIG_SF_DEFAULT_SPEED, SPI_MODE_3);
+	spi_flash_probe(CONFIG_SPI_FLASH_BUS, CONFIG_SPI_FLASH_CS, \
+		 			CONFIG_SF_DEFAULT_SPEED, SPI_MODE_3);
 
 	if (!(cff_flashinfo->raw_flashinfo.flash)) {
 		puts("SPI probe failed.\n");
@@ -342,8 +346,10 @@ int cff_from_flash(fpga_fs_info *fpga_fsinfo)
 	ret = cff_flash_preinit(&cff_flashinfo, fpga_fsinfo, &buffer,
 		&buffer_sizebytes);
 
-	if (ret)
+	if (ret) {
+		fpga_ok = ret;
 		return ret;
+	}
 
 	if (!strcmp(fpga_fsinfo->rbftype, "periph") ||
 		!strcmp(fpga_fsinfo->rbftype, "combined")) {
@@ -729,3 +735,6 @@ int socfpga_loadfs(Altera_desc *desc, const void *buf, size_t bsize,
 }
 #endif
 
+int is_fpga_ok() {
+	return fpga_ok;
+}

@@ -12,6 +12,7 @@
 #include <asm/arch/ecc_ram.h>
 #include <asm/arch/system_manager.h>
 #include <asm/arch/sdram.h>
+#include <asm/arch/cff.h>
 
 #ifdef CONFIG_USE_IRQ
 interrupt_struct interrupt_vectors[MAX_INT_VECTORS];
@@ -59,30 +60,38 @@ int arch_interrupt_init (void)
 	/* Initialize to non-zero so that we avoid clearing of bss */
 	memset(interrupt_vectors, (int) INVERSE_NULL,
 		sizeof(interrupt_vectors));
+	if (0 == is_fpga_ok()) {
+		if (is_ocram_ecc_enabled() || is_sdram_ecc_enabled()) {
+			irq_register(IRQ_ECC_SERR,
+				irq_handler_ecc_serr,
+				0, 0);
 
-	if (is_ocram_ecc_enabled() || is_sdram_ecc_enabled()) {
-		irq_register(IRQ_ECC_SERR,
-			irq_handler_ecc_serr,
-			0, 0);
+			irq_register(IRQ_ECC_DERR,
+				irq_handler_ecc_derr,
+				0, 0);
+		}
 
-		irq_register(IRQ_ECC_DERR,
-			irq_handler_ecc_derr,
-			0, 0);
+		if (is_ocram_ecc_enabled())
+			ocram_ecc_masking_interrupt(0);
+
+		if (is_sdram_ecc_enabled()) {
+			ddr0_ecc_masking_interrupt(0);
+
+			sb_err_enable_interrupt(1);
+
+			ext_addrparity_err_enable_interrupt(1);
+
+			db_err_enable_interrupt(1);
+		}
+	} else {
+		if (is_ocram_ecc_enabled()) {
+			irq_register(IRQ_ECC_SERR,
+				irq_handler_ecc_serr,
+				0, 0);
+		}
+		if (is_ocram_ecc_enabled())
+			ocram_ecc_masking_interrupt(0);
 	}
-
-	if (is_ocram_ecc_enabled())
-		ocram_ecc_masking_interrupt(0);
-
-	if (is_sdram_ecc_enabled()) {
-		ddr0_ecc_masking_interrupt(0);
-
-		sb_err_enable_interrupt(1);
-
-		ext_addrparity_err_enable_interrupt(1);
-
-		db_err_enable_interrupt(1);
-	}
-
 	return 0;
 }
 

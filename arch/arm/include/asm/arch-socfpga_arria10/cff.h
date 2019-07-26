@@ -49,6 +49,7 @@ int cff_from_qspi_env(void);
 int cff_from_flash(fpga_fs_info *fpga_fsinfo);
 int cff_from_nand_env(void);
 const char *get_cff_filename(const void *fdt, int *len);
+int is_fpga_ok(void);
 #endif /* __ASSEMBLY__ */
 
 #endif /* _SOCFPGA_CFF_H_ */

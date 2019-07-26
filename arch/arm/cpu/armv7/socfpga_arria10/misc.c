@@ -173,10 +173,15 @@ void skip_relocation(void)
 	puts("DRAM  : ");
 	print_size(size, "\n");
 
+	if(size) {
 	/* relocate malloc at SDRAM to support eth */
-	gd->relocaddr = gd->ram_size;
+		gd->relocaddr = gd->ram_size;
 	/* relocate stack to SDRAM too where its located below malloc */
-	gd->start_addr_sp = gd->relocaddr - TOTAL_MALLOC_LEN;
+		gd->start_addr_sp = gd->relocaddr - TOTAL_MALLOC_LEN;
+	} else {
+		gd->relocaddr = CONFIG_SYS_TEXT_BASE + CONFIG_SYS_INIT_RAM_SIZE;
+		gd->start_addr_sp = gd->relocaddr - TOTAL_MALLOC_LEN;
+	}
 	gd->reloc_off = 0;
 	debug("relocation Offset is: %08lx\n", gd->reloc_off);
 
