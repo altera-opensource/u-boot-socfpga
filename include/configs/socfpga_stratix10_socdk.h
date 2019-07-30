@@ -116,7 +116,7 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
  * CONFIG_BOOTARGS goes into the environment value "bootargs".
  * Do note the value will overide also the chosen node in FDT blob.
  */
-#define CONFIG_BOOTARGS "earlycon"
+#define CONFIG_BOOTARGS "earlycon panic=-1"
 #define CONFIG_BOOTCOMMAND "run fatscript; run mmcload;run linux_qspi_enable;" \
 			   "rsu dtb; run mmcboot"
 
