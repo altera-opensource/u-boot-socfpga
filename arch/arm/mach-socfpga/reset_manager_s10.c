@@ -12,6 +12,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define GICD_CTRL_ADDRESS	0xfffc1000
+
 /* Assert or de-assert SoCFPGA reset manager reset. */
 void socfpga_per_reset(u32 reset, int set)
 {
@@ -176,6 +178,9 @@ int cpu_has_been_warmreset(void)
 void l2_reset_cpu(void)
 {
 	asm volatile(
+		/* Disable GIC distributor (IRQs). */
+		"str    wzr, [%3]\n"
+		/* Set Magic Number */
 		"str	%0, [%1]\n"
 		/* Increase timeout in rstmgr.hdsktimeout */
 		"ldr	x2, =0xFFFFFF\n"
@@ -203,6 +208,7 @@ void l2_reset_cpu(void)
 		"	b	wfi_loop\n"
 		: : "r" (L2_RESET_DONE_STATUS),
 		    "r" (L2_RESET_DONE_REG),
-		    "r" (SOCFPGA_RSTMGR_ADDRESS)
+		    "r" (SOCFPGA_RSTMGR_ADDRESS),
+		    "r" (GICD_CTRL_ADDRESS)
 		: "x1", "x2", "x3");
 }
