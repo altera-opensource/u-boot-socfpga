@@ -161,7 +161,7 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 /*
  * SDRAM controller
  */
-#define CONFIG_ALTERA_SDRAM
+#define CONFIG_SPL_ALTERA_SDRAM
 
 /*
  * Serial / UART configurations

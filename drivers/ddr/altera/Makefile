@@ -8,7 +8,7 @@
 # SPDX-License-Identifier:	GPL-2.0+
 #
 
-ifdef CONFIG_ALTERA_SDRAM
+ifdef CONFIG_$(SPL_)ALTERA_SDRAM
 obj-$(CONFIG_TARGET_SOCFPGA_GEN5) += sdram.o sequencer.o
 obj-$(CONFIG_TARGET_SOCFPGA_STRATIX10) += sdram_s10.o
 endif
