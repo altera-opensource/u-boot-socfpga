@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2016-2018 Intel Corporation <www.intel.com>
+ *  Copyright (C) 2016-2019 Intel Corporation <www.intel.com>
  *
  * SPDX-License-Identifier:	GPL-2.0
  */
@@ -13,11 +13,11 @@
 #include <spl.h>
 #include <asm/arch/system_manager.h>
 #include <asm/arch/clock_manager.h>
-#include <asm/arch/sdram_s10.h>
 #include <asm/arch/mailbox_s10.h>
 #include <asm/arch/firewall_s10.h>
 #include <watchdog.h>
 #include <asm/arch/smmu_s10.h>
+#include <dm/uclass.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -53,6 +53,7 @@ u32 spl_boot_mode(const u32 boot_device)
 void board_init_f(ulong dummy)
 {
 	const struct cm_config *cm_default_cfg = cm_get_default_config();
+	int ret;
 
 #ifdef CONFIG_HW_WATCHDOG
 	/* Ensure watchdog is paused when debugging is happening */
@@ -85,6 +86,12 @@ void board_init_f(ulong dummy)
 	/* enables nonsecure access to UART1 */
 	writel(FIREWALL_L4_DISABLE_ALL, &firwall_l4_per_base->uart1);
 #endif
+
+	ret = spl_early_init();
+	if (ret) {
+		debug("spl_early_init() failed: %d\n", ret);
+		hang();
+	}
 
 	preloader_console_init();
 	cm_print_clock_quick_summary();
@@ -194,11 +201,15 @@ void board_init_f(ulong dummy)
 	socfpga_per_reset(SOCFPGA_RESET(SPIM0), 0);
 	socfpga_per_reset(SOCFPGA_RESET(SPIM1), 0);
 
-	puts("DDR: Initializing Hard Memory Controller\n");
-	if (sdram_mmr_init_full(0)) {
-		puts("DDR: Initialization failed.\n");
+#if CONFIG_IS_ENABLED(ALTERA_SDRAM)
+	struct udevice *dev;
+
+	ret = uclass_get_device(UCLASS_RAM, 0, &dev);
+	if (ret) {
+		debug("DRAM init failed: %d\n", ret);
 		hang();
 	}
+#endif
 
 #ifdef CONFIG_SOCFPGA_SDRAM_SBE_ECC_CHECKING
 	sdram_sbe_ecc_checking();

@@ -1,35 +1,40 @@
-/*
- * Copyright (C) 2016-2018 Intel Corporation <www.intel.com>
- *
- * SPDX-License-Identifier:	GPL-2.0
- */
+ /*
+  * Copyright (C) 2016-2019 Intel Corporation <www.intel.com>
+  *
+  * SPDX-License-Identifier:	GPL-2.0
+  */
 
 #include <common.h>
+#include <dm.h>
 #include <errno.h>
 #include <div64.h>
 #include <fdtdec.h>
-#include <asm/io.h>
-#include <linux/sizes.h>
-#include <watchdog.h>
-#include <dma330.h>
-#include <asm/arch/sdram_s10.h>
+#include <ram.h>
+#include <reset.h>
+#include "sdram_s10.h"
+#include <wait_bit.h>
+#include <asm/arch/firewall_s10.h>
 #include <asm/arch/system_manager.h>
 #include <asm/arch/reset_manager.h>
+#include <asm/io.h>
 #include <linux/sizes.h>
+
+struct altera_sdram_priv {
+	struct ram_info info;
+};
+
+struct altera_sdram_platdata {
+	void __iomem *hmc;
+	void __iomem *ddr_sch;
+	void __iomem *iomhc;
+};
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static const struct socfpga_ecc_hmc *socfpga_ecc_hmc_base =
-		(void *)SOCFPGA_SDR_ADDRESS;
-static const struct socfpga_noc_ddr_scheduler *socfpga_noc_ddr_scheduler_base =
-		(void *)SOCFPGA_SDR_SCHEDULER_ADDRESS;
-static const struct socfpga_io48_mmr *socfpga_io48_mmr_base =
-		(void *)SOCFPGA_HMC_MMR_IO48_ADDRESS;
 static const struct socfpga_system_manager *sysmgr_regs =
 		(void *)SOCFPGA_SYSMGR_ADDRESS;
 
-#define DDR_CONFIG(A, B, C, R)	((A<<24)|(B<<16)|(C<<8)|R)
-#define DDR_ECC_DMA_SIZE	256
+#define DDR_CONFIG(A, B, C, R)	(((A) << 24) | ((B) << 16) | ((C) << 8) | (R))
 
 #define PGTABLE_OFF	0x4000
 
@@ -59,95 +64,93 @@ u32 ddr_config[] = {
 	DDR_CONFIG(1, 4, 10, 17),
 };
 
-#define DDR_CONFIG_ELEMENTS	(sizeof(ddr_config)/sizeof(u32))
+static u32 hmc_readl(struct altera_sdram_platdata *plat, u32 reg)
+{
+	return readl(plat->iomhc + reg);
+}
+
+static u32 hmc_ecc_readl(struct altera_sdram_platdata *plat, u32 reg)
+{
+	return readl(plat->hmc + reg);
+}
+
+static u32 hmc_ecc_writel(struct altera_sdram_platdata *plat,
+			  u32 data, u32 reg)
+{
+	return writel(data, plat->hmc + reg);
+}
+
+static u32 ddr_sch_writel(struct altera_sdram_platdata *plat, u32 data,
+			  u32 reg)
+{
+	return writel(data, plat->ddr_sch + reg);
+}
 
 int match_ddr_conf(u32 ddr_conf)
 {
 	int i;
-	for (i = 0; i < DDR_CONFIG_ELEMENTS; i++) {
+
+	for (i = 0; i < ARRAY_SIZE(ddr_config); i++) {
 		if (ddr_conf == ddr_config[i])
 			return i;
 	}
 	return 0;
 }
 
-static int emif_clear(void)
+static int emif_clear(struct altera_sdram_platdata *plat)
 {
-	u32 s2c, i;
+	hmc_ecc_writel(plat, 0, RSTHANDSHAKECTRL);
 
-	writel(0, &socfpga_ecc_hmc_base->rsthandshakectrl);
-	s2c = readl(&socfpga_ecc_hmc_base->rsthandshakestat) &
-	      DDR_HMC_RSTHANDSHAKE_MASK;
-
-	for (i = 1000; (i > 0) && s2c; i--) {
-		WATCHDOG_RESET();
-		mdelay(1);
-		s2c = readl(&socfpga_ecc_hmc_base->rsthandshakestat) &
-		      DDR_HMC_RSTHANDSHAKE_MASK;
-	}
-	return !s2c;
+	return wait_for_bit("emif_clear_timeout",
+			    (const void *)(plat->hmc + RSTHANDSHAKESTAT),
+			    DDR_HMC_RSTHANDSHAKE_MASK, false, 1000, false);
 }
 
-static int emif_reset(void)
+static int emif_reset(struct altera_sdram_platdata *plat)
 {
-	u32 c2s, s2c, i;
+	u32 c2s, s2c, ret;
 
-	c2s = readl(&socfpga_ecc_hmc_base->rsthandshakectrl) &
-	      DDR_HMC_RSTHANDSHAKE_MASK;
-	s2c = readl(&socfpga_ecc_hmc_base->rsthandshakestat) &
-	      DDR_HMC_RSTHANDSHAKE_MASK;
+	c2s = hmc_ecc_readl(plat, RSTHANDSHAKECTRL) & DDR_HMC_RSTHANDSHAKE_MASK;
+	s2c = hmc_ecc_readl(plat, RSTHANDSHAKESTAT) & DDR_HMC_RSTHANDSHAKE_MASK;
 
 	debug("DDR: c2s=%08x s2c=%08x nr0=%08x nr1=%08x nr2=%08x dst=%08x\n",
-		c2s, s2c, readl(&socfpga_io48_mmr_base->niosreserve0),
-		readl(&socfpga_io48_mmr_base->niosreserve1),
-		readl(&socfpga_io48_mmr_base->niosreserve2),
-		readl(&socfpga_io48_mmr_base->dramsts));
+	      c2s, s2c, hmc_readl(plat, NIOSRESERVED0),
+	      hmc_readl(plat, NIOSRESERVED1), hmc_readl(plat, NIOSRESERVED2),
+	      hmc_readl(plat, DRAMSTS));
 
-	if (s2c && emif_clear()) {
+	if (s2c && emif_clear(plat)) {
 		printf("DDR: emif_clear() failed\n");
 		return -1;
 	}
 
-	puts("DDR: Triggerring emif_reset\n");
-	writel(DDR_HMC_CORE2SEQ_INT_REQ,
-	       &socfpga_ecc_hmc_base->rsthandshakectrl);
+	debug("DDR: Triggerring emif reset\n");
+	hmc_ecc_writel(plat, DDR_HMC_CORE2SEQ_INT_REQ, RSTHANDSHAKECTRL);
 
-	for (i = 1000; i > 0; i--) {
-		/* if seq2core[3] = 0, we are good */
-		if (!(readl(&socfpga_ecc_hmc_base->rsthandshakestat) &
-		    DDR_HMC_SEQ2CORE_INT_RESP_MASK))
-			break;
-		WATCHDOG_RESET();
-		mdelay(1);
-	}
+	/* if seq2core[3] = 0, we are good */
+	return wait_for_bit("emif_reset_timeout",
+			    (const void *)(plat->hmc + RSTHANDSHAKESTAT),
+			    DDR_HMC_SEQ2CORE_INT_RESP_MASK, false, 1000, false);
 
-	if (!i) {
+	if (ret) {
 		printf("DDR: failed to get ack from EMIF\n");
-		return -2;
+		return ret;
 	}
 
-	if (emif_clear()) {
+	ret = emif_clear(plat);
+	if (ret) {
 		printf("DDR: emif_clear() failed\n");
-		return -3;
+		return ret;
 	}
 
-	printf("DDR: emif_reset triggered successly\n");
+	debug("DDR: %s triggered successly\n", __func__);
 	return 0;
 }
 
 static int poll_hmc_clock_status(void)
 {
-	u32 status, i;
-
-	for (i = 1000; i > 0; i--) {
-		status = readl(&sysmgr_regs->hmc_clk) &
-			 SYSMGR_HMC_CLK_STATUS_MSK;
-		udelay(1);
-		if (status)
-			break;
-		WATCHDOG_RESET();
-	}
-	return status;
+	return wait_for_bit("hmc_clock_polling_timeout",
+			    &sysmgr_regs->hmc_clk,
+			    SYSMGR_HMC_CLK_STATUS_MSK, true, 1000, false);
 }
 
 static void sdram_clear_mem(phys_addr_t addr, phys_size_t size)
@@ -253,108 +256,120 @@ static void sdram_size_check(bd_t *bd)
 }
 
 /**
+ * sdram_calculate_size() - Calculate SDRAM size
+ *
+ * Calculate SDRAM device size based on SDRAM controller parameters.
+ * Size is specified in bytes.
+ */
+static phys_size_t sdram_calculate_size(struct altera_sdram_platdata *plat)
+{
+	u32 dramaddrw = hmc_readl(plat, DRAMADDRW);
+
+	phys_size_t size = 1 << (DRAMADDRW_CFG_CS_ADDR_WIDTH(dramaddrw) +
+			 DRAMADDRW_CFG_BANK_GRP_ADDR_WIDTH(dramaddrw) +
+			 DRAMADDRW_CFG_BANK_ADDR_WIDTH(dramaddrw) +
+			 DRAMADDRW_CFG_ROW_ADDR_WIDTH(dramaddrw) +
+			 DRAMADDRW_CFG_COL_ADDR_WIDTH(dramaddrw));
+
+	size *= (2 << (hmc_ecc_readl(plat, DDRIOCTRL) &
+			DDR_HMC_DDRIOCTRL_IOSIZE_MSK));
+
+	return size;
+}
+
+/**
  * sdram_mmr_init_full() - Function to initialize SDRAM MMR
  *
  * Initialize the SDRAM MMR.
  */
-int sdram_mmr_init_full(unsigned int unused)
+static int sdram_mmr_init_full(struct udevice *dev)
 {
+	struct altera_sdram_platdata *plat = dev->platdata;
+	struct altera_sdram_priv *priv = dev_get_priv(dev);
 	u32 update_value, io48_value, ddrioctl;
-	u32 i, j, cal_success;
+	u32 i;
 	int ret;
 	phys_size_t hw_size;
 	bd_t bd = {0};
 
 	/* Enable access to DDR from CPU master */
-	clrbits_le32(CCU_CPU0_MPRT_ADBASE_DDRREG_ADDR, CCU_ADBASE_DI_MASK);
-	clrbits_le32(CCU_CPU0_MPRT_ADBASE_MEMSPACE0_ADDR, CCU_ADBASE_DI_MASK);
-	clrbits_le32(CCU_CPU0_MPRT_ADBASE_MEMSPACE1A_ADDR, CCU_ADBASE_DI_MASK);
-	clrbits_le32(CCU_CPU0_MPRT_ADBASE_MEMSPACE1B_ADDR, CCU_ADBASE_DI_MASK);
-	clrbits_le32(CCU_CPU0_MPRT_ADBASE_MEMSPACE1C_ADDR, CCU_ADBASE_DI_MASK);
-	clrbits_le32(CCU_CPU0_MPRT_ADBASE_MEMSPACE1D_ADDR, CCU_ADBASE_DI_MASK);
-	clrbits_le32(CCU_CPU0_MPRT_ADBASE_MEMSPACE1E_ADDR, CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_CPU0_MPRT_ADBASE_DDRREG),
+		     CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_CPU0_MPRT_ADBASE_MEMSPACE0),
+		     CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_CPU0_MPRT_ADBASE_MEMSPACE1A),
+		     CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_CPU0_MPRT_ADBASE_MEMSPACE1B),
+		     CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_CPU0_MPRT_ADBASE_MEMSPACE1C),
+		     CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_CPU0_MPRT_ADBASE_MEMSPACE1D),
+		     CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_CPU0_MPRT_ADBASE_MEMSPACE1E),
+		     CCU_ADBASE_DI_MASK);
 
 	/* Enable access to DDR from IO master */
-	clrbits_le32(CCU_IOM_MPRT_ADBASE_MEMSPACE0_ADDR, CCU_ADBASE_DI_MASK);
-	clrbits_le32(CCU_IOM_MPRT_ADBASE_MEMSPACE1A_ADDR, CCU_ADBASE_DI_MASK);
-	clrbits_le32(CCU_IOM_MPRT_ADBASE_MEMSPACE1B_ADDR, CCU_ADBASE_DI_MASK);
-	clrbits_le32(CCU_IOM_MPRT_ADBASE_MEMSPACE1C_ADDR, CCU_ADBASE_DI_MASK);
-	clrbits_le32(CCU_IOM_MPRT_ADBASE_MEMSPACE1D_ADDR, CCU_ADBASE_DI_MASK);
-	clrbits_le32(CCU_IOM_MPRT_ADBASE_MEMSPACE1E_ADDR, CCU_ADBASE_DI_MASK);
-
-	/* Enable access to DDR from TCU master */
-	clrbits_le32(CCU_TCU_MPRT_ADBASE_MEMSPACE0_ADDR, CCU_ADBASE_DI_MASK);
-	clrbits_le32(CCU_TCU_MPRT_ADBASE_MEMSPACE1A_ADDR, CCU_ADBASE_DI_MASK);
-	clrbits_le32(CCU_TCU_MPRT_ADBASE_MEMSPACE1B_ADDR, CCU_ADBASE_DI_MASK);
-	clrbits_le32(CCU_TCU_MPRT_ADBASE_MEMSPACE1C_ADDR, CCU_ADBASE_DI_MASK);
-	clrbits_le32(CCU_TCU_MPRT_ADBASE_MEMSPACE1D_ADDR, CCU_ADBASE_DI_MASK);
-	clrbits_le32(CCU_TCU_MPRT_ADBASE_MEMSPACE1E_ADDR, CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_IOM_MPRT_ADBASE_MEMSPACE0),
+		     CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_IOM_MPRT_ADBASE_MEMSPACE1A),
+		     CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_IOM_MPRT_ADBASE_MEMSPACE1B),
+		     CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_IOM_MPRT_ADBASE_MEMSPACE1C),
+		     CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_IOM_MPRT_ADBASE_MEMSPACE1D),
+		     CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_IOM_MPRT_ADBASE_MEMSPACE1E),
+		     CCU_ADBASE_DI_MASK);
 
 	/* this enables nonsecure access to DDR */
 	/* mpuregion0addr_limit */
-	writel(0xFFFF0000, 0xF8020118);
-	writel(0x1F, 0xF802011c);
+	FW_MPU_DDR_SCR_WRITEL(0xFFFF0000, FW_MPU_DDR_SCR_MPUREGION0ADDR_LIMIT);
+	FW_MPU_DDR_SCR_WRITEL(0x1F, FW_MPU_DDR_SCR_MPUREGION0ADDR_LIMITEXT);
 
 	/* nonmpuregion0addr_limit */
-	writel(0xFFFF0000, 0xF8020198);
-	writel(0x1F, 0xF802019C);
+	FW_MPU_DDR_SCR_WRITEL(0xFFFF0000,
+			      FW_MPU_DDR_SCR_NONMPUREGION0ADDR_LIMIT);
+	FW_MPU_DDR_SCR_WRITEL(0x1F, FW_MPU_DDR_SCR_NONMPUREGION0ADDR_LIMITEXT);
 
 	/* Enable mpuregion0enable and nonmpuregion0enable */
-	writel(BIT(0) | BIT(8), 0xF8020100);
+	FW_MPU_DDR_SCR_WRITEL(MPUREGION0_ENABLE | NONMPUREGION0_ENABLE,
+			      FW_MPU_DDR_SCR_EN_SET);
 
 	/* Ensure HMC clock is running */
-	if (!poll_hmc_clock_status()) {
+	if (poll_hmc_clock_status()) {
 		puts("DDR: Error as HMC clock not running\n");
 		return -1;
 	}
 
-	/* release DDR scheduler from reset */
-	socfpga_per_reset(SOCFPGA_RESET(SDR), 0);
-
 	/* Try 3 times to do a calibration */
 	for (i = 0; i < 3; i++) {
-		cal_success = readl(&socfpga_ecc_hmc_base->ddrcalstat) &
-			      DDR_HMC_DDRCALSTAT_CAL_MSK;
-		/* A delay to wait for calibration bit to set */
-		for (j = 0; (j < 1000) && !cal_success; j++) {
-			WATCHDOG_RESET();
-			mdelay(1);
-			cal_success = readl(&socfpga_ecc_hmc_base->ddrcalstat)
-				      & DDR_HMC_DDRCALSTAT_CAL_MSK;
-		}
-
-		if (cal_success)
+		ret = wait_for_bit("calibration_timeout",
+				   (const void *)(plat->hmc + DDRCALSTAT),
+				   DDR_HMC_DDRCALSTAT_CAL_MSK, true, 1000,
+				   false);
+		if (!ret)
 			break;
-		else
-			emif_reset();
+
+		emif_reset(plat);
 	}
 
-	if (!cal_success) {
+	if (ret) {
 		puts("DDR: Error as SDRAM calibration failed\n");
 		return -1;
 	}
-	puts("DDR: Calibration success\n");
+	debug("DDR: Calibration success\n");
 
-	union ctrlcfg0_reg ctrlcfg0 = (union ctrlcfg0_reg)
-				readl(&socfpga_io48_mmr_base->ctrlcfg0);
-	union ctrlcfg1_reg ctrlcfg1 = (union ctrlcfg1_reg)
-				readl(&socfpga_io48_mmr_base->ctrlcfg1);
-	union dramaddrw_reg dramaddrw = (union dramaddrw_reg)
-				readl(&socfpga_io48_mmr_base->dramaddrw);
-	union dramtiming0_reg dramtim0 = (union dramtiming0_reg)
-				readl(&socfpga_io48_mmr_base->dramtiming0);
-	union caltiming0_reg caltim0 = (union caltiming0_reg)
-				readl(&socfpga_io48_mmr_base->caltiming0);
-	union caltiming1_reg caltim1 = (union caltiming1_reg)
-				readl(&socfpga_io48_mmr_base->caltiming1);
-	union caltiming2_reg caltim2 = (union caltiming2_reg)
-				readl(&socfpga_io48_mmr_base->caltiming2);
-	union caltiming3_reg caltim3 = (union caltiming3_reg)
-				readl(&socfpga_io48_mmr_base->caltiming3);
-	union caltiming4_reg caltim4 = (union caltiming4_reg)
-				readl(&socfpga_io48_mmr_base->caltiming4);
-	union caltiming9_reg caltim9 = (union caltiming9_reg)
-				readl(&socfpga_io48_mmr_base->caltiming9);
+	u32 ctrlcfg0 = hmc_readl(plat, CTRLCFG0);
+	u32 ctrlcfg1 = hmc_readl(plat, CTRLCFG1);
+	u32 dramaddrw = hmc_readl(plat, DRAMADDRW);
+	u32 dramtim0 = hmc_readl(plat, DRAMTIMING0);
+	u32 caltim0 = hmc_readl(plat, CALTIMING0);
+	u32 caltim1 = hmc_readl(plat, CALTIMING1);
+	u32 caltim2 = hmc_readl(plat, CALTIMING2);
+	u32 caltim3 = hmc_readl(plat, CALTIMING3);
+	u32 caltim4 = hmc_readl(plat, CALTIMING4);
+	u32 caltim9 = hmc_readl(plat, CALTIMING9);
 
 	/*
 	 * Configure the DDR IO size [0xFFCFB008]
@@ -370,29 +385,26 @@ int sdram_mmr_init_full(unsigned int unused)
 	 *	bit[9:6] = Minor Release #
 	 *	bit[14:10] = Major Release #
 	 */
-	update_value = readl(&socfpga_io48_mmr_base->niosreserve0);
-	writel(((update_value & 0xFF) >> 5), &socfpga_ecc_hmc_base->ddrioctrl);
-	ddrioctl = readl(&socfpga_ecc_hmc_base->ddrioctrl);
+	update_value = hmc_readl(plat, NIOSRESERVED0);
+	hmc_ecc_writel(plat, ((update_value & 0xFF) >> 5), DDRIOCTRL);
+	ddrioctl = hmc_ecc_readl(plat, DDRIOCTRL);
 
 	/* enable HPS interface to HMC */
-	writel(DDR_HMC_HPSINTFCSEL_ENABLE_MASK,
-	       &socfpga_ecc_hmc_base->hpsintfcsel);
+	hmc_ecc_writel(plat, DDR_HMC_HPSINTFCSEL_ENABLE_MASK, HPSINTFCSEL);
 
 	/* Set the DDR Configuration */
-	io48_value = DDR_CONFIG(ctrlcfg1.cfg_addr_order,
-				(dramaddrw.cfg_bank_addr_width +
-				 dramaddrw.cfg_bank_group_addr_width),
-				dramaddrw.cfg_col_addr_width,
-				dramaddrw.cfg_row_addr_width);
+	io48_value = DDR_CONFIG(CTRLCFG1_CFG_ADDR_ORDER(ctrlcfg1),
+				(DRAMADDRW_CFG_BANK_ADDR_WIDTH(dramaddrw) +
+				 DRAMADDRW_CFG_BANK_GRP_ADDR_WIDTH(dramaddrw)),
+				DRAMADDRW_CFG_COL_ADDR_WIDTH(dramaddrw),
+				DRAMADDRW_CFG_ROW_ADDR_WIDTH(dramaddrw));
 
 	update_value = match_ddr_conf(io48_value);
 	if (update_value)
-		writel(update_value,
-		&socfpga_noc_ddr_scheduler_base->main_scheduler_ddrconf);
+		ddr_sch_writel(plat, update_value, DDR_SCH_DDRCONF);
 
 	/* Configure HMC dramaddrw */
-	writel(readl(&socfpga_io48_mmr_base->dramaddrw),
-		&socfpga_ecc_hmc_base->dramaddrwidth);
+	hmc_ecc_writel(plat, hmc_readl(plat, DRAMADDRW), DRAMADDRWIDTH);
 
 	/*
 	 * Configure DDR timing
@@ -403,59 +415,71 @@ int sdram_mmr_init_full(unsigned int unused)
 	 *  for HMC clock units. 1066MHz is close to 1ns so use 15 directly.
 	 *  WRTOMISS = ((RL + BL/2 + 2 + tWR) >> 1)- rd-to-wr + tRP + tRCD
 	 */
-	update_value = caltim2.cfg_rd_to_pch + caltim4.cfg_pch_to_valid +
-		       caltim0.cfg_act_to_rdwr -
-		       (ctrlcfg0.cfg_ctrl_burst_len >> 2);
-	io48_value = (((dramtim0.cfg_tcl + 2 + DDR_TWR +
-		      (ctrlcfg0.cfg_ctrl_burst_len >> 1)) >> 1) -
-		      /* Up to here was in memory cycles so divide by 2 */
-		      caltim1.cfg_rd_to_wr + caltim0.cfg_act_to_rdwr +
-		      caltim4.cfg_pch_to_valid);
+	u32 burst_len = CTRLCFG0_CFG_CTRL_BURST_LEN(ctrlcfg0);
 
-	writel(((caltim0.cfg_act_to_act << DDR_SCHED_DDRTIMING_ACTTOACT_OFFSET) |
-		(update_value << DDR_SCHED_DDRTIMING_RDTOMISS_OFFSET) |
-		(io48_value << DDR_SCHED_DDRTIMING_WRTOMISS_OFFSET) |
-		((ctrlcfg0.cfg_ctrl_burst_len >> 2) <<
-			DDR_SCHED_DDRTIMING_BURSTLEN_OFFSET) |
-		(caltim1.cfg_rd_to_wr << DDR_SCHED_DDRTIMING_RDTOWR_OFFSET) |
-		(caltim3.cfg_wr_to_rd << DDR_SCHED_DDRTIMING_WRTORD_OFFSET) |
-		(((ddrioctl == 1) ? 1 : 0) <<
-			DDR_SCHED_DDRTIMING_BWRATIO_OFFSET)),
-		&socfpga_noc_ddr_scheduler_base->main_scheduler_ddrtiming);
+	update_value = CALTIMING2_CFG_RD_TO_WR_PCH(caltim2) +
+		       CALTIMING4_CFG_PCH_TO_VALID(caltim4) +
+		       CALTIMING0_CFG_ACT_TO_RDWR(caltim0) -
+		       (burst_len >> 2);
+	io48_value = (((DRAMTIMING0_CFG_TCL(dramtim0) + 2 + DDR_TWR +
+		       (burst_len >> 1)) >> 1) -
+		      /* Up to here was in memory cycles so divide by 2 */
+		      CALTIMING1_CFG_RD_TO_WR(caltim1) +
+		      CALTIMING0_CFG_ACT_TO_RDWR(caltim0) +
+		      CALTIMING4_CFG_PCH_TO_VALID(caltim4));
+
+	ddr_sch_writel(plat, ((CALTIMING0_CFG_ACT_TO_ACT(caltim0) <<
+			 DDR_SCH_DDRTIMING_ACTTOACT_OFF) |
+			(update_value << DDR_SCH_DDRTIMING_RDTOMISS_OFF) |
+			(io48_value << DDR_SCH_DDRTIMING_WRTOMISS_OFF) |
+			((burst_len >> 2) << DDR_SCH_DDRTIMING_BURSTLEN_OFF) |
+			(CALTIMING1_CFG_RD_TO_WR(caltim1) <<
+			 DDR_SCH_DDRTIMING_RDTOWR_OFF) |
+			(CALTIMING3_CFG_WR_TO_RD(caltim3) <<
+			 DDR_SCH_DDRTIMING_WRTORD_OFF) |
+			(((ddrioctl == 1) ? 1 : 0) <<
+			 DDR_SCH_DDRTIMING_BWRATIO_OFF)),
+			DDR_SCH_DDRTIMING);
 
 	/* Configure DDR mode [precharge = 0] */
-	writel(((ddrioctl ? 0 : 1) << DDR_SCHED_DDRMOD_BWRATIOEXTENDED_OFFSET),
-	       &socfpga_noc_ddr_scheduler_base->main_scheduler_ddrmode);
+	ddr_sch_writel(plat, ((ddrioctl ? 0 : 1) <<
+			 DDR_SCH_DDRMOD_BWRATIOEXTENDED_OFF),
+			DDR_SCH_DDRMODE);
 
 	/* Configure the read latency */
-	writel((dramtim0.cfg_tcl >> 1) + DDR_READ_LATENCY_DELAY,
-	       &socfpga_noc_ddr_scheduler_base->main_scheduler_readlatency);
+	ddr_sch_writel(plat, (DRAMTIMING0_CFG_TCL(dramtim0) >> 1) +
+			DDR_READ_LATENCY_DELAY,
+			DDR_SCH_READ_LATENCY);
 
 	/*
 	 * Configuring timing values concerning activate commands
 	 * [FAWBANK alway 1 because always 4 bank DDR]
 	 */
-	writel(((caltim0.cfg_act_to_act_db << DDR_SCHED_ACTIVATE_RRD_OFFSET) |
-	       (caltim9.cfg_4_act_to_act << DDR_SCHED_ACTIVATE_FAW_OFFSET) |
-	       (DDR_ACTIVATE_FAWBANK << DDR_SCHED_ACTIVATE_FAWBANK_OFFSET)),
-	       &socfpga_noc_ddr_scheduler_base->main_scheduler_activate);
+	ddr_sch_writel(plat, ((CALTIMING0_CFG_ACT_TO_ACT_DB(caltim0) <<
+			 DDR_SCH_ACTIVATE_RRD_OFF) |
+			(CALTIMING9_CFG_4_ACT_TO_ACT(caltim9) <<
+			 DDR_SCH_ACTIVATE_FAW_OFF) |
+			(DDR_ACTIVATE_FAWBANK <<
+			 DDR_SCH_ACTIVATE_FAWBANK_OFF)),
+			DDR_SCH_ACTIVATE);
 
 	/*
 	 * Configuring timing values concerning device to device data bus
 	 * ownership change
 	 */
-	writel(((caltim1.cfg_rd_to_rd_dc <<
-			DDR_SCHED_DEVTODEV_BUSRDTORD_OFFSET) |
-	       (caltim1.cfg_rd_to_wr_dc <<
-			DDR_SCHED_DEVTODEV_BUSRDTOWR_OFFSET) |
-	       (caltim3.cfg_wr_to_rd_dc <<
-			DDR_SCHED_DEVTODEV_BUSWRTORD_OFFSET)),
-	       &socfpga_noc_ddr_scheduler_base->main_scheduler_devtodev);
+	ddr_sch_writel(plat, ((CALTIMING1_CFG_RD_TO_RD_DC(caltim1) <<
+			 DDR_SCH_DEVTODEV_BUSRDTORD_OFF) |
+			(CALTIMING1_CFG_RD_TO_WR_DC(caltim1) <<
+			 DDR_SCH_DEVTODEV_BUSRDTOWR_OFF) |
+			(CALTIMING3_CFG_WR_TO_RD_DC(caltim3) <<
+			 DDR_SCH_DEVTODEV_BUSWRTORD_OFF)),
+			DDR_SCH_DEVTODEV);
 
 	/* assigning the SDRAM size */
-	phys_size_t size = sdram_calculate_size();
+	unsigned long long size = sdram_calculate_size(plat);
 	/* If the size is invalid, use default Config size */
 	if (size <= 0)
+		hw_size = PHYS_SDRAM_1_SIZE;
 	else
 		hw_size = size;
 
@@ -470,22 +494,21 @@ int sdram_mmr_init_full(unsigned int unused)
 	if (gd->ram_size != hw_size)
 		printf("DDR: Warning: DRAM size from device tree mismatch with hardware.\n");
 
-	printf("DDR: %lld MiB\n", gd->ram_size >> 20);
+	printf("DDR: %u MiB\n", (u32)(gd->ram_size >> 20));
 
 	/* Enable or disable the SDRAM ECC */
-	if (ctrlcfg1.cfg_ctrl_enable_ecc) {
-		setbits_le32(&socfpga_ecc_hmc_base->eccctrl,
+	if (CTRLCFG1_CFG_CTRL_EN_ECC(ctrlcfg1)) {
+		setbits_le32(plat->hmc + ECCCTRL1,
 			     (DDR_HMC_ECCCTL_AWB_CNT_RST_SET_MSK |
 			      DDR_HMC_ECCCTL_CNT_RST_SET_MSK |
 			      DDR_HMC_ECCCTL_ECC_EN_SET_MSK));
-		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl,
+		clrbits_le32(plat->hmc + ECCCTRL1,
 			     (DDR_HMC_ECCCTL_AWB_CNT_RST_SET_MSK |
 			      DDR_HMC_ECCCTL_CNT_RST_SET_MSK));
-		setbits_le32(&socfpga_ecc_hmc_base->eccctrl2,
+		setbits_le32(plat->hmc + ECCCTRL2,
 			     (DDR_HMC_ECCCTL2_RMW_EN_SET_MSK |
 			      DDR_HMC_ECCCTL2_AWB_EN_SET_MSK));
-		writel(DDR_HMC_ERRINTEN_INTMASK,
-		       SOCFPGA_SDR_ADDRESS + ERRINTENS);
+		hmc_ecc_writel(plat, DDR_HMC_ERRINTEN_INTMASK, ERRINTENS);
 
 		/* Enable non-secure writes to HMC Adapter for SDRAM ECC */
 		writel(FW_HMC_ADAPTOR_MPU_MASK, FW_HMC_ADAPTOR_REG_ADDR);
@@ -494,40 +517,91 @@ int sdram_mmr_init_full(unsigned int unused)
 		if (!cpu_has_been_warmreset())
 			sdram_init_ecc_bits(&bd);
 	} else {
-		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl,
+		clrbits_le32(plat->hmc + ECCCTRL1,
 			     (DDR_HMC_ECCCTL_AWB_CNT_RST_SET_MSK |
 			      DDR_HMC_ECCCTL_CNT_RST_SET_MSK |
 			      DDR_HMC_ECCCTL_ECC_EN_SET_MSK));
-		clrbits_le32(&socfpga_ecc_hmc_base->eccctrl2,
+		clrbits_le32(plat->hmc + ECCCTRL2,
 			     (DDR_HMC_ECCCTL2_RMW_EN_SET_MSK |
 			      DDR_HMC_ECCCTL2_AWB_EN_SET_MSK));
 	}
 
 	sdram_size_check(&bd);
 
+	priv->info.base = bd.bi_dram[0].start;
+	priv->info.size = gd->ram_size;
+
 	debug("DDR: HMC init success\n");
 	return 0;
 }
 
-/**
- * sdram_calculate_size() - Calculate SDRAM size
- *
- * Calculate SDRAM device size based on SDRAM controller parameters.
- * Size is specified in bytes.
- */
-phys_size_t sdram_calculate_size(void)
+static int altera_sdram_ofdata_to_platdata(struct udevice *dev)
 {
-	union dramaddrw_reg dramaddrw =
-		(union dramaddrw_reg)readl(&socfpga_io48_mmr_base->dramaddrw);
+	struct altera_sdram_platdata *plat = dev->platdata;
+	fdt_addr_t addr;
 
-	phys_size_t size = ((phys_size_t)1 << (dramaddrw.cfg_cs_addr_width +
-		    dramaddrw.cfg_bank_group_addr_width +
-		    dramaddrw.cfg_bank_addr_width +
-		    dramaddrw.cfg_row_addr_width +
-		    dramaddrw.cfg_col_addr_width));
+	addr = dev_read_addr_index(dev, 0);
+	if (addr == FDT_ADDR_T_NONE)
+		return -EINVAL;
+	plat->ddr_sch = (void __iomem *)addr;
 
-	size *= ((phys_size_t)2 << (readl(&socfpga_ecc_hmc_base->ddrioctrl) &
-		       DDR_HMC_DDRIOCTRL_IOSIZE_MSK));
+	addr = dev_read_addr_index(dev, 1);
+	if (addr == FDT_ADDR_T_NONE)
+		return -EINVAL;
+	plat->iomhc = (void __iomem *)addr;
 
-	return size;
+	addr = dev_read_addr_index(dev, 2);
+	if (addr == FDT_ADDR_T_NONE)
+		return -EINVAL;
+	plat->hmc = (void __iomem *)addr;
+
+	return 0;
 }
+
+static int altera_sdram_probe(struct udevice *dev)
+{
+	/* release DDR scheduler from reset */
+	socfpga_per_reset(SOCFPGA_RESET(SDR), 0);
+
+	if (sdram_mmr_init_full(dev) != 0) {
+		puts("SDRAM init failed.\n");
+		goto failed;
+	}
+
+	return 0;
+
+failed:
+	socfpga_per_reset(SOCFPGA_RESET(SDR), 1);
+	return -ENODEV;
+}
+
+static int altera_sdram_get_info(struct udevice *dev,
+				 struct ram_info *info)
+{
+	struct altera_sdram_priv *priv = dev_get_priv(dev);
+
+	info->base = priv->info.base;
+	info->size = priv->info.size;
+
+	return 0;
+}
+
+static struct ram_ops altera_sdram_ops = {
+	.get_info = altera_sdram_get_info,
+};
+
+static const struct udevice_id altera_sdram_ids[] = {
+	{ .compatible = "altr,sdr-ctl-s10" },
+	{ /* sentinel */ }
+};
+
+U_BOOT_DRIVER(altera_sdram) = {
+	.name = "altr_sdr_ctl",
+	.id = UCLASS_RAM,
+	.of_match = altera_sdram_ids,
+	.ops = &altera_sdram_ops,
+	.ofdata_to_platdata = altera_sdram_ofdata_to_platdata,
+	.platdata_auto_alloc_size = sizeof(struct altera_sdram_platdata),
+	.probe = altera_sdram_probe,
+	.priv_auto_alloc_size = sizeof(struct altera_sdram_priv),
+};
