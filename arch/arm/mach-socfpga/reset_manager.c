@@ -8,13 +8,15 @@
 #include <asm/io.h>
 #include <asm/arch/reset_manager.h>
 
-#if defined(CONFIG_TARGET_SOCFPGA_STRATIX10)
+#if defined(CONFIG_TARGET_SOCFPGA_STRATIX10) || \
+	defined(CONFIG_TARGET_SOCFPGA_AGILEX)
 #include <asm/arch/mailbox_s10.h>
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#if !defined(CONFIG_TARGET_SOCFPGA_STRATIX10)
+#if !defined(CONFIG_TARGET_SOCFPGA_STRATIX10) && \
+	!defined(CONFIG_TARGET_SOCFPGA_AGILEX)
 static const struct socfpga_reset_manager *reset_manager_base =
 		(void *)SOCFPGA_RSTMGR_ADDRESS;
 #endif
@@ -24,7 +26,8 @@ static const struct socfpga_reset_manager *reset_manager_base =
  */
 void reset_cpu(ulong addr)
 {
-#if defined(CONFIG_TARGET_SOCFPGA_STRATIX10)
+#if defined(CONFIG_TARGET_SOCFPGA_STRATIX10) || \
+	defined(CONFIG_TARGET_SOCFPGA_AGILEX)
 #ifndef CONFIG_SPL_BUILD
 	const char *reset = env_get("reset");
 
