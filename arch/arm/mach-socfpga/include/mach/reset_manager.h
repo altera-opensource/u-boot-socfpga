@@ -43,6 +43,8 @@ void socfpga_per_reset_all(void);
 #include <asm/arch/reset_manager_arria10.h>
 #elif defined(CONFIG_TARGET_SOCFPGA_STRATIX10)
 #include <asm/arch/reset_manager_s10.h>
+#elif defined(CONFIG_TARGET_SOCFPGA_AGILEX)
+#include <asm/arch/reset_manager_agilex.h>
 #endif
 
 #endif /* _RESET_MANAGER_H_ */
