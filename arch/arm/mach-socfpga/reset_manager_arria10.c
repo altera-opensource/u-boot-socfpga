@@ -110,8 +110,8 @@ int socfpga_reset_deassert_bridges_handoff(void)
 				 false, 1000, false);
 }
 
-/* Release L4 OSC1 Watchdog Timer 0 from reset through reset manager */
-void socfpga_reset_deassert_osc1wd0(void)
+/* Release Watchdog 0 from reset through reset manager */
+void socfpga_reset_deassert_wd0(void)
 {
 	clrbits_le32(&reset_manager_base->per1modrst,
 		     ALT_RSTMGR_PER1MODRST_WD0_SET_MSK);
