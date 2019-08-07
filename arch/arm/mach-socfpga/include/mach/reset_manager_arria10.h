@@ -11,7 +11,7 @@
 void socfpga_watchdog_disable(void);
 void socfpga_reset_deassert_noc_ddr_scheduler(void);
 int socfpga_reset_deassert_bridges_handoff(void);
-void socfpga_reset_deassert_osc1wd0(void);
+void socfpga_reset_deassert_wd0(void);
 int socfpga_bridges_reset(void);
 
 struct socfpga_reset_manager {
