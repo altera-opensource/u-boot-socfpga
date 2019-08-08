@@ -6,7 +6,7 @@
 
 #include <common.h>
 #include <asm/io.h>
-#include <asm/arch/firewall_s10.h>
+#include <asm/arch/firewall.h>
 #include <asm/arch/smmu_s10.h>
 #include <asm/arch/system_manager.h>
 
