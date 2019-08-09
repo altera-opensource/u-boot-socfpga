@@ -217,6 +217,7 @@ ALL-y	+= $(obj)/$(SPL_BIN).sfp
 endif
 
 ALL-$(CONFIG_TARGET_SOCFPGA_STRATIX10) += $(obj)/u-boot-spl-dtb.hex
+ALL-$(CONFIG_TARGET_SOCFPGA_AGILEX) += $(obj)/u-boot-spl-dtb.hex
 
 ifdef CONFIG_ARCH_SUNXI
 ALL-y	+= $(obj)/sunxi-spl.bin
