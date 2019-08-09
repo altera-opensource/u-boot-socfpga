@@ -73,6 +73,7 @@ obj-y	+= spl_s10.o
 endif
 ifdef CONFIG_TARGET_SOCFPGA_AGILEX
 obj-y	+= ccu_agilex.o
+obj-y	+= spl_agilex.o
 endif
 endif
 
