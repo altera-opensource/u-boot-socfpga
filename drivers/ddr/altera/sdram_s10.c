@@ -491,8 +491,17 @@ static int sdram_mmr_init_full(struct udevice *dev)
 		return -1;
 	}
 
-	if (gd->ram_size != hw_size)
-		printf("DDR: Warning: DRAM size from device tree mismatch with hardware.\n");
+	if (gd->ram_size != hw_size) {
+		printf("DDR: Warning: DRAM size from device tree");
+		printf(" %u MiB mismatch with", (u32)(gd->ram_size >> 20));
+		printf(" hardware size %u MiB.\n", (u32)(hw_size >> 20));
+	}
+
+	if (gd->ram_size > hw_size) {
+		printf("DDR: Error: DRAM size from device tree is greater");
+		printf(" than hardware size.\n");
+		hang();
+	}
 
 	printf("DDR: %u MiB\n", (u32)(gd->ram_size >> 20));
 
