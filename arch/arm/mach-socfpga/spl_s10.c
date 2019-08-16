@@ -206,10 +206,6 @@ void board_init_f(ulong dummy)
 	writel(SYSMGR_DMA_IRQ_NS | SYSMGR_DMA_MGR_NS, &sysmgr_regs->dma);
 	writel(SYSMGR_DMAPERIPH_ALL_NS, &sysmgr_regs->dma_periph);
 
-	/* enable PL330 DMA */
-	socfpga_per_reset(SOCFPGA_RESET(DMA), 0);
-	socfpga_per_reset(SOCFPGA_RESET(DMA_OCP), 0);
-
 	spl_disable_firewall_l4_per();
 
 	spl_disable_firewall_l4_sys();
