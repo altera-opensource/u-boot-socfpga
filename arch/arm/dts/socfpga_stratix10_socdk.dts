@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  */
 
 #include "socfpga_stratix10.dtsi"
@@ -9,6 +9,7 @@
 	model = "SoCFPGA Stratix 10 SoCDK";
 
 	aliases {
+		ethernet0 = &gmac0;
 		i2c0 = &i2c1;
 		serial0 = &uart0;
 	};
