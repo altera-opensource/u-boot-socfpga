@@ -87,6 +87,7 @@ PSCI_DEFAULT(psci_system_reset2_64)
 .align 3
 _psci_64_table:
 PSCI_TABLE(ARM_PSCI_0_2_FN64_CPU_SUSPEND, psci_cpu_suspend_64)
+PSCI_TABLE(ARM_PSCI_FN_CPU_OFF, psci_cpu_off)
 PSCI_TABLE(ARM_PSCI_0_2_FN64_CPU_ON, psci_cpu_on_64)
 PSCI_TABLE(ARM_PSCI_0_2_FN64_AFFINITY_INFO, psci_affinity_info_64)
 PSCI_TABLE(ARM_PSCI_0_2_FN64_MIGRATE, psci_migrate_64)
