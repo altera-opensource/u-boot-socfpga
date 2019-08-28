@@ -175,7 +175,8 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 /*
  * L4 Watchdog
  */
-#ifdef CONFIG_HW_WATCHDOG
+#ifdef CONFIG_SPL_BUILD
+#define CONFIG_HW_WATCHDOG
 #define CONFIG_DESIGNWARE_WATCHDOG
 #define CONFIG_DW_WDT_BASE		SOCFPGA_L4WD0_ADDRESS
 #ifndef __ASSEMBLY__
