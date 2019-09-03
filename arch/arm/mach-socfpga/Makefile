@@ -54,6 +54,26 @@ endif
 
 ifdef CONFIG_TARGET_SOCFPGA_AGILEX
 obj-y	+= clock_manager_agilex.o
+obj-y	+= exception_handler.o
+obj-y	+= lowlevel_init.o
+obj-y	+= mailbox_s10.o
+obj-y	+= misc_s10.o
+obj-y	+= mmu-arm64_s10.o
+obj-y	+= reset_manager_s10.o
+obj-y	+= smc_registers_s10.o
+obj-y	+= smc_rsu_s10.o
+obj-y	+= smmu_s10.o
+obj-y	+= system_manager_s10.o
+obj-y	+= timer_s10.o
+obj-y	+= wrap_pinmux_config_s10.o
+obj-y	+= wrap_pll_config_s10.o
+ifndef CONFIG_SPL_BUILD
+obj-y	+= rsu.o
+obj-y	+= rsu_ll_qspi.o
+obj-y	+= rsu_misc.o
+obj-y	+= rsu_s10.o
+obj-$(CONFIG_ARMV8_PSCI)	+= psci.o
+endif
 endif
 
 ifdef CONFIG_SPL_BUILD
@@ -73,6 +93,7 @@ obj-y	+= spl_s10.o
 endif
 ifdef CONFIG_TARGET_SOCFPGA_AGILEX
 obj-y	+= ccu_agilex.o
+obj-y	+= firewall.o
 obj-y	+= spl_agilex.o
 endif
 endif
