@@ -16,6 +16,8 @@
 static u64 psci_cpu_on_64_cpuid __secure_data;
 static u64 psci_cpu_on_64_entry_point __secure_data;
 
+bool __secure is_ecc_dbe_cold_reset(void);
+
 void __noreturn __secure psci_system_reset(void)
 {
 	if (smc_rsu_update_address)
@@ -41,6 +43,15 @@ int __secure psci_system_reset2_64(u32 function_id, u32 reset_type, u64 cookie)
 	if (reset_type != 0)
 		return ARM_PSCI_RET_INVAL;
 
+#ifdef CONFIG_LINUX_DBE_WARM_RESET
+	/* If critical memory (DDR/OCRAM), do a cold reboot */
+	if (is_ecc_dbe_cold_reset()) {
+		mbox_send_cmd_psci(MBOX_ID_UBOOT, MBOX_REBOOT_HPS,
+				   MBOX_CMD_DIRECT, 0, NULL, 0, 0, NULL);
+		while (1)
+			;
+	}
+#endif
 	l2_reset_cpu_psci();
 
 	return ARM_PSCI_RET_INTERNAL_FAILURE; /* Never reached */
