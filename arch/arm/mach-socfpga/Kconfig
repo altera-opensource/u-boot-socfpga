@@ -15,6 +15,16 @@ config SPL_STACK_R_ADDR
 config SPL_SYS_MALLOC_F_LEN
 	default 0x800 if TARGET_SOCFPGA_GEN5
 
+config LINUX_DBE_WARM_RESET
+	bool "Configure Linux handler for DBEs warm reset"
+	depends on TARGET_SOCFPGA_STRATIX10
+	help
+	 Double Bit ECC errors will trigger a warm reset instead of
+	 a cold reset if this option is y.
+	 1. Peripheral DBEs will trigger a warm reset.
+	 2. SDRAM and OCRAM cause a cold reset because the contents
+            cannot be trusted.
+
 config SYS_MMCSD_RAW_MODE_U_BOOT_PARTITION_TYPE
 	default 0xa2
 
