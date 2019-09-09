@@ -25,6 +25,16 @@ config SOCFPGA_SDRAM_ADDR_MISMATCH_ECC_CHECKING
 	 1. sdram_addr_mismatch_ecc_checking only.
 	 2. sdram_sbe_ecc_checking -> sdram_addr_mismatch_ecc_checking.
 
+config LINUX_DBE_WARM_RESET
+	bool "Configure Linux handler for DBEs warm reset"
+	depends on TARGET_SOCFPGA_STRATIX10
+	help
+	 Double Bit ECC errors will trigger a warm reset instead of
+	 a cold reset if this option is y.
+	 1. Peripheral DBEs will trigger a warm reset.
+	 2. SDRAM and OCRAM cause a cold reset because the contents
+            cannot be trusted.
+
 config SPL_LIBCOMMON_SUPPORT
 	default y
 
