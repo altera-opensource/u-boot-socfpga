@@ -395,10 +395,25 @@
 						clk-gate = <0xC8 11>;
 					};
 
-					nand_clk: nand_clk {
+					nand_x_clk: nand_x_clk {
 						#clock-cells = <0>;
 						compatible = "altr,socfpga-a10-gate-clk";
 						clocks = <&l4_mp_clk>;
+						clk-gate = <0xC8 10>;
+					};
+
+					nand_ecc_clk: nand_ecc_clk {
+						#clock-cells = <0>;
+						compatible = "altr,socfpga-a10-gate-clk";
+						clocks = <&nand_x_clk>;
+						clk-gate = <0xC8 10>;
+					};
+
+					nand_clk: nand_clk {
+						#clock-cells = <0>;
+						compatible = "altr,socfpga-a10-gate-clk";
+						clocks = <&nand_x_clk>;
+						fixed-divider = <4>;
 						clk-gate = <0xC8 10>;
 					};
 
@@ -667,13 +682,13 @@
 		nand: nand@ffb90000 {
 			#address-cells = <1>;
 			#size-cells = <1>;
-			compatible = "denali,denali-nand-dt", "altr,socfpga-denali-nand";
+			compatible = "altr,socfpga-denali-nand";
 			reg = <0xffb90000 0x20>,
 			      <0xffb80000 0x1000>;
 			reg-names = "nand_data", "denali_reg";
 			interrupts = <0 99 4>;
-			dma-mask = <0xffffffff>;
-			clocks = <&nand_clk>;
+			clocks = <&nand_clk>, <&nand_x_clk>, <&nand_ecc_clk>;
+			clock-names = "nand", "nand_x", "ecc";
 			resets = <&rst NAND_RESET>;
 			status = "disabled";
 		};
