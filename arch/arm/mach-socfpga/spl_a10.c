@@ -134,7 +134,8 @@ void board_init_f(ulong dummy)
 	WATCHDOG_RESET();
 }
 
-#if defined(CONFIG_SPL_LOAD_FIT) && defined(CONFIG_SPL_SPI_LOAD)
+#if defined(CONFIG_SPL_LOAD_FIT) && (defined(CONFIG_SPL_SPI_LOAD) || \
+	defined(CONFIG_SPL_NAND_SUPPORT))
 struct image_header *spl_get_load_buffer(int offset, size_t size)
 {
 	if (gd->ram_size)
