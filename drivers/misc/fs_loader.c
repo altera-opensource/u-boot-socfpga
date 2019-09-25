@@ -20,6 +20,7 @@
 #include <linux/string.h>
 #include <mapmem.h>
 #include <malloc.h>
+#include <nand.h>
 #include <spl.h>
 #include <spi_flash.h>
 
@@ -205,11 +206,23 @@ static int fw_get_filesystem_firmware(struct udevice *dev)
 			     (ulong)map_to_sysmem(firmwarep->data),
 			     firmwarep->offset, firmwarep->size, &actread);
 	else if (plat->data_type == DATA_RAW) {
+#if defined(CONFIG_SPL_NAND_SUPPORT) || defined(CONFIG_NAND)
+		if (plat->storage_type == NAND_DEV) {
+			ret = nand_spl_load_image(firmwarep->offset,
+					firmwarep->size,
+					(void *)map_to_sysmem(firmwarep->data));
+			actread = firmwarep->size;
+		}
+
+#endif
+
 #ifdef CONFIG_SPI_FLASH
-		ret = spi_flash_read_dm(plat->flash, firmwarep->offset,
-				       firmwarep->size,
-				       (void *)map_to_sysmem(firmwarep->data));
-		actread = firmwarep->size;
+		if (plat->storage_type == SPI_DEV) {
+			ret = spi_flash_read_dm(plat->flash, firmwarep->offset,
+					firmwarep->size,
+					(void *)map_to_sysmem(firmwarep->data));
+			actread = firmwarep->size;
+		}
 #endif
 	}
 
@@ -273,6 +286,20 @@ static int fs_loader_of_to_plat(struct udevice *dev)
 					  phandlepart, 2)) {
 			plat->phandlepart.phandle = phandlepart[0];
 			plat->phandlepart.partition = phandlepart[1];
+			plat->data_type = DATA_FS;
+			plat->storage_type = BLOCK_DEV;
+		} else if (!ofnode_read_u32_array(fs_loader_node, "sfconfig",
+						  sfconfig, 4)) {
+			plat->data_type = DATA_RAW;
+			plat->sfconfig.bus = sfconfig[0];
+			plat->sfconfig.cs = sfconfig[1];
+			plat->sfconfig.speed = sfconfig[2];
+			plat->sfconfig.mode = sfconfig[3];
+			plat->data_type = DATA_RAW;
+			plat->storage_type = SPI_DEV;
+		} else {
+			plat->data_type = DATA_RAW;
+			plat->storage_type = NAND_DEV;
 		}
 
 		plat->mtdpart = (char *)ofnode_read_string(
@@ -281,16 +308,8 @@ static int fs_loader_of_to_plat(struct udevice *dev)
 		plat->ubivol = (char *)ofnode_read_string(
 				 fs_loader_node, "ubivol");
 
-		if (!ofnode_read_u32_array(fs_loader_node, "sfconfig", sfconfig,
-					   4)) {
-			plat->data_type = DATA_RAW;
-			plat->sfconfig.bus = sfconfig[0];
-			plat->sfconfig.cs = sfconfig[1];
-			plat->sfconfig.speed = sfconfig[2];
-			plat->sfconfig.mode = sfconfig[3];
-		} else {
+		if (plat->mtdpart && plat->ubivol)
 			plat->data_type = DATA_FS;
-		}
 	}
 
 	return 0;
@@ -301,17 +320,23 @@ static int fs_loader_probe(struct udevice *dev)
 	int ret = 0;
 	struct device_plat *plat = dev_get_plat(dev);
 
-#ifdef CONFIG_SPI_FLASH
-	if (!plat->flash) {
+	if (!plat->flash && plat->storage_type == NAND_DEV) {
+#if defined(CONFIG_SPL_NAND_SUPPORT) || defined(CONFIG_NAND)
+		nand_init();
+#endif
+	}
+
+	if (!plat->flash && plat->storage_type == SPI_DEV) {
 		debug("bus = %d\ncs = %d\nspeed= %d\nmode = %d\n",
 			 plat->sfconfig.bus, plat->sfconfig.cs,
 			 plat->sfconfig.speed, plat->sfconfig.mode);
-
+#ifdef CONFIG_SPI_FLASH
 		ret = spi_flash_probe_bus_cs(plat->sfconfig.bus,
 					    plat->sfconfig.cs,
 					    plat->sfconfig.speed,
 					    plat->sfconfig.mode,
 					    &plat->flash);
+#endif
 		if (ret) {
 			debug("fs_loader: Failed to initialize SPI flash at ");
 			debug("%u:%u (error %d)\n", plat->sfconfig.bus,
@@ -322,7 +347,6 @@ static int fs_loader_probe(struct udevice *dev)
 		if (!plat->flash)
 			return -EINVAL;
 	}
-#endif
 
 #if CONFIG_IS_ENABLED(DM) && CONFIG_IS_ENABLED(BLK)
 	if (plat->phandlepart.phandle) {
