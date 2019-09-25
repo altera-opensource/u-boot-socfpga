@@ -184,6 +184,14 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 #define CONFIG_ENV_SIZE_REDUND		CONFIG_ENV_SIZE
 #endif
 
+/* Environment for NAND boot */
+#if defined(CONFIG_ENV_IS_IN_NAND) && !defined(CONFIG_ENV_OFFSET)
+#define CONFIG_ENV_OFFSET		0x00200000
+#define CONFIG_ENV_SECT_SIZE		(128 * 1024)
+#define CONFIG_ENV_OFFSET_REDUND	(CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
+#define CONFIG_ENV_SIZE_REDUND		CONFIG_ENV_SIZE
+#endif
+
 /*
  * SPL
  *

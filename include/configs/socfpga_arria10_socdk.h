@@ -47,7 +47,7 @@
 /* SPL memory allocation configuration, this is for FAT implementation */
 #define CONFIG_SYS_SPL_MALLOC_SIZE	0x00015000
 
-#if defined(CONFIG_QSPI_BOOT)
+#if defined(CONFIG_QSPI_BOOT) || defined(CONFIG_NAND_BOOT)
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"fdtfile=" CONFIG_DEFAULT_FDT_FILE "\0" \
 	"bootm_size=0xa000000\0" \
@@ -64,6 +64,12 @@
 	"qspiload=sf probe; sf read ${scriptaddr} ${kernelfit_addr}\0" \
 	"qspiboot=setenv bootargs " CONFIG_BOOTARGS \
 			"root=${qspiroot} rw rootfstype=${qspirootfstype}; " \
+			"bootm ${scriptaddr}\0" \
+	"nandroot=/dev/mtdblock1\0" \
+	"nandrootfstype=jffs2\0" \
+	"nandload=nand read ${scriptaddr} ${kernelfit_addr}\0" \
+	"nandboot=setenv bootargs " CONFIG_BOOTARGS \
+			"root=${nandroot} rw rootfstype=${nandrootfstype}; " \
 			"bootm ${scriptaddr}\0" \
 
 #endif
@@ -83,4 +89,14 @@
 #undef CONFIG_BOOTCOMMAND
 #define CONFIG_BOOTCOMMAND "run qspiload; run qspiboot"
 #endif
+
+#ifdef CONFIG_NAND_DENALI_DT
+#define CONFIG_SYS_NAND_BAD_BLOCK_POS        0x0
+#endif
+
+#if defined(CONFIG_NAND_BOOT)
+#undef CONFIG_BOOTCOMMAND
+#define CONFIG_BOOTCOMMAND "run nandload; run nandboot"
+#endif
+
 #endif	/* __CONFIG_SOCFGPA_ARRIA10_H__ */
