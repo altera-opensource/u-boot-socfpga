@@ -58,6 +58,34 @@ static const struct udevice_id denali_nand_dt_ids[] = {
 	{ /* sentinel */ }
 };
 
+static int denali_dt_reset(struct udevice *dev)
+{
+	int ret;
+	struct denali_nand_info *denali = dev_get_priv(dev);
+
+	ret = reset_get_bulk(dev, &denali->resets);
+	if (ret) {
+		/*
+		 * Return 0 if error due to !CONFIG_DM_RESET and reset
+		 * DT property is not present.
+		 */
+		if (ret == -ENOENT || ret == -ENOTSUPP)
+			return 0;
+
+		dev_warn(dev, "Can't get reset: %d\n", ret);
+		return ret;
+	}
+
+	ret = reset_deassert_bulk(&denali->resets);
+	if (ret) {
+		reset_release_bulk(&denali->resets);
+		dev_err(dev, "Failed to reset: %d\n", ret);
+		return ret;
+	}
+
+	return 0;
+}
+
 static int denali_dt_probe(struct udevice *dev)
 {
 	struct denali_nand_info *denali = dev_get_priv(dev);
@@ -131,7 +159,18 @@ static int denali_dt_probe(struct udevice *dev)
 		denali->clk_x_rate = 200000000;
 	}
 
+	ret = denali_dt_reset(dev);
+	if (ret)
+		return ret;
+
 	return denali_init(denali);
+}
+
+static int denali_dt_remove(struct udevice *dev)
+{
+	struct denali_nand_info *denali = dev_get_priv(dev);
+
+	return reset_release_bulk(&denali->resets);
 }
 
 U_BOOT_DRIVER(denali_nand_dt) = {
@@ -140,6 +179,7 @@ U_BOOT_DRIVER(denali_nand_dt) = {
 	.of_match = denali_nand_dt_ids,
 	.probe = denali_dt_probe,
 	.priv_auto_alloc_size = sizeof(struct denali_nand_info),
+	.remove = denali_dt_remove,
 };
 
 void board_nand_init(void)

@@ -8,6 +8,7 @@
 #define __DENALI_H__
 
 #include <linux/bitops.h>
+#include <reset.h>
 #include <linux/mtd/rawnand.h>
 #include <linux/types.h>
 
@@ -296,6 +297,7 @@ struct denali_nand_info {
 	unsigned long clk_x_rate;	/* bus interface clock rate */
 	int active_bank;		/* currently selected bank */
 	struct udevice *dev;
+	struct reset_ctl_bulk resets;
 	uint32_t page;
 	void __iomem *reg;		/* Register Interface */
 	void __iomem *host;		/* Host Data/Command Interface */
