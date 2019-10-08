@@ -91,11 +91,13 @@ endif
 ifdef CONFIG_TARGET_SOCFPGA_STRATIX10
 obj-y	+= firewall.o
 obj-y	+= spl_s10.o
+obj-y	+= spl_soc64.o
 endif
 ifdef CONFIG_TARGET_SOCFPGA_AGILEX
 obj-y	+= ccu_agilex.o
 obj-y	+= firewall.o
 obj-y	+= spl_agilex.o
+obj-y	+= spl_soc64.o
 endif
 endif
 
