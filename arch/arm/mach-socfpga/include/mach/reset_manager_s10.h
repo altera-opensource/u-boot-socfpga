@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0
  *
- * Copyright (C) 2016-2018 Intel Corporation <www.intel.com>
+ * Copyright (C) 2016-2019 Intel Corporation <www.intel.com>
  *
  */
 
@@ -15,6 +15,8 @@ void socfpga_bridges_reset_psci(int enable);
 
 void socfpga_per_reset(u32 reset, int set);
 void socfpga_per_reset_all(void);
+
+void l2_reset_cpu(void);
 
 struct socfpga_reset_manager {
 	u32	status;
