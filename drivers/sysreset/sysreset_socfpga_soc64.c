@@ -14,6 +14,8 @@
 #include <asm/arch/reset_manager.h>
 #include <asm/secure.h>
 
+#define GICD_CTRL_ADDRESS	0xfffc1000
+
 static int socfpga_sysreset_request(struct udevice *dev,
 				    enum sysreset_t type)
 {
@@ -41,6 +43,9 @@ static int socfpga_sysreset_request(struct udevice *dev,
 void l2_reset_cpu(void)
 {
 	asm volatile(
+		/* Disable GIC distributor (IRQs). */
+		"str    wzr, [%3]\n"
+		/* Set Magic Number */
 		"str	%0, [%1]\n"
 		/* Increase timeout in rstmgr.hdsktimeout */
 		"ldr	x2, =0xFFFFFF\n"
@@ -68,7 +73,8 @@ void l2_reset_cpu(void)
 		"	b	wfi_loop\n"
 		: : "r" (L2_RESET_DONE_STATUS),
 		    "r" (L2_RESET_DONE_REG),
-		    "r" (SOCFPGA_RSTMGR_ADDRESS)
+		    "r" (SOCFPGA_RSTMGR_ADDRESS),
+		    "r" (GICD_CTRL_ADDRESS)
 		: "x1", "x2", "x3");
 }
 
