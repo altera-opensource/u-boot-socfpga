@@ -310,6 +310,7 @@ dtb-$(CONFIG_THUNDERX) += thunderx-88xx.dtb
 
 dtb-$(CONFIG_ARCH_SOCFPGA) +=				\
 	socfpga_agilex_socdk.dtb			\
+	socfpga_agilex_socdk_qspi.dtb			\
 	socfpga_arria5_socdk.dtb			\
 	socfpga_arria10_socdk_nand.dtb			\
 	socfpga_arria10_socdk_qspi.dtb			\
