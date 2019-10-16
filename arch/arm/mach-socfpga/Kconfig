@@ -38,13 +38,14 @@ config ARMV8_SECURE_BASE
 	default 0x00001000 if TARGET_SOCFPGA_AGILEX
 	default 0x00001000 if TARGET_SOCFPGA_STRATIX10
 
-config SYS_HAS_ARMV8_SECURE_BASE
+config SMC_SIP_FPGA_RECONFIG
+	bool "SMC SiP services for Intel SDM Mailbox FPGA reconfiguration"
 	default y if TARGET_SOCFPGA_AGILEX
 	default y if TARGET_SOCFPGA_STRATIX10
 
-config STRATIX10_FPGA_RECONFIG
-	bool "Intel Stratix 10 FPGA configuration support"
-	depends on TARGET_SOCFPGA_STRATIX10
+config SYS_HAS_ARMV8_SECURE_BASE
+	default y if TARGET_SOCFPGA_AGILEX
+	default y if TARGET_SOCFPGA_STRATIX10
 
 config TARGET_SOCFPGA_AGILEX
 	bool
