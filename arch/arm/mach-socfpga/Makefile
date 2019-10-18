@@ -99,6 +99,8 @@ obj-y	+= firewall.o
 obj-y	+= spl_agilex.o
 obj-y	+= spl_soc64.o
 endif
+else
+obj-$(CONFIG_SMC_SIP_FPGA_RECONFIG)	+= smc_fpga_reconfig_s10.o
 endif
 
 ifdef CONFIG_TARGET_SOCFPGA_GEN5
