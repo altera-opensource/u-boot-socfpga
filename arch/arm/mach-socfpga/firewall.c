@@ -94,4 +94,10 @@ void firewall_setup(void)
 	firewall_l4_per_disable();
 	firewall_l4_sys_disable();
 	firewall_bridge_disable();
+
+#ifdef CONFIG_TARGET_SOCFPGA_AGILEX
+	/* Disable the MPFE Firewall for SMMU */
+	writel(FIREWALL_MPFE_SCR_DISABLE_ALL, SOCFPGA_FW_MPFE_SCR_ADDRESS);
+#endif
+
 }
