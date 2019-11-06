@@ -531,7 +531,10 @@ static ulong socfpga_clk_get_rate(struct clk *clk)
 	case SOCFPGA_SOC64_EMAC2_CLK:
 		return clk_get_emac_clk_hz(plat, clk->id);
 	case SOCFPGA_SOC64_USB_CLK:
+	case SOCFPGA_SOC64_NAND_X_CLK:
 		return clk_get_l4_mp_clk_hz(plat);
+	case SOCFPGA_SOC64_NAND_CLK:
+		return clk_get_l4_mp_clk_hz(plat) / 4;
 	default:
 		return -ENXIO;
 	}
