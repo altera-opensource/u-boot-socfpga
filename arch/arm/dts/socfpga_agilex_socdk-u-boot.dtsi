@@ -37,6 +37,10 @@
 	u-boot,dm-pre-reloc;
 };
 
+&nand {
+	u-boot,dm-pre-reloc;
+};
+
 &porta {
 	bank-name = "porta";
 };
