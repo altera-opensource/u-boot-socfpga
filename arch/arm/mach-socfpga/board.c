@@ -86,3 +86,13 @@ int g_dnl_board_usb_cable_connected(void)
 	return 1;
 }
 #endif
+
+#ifdef CONFIG_SPL_BUILD
+__weak int board_fit_config_name_match(const char *name)
+{
+	/* Just empty function now - can't decide what to choose */
+	debug("%s: %s\n", __func__, name);
+
+	return 0;
+}
+#endif
