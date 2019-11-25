@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2016-2017 Intel Corporation
+ * Copyright (C) 2016-2019 Intel Corporation
  */
 
 #include <altera.h>
@@ -11,6 +11,7 @@
 #include <netdev.h>
 #include <ns16550.h>
 #include <watchdog.h>
+#include <asm/arch/fpga_manager.h>
 #include <asm/arch/misc.h>
 #include <asm/arch/pinmux.h>
 #include <asm/arch/reset_manager.h>
@@ -117,8 +118,14 @@ int print_cpuinfo(void)
 
 void do_bridge_reset(int enable, unsigned int mask)
 {
-	if (enable)
-		socfpga_reset_deassert_bridges_handoff();
-	else
+	if (enable) {
+		if (is_fpgamgr_user_mode()) {
+			socfpga_reset_deassert_bridges_handoff();
+		} else {
+			puts("Bridges: Failed to enable because FPGA is not ");
+			puts("in user mode\n");
+		}
+	} else {
 		socfpga_bridges_reset();
+	}
 }
