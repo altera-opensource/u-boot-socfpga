@@ -90,7 +90,7 @@
 
 #if defined(CONFIG_NAND_BOOT)
 #undef CONFIG_BOOTCOMMAND
-#define CONFIG_BOOTCOMMAND "run nandload; run nandboot"
+#define CONFIG_BOOTCOMMAND "bridge enable; run nandload; run nandboot"
 #endif
 
 #endif	/* __CONFIG_SOCFGPA_ARRIA10_H__ */
