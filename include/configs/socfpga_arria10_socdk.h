@@ -81,7 +81,7 @@
 
 #if defined(CONFIG_QSPI_BOOT)
 #undef CONFIG_BOOTCOMMAND
-#define CONFIG_BOOTCOMMAND "run qspiload; run qspiboot"
+#define CONFIG_BOOTCOMMAND "bridge enable; run qspiload; run qspiboot"
 #endif
 
 #ifdef CONFIG_NAND_DENALI_DT
