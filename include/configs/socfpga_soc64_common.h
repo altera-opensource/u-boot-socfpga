@@ -233,6 +233,11 @@ unsigned int cm_get_l4_sys_free_clk_hz(void);
 					- CONFIG_SYS_SPL_MALLOC_SIZE)
 
 /* SPL SDMMC boot support */
+#define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
+#ifdef CONFIG_SPL_LOAD_FIT
+#define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME		"u-boot.itb"
+#else
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME		"u-boot.img"
+#endif
 
 #endif	/* __CONFIG_SOCFPGA_SOC64_COMMON_H__ */
