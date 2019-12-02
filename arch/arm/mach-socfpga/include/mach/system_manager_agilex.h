@@ -78,7 +78,7 @@ struct socfpga_system_manager {
 	u32	boot_scratch_cold0;		/* store qspi ref clock */
 	u32	boot_scratch_cold1;		/* store osc1 clock freq */
 	u32	boot_scratch_cold2;		/* store fpga clock freq */
-	u32	boot_scratch_cold3;
+	u32	boot_scratch_cold3;		/* reserved for customer use */
 	u32	boot_scratch_cold4;		/* store PSCI_CPU_ON value */
 	u32	boot_scratch_cold5;		/* store PSCI_CPU_ON value */
 	u32	boot_scratch_cold6;		/* store VBAR_EL3 value */
