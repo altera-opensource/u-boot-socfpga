@@ -118,13 +118,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
  * Do note the value will override also the chosen node in FDT blob.
  */
 #define CONFIG_BOOTARGS "earlycon"
-#ifdef CONFIG_QSPI_BOOT
-#define CONFIG_BOOTCOMMAND "sf probe; run qspiload;run linux_qspi_enable;" \
-			   "rsu dtb; run qspiboot"
-#else
-#define CONFIG_BOOTCOMMAND "run fatscript; run mmcload;run linux_qspi_enable;" \
-			   "run mmcboot"
-#endif
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"qspibootimageaddr=0x020B0000\0" \
