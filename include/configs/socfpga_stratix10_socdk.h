@@ -166,7 +166,10 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 /*
  * Serial / UART configurations
  */
-#define CONFIG_SYS_NS16550_CLK		100000000
+#ifndef __ASSEMBLY__
+unsigned int cm_get_l4_sp_clk_hz(void);
+#endif
+#define CONFIG_SYS_NS16550_CLK		cm_get_l4_sp_clk_hz()
 #define CONFIG_SYS_NS16550_MEM32
 
 /*
