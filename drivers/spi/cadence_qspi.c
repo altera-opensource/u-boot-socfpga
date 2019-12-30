@@ -157,6 +157,9 @@ static int cadence_spi_probe(struct udevice *bus)
 	struct cadence_spi_priv *priv = dev_get_priv(bus);
 	int ret;
 
+	if (!CONFIG_CQSPI_REF_CLK)
+		return -ENODEV;
+
 	priv->regbase = plat->regbase;
 	priv->ahbbase = plat->ahbbase;
 
