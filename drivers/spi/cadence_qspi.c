@@ -170,6 +170,9 @@ static int cadence_spi_probe(struct udevice *bus)
 	struct clk clk;
 	int ret;
 
+	if (!CONFIG_CQSPI_REF_CLK)
+		return -ENODEV;
+
 	priv->regbase = plat->regbase;
 	priv->ahbbase = plat->ahbbase;
 
