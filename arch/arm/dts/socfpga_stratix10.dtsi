@@ -340,7 +340,6 @@
 			reg-shift = <2>;
 			reg-io-width = <4>;
 			resets = <&rst UART0_RESET>;
-			clock-frequency = <100000000>;
 			u-boot,dm-pre-reloc;
 			status = "disabled";
 		};
