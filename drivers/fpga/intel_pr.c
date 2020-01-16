@@ -8,7 +8,7 @@
 #include <errno.h>
 #include <wait_bit.h>
 #include <asm/io.h>
-#include <libfdt.h>
+#include <linux/libfdt.h>
 #include <fdtdec.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -74,10 +74,10 @@ static int intel_freeze_br_do_freeze(unsigned int region)
 
 	writel(FREEZE_CSR_CTRL_FREEZE_REQ, addr + FREEZE_CSR_CTRL_OFFSET);
 
-	return wait_for_bit(__func__, (const u32 *)(addr +
-			    FREEZE_CSR_STATUS_OFFSET),
-			    FREEZE_CSR_STATUS_FREEZE_REQ_DONE, true,
-			    FREEZE_TIMEOUT, false);
+	return wait_for_bit_le32((const u32 *)(addr +
+				 FREEZE_CSR_STATUS_OFFSET),
+				 FREEZE_CSR_STATUS_FREEZE_REQ_DONE, true,
+				 FREEZE_TIMEOUT, false);
 }
 
 static int intel_freeze_br_do_unfreeze(unsigned int region)
@@ -99,10 +99,10 @@ static int intel_freeze_br_do_unfreeze(unsigned int region)
 
 	writel(FREEZE_CSR_CTRL_UNFREEZE_REQ, addr + FREEZE_CSR_CTRL_OFFSET);
 
-	return wait_for_bit(__func__, (const u32 *)(addr +
-			    FREEZE_CSR_STATUS_OFFSET),
-			    FREEZE_CSR_STATUS_UNFREEZE_REQ_DONE, true,
-			    FREEZE_TIMEOUT, false);
+	return wait_for_bit_le32((const u32 *)(addr +
+				 FREEZE_CSR_STATUS_OFFSET),
+				 FREEZE_CSR_STATUS_UNFREEZE_REQ_DONE, true,
+				 FREEZE_TIMEOUT, false);
 }
 
 static int do_pr(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
