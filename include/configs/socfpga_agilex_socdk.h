@@ -78,7 +78,7 @@
 #ifdef CONFIG_ENV_IS_IN_SPI_FLASH
 #undef CONFIG_ENV_OFFSET
 #undef CONFIG_ENV_SIZE
-#define CONFIG_ENV_OFFSET		0x02080000
+#define CONFIG_ENV_OFFSET		0x020C0000
 #define CONFIG_ENV_SIZE			(64 * 1024)
 #define CONFIG_ENV_SECT_SIZE		(64 * 1024)
 #endif /* CONFIG_ENV_IS_IN_SPI_FLASH */
@@ -120,9 +120,9 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 #define CONFIG_BOOTARGS "earlycon"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
-	"qspibootimageaddr=0x020B0000\0" \
-	"qspifdtaddr=0x02090000\0" \
-	"bootimagesize=0x01400000\0" \
+	"qspibootimageaddr=0x020E0000\0" \
+	"qspifdtaddr=0x020D0000\0" \
+	"bootimagesize=0x01F00000\0" \
 	"fdtimagesize=0x00010000\0" \
 	"qspiload=sf read ${loadaddr} ${qspibootimageaddr} ${bootimagesize};" \
 		"sf read ${fdt_addr} ${qspifdtaddr} ${fdtimagesize}\0" \
