@@ -265,8 +265,8 @@ void board_init_f(ulong dummy)
 	cm_basic_init(gd->fdt_blob);
 
 #ifdef CONFIG_HW_WATCHDOG
-	/* release watchdog 0 from reset */
-	socfpga_reset_deassert_wd0();
+	/* release watchdog 1 from reset */
+	socfpga_reset_deassert_wd1();
 
 	/* reconfigure and enable the watchdog */
 	hw_watchdog_init();
