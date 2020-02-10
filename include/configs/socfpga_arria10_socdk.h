@@ -62,4 +62,12 @@
 /* The rest of the configuration is shared */
 #include <configs/socfpga_common.h>
 
+/*
+ * L4 Watchdog
+ */
+#ifdef CONFIG_HW_WATCHDOG
+#undef CONFIG_DW_WDT_BASE
+#define CONFIG_DW_WDT_BASE		SOCFPGA_L4WD1_ADDRESS
+#endif
+
 #endif	/* __CONFIG_SOCFGPA_ARRIA10_H__ */
