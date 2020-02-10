@@ -39,6 +39,7 @@ obj-$(CONFIG_$(SPL_TPL_)FRAMEWORK) += spl.o
 obj-$(CONFIG_SPL_FRAMEWORK) += zimage.o
 obj-$(CONFIG_OF_LIBFDT) += bootm-fdt.o
 endif
+obj-$(CONFIG_SYS_L2_PL310) += cache-pl310.o
 obj-$(CONFIG_$(SPL_TPL_)USE_ARCH_MEMSET) += memset.o
 obj-$(CONFIG_$(SPL_TPL_)USE_ARCH_MEMCPY) += memcpy.o
 obj-$(CONFIG_SEMIHOSTING) += semihosting.o
