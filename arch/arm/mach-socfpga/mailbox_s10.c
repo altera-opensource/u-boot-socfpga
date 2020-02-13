@@ -400,6 +400,9 @@ error:
 
 int mbox_reset_cold(void)
 {
+#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_ATF)
+	psci_system_reset();
+#else
 	int ret;
 
 	ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_REBOOT_HPS, MBOX_CMD_DIRECT,
@@ -408,6 +411,7 @@ int mbox_reset_cold(void)
 		/* mailbox sent failure, wait for watchdog to kick in */
 		hang();
 	}
+#endif
 	return 0;
 }
 
