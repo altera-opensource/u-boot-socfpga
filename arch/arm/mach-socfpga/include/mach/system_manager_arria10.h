@@ -60,7 +60,7 @@ struct socfpga_system_manager {
 	u32  _pad_0x110_0x200[60];
 	u32  romhw_ctrl;
 	u32  romcode_ctrl;
-	u32  romcode_cpu1startaddr;
+	u32  romcode_qspiresetcommand;
 	u32  romcode_initswstate;
 	u32  romcode_initswlastld;
 	u32  _pad_0x214_0x217;
