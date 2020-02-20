@@ -405,13 +405,13 @@ static int load_spt(void)
 		}
 
 		spt.magic_number = (u32)0xFFFFFFFF;
-		if (write_dev(spt1_offset, &spt, sizeof(spt))) {
+		if (write_dev(spt0_offset, &spt, sizeof(spt))) {
 			rsu_log(RSU_ERR, "Unable to write SPT0 table\n");
 			return -1;
 		}
 
 		spt.magic_number = (u32)SPT_MAGIC_NUMBER;
-		if (write_dev(spt1_offset, &spt.magic_number,
+		if (write_dev(spt0_offset, &spt.magic_number,
 			      sizeof(spt.magic_number))) {
 			rsu_log(RSU_ERR, "Unable to wr SPT0 magic #\n");
 			return -1;
