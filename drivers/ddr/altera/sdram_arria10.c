@@ -199,17 +199,7 @@ static void sdram_init_ecc_bits(u32 size)
 	gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE;
 	gd->bd->bi_dram[0].size = size;
 
-	gd->arch.tlb_addr = gd->bd->bi_dram[0].start + PGTABLE_OFF;
-	gd->arch.tlb_size = PGTABLE_SIZE;
-
-	memset((void *)gd->bd->bi_dram[0].start, 0, gd->arch.tlb_addr +
-	       gd->arch.tlb_size + SZ_1K);
-
-	icache_enable();
-	dcache_enable();
-
-	start_addr = gd->arch.tlb_addr + gd->arch.tlb_size;
-	size -= (gd->arch.tlb_addr + gd->arch.tlb_size);
+	start_addr = gd->bd->bi_dram[0].start;
 
 	printf("DDRCAL: Scrubbing ECC RAM (%d MiB).\n", size >> 20);
 
@@ -222,11 +212,7 @@ static void sdram_init_ecc_bits(u32 size)
 		WATCHDOG_RESET();
 	}
 
-	flush_dcache_all();
-
 	printf("DDRCAL: Scrubbing ECC RAM done.\n");
-
-	dcache_disable();
 
 	printf("DDRCAL: SDRAM-ECC initialized success with %d ms\n",
 	       (u32)get_timer(start));
