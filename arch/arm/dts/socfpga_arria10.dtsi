@@ -764,6 +764,8 @@
 
 		rst: rstmgr@ffd05000 {
 			#reset-cells = <1>;
+			#address-cells = <1>;
+			#size-cells = <1>;
 			compatible = "altr,rst-mgr";
 			reg = <0xffd05000 0x100>;
 			altr,modrst-offset = <0x20>;
