@@ -60,6 +60,7 @@ void board_init_f(ulong dummy)
 	}
 
 	preloader_console_init();
+	print_reset_info();
 	cm_print_clock_quick_summary();
 
 	/* enable non-secure interface to DMA330 DMA and peripherals */
