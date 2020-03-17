@@ -359,4 +359,26 @@ INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_FPGA_CONFIG_COMPLETED_WRITE)
 #define INTEL_SIP_SMC_RSU_RETRY_COUNTER \
 	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_RSU_RETRY_COUNTER)
 
+/*
+ * Request INTEL_SIP_SMC_RSU_DCMF_VERSION
+ *
+ * Sync call used by service driver at EL1 to query DCMF version
+ *
+ * Call register usage:
+ * a0 INTEL_SIP_SMC_RSU_DCMF_VERSION
+ * a1-7 not used
+ *
+ * Return status
+ * a0 INTEL_SIP_SMC_STATUS_OK
+ * a1 dcmf1 version | dcmf0 version
+ * a2 dcmf3 version | dcmf2 version
+ *
+ * Or
+ *
+ * a0 INTEL_SIP_SMC_RSU_ERROR
+ */
+#define INTEL_SIP_SMC_FUNCID_RSU_DCMF_VERSION 16
+#define INTEL_SIP_SMC_RSU_DCMF_VERSION \
+	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_RSU_DCMF_VERSION)
+
 #endif
