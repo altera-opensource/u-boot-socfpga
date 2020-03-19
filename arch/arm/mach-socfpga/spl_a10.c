@@ -29,11 +29,15 @@
 
 #define FPGA_BUFSIZ	16 * 1024
 #define FSBL_IMAGE_IS_VALID	0x49535756
+#define FSBL_IMAGE_IS_INVALID	0x0
+#define BOOTROM_CONFIGURES_IO_PINMUX	0x3
 
 DECLARE_GLOBAL_DATA_PTR;
 
 static const struct socfpga_system_manager *sysmgr_regs =
 	(struct socfpga_system_manager *)SOCFPGA_SYSMGR_ADDRESS;
+static const struct socfpga_reset_manager *rstmgr_regs =
+	(void *)SOCFPGA_RSTMGR_ADDRESS;
 
 #define BOOTROM_SHARED_MEM_SIZE		0x800	/* 2KB */
 #define BOOTROM_SHARED_MEM_ADDR		(CONFIG_SYS_INIT_RAM_ADDR + \
@@ -106,6 +110,8 @@ u32 spl_boot_mode(const u32 boot_device)
 
 void spl_board_init(void)
 {
+	int ret;
+
 	ALLOC_CACHE_ALIGN_BUFFER(char, buf, FPGA_BUFSIZ);
 
 	/* enable console uart printing */
@@ -116,7 +122,7 @@ void spl_board_init(void)
 
 	/* If the full FPGA is already loaded, ie.from EPCQ, config fpga pins */
 	if (is_fpgamgr_user_mode()) {
-		int ret = config_pins(gd->fdt_blob, "shared");
+		ret = config_pins(gd->fdt_blob, "shared");
 
 		if (ret)
 			return;
@@ -130,8 +136,86 @@ void spl_board_init(void)
 	}
 
 	/* If the IOSSM/full FPGA is already loaded, start DDR */
-	if (is_fpgamgr_early_user_mode() || is_fpgamgr_user_mode())
+	if (is_fpgamgr_early_user_mode() || is_fpgamgr_user_mode()) {
+		if (!is_regular_boot_valid()) {
+			/*
+			 * Ensure all signals in stable state before triggering
+			 * warm reset. This value is recommended from stress
+			 * test.
+			 */
+			mdelay(10);
+
+#ifdef CONFIG_SPI_FLASH
+			/*
+			 * Trigger software reset to QSPI flash.
+			 * On some boards, the QSPI flash reset may not be
+			 * connected to the HPS warm reset.
+			 */
+			qspi_flash_software_reset();
+#endif
+
+			ret = readl(&rstmgr_regs->syswarmmask);
+			/*
+			 * Masking s2f & FPGA manager module reset from warm
+			 * reset
+			 */
+			writel(ret & (~(ALT_RSTMGR_SYSWARMMASK_S2F_SET_MSK |
+				       ALT_RSTMGR_FPGAMGRWARMMASK_S2F_SET_MSK)),
+				&rstmgr_regs->syswarmmask);
+
+			/*
+			 * BootROM will configure both IO and pin mux after a
+			 * warm reset
+			 */
+			ret = readl(&sysmgr_regs->romcode_ctrl);
+			writel(ret | BOOTROM_CONFIGURES_IO_PINMUX,
+				&sysmgr_regs->romcode_ctrl);
+
+			/*
+			 * Up to here, image is considered valid and should be
+			 * set as valid before warm reset is triggered
+			 */
+			writel(FSBL_IMAGE_IS_VALID,
+				&sysmgr_regs->romcode_initswstate);
+
+			/*
+			 * Set this flag to scratch register, so that a proper
+			 * boot progress before / after warm reset can be
+			 * tracked by FSBL
+			 */
+			set_regular_boot(true);
+
+			WATCHDOG_RESET();
+
+			reset_cpu(0);
+		}
+
+		/*
+		 * Reset this flag to scratch register, so that a proper
+		 * boot progress before / after warm reset can be
+		 * tracked by FSBL
+		 */
+		set_regular_boot(false);
+
+		ret = readl(&rstmgr_regs->syswarmmask);
+		/*
+		 * Unmasking s2f & FPGA manager module reset from warm
+		 * reset
+		 */
+		writel(ret | ALT_RSTMGR_SYSWARMMASK_S2F_SET_MSK |
+			ALT_RSTMGR_FPGAMGRWARMMASK_S2F_SET_MSK,
+			&rstmgr_regs->syswarmmask);
+
+		/*
+		 * Up to here, MPFE hang workaround is considered done and
+		 * should be reset as invalid until FSBL successfully loading
+		 * SSBL, and prepare jumping to SSBL, then only setting as valid
+		 */
+		writel(FSBL_IMAGE_IS_INVALID,
+			&sysmgr_regs->romcode_initswstate);
+
 		ddr_calibration_sequence();
+	}
 
 	if (!is_fpgamgr_user_mode())
 		fpgamgr_program(buf, FPGA_BUFSIZ, 0);
