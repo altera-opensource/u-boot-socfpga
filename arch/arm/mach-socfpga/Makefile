@@ -43,6 +43,7 @@ ifndef CONFIG_SPL_BUILD
 obj-y	+= psci.o
 obj-$	+= smc_fpga_reconfig_s10.o
 obj-y	+= rsu_s10.o
+obj-y	+= smc_rsu_s10.o
 endif
 endif
 
@@ -62,6 +63,7 @@ ifndef CONFIG_SPL_BUILD
 obj-y	+= psci.o
 obj-$	+= smc_fpga_reconfig_s10.o
 obj-y	+= rsu_s10.o
+obj-y	+= smc_rsu_s10.o
 endif
 endif
 
