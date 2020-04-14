@@ -11,6 +11,7 @@ int cpu_has_been_warmreset(void);
 void print_reset_info(void);
 void socfpga_bridges_reset(int enable);
 void socfpga_bridges_reset_psci(int enable);
+void l2_reset_cpu(void);
 
 #define RSTMGR_SOC64_STATUS	0x00
 #define RSTMGR_SOC64_MPUMODRST	0x20
