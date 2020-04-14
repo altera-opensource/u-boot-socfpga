@@ -19,6 +19,7 @@
 #include <asm/arch/mailbox_s10.h>
 #include <asm/arch/misc.h>
 #include <asm/arch/reset_manager.h>
+#include <asm/arch/smmu_s10.h>
 #include <asm/arch/system_manager.h>
 #include <watchdog.h>
 #include <dm/uclass.h>
@@ -65,6 +66,10 @@ void board_init_f(ulong dummy)
 	cm_print_clock_quick_summary();
 
 	firewall_setup();
+
+	/* Setup and Initialize SMMU */
+	socfpga_init_smmu();
+
 	ret = uclass_get_device(UCLASS_CACHE, 0, &dev);
 	if (ret) {
 		debug("CCU init failed: %d\n", ret);
