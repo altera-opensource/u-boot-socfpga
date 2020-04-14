@@ -61,7 +61,9 @@ void sysmgr_pinmux_table_delay(const u32 **table, unsigned int *table_len);
 #define SYSMGR_SOC64_BOOT_SCRATCH_COLD6		0x218
 /* store VBAR_EL3 value */
 #define SYSMGR_SOC64_BOOT_SCRATCH_COLD7		0x21c
+/* store ECC DBE register */
 #define SYSMGR_SOC64_BOOT_SCRATCH_COLD8		0x220
+/* store ECC DBE address */
 #define SYSMGR_SOC64_BOOT_SCRATCH_COLD9		0x224
 #define SYSMGR_SOC64_PINSEL0			0x1000
 #define SYSMGR_SOC64_IOCTRL0			0x1130
