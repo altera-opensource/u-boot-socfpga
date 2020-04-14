@@ -38,6 +38,7 @@ obj-y	+= timer_s10.o
 obj-y	+= wrap_pinmux_config_s10.o
 obj-y	+= wrap_pll_config_s10.o
 obj-y	+= smc_registers_s10.o
+obj-y	+= smmu_s10.o
 obj-y	+= lowlevel_init_soc64.o
 ifndef CONFIG_SPL_BUILD
 obj-y	+= psci.o
@@ -58,6 +59,7 @@ obj-y	+= timer_s10.o
 obj-y	+= wrap_pinmux_config_s10.o
 obj-y	+= wrap_pll_config_s10.o
 obj-y	+= smc_registers_s10.o
+obj-y	+= smmu_s10.o
 obj-y	+= lowlevel_init_soc64.o
 ifndef CONFIG_SPL_BUILD
 obj-y	+= psci.o
