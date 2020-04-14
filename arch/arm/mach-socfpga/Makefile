@@ -41,6 +41,7 @@ obj-y	+= smc_registers_s10.o
 obj-y	+= smmu_s10.o
 obj-y	+= lowlevel_init_soc64.o
 ifndef CONFIG_SPL_BUILD
+obj-y	+= exception_handler.o
 obj-y	+= psci.o
 obj-$	+= smc_fpga_reconfig_s10.o
 obj-y	+= rsu_s10.o
@@ -62,6 +63,7 @@ obj-y	+= smc_registers_s10.o
 obj-y	+= smmu_s10.o
 obj-y	+= lowlevel_init_soc64.o
 ifndef CONFIG_SPL_BUILD
+obj-y	+= exception_handler.o
 obj-y	+= psci.o
 obj-$	+= smc_fpga_reconfig_s10.o
 obj-y	+= rsu_s10.o
