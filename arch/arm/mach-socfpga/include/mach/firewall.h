@@ -76,6 +76,7 @@ struct socfpga_firwall_l4_sys {
 
 #define FIREWALL_L4_DISABLE_ALL		(BIT(0) | BIT(24) | BIT(16))
 #define FIREWALL_MPFE_SCR_DISABLE_ALL	(BIT(0) | BIT(8) | BIT(16))
+#define FIREWALL_MPFE_SCR_DISABLE_MPU	BIT(0)
 #define FIREWALL_BRIDGE_DISABLE_ALL	(~0)
 
 /* Cache coherency unit (CCU) registers */
@@ -126,6 +127,10 @@ struct socfpga_firwall_l4_sys {
 #define FW_MPU_DDR_SCR_NONMPUREGION0ADDR_LIMIT		0x98
 #define FW_MPU_DDR_SCR_NONMPUREGION0ADDR_LIMITEXT	0x9c
 #define FW_MPU_DDR_SCR_NONMPUREGION0ADDR_LIMITEXT_FIELD	0xff
+
+/* Firewall MPFE SCR Registers */
+#define FW_MPFE_SCR_HMC					0x00
+#define FW_MPFE_SCR_HMC_ADAPTOR				0x04
 
 #define MPUREGION0_ENABLE				BIT(0)
 #define NONMPUREGION0_ENABLE				BIT(8)
