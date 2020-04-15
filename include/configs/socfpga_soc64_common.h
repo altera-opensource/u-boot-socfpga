@@ -76,6 +76,7 @@
 		"bootm ${loadaddr}\0" \
 	"mmcfitload=mmc rescan;" \
 		"load mmc 0:1 ${loadaddr} ${bootfile}\0" \
+	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
 	"linux_qspi_enable=if sf probe; then " \
 		"echo Enabling QSPI at Linux DTB...;" \
 		"fdt addr ${fdt_addr}; fdt resize;" \
