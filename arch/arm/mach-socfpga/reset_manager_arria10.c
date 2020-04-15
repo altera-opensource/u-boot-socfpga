@@ -61,6 +61,9 @@ void socfpga_watchdog_disable(void)
 	/* assert reset for watchdog */
 	setbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_A10_PER1MODRST,
 		     ALT_RSTMGR_PER1MODRST_WD0_SET_MSK);
+
+	setbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_A10_PER1MODRST,
+		     ALT_RSTMGR_PER1MODRST_WD1_SET_MSK);
 }
 
 /* Release NOC ddr scheduler from reset */
@@ -116,6 +119,13 @@ void socfpga_reset_deassert_wd0(void)
 		     ALT_RSTMGR_PER1MODRST_WD0_SET_MSK);
 }
 
+/* Release Watchdog 1 from reset through reset manager */
+void socfpga_reset_deassert_wd1(void)
+{
+	clrbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_A10_PER1MODRST,
+		     ALT_RSTMGR_PER1MODRST_WD1_SET_MSK);
+}
+
 /*
  * Assert or de-assert SoCFPGA reset manager reset.
  */
@@ -154,15 +164,16 @@ void socfpga_per_reset(u32 reset, int set)
 }
 
 /*
- * Assert reset on every peripheral but L4WD0.
+ * Assert reset on every peripheral but L4WD0 & l4WD1.
  * Watchdog must be kept intact to prevent glitches
  * and/or hangs.
  * For the Arria10, we disable all the peripherals except L4 watchdog0,
- * L4 Timer 0, and ECC.
+ * L4 watchdog1, L4 Timer 0, and ECC.
  */
 void socfpga_per_reset_all(void)
 {
-	const u32 l4wd0 = (1 << RSTMGR_RESET(SOCFPGA_RESET(L4WD0)) |
+	const u32 l4wd = (1 << RSTMGR_RESET(SOCFPGA_RESET(L4WD0)) |
+			  1 << RSTMGR_RESET(SOCFPGA_RESET(L4WD1)) |
 			  (1 << RSTMGR_RESET(SOCFPGA_RESET(L4SYSTIMER0))));
 	unsigned mask_ecc_ocp =
 		ALT_RSTMGR_PER0MODRST_EMACECC0_SET_MSK |
@@ -174,8 +185,8 @@ void socfpga_per_reset_all(void)
 		ALT_RSTMGR_PER0MODRST_QSPIECC_SET_MSK |
 		ALT_RSTMGR_PER0MODRST_SDMMCECC_SET_MSK;
 
-	/* disable all components except ECC_OCP, L4 Timer0 and L4 WD0 */
-	writel(~l4wd0, socfpga_get_rstmgr_addr() + RSTMGR_A10_PER1MODRST);
+	/* disable all components except ECC_OCP, L4 Timer0, L4 WD0 & l4 WD1 */
+	writel(~l4wd, socfpga_get_rstmgr_addr() + RSTMGR_A10_PER1MODRST);
 	setbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_A10_PER0MODRST,
 		     ~mask_ecc_ocp);
 
