@@ -107,7 +107,11 @@ void firewall_setup(void)
 
 #ifdef CONFIG_TARGET_SOCFPGA_AGILEX
 	/* Disable the MPFE Firewall for SMMU */
-	writel(FIREWALL_MPFE_SCR_DISABLE_ALL, SOCFPGA_FW_MPFE_SCR_ADDRESS);
+	writel(FIREWALL_MPFE_SCR_DISABLE_ALL, SOCFPGA_FW_MPFE_SCR_ADDRESS +
+					      FW_MPFE_SCR_HMC);
+	/* Disable MPFE Firewall for HMC adapter (ECC) */
+	writel(FIREWALL_MPFE_SCR_DISABLE_MPU, SOCFPGA_FW_MPFE_SCR_ADDRESS +
+					      FW_MPFE_SCR_HMC_ADAPTOR);
 #endif
 
 }
