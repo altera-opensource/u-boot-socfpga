@@ -102,6 +102,11 @@
 	"scriptfile=u-boot.scr\0" \
 	"fatscript=if fatload mmc 0:1 ${scriptaddr} ${scriptfile};" \
 		   "then source ${scriptaddr}; fi\0" \
+	"nandroot=/dev/mtdblock5\0" \
+	"nandload=nand read ${loadaddr} kernel; nand read ${fdt_addr} dtb\0" \
+	"nandboot=setenv bootargs " CONFIG_BOOTARGS \
+			" root=${nandroot} rw rootwait rootfstype=jffs2; " \
+			"booti ${loadaddr} - ${fdt_addr}\0" \
 	"socfpga_legacy_reset_compat=1\0"
 
 /*
