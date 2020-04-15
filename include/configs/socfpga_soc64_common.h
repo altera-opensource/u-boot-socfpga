@@ -52,6 +52,14 @@
  * Environment variable
  */
 #define CFG_EXTRA_ENV_SETTINGS \
+	"qspibootimageaddr=0x020B0000\0" \
+	"qspifdtaddr=0x02090000\0" \
+	"bootimagesize=0x01400000\0" \
+	"fdtimagesize=0x00010000\0" \
+	"qspiload=sf read ${loadaddr} ${qspibootimageaddr} ${bootimagesize};" \
+		"sf read ${fdt_addr} ${qspifdtaddr} ${fdtimagesize}\0" \
+	"qspiboot=setenv bootargs earlycon root=/dev/mtdblock1 rw " \
+		"rootfstype=jffs2 rootwait;booti ${loadaddr} - ${fdt_addr}\0" \
 	"loadaddr=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
 	"bootfile=" CONFIG_BOOTFILE "\0" \
 	"fdt_addr=8000000\0" \
