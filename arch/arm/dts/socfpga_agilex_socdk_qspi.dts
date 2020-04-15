@@ -1,0 +1,14 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Copyright (C) 2019 Intel Corporation
+ */
+
+#include "socfpga_agilex_socdk.dts"
+#include "socfpga_agilex_socdk-u-boot.dtsi"
+
+/ {
+
+	chosen {
+		u-boot,boot0 = <&flash0>;
+	};
+};
