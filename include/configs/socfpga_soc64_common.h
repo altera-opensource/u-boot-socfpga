@@ -48,6 +48,28 @@
  * U-Boot environment configurations
  */
 
+ /*
+ * NAND support
+ */
+#ifdef CONFIG_NAND_DENALI
+#define CONFIG_SPL_NAND_RAW_ONLY
+#define CONFIG_SYS_NAND_ONFI_DETECTION
+#define CONFIG_SYS_MAX_NAND_DEVICE	1
+
+#define CONFIG_SYS_NAND_U_BOOT_SIZE	(1 * 1024 * 1024)
+#define CONFIG_SYS_NAND_U_BOOT_DST	CONFIG_SYS_TEXT_BASE
+
+/* Environment for NAND boot */
+#if defined(CONFIG_ENV_IS_IN_NAND)
+#undef CONFIG_ENV_OFFSET
+#undef CONFIG_ENV_SIZE
+#define CONFIG_ENV_OFFSET		0x00200000
+#define CONFIG_ENV_SIZE			(128 * 1024)
+#define CONFIG_ENV_OFFSET_REDUND	(CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
+#define CONFIG_ENV_SIZE_REDUND		CONFIG_ENV_SIZE
+#endif
+#endif /* CONFIG_NAND_DENALI */
+
 /*
  * Environment variable
  */
@@ -77,6 +99,7 @@
 	"mmcfitload=mmc rescan;" \
 		"load mmc 0:1 ${loadaddr} ${bootfile}\0" \
 	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
+	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
 	"linux_qspi_enable=if sf probe; then " \
 		"echo Enabling QSPI at Linux DTB...;" \
 		"fdt addr ${fdt_addr}; fdt resize;" \
