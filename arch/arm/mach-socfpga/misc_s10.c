@@ -16,6 +16,8 @@
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/system_manager.h>
 
+#define RSU_DEFAULT_LOG_LEVEL  7
+
 DECLARE_GLOBAL_DATA_PTR;
 
 /*
@@ -55,10 +57,18 @@ int print_cpuinfo(void)
 int arch_misc_init(void)
 {
 	char qspi_string[13];
+	char level[4];
+
+	snprintf(level, sizeof(level), "%u", RSU_DEFAULT_LOG_LEVEL);
 
 	sprintf(qspi_string, "<0x%08x>", cm_get_qspi_controller_clk_hz());
 	env_set("qspi_clock", qspi_string);
 
+	/* setup for RSU */
+	env_set("rsu_protected_slot", "");
+	env_set("rsu_log_level", level);
+
+	socfpga_set_phymode();
 	return 0;
 }
 #endif
