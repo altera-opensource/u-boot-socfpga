@@ -47,6 +47,7 @@ obj-y	+= rsu_s10.o
 obj-y   += rsu.o
 obj-y   += rsu_ll_qspi.o
 obj-y   += rsu_misc.o
+obj-y	+= smc_ecc_dbe_s10.o
 obj-y	+= smc_rsu_s10.o
 endif
 endif
@@ -71,6 +72,7 @@ obj-y	+= rsu_s10.o
 obj-y   += rsu.o
 obj-y   += rsu_ll_qspi.o
 obj-y   += rsu_misc.o
+obj-y	+= smc_ecc_dbe_s10.o
 obj-y	+= smc_rsu_s10.o
 endif
 endif
