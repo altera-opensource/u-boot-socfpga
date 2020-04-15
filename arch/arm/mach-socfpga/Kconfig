@@ -94,7 +94,7 @@ config TARGET_SOCFPGA_STRATIX10
 	select ARMV8_PSCI
 	select ARMV8_SEC_FIRMWARE_SUPPORT
 	select ARMV8_SET_SMPEN
-	select FPGA_STRATIX10
+	select FPGA_INTEL_SDM_MAILBOX
 
 choice
 	prompt "Altera SOCFPGA board select"
