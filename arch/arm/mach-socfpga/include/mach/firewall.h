@@ -75,6 +75,7 @@ struct socfpga_firwall_l4_sys {
 };
 
 #define FIREWALL_L4_DISABLE_ALL		(BIT(0) | BIT(24) | BIT(16))
+#define FIREWALL_MPFE_SCR_DISABLE_ALL	(BIT(0) | BIT(8) | BIT(16))
 #define FIREWALL_BRIDGE_DISABLE_ALL	(~0)
 
 /* Cache coherency unit (CCU) registers */
