@@ -78,10 +78,6 @@
 
 /*#define CONFIG_ENV_IS_IN_SPI_FLASH*/
 
-#ifndef CONFIG_SPL_BUILD
-#define MTDIDS_DEFAULT			"nor0=ff705000.spi.0"
-#endif /* CONFIG_SPL_BUILD */
-
 #ifndef __ASSEMBLY__
 unsigned int cm_get_qspi_controller_clk_hz(void);
 #define CONFIG_CQSPI_REF_CLK		cm_get_qspi_controller_clk_hz()
@@ -124,6 +120,7 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 		"bootm ${loadaddr}\0" \
 	"mmcfitload=mmc rescan;" \
 		"load mmc 0:1 ${loadaddr} ${bootfile}\0" \
+	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
 	"linux_qspi_enable=if sf probe; then " \
 		"echo Enabling QSPI at Linux DTB...;" \
 		"fdt addr ${fdt_addr}; fdt resize;" \
