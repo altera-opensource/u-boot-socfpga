@@ -55,6 +55,7 @@ void sysmgr_pinmux_table_delay(const u32 **table, unsigned int *table_len);
 #define SYSMGR_SOC64_BOOT_SCRATCH_COLD1		0x204
 /* store fpga clock freq */
 #define SYSMGR_SOC64_BOOT_SCRATCH_COLD2		0x208
+/* reserved for customer use */
 #define SYSMGR_SOC64_BOOT_SCRATCH_COLD3		0x20c
 /* store PSCI_CPU_ON value */
 #define SYSMGR_SOC64_BOOT_SCRATCH_COLD4		0x210
