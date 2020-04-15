@@ -16,6 +16,7 @@
 
 	chosen {
 		stdout-path = "serial0:115200n8";
+		u-boot,boot0 = <&mmc>;
 	};
 
 	leds {
