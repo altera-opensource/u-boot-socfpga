@@ -9,4 +9,11 @@
 
 #include <configs/socfpga_soc64_common.h>
 
+#ifndef __ASSEMBLY__
+unsigned int cm_get_l4_sp_clk_hz(void);
+#endif
+
+#undef CONFIG_SYS_NS16550_CLK
+#define CONFIG_SYS_NS16550_CLK		cm_get_l4_sp_clk_hz()
+
 #endif	/* __CONFIG_SOCFGPA_STRATIX10_H__ */
