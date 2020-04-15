@@ -20,6 +20,8 @@
 #include <asm/global_data.h>
 #include <mach/clock_manager.h>
 
+#define RSU_DEFAULT_LOG_LEVEL  7
+
 DECLARE_GLOBAL_DATA_PTR;
 
 /* Agilex5 Sub Device Jtag ID List */
@@ -104,10 +106,16 @@ int print_cpuinfo(void)
 int arch_misc_init(void)
 {
 	char qspi_string[13];
+	char level[4];
 	unsigned long id;
 
+	snprintf(level, sizeof(level), "%u", RSU_DEFAULT_LOG_LEVEL);
 	sprintf(qspi_string, "<0x%08x>", cm_get_qspi_controller_clk_hz());
 	env_set("qspi_clock", qspi_string);
+
+	/* setup for RSU */
+	env_set("rsu_protected_slot", "");
+	env_set("rsu_log_level", level);
 
 	/* Export board_id as environment variable */
 	id = socfpga_get_board_id();
