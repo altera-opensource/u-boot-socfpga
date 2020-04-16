@@ -64,9 +64,9 @@
  * Environment variable
  */
 #define CFG_EXTRA_ENV_SETTINGS \
-	"qspibootimageaddr=0x020B0000\0" \
-	"qspifdtaddr=0x02090000\0" \
-	"bootimagesize=0x01400000\0" \
+	"qspibootimageaddr=0x020E0000\0" \
+	"qspifdtaddr=0x020D0000\0" \
+	"bootimagesize=0x01F00000\0" \
 	"fdtimagesize=0x00010000\0" \
 	"qspiload=sf read ${loadaddr} ${qspibootimageaddr} ${bootimagesize};" \
 		"sf read ${fdt_addr} ${qspifdtaddr} ${fdtimagesize}\0" \
