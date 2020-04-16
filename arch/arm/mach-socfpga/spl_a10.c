@@ -126,6 +126,7 @@ void spl_board_init(void)
 	/* If the full FPGA is already loaded, ie.from EPCQ, config fpga pins */
 	if (is_fpgamgr_user_mode()) {
 		ret = config_pins(gd->fdt_blob, "shared");
+
 		if (ret)
 			return;
 
@@ -180,7 +181,6 @@ void spl_board_init(void)
 			       ALT_RSTMGR_FPGAMGRWARMMASK_S2F_SET_MSK)),
 			       socfpga_get_rstmgr_addr() +
 			       RSTMGR_A10_SYSWARMMASK);
-
 			/*
 			 * BootROM will configure both IO and pin mux after a
 			 * warm reset
