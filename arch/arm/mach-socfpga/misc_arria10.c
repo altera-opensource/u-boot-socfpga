@@ -201,7 +201,6 @@ bool is_regular_boot_valid(void)
 
 	status = readl(socfpga_get_sysmgr_addr() +
 		       SYSMGR_A10_ISW_HANDOFF_BASE + SYSMGR_A10_ISW_HANDOFF_7);
-
 	if (status == REGULAR_BOOT_MAGIC)
 		return true;
 	else
@@ -224,7 +223,6 @@ int qspi_flash_software_reset(void)
 				     CONFIG_SF_DEFAULT_SPEED,
 				     CONFIG_SF_DEFAULT_MODE,
 				     &flash);
-
 	if (ret) {
 		debug("Failed to initialize SPI flash at ");
 		debug("%u:%u (error %d)\n", CONFIG_SF_DEFAULT_BUS,
