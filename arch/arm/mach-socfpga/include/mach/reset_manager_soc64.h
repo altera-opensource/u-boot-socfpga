@@ -8,6 +8,7 @@
 
 void reset_deassert_peripherals_handoff(void);
 int cpu_has_been_warmreset(void);
+void print_reset_info(void);
 void socfpga_bridges_reset(int enable);
 void socfpga_bridges_reset_psci(int enable);
 void l2_reset_cpu(void);
