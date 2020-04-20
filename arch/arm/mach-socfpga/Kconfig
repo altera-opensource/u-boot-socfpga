@@ -122,6 +122,10 @@ config TARGET_SOCFPGA_AGILEX_SOCDK
 config TARGET_SOCFPGA_ARRIA10_SOCDK
 	bool "Altera SOCFPGA SoCDK (Arria 10)"
 	select TARGET_SOCFPGA_ARRIA10
+	
+config TARGET_SOCFPGA_ARRIA10_HANPILOT
+	bool "Terasic SOCFPGA Hanpilot (Arria 10)"
+	select TARGET_SOCFPGA_ARRIA10
 
 config TARGET_SOCFPGA_ARRIA5_SOCDK
 	bool "Altera SOCFPGA SoCDK (Arria V)"
@@ -178,6 +182,7 @@ config SYS_BOARD
 	default "agilex-socdk" if TARGET_SOCFPGA_AGILEX_SOCDK
 	default "arria5-socdk" if TARGET_SOCFPGA_ARRIA5_SOCDK
 	default "arria10-socdk" if TARGET_SOCFPGA_ARRIA10_SOCDK
+	default "arria10-hanpilot" if TARGET_SOCFPGA_ARRIA10_HANPILOT
 	default "cyclone5-socdk" if TARGET_SOCFPGA_CYCLONE5_SOCDK
 	default "dbm-soc1" if TARGET_SOCFPGA_DEVBOARDS_DBM_SOC1
 	default "de0-nano-soc" if TARGET_SOCFPGA_TERASIC_DE0_NANO
@@ -195,6 +200,7 @@ config SYS_VENDOR
 	default "intel" if TARGET_SOCFPGA_AGILEX_SOCDK
 	default "altera" if TARGET_SOCFPGA_ARRIA5_SOCDK
 	default "altera" if TARGET_SOCFPGA_ARRIA10_SOCDK
+	default "terasic" if TARGET_SOCFPGA_ARRIA10_HANPILOT
 	default "altera" if TARGET_SOCFPGA_CYCLONE5_SOCDK
 	default "altera" if TARGET_SOCFPGA_STRATIX10_SOCDK
 	default "aries" if TARGET_SOCFPGA_ARIES_MCVEVK
@@ -213,6 +219,7 @@ config SYS_CONFIG_NAME
 	default "socfpga_agilex_socdk" if TARGET_SOCFPGA_AGILEX_SOCDK
 	default "socfpga_arria5_socdk" if TARGET_SOCFPGA_ARRIA5_SOCDK
 	default "socfpga_arria10_socdk" if TARGET_SOCFPGA_ARRIA10_SOCDK
+	default "socfpga_arria10_socdk" if TARGET_SOCFPGA_ARRIA10_HANPILOT
 	default "socfpga_cyclone5_socdk" if TARGET_SOCFPGA_CYCLONE5_SOCDK
 	default "socfpga_dbm_soc1" if TARGET_SOCFPGA_DEVBOARDS_DBM_SOC1
 	default "socfpga_de0_nano_soc" if TARGET_SOCFPGA_TERASIC_DE0_NANO
