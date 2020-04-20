@@ -63,7 +63,7 @@
 			cntr4clk-cnt = <900>;	/* Field: cntr4clk.cnt */
 			cntr5clk-cnt = <900>;	/* Field: cntr5clk.cnt */
 			cntr6clk-cnt = <900>;	/* Field: cntr6clk.cnt */
-			cntr7clk-cnt = <11>;	/* Field: cntr7clk.cnt */
+			cntr7clk-cnt = <9>;	/* Field: cntr7clk.cnt */
 			cntr7clk-src = <0>;	/* Field: cntr7clk.src */
 			cntr8clk-cnt = <900>;	/* Field: cntr8clk.cnt */
 			cntr9clk-cnt = <900>;	/* Field: cntr9clk.cnt */
@@ -166,7 +166,7 @@
 				<0x00000090 0x0000000a>,	/* Register: pinmux_shared_io_q4_1 */
 				<0x00000094 0x0000000a>,	/* Register: pinmux_shared_io_q4_2 */
 				<0x00000098 0x0000000a>,	/* Register: pinmux_shared_io_q4_3 */
-				<0x0000009c 0x0000000a>,	/* Register: pinmux_shared_io_q4_4 */
+				<0x0000009c 0x0000000f>,	/* Register: pinmux_shared_io_q4_4 */
 				<0x000000a0 0x0000000a>,	/* Register: pinmux_shared_io_q4_5 */
 				<0x000000a4 0x0000000a>,	/* Register: pinmux_shared_io_q4_6 */
 				<0x000000a8 0x0000000a>,	/* Register: pinmux_shared_io_q4_7 */
