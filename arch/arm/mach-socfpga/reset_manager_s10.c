@@ -5,13 +5,16 @@
  */
 
 #include <common.h>
+#include <hang.h>
 #include <asm/io.h>
 #include <asm/secure.h>
 #include <asm/arch/reset_manager.h>
+#include <asm/arch/smc_api.h>
 #include <asm/arch/system_manager.h>
 #include <dt-bindings/reset/altr,rst-mgr-s10.h>
 #include <linux/iopoll.h>
 #include <exports.h>
+#include <linux/intel-smc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -57,6 +60,12 @@ void socfpga_per_reset_all(void)
 
 void socfpga_bridges_reset(int enable)
 {
+#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_ATF)
+	u64 arg = enable;
+
+	if (invoke_smc(INTEL_SIP_SMC_HPS_SET_BRIDGES, &arg, 1, NULL, 0))
+		hang();
+#else
 	u32 reg;
 
 	if (enable) {
@@ -103,6 +112,7 @@ void socfpga_bridges_reset(int enable)
 		/* Disable NOC timeout */
 		writel(0, socfpga_get_sysmgr_addr() + SYSMGR_SOC64_NOC_TIMEOUT);
 	}
+#endif
 }
 
 void __secure socfpga_bridges_reset_psci(int enable)
