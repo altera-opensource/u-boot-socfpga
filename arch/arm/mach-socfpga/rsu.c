@@ -662,6 +662,27 @@ int rsu_reset_retry_counter(void)
 	return ll_intf->fw_ops.notify(arg);
 }
 
+extern u32 smc_rsu_dcmf_version[4];
+
+static int copy_dcmf_version_to_smc(u32 *versions)
+{
+	void *dcmf_versions;
+
+	if (!versions)
+		return -EINVAL;
+
+	/*
+	 * Convert the address of smc_rsu_dcmf_versions
+	 * to pre-relocation address.
+	 */
+	dcmf_versions = (char *)__secure_start - CONFIG_ARMV8_SECURE_BASE +
+			(u64)secure_ram_addr(smc_rsu_dcmf_version);
+
+	memcpy(dcmf_versions, versions, sizeof(*versions) * 4);
+
+	return 0;
+}
+
 /**
  * rsu_dcmf_version() - retrieve the decision firmware version
  * @versions: pointer to where the four DCMF versions will be stored
@@ -685,5 +706,5 @@ int rsu_dcmf_version(u32 *versions)
 	if (ret)
 		return ret;
 
-	return smc_store_dcmf_version(versions);
+	return copy_dcmf_version_to_smc(versions);
 }
