@@ -256,7 +256,7 @@ static void __secure smc_socfpga_config_write(
 
 	if (fpga_error) {
 		SMC_ASSIGN_REG_MEM(r, SMC_ARG0,
-				   INTEL_SIP_SMC_FPGA_CONFIG_STATUS_ERROR);
+				   INTEL_SIP_SMC_STATUS_ERROR);
 		SMC_ASSIGN_REG_MEM(r, SMC_ARG1,
 				   fpga_buf_list[fpga_buf_read_index].
 				   buf_addr);
@@ -272,13 +272,13 @@ static void __secure smc_socfpga_config_write(
 	    (fpga_buf_count == FPGA_CONFIG_BUF_MAX &&
 	     fpga_buf_write_index == fpga_buf_read_index)) {
 		SMC_ASSIGN_REG_MEM(r, SMC_ARG0,
-				   INTEL_SIP_SMC_FPGA_CONFIG_STATUS_REJECTED);
+				   INTEL_SIP_SMC_STATUS_REJECTED);
 		goto ret;
 	}
 
 	if (!phys_addr || !phys_size) {
 		SMC_ASSIGN_REG_MEM(r, SMC_ARG0,
-				   INTEL_SIP_SMC_FPGA_CONFIG_STATUS_ERROR);
+				   INTEL_SIP_SMC_STATUS_ERROR);
 		SMC_ASSIGN_REG_MEM(r, SMC_ARG1, phys_addr);
 		SMC_ASSIGN_REG_MEM(r, SMC_ARG2, phys_size);
 		goto ret;
@@ -301,7 +301,7 @@ static void __secure smc_socfpga_config_write(
 		fpga_buf_rcv_count++;
 		if (fpga_buf_rcv_count == fpga_xfer_max)
 			SMC_ASSIGN_REG_MEM(r, SMC_ARG0,
-					INTEL_SIP_SMC_FPGA_CONFIG_STATUS_BUSY);
+					INTEL_SIP_SMC_STATUS_BUSY);
 		else
 			SMC_ASSIGN_REG_MEM(r, SMC_ARG0,
 					   INTEL_SIP_SMC_STATUS_OK);
@@ -310,7 +310,7 @@ static void __secure smc_socfpga_config_write(
 	} else	{
 		/* No free buffer avalable in buffer list */
 		SMC_ASSIGN_REG_MEM(r, SMC_ARG0,
-				   INTEL_SIP_SMC_FPGA_CONFIG_STATUS_REJECTED);
+				   INTEL_SIP_SMC_STATUS_REJECTED);
 	}
 
 ret:
@@ -350,7 +350,7 @@ static void __secure smc_socfpga_config_completed_write(
 			   !fpga_buf_list[fpga_buf_read_index].submit_count) {
 			SMC_INIT_REG_MEM(r);
 			SMC_ASSIGN_REG_MEM(r, SMC_ARG0,
-				INTEL_SIP_SMC_FPGA_CONFIG_STATUS_ERROR);
+				INTEL_SIP_SMC_STATUS_ERROR);
 			SMC_ASSIGN_REG_MEM(r, SMC_ARG1,
 				fpga_buf_list[fpga_buf_read_index].buf_addr);
 			SMC_ASSIGN_REG_MEM(r, SMC_ARG2,
@@ -362,7 +362,7 @@ static void __secure smc_socfpga_config_completed_write(
 	/* No completed buffers found */
 	if (r_index == 1 && fpga_xfer_submitted_count)
 		SMC_ASSIGN_REG_MEM(r, SMC_ARG0,
-				   INTEL_SIP_SMC_FPGA_CONFIG_STATUS_BUSY);
+				   INTEL_SIP_SMC_STATUS_BUSY);
 
 ret:
 	SMC_RET_REG_MEM(r);
@@ -375,14 +375,14 @@ static void __secure smc_socfpga_config_isdone(unsigned long function_id)
 
 	SMC_INIT_REG_MEM(r);
 
-	SMC_ASSIGN_REG_MEM(r, SMC_ARG0, INTEL_SIP_SMC_FPGA_CONFIG_STATUS_BUSY);
+	SMC_ASSIGN_REG_MEM(r, SMC_ARG0, INTEL_SIP_SMC_STATUS_BUSY);
 
 	reclaim_completed_buf();
 	do_xfer_buf();
 
 	if (fpga_error) {
 		SMC_ASSIGN_REG_MEM(r, SMC_ARG0,
-				   INTEL_SIP_SMC_FPGA_CONFIG_STATUS_ERROR);
+				   INTEL_SIP_SMC_STATUS_ERROR);
 		goto ret;
 	}
 
@@ -393,7 +393,7 @@ static void __secure smc_socfpga_config_isdone(unsigned long function_id)
 	if (ret) {
 		if (ret != MBOX_CFGSTAT_STATE_CONFIG) {
 			SMC_ASSIGN_REG_MEM(r, SMC_ARG0,
-				INTEL_SIP_SMC_FPGA_CONFIG_STATUS_ERROR);
+				INTEL_SIP_SMC_STATUS_ERROR);
 			fpga_error = 1;
 		}
 		goto ret;
