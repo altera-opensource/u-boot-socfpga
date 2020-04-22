@@ -43,7 +43,17 @@ skipwarmreset:
 #endif
 
 #if defined(CONFIG_GICV2) || defined(CONFIG_GICV3)
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_ATF)
+wait_for_atf:
+	ldr	x4, =CPU_RELEASE_ADDR
+	ldr	x5, [x4]
+	cbz	x5, slave_wait_atf
+	br	x5
+slave_wait_atf:
+	branch_if_slave x0, wait_for_atf
+#else
 	branch_if_slave x0, 1f
+#endif
 	ldr	x0, =GICD_BASE
 	bl	gic_init_secure
 1:
@@ -72,7 +82,7 @@ skipwarmreset:
 	bl	gic_wait_for_interrupt
 #endif
 
-#ifdef CONFIG_SPL_BUILD
+#if defined(CONFIG_SPL_BUILD) && !defined(CONFIG_SPL_ATF)
 	/*
 	 * Read the u-boot's PSCI exception handler's vector base
 	 * address from the sysmgr.boot_scratch_cold6 & 7 and update
