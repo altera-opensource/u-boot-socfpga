@@ -7,6 +7,7 @@
 #include <common.h>
 #include <asm/ptrace.h>
 #include <asm/system.h>
+#include <linux/intel-smc.h>
 
 int invoke_smc(u32 func_id, u64 *args, int arg_len, u64 *ret_arg, int ret_len)
 {
@@ -24,4 +25,32 @@ int invoke_smc(u32 func_id, u64 *args, int arg_len, u64 *ret_arg, int ret_len)
 		memcpy(ret_arg, &regs.regs[1], ret_len * sizeof(*ret_arg));
 
 	return regs.regs[0];
+}
+
+int smc_send_mailbox(u32 cmd, u32 len, u32 *arg, u8 urgent, u32 *resp_buf_len,
+		     u32 *resp_buf)
+{
+	int ret;
+	u64 args[6];
+	u64 resp[3];
+
+	args[0] = cmd;
+	args[1] = (u64)arg;
+	args[2] = len;
+	args[3] = urgent;
+	args[4] = (u64)resp_buf;
+	if (resp_buf_len)
+		args[5] = *resp_buf_len;
+	else
+		args[5] = 0;
+
+	ret = invoke_smc(INTEL_SIP_SMC_MBOX_SEND_CMD, args, ARRAY_SIZE(args),
+			 resp, ARRAY_SIZE(resp));
+
+	if (ret == INTEL_SIP_SMC_STATUS_OK && resp_buf && resp_buf_len) {
+		if (!resp[0])
+			*resp_buf_len = resp[1];
+	}
+
+	return (int)resp[0];
 }
