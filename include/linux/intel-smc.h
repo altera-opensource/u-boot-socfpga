@@ -382,6 +382,23 @@ INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_FPGA_CONFIG_COMPLETED_WRITE)
 	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_RSU_DCMF_VERSION)
 
 /*
+ * Request INTEL_SIP_SMC_RSU_COPY_DCMF_VERSION
+ *
+ * Sync call used by SSBL (EL2) to copy DCMF version to ATF memory
+ *
+ * Call register usage:
+ * a0 INTEL_SIP_SMC_RSU_COPY_DCMF_VERSION
+ * a1 dcmf1 version | dcmf0 version
+ * a2 dcmf3 version | dcmf2 version
+ *
+ * Return status
+ * a0 INTEL_SIP_SMC_STATUS_OK
+ */
+#define INTEL_SIP_SMC_FUNCID_RSU_COPY_DCMF_VERSION 17
+#define INTEL_SIP_SMC_RSU_COPY_DCMF_VERSION \
+	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_RSU_COPY_DCMF_VERSION)
+
+/*
  * Request INTEL_SIP_SMC_RSU_MAX_RETRY
  *
  * Sync call used by service driver at EL1 to query max_retry parameter
