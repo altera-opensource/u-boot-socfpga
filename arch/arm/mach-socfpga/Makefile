@@ -37,18 +37,18 @@ obj-y	+= system_manager_s10.o
 obj-y	+= timer_s10.o
 obj-y	+= wrap_pinmux_config_s10.o
 obj-y	+= wrap_pll_config_s10.o
-obj-y	+= smc_registers_s10.o
 obj-y	+= smmu_s10.o
 obj-y	+= lowlevel_init_soc64.o
 ifndef CONFIG_SPL_BUILD
-obj-y	+= psci.o
-obj-$	+= smc_fpga_reconfig_s10.o
 obj-y	+= rsu_s10.o
 obj-y   += rsu.o
 obj-y   += rsu_ll_qspi.o
 obj-y   += rsu_misc.o
-obj-y	+= smc_ecc_dbe_s10.o
-obj-y	+= smc_rsu_s10.o
+obj-$(CONFIG_ARMV8_PSCI) += psci.o
+obj-$(CONFIG_ARMV8_PSCI) += smc_ecc_dbe_s10.o
+obj-$(CONFIG_ARMV8_PSCI) += smc_fpga_reconfig_s10.o
+obj-$(CONFIG_ARMV8_PSCI) += smc_registers_s10.o
+obj-$(CONFIG_ARMV8_PSCI) += smc_rsu_s10.o
 endif
 endif
 
@@ -62,18 +62,18 @@ obj-y	+= system_manager_s10.o
 obj-y	+= timer_s10.o
 obj-y	+= wrap_pinmux_config_s10.o
 obj-y	+= wrap_pll_config_s10.o
-obj-y	+= smc_registers_s10.o
 obj-y	+= smmu_s10.o
 obj-y	+= lowlevel_init_soc64.o
 ifndef CONFIG_SPL_BUILD
-obj-y	+= psci.o
-obj-$	+= smc_fpga_reconfig_s10.o
 obj-y	+= rsu_s10.o
 obj-y   += rsu.o
 obj-y   += rsu_ll_qspi.o
 obj-y   += rsu_misc.o
-obj-y	+= smc_ecc_dbe_s10.o
-obj-y	+= smc_rsu_s10.o
+obj-$(CONFIG_ARMV8_PSCI) += psci.o
+obj-$(CONFIG_ARMV8_PSCI) += smc_ecc_dbe_s10.o
+obj-$(CONFIG_ARMV8_PSCI) += smc_fpga_reconfig_s10.o
+obj-$(CONFIG_ARMV8_PSCI) += smc_registers_s10.o
+obj-$(CONFIG_ARMV8_PSCI) += smc_rsu_s10.o
 endif
 endif
 
