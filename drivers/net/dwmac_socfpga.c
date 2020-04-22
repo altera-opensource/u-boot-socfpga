@@ -14,8 +14,10 @@
 #include <reset.h>
 #include <syscon.h>
 #include "designware.h"
+#include <asm/arch/smc_api.h>
 #include <dm/device_compat.h>
 #include <linux/err.h>
+#include <linux/intel-smc.h>
 
 #include <asm/arch/system_manager.h>
 
@@ -66,6 +68,10 @@ static int dwmac_socfpga_ofdata_to_platdata(struct udevice *dev)
 
 static int dwmac_socfpga_probe(struct udevice *dev)
 {
+#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_ATF)
+	u64 args[2];
+#endif
+
 	struct dwmac_socfpga_platdata *pdata = dev_get_platdata(dev);
 	struct eth_pdata *edata = &pdata->dw_eth_pdata.eth_pdata;
 	struct reset_ctl_bulk reset_bulk;
@@ -98,8 +104,18 @@ static int dwmac_socfpga_probe(struct udevice *dev)
 	reset_assert_bulk(&reset_bulk);
 
 	modemask = SYSMGR_EMACGRP_CTRL_PHYSEL_MASK << pdata->reg_shift;
+
+#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_ATF)
+	args[0] = (u64)pdata->phy_intf;
+	args[1] = (readl(args[0]) & ~modemask) | (modereg << pdata->reg_shift);
+	if (invoke_smc(INTEL_SIP_SMC_REG_WRITE, args, 2, NULL, 0)) {
+		printf("DWMAC: Failed to set PHY register via SMC call\n");
+		return -EIO;
+	}
+#else
 	clrsetbits_le32(pdata->phy_intf, modemask,
 			modereg << pdata->reg_shift);
+#endif
 
 	reset_release_bulk(&reset_bulk);
 
