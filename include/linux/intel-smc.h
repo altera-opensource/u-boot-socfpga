@@ -402,4 +402,48 @@ INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_FPGA_CONFIG_COMPLETED_WRITE)
 #define INTEL_SIP_SMC_RSU_MAX_RETRY \
 	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_RSU_MAX_RETRY)
 
+/*
+ * Request INTEL_SIP_SMC_HPS_SET_BRIDGES
+ *
+ * Enable/disable the SoC FPGA bridges
+ *
+ * Call register usage:
+ * a0 INTEL_SIP_SMC_HPS_SET_BRIDGES
+ * a1 Set bridges status:
+ *      0 - Disable
+ *      1 - Enable
+ * a2-7 not used
+ *
+ * Return status
+ * a0 INTEL_SIP_SMC_STATUS_OK
+ */
+#define INTEL_SIP_SMC_FUNCID_HPS_SET_BRIDGES	50
+#define INTEL_SIP_SMC_HPS_SET_BRIDGES \
+	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_HPS_SET_BRIDGES)
+
+/*
+ * Request INTEL_SIP_SMC_MBOX_SEND_CMD
+ *
+ * Send mailbox command to SDM
+ *
+ * Call register usage:
+ * a0 INTEL_SIP_SMC_MBOX_SEND_CMD
+ * a1 Mailbox command
+ * a2 64bit physical address pointer to command's arguments
+ * a3 Length of the argument
+ * a4 Urgent command:
+ *      0 - Disable
+ *      1 - Enable
+ * a5 64bit physical address pointer to a buffer for receiving responses
+ * a6 Length of the buffer
+ *
+ * Return status
+ * a0 INTEL_SIP_SMC_STATUS_OK or INTEL_SIP_SMC_STATUS_ERROR
+ * a1 Status of mailbox response
+ * a2 Received length in the buffer
+ */
+#define INTEL_SIP_SMC_FUNCID_MBOX_SEND_CMD	60
+#define INTEL_SIP_SMC_MBOX_SEND_CMD \
+	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_MBOX_SEND_CMD)
+
 #endif
