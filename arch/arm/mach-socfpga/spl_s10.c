@@ -28,10 +28,13 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+u32 spl_boot_device_ram(void);
+
 void board_init_f(ulong dummy)
 {
+	/* Ensure 'spl_boot_device_ram' symbol used by debugger is exported */
+	int ret = spl_boot_device_ram();
 	const struct cm_config *cm_default_cfg = cm_get_default_config();
-	int ret;
 
 	ret = spl_early_init();
 	if (ret)

@@ -25,6 +25,12 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+/* This function is used by debugger to force boot from RAM */
+noinline u32 spl_boot_device_ram(void)
+{
+	return BOOT_DEVICE_RAM;
+}
+
 u32 spl_boot_device(void)
 {
 	int ret, size;
