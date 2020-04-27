@@ -146,7 +146,7 @@ void spl_board_init(void)
 			 */
 			mdelay(10);
 
-#ifdef CONFIG_SPI_FLASH
+#ifdef CONFIG_CADENCE_QSPI
 			/*
 			 * Trigger software reset to QSPI flash.
 			 * On some boards, the QSPI flash reset may not be
