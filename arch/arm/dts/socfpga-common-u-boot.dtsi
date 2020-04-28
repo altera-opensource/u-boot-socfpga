@@ -14,6 +14,10 @@
 	bootph-all;
 };
 
+&L2 {
+        bootph-all;
+};
+
 &rst {
 	bootph-all;
 };
