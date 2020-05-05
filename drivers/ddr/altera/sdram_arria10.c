@@ -7,6 +7,7 @@
 #include <cpu_func.h>
 #include <errno.h>
 #include <fdtdec.h>
+#include <hang.h>
 #include <malloc.h>
 #include <wait_bit.h>
 #include <watchdog.h>
@@ -711,6 +712,19 @@ int ddr_calibration_sequence(void)
 
 	/* setup the dram info within bd */
 	dram_init_banksize();
+
+	if (gd->ram_size != gd->bd->bi_dram[0].size) {
+		printf("DDR: Warning: DRAM size from device tree (%ld MiB)\n",
+		       gd->bd->bi_dram[0].size >> 20);
+		printf(" mismatch with hardware (%ld MiB).\n",
+		       gd->ram_size >> 20);
+	}
+
+	if (gd->bd->bi_dram[0].size > gd->ram_size) {
+		printf("DDR: Error: DRAM size from device tree is greater\n");
+		printf(" than hardware size.\n");
+		hang();
+	}
 
 	if (of_sdram_firewall_setup(gd->fdt_blob))
 		puts("FW: Error Configuring Firewall\n");
