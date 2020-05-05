@@ -197,27 +197,15 @@ static int sdram_is_ecc_enabled(void)
 		  ALT_ECC_HMC_OCP_ECCCTL_ECC_EN_SET_MSK);
 }
 
-/* Initialize SDRAM ECC bits to avoid false DBE */
-static void sdram_init_ecc_bits(u32 size)
+static void sdram_init_ecc_bits(void)
 {
 	u32 start, size_init, start_addr;
+	phys_size_t size;
 
 	start = get_timer(0);
 
-	gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE;
-	gd->bd->bi_dram[0].size = size;
-
-	gd->arch.tlb_addr = gd->bd->bi_dram[0].start + PGTABLE_OFF;
-	gd->arch.tlb_size = PGTABLE_SIZE;
-
-	memset((void *)gd->bd->bi_dram[0].start, 0, gd->arch.tlb_addr +
-	       gd->arch.tlb_size + SZ_1K);
-
-	icache_enable();
-	dcache_enable();
-
-	start_addr = gd->arch.tlb_addr + gd->arch.tlb_size;
-	size -= (gd->arch.tlb_addr + gd->arch.tlb_size);
+	start_addr = gd->bd->bi_dram[0].start;
+	size = gd->bd->bi_dram[0].size;
 
 	printf("DDRCAL: Scrubbing ECC RAM (%ld MiB).\n", size >> 20);
 
@@ -749,7 +737,7 @@ int ddr_calibration_sequence(void)
 		puts("FW: Error Configuring Firewall\n");
 
 	if (sdram_is_ecc_enabled())
-		sdram_init_ecc_bits(gd->ram_size);
+		sdram_init_ecc_bits();
 
 	return 0;
 }
