@@ -194,8 +194,9 @@ static int sdram_is_ecc_enabled(void)
 /* Initialize SDRAM ECC bits to avoid false DBE */
 static void sdram_init_ecc_bits(void)
 {
-	u32 start, size_init, start_addr;
-	phys_size_t size;
+	u32 start;
+	phys_addr_t start_addr;
+	phys_size_t size, size_init;
 
 	start = get_timer(0);
 
