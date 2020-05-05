@@ -219,8 +219,7 @@ static void sdram_init_ecc_bits(u32 size)
 	start_addr = gd->arch.tlb_addr + gd->arch.tlb_size;
 	size -= (gd->arch.tlb_addr + gd->arch.tlb_size);
 
-	printf("DDRCAL: Scrubbing ECC RAM (%d MiB).\n", size >> 20);
-
+	printf("DDRCAL: Scrubbing ECC RAM (%ld MiB).\n", size >> 20);
 
 	while (size > 0) {
 		size_init = min((phys_addr_t)SZ_1G, (phys_addr_t)size);
