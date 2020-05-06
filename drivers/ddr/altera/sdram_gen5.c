@@ -657,6 +657,9 @@ static int altera_gen5_sdram_probe(struct udevice *dev)
 	sdram_size = sdram_calculate_size(sdr_ctrl);
 	debug("SDRAM: %ld MiB\n", sdram_size >> 20);
 
+	/* setup the dram info within bd */
+	dram_init_banksize();
+
 	if (sdram_is_ecc_enabled(sdr_ctrl)) {
 		/* Must set USEECCASDATA to 0 if ECC is enabled */
 		clrbits_le32(&sdr_ctrl->static_cfg,
