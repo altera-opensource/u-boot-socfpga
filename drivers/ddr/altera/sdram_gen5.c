@@ -23,6 +23,7 @@
 #include <linux/sizes.h>
 
 #include "sequencer.h"
+#include "sdram_soc32.h"
 
 #define PGTABLE_OFF	0x4000
 
@@ -574,48 +575,6 @@ static int sdram_is_ecc_enabled(struct socfpga_sdr_ctrl *sdr_ctrl)
 		  SDR_CTRLGRP_CTRLCFG_ECCEN_MASK);
 }
 
-/* Initialize SDRAM ECC bits to avoid false DBE */
-static void sdram_init_ecc_bits(phys_size_t size)
-{
-	phys_size_t start, size_init, start_addr;
-
-	start = get_timer(0);
-
-	gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE;
-	gd->bd->bi_dram[0].size = size;
-
-	gd->arch.tlb_addr = gd->bd->bi_dram[0].start + PGTABLE_OFF;
-	gd->arch.tlb_size = PGTABLE_SIZE;
-
-	memset((void *)gd->bd->bi_dram[0].start, 0, gd->arch.tlb_addr +
-	       gd->arch.tlb_size);
-
-	icache_enable();
-	dcache_enable();
-
-	printf("DDRCAL: Scrubbing ECC RAM (%lu MiB).\n", size >> 20);
-
-	start_addr = gd->arch.tlb_addr + gd->arch.tlb_size;
-	size -= (gd->arch.tlb_addr + gd->arch.tlb_size);
-
-	while (size > 0) {
-		size_init = min((phys_addr_t)SZ_1G, (phys_addr_t)size);
-		memset((void *)start_addr, 0, size_init);
-		size -= size_init;
-		start_addr += size_init;
-		WATCHDOG_RESET();
-	}
-
-	flush_dcache_all();
-
-	printf("DDRCAL: Scrubbing ECC RAM done.\n");
-
-	dcache_disable();
-
-	printf("DDRCAL: SDRAM-ECC initialized success with %d ms\n",
-	       (u32)get_timer(start));
-}
-
 static int altera_gen5_sdram_of_to_plat(struct udevice *dev)
 {
 	struct altera_gen5_sdram_plat *plat = dev_get_plat(dev);
@@ -678,7 +637,7 @@ static int altera_gen5_sdram_probe(struct udevice *dev)
 		/* Must set USEECCASDATA to 0 if ECC is enabled */
 		clrbits_le32(&sdr_ctrl->static_cfg,
 			     SDR_CTRLGRP_STATICCFG_USEECCASDATA_MASK);
-		sdram_init_ecc_bits(sdram_size);
+		sdram_init_ecc_bits();
 	}
 
 	/* Sanity check ensure correct SDRAM size specified */
