@@ -29,16 +29,16 @@ endif
 
 ifdef CONFIG_TARGET_SOCFPGA_STRATIX10
 obj-y	+= clock_manager_s10.o
+obj-y	+= lowlevel_init_soc64.o
 obj-y	+= mailbox_s10.o
 obj-y	+= misc_s10.o
 obj-y	+= mmu-arm64_s10.o
 obj-y	+= reset_manager_s10.o
+obj-y	+= smmu_s10.o
 obj-y	+= system_manager_s10.o
 obj-y	+= timer_s10.o
 obj-y	+= wrap_pinmux_config_s10.o
 obj-y	+= wrap_pll_config_s10.o
-obj-y	+= smmu_s10.o
-obj-y	+= lowlevel_init_soc64.o
 ifndef CONFIG_SPL_BUILD
 obj-y	+= rsu_s10.o
 obj-y   += rsu.o
@@ -54,16 +54,17 @@ endif
 
 ifdef CONFIG_TARGET_SOCFPGA_AGILEX
 obj-y	+= clock_manager_agilex.o
+obj-y	+= lowlevel_init_soc64.o
 obj-y	+= mailbox_s10.o
 obj-y	+= misc_s10.o
 obj-y	+= mmu-arm64_s10.o
 obj-y	+= reset_manager_s10.o
+obj-$(CONFIG_SECURE_VAB_AUTH)	+= secure_vab.o
+obj-y	+= smmu_s10.o
 obj-y	+= system_manager_s10.o
 obj-y	+= timer_s10.o
 obj-y	+= wrap_pinmux_config_s10.o
 obj-y	+= wrap_pll_config_s10.o
-obj-y	+= smmu_s10.o
-obj-y	+= lowlevel_init_soc64.o
 ifndef CONFIG_SPL_BUILD
 obj-y	+= rsu_s10.o
 obj-y   += rsu.o
