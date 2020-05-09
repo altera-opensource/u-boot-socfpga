@@ -105,6 +105,12 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 #define CONFIG_BOOTARGS "earlycon panic=-1"
 #endif
 
+#ifdef CONFIG_SECURE_VAB_AUTH
+#define CONFIG_BOOTFILE "kernel_vab.itb"
+#else
+#define CONFIG_BOOTFILE "Image"
+#endif
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"qspibootimageaddr=0x020E0000\0" \
 	"qspifdtaddr=0x020D0000\0" \
@@ -115,10 +121,15 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 	"qspiboot=setenv bootargs earlycon root=/dev/mtdblock1 rw " \
 		"rootfstype=jffs2 rootwait;booti ${loadaddr} - ${fdt_addr}\0" \
 	"loadaddr=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
-	"bootfile=Image\0" \
+	"bootfile=" CONFIG_BOOTFILE "\0" \
 	"fdt_addr=8000000\0" \
 	"fdtimage=" CONFIG_DEFAULT_DEVICE_TREE ".dtb\0" \
 	"mmcroot=/dev/mmcblk0p2\0" \
+	"mmcvabboot=setenv bootargs " CONFIG_BOOTARGS \
+		" root=${mmcroot} rw rootwait;" \
+		"bootm ${loadaddr}\0" \
+	"mmcvabload=mmc rescan;" \
+		"load mmc 0:1 ${loadaddr} ${bootfile}\0" \
 	"mmcboot=setenv bootargs " CONFIG_BOOTARGS \
 		" root=${mmcroot} rw rootwait;" \
 		"booti ${loadaddr} - ${fdt_addr}\0" \
