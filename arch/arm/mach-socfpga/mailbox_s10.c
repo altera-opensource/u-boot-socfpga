@@ -19,13 +19,14 @@ static __always_inline int mbox_polling_resp(u32 rout)
 	static const struct socfpga_mailbox *mbox_base =
 					(void *)SOCFPGA_MAILBOX_ADDRESS;
 	u32 rin;
-	unsigned long i = ~0;
+	unsigned long i = 2000;
 
 	while (i) {
 		rin = readl(&mbox_base->rin);
 		if (rout != rin)
 			return 0;
 
+		__udelay(1000);
 		i--;
 	}
 
@@ -173,11 +174,15 @@ static __always_inline int __mbox_send_cmd(u8 id, u32 cmd, u8 is_indirect,
 	writel(1, MBOX_DOORBELL_TO_SDM_REG);
 
 	while (1) {
-		ret = ~0;
+		ret = 1000;
 
 		/* Wait for doorbell from SDM */
-		while (!readl(MBOX_DOORBELL_FROM_SDM_REG) && ret--)
-			;
+		do {
+			if (readl(MBOX_DOORBELL_FROM_SDM_REG))
+				break;
+			__udelay(1000);
+		} while (--ret);
+
 		if (!ret) {
 			return -ETIMEDOUT;
 		}
