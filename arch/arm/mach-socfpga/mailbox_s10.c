@@ -33,6 +33,72 @@ static __always_inline int mbox_polling_resp(u32 rout)
 	return -ETIMEDOUT;
 }
 
+static __always_inline int mbox_is_cmdbuf_full(u32 cin)
+{
+	static const struct socfpga_mailbox *mbox_base =
+					(void *)SOCFPGA_MAILBOX_ADDRESS;
+
+	return (((cin + 1) % MBOX_CMD_BUFFER_SIZE) == readl(&mbox_base->cout));
+}
+
+static __always_inline int mbox_is_cmdbuf_empty(u32 cin)
+{
+	static const struct socfpga_mailbox *mbox_base =
+					(void *)SOCFPGA_MAILBOX_ADDRESS;
+
+	return (((readl(&mbox_base->cout) + 1) % MBOX_CMD_BUFFER_SIZE) == cin);
+}
+
+static __always_inline int mbox_wait_for_cmdbuf_empty(u32 cin)
+{
+	int timeout = 2000;
+
+	while (timeout) {
+		if (mbox_is_cmdbuf_empty(cin))
+			return 0;
+		__udelay(1000);
+		timeout--;
+	}
+
+	return -ETIMEDOUT;
+}
+
+static __always_inline int mbox_write_cmd_buffer(u32 *cin, u32 data,
+						 int *is_cmdbuf_overflow)
+{
+	static const struct socfpga_mailbox *mbox_base =
+					(void *)SOCFPGA_MAILBOX_ADDRESS;
+	int timeout = 1000;
+
+	while (timeout) {
+		if (mbox_is_cmdbuf_full(*cin)) {
+			if (is_cmdbuf_overflow &&
+			    *is_cmdbuf_overflow == 0) {
+				/* Trigger SDM doorbell */
+				writel(1, MBOX_DOORBELL_TO_SDM_REG);
+				*is_cmdbuf_overflow = 1;
+			}
+			__udelay(1000);
+		} else {
+			/* write header to circular buffer */
+			writel(data, &mbox_base->cmd_buf[(*cin)++]);
+			*cin %= MBOX_CMD_BUFFER_SIZE;
+			writel(*cin, &mbox_base->cin);
+			break;
+		}
+		timeout--;
+	}
+
+	if (!timeout)
+		return -ETIMEDOUT;
+
+	/* Wait for the SDM to drain the FIFO command buffer */
+	if (is_cmdbuf_overflow && *is_cmdbuf_overflow)
+		return mbox_wait_for_cmdbuf_empty(*cin);
+
+	return 0;
+}
+
 /* Check for available slot and write to circular buffer.
  * It also update command valid offset (cin) register.
  */
@@ -41,34 +107,29 @@ static __always_inline int mbox_fill_cmd_circular_buff(u32 header, u32 len,
 {
 	static const struct socfpga_mailbox *mbox_base =
 					(void *)SOCFPGA_MAILBOX_ADDRESS;
-	u32 cin;
-	u32 cout;
-	u32 i;
+	int i, ret;
+	int is_cmdbuf_overflow = 0;
+	u32 cin = readl(&mbox_base->cin) % MBOX_CMD_BUFFER_SIZE;
 
-	cin = readl(&mbox_base->cin) % MBOX_CMD_BUFFER_SIZE;
-	cout = readl(&mbox_base->cout) % MBOX_CMD_BUFFER_SIZE;
-
-	/* if command buffer is full or not enough free space
-	   to fit the data */
-	if (((cin + 1) % MBOX_CMD_BUFFER_SIZE) == cout ||
-	    ((MBOX_CMD_BUFFER_SIZE - cin + cout - 1) %
-	     MBOX_CMD_BUFFER_SIZE) < len)
-		return -ENOMEM;
-
-	/* write header to circular buffer */
-	writel(header, &mbox_base->cmd_buf[cin++]);
-	/* wrapping around when it reach the buffer size */
-	cin %= MBOX_CMD_BUFFER_SIZE;
+	ret = mbox_write_cmd_buffer(&cin, header, &is_cmdbuf_overflow);
+	if (ret)
+		return ret;
 
 	/* write arguments */
 	for (i = 0; i < len; i++) {
-		writel(arg[i], &mbox_base->cmd_buf[cin++]);
-		/* wrapping around when it reach the buffer size */
-		cin %= MBOX_CMD_BUFFER_SIZE;
+		is_cmdbuf_overflow = 0;
+		ret = mbox_write_cmd_buffer(&cin, arg[i], &is_cmdbuf_overflow);
+		if (ret)
+			return ret;
 	}
 
-	/* write command valid offset */
-	writel(cin, &mbox_base->cin);
+	/* If SDM doorbell is not triggered after the last data is
+	 * written into mailbox FIFO command buffer, trigger the
+	 * SDM doorbell again to ensure SDM able to read the remaining
+	 * data.
+	 */
+	if (!is_cmdbuf_overflow)
+		writel(1, MBOX_DOORBELL_TO_SDM_REG);
 
 	return 0;
 }
@@ -103,11 +164,7 @@ static __always_inline int __mbox_send_cmd_only(u8 id, u32 cmd,
 						u8 is_indirect, u32 len,
 						u32 *arg)
 {
-	int ret = mbox_prepare_cmd_only(id, cmd, is_indirect, len, arg);
-	/* write doorbell */
-	writel(1, MBOX_DOORBELL_TO_SDM_REG);
-
-	return ret;
+	return mbox_prepare_cmd_only(id, cmd, is_indirect, len, arg);
 }
 
 /* Return number of responses received in buffer */
@@ -164,14 +221,13 @@ static __always_inline int __mbox_send_cmd(u8 id, u32 cmd, u8 is_indirect,
 		status = readl(&mbox_base->status) & MBOX_STATUS_UA_MSK;
 		/* Write urgent command to urgent register */
 		writel(cmd, &mbox_base->urg);
+		/* write doorbell */
+		writel(1, MBOX_DOORBELL_TO_SDM_REG);
 	} else {
 		ret = mbox_prepare_cmd_only(id, cmd, is_indirect, len, arg);
 		if (ret)
 			return ret;
 	}
-
-	/* write doorbell */
-	writel(1, MBOX_DOORBELL_TO_SDM_REG);
 
 	while (1) {
 		ret = 1000;
