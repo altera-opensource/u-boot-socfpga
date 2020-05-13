@@ -1,0 +1,40 @@
+/*
+ * Copyright (C) 2020 Intel Corporation. All rights reserved
+ *
+ * SPDX-License-Identifier: GPL-2.0+
+ */
+
+/dts-v1/;
+
+/ {
+	description = "FIT with VAB signed Linux kernel image and FDT blob";
+	#address-cells = <1>;
+
+	images {
+		kernel {
+			description = "Signed Linux Kernel";
+			data = /incbin/("../../../../signed_Image");
+			type = "kernel";
+			arch = "arm64";
+			os = "linux";
+			compression = "none";
+			load = <0x4080000>;
+			entry = <0x4080000>;
+		};
+		fdt {
+			description = "Signed Linux DTB";
+			data = /incbin/("../../../../signed_linux.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			compression = "none";
+		};
+	};
+	configurations {
+		default = "conf";
+		conf {
+			description = "VAB signed Linux boot configuration";
+			kernel = "kernel";
+			fdt = "fdt";
+		};
+	};
+};
