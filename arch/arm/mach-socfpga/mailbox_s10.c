@@ -305,6 +305,28 @@ static __always_inline int mbox_send_cmd_common(u8 id, u32 cmd, u8 is_indirect,
 	return -EIO;
 }
 
+static __always_inline int mbox_send_cmd_common_retry(u8 id, u32 cmd,
+						      u8 is_indirect,
+						      u32 len, u32 *arg,
+						      u8 urgent,
+						      u32 *resp_buf_len,
+						      u32 *resp_buf)
+{
+	int ret;
+	int i;
+
+	for (i = 0; i < 3; i++) {
+		ret = mbox_send_cmd_common(id, cmd, is_indirect, len, arg,
+					   urgent, resp_buf_len, resp_buf);
+		if (ret == MBOX_RESP_TIMEOUT || ret == MBOX_RESP_DEVICE_BUSY)
+			__udelay(2000); /* wait for 2ms before resend */
+		else
+			break;
+	}
+
+	return ret;
+}
+
 int mbox_init(void)
 {
 	int ret;
@@ -467,10 +489,10 @@ static __always_inline int mbox_get_fpga_config_status_common(u32 cmd)
 	int ret;
 
 	reconfig_status_resp_len = RECONFIG_STATUS_RESPONSE_LEN;
-	ret = mbox_send_cmd_common(MBOX_ID_UBOOT, cmd,
-				   MBOX_CMD_DIRECT, 0, NULL, 0,
-				   &reconfig_status_resp_len,
-				   reconfig_status_resp);
+	ret = mbox_send_cmd_common_retry(MBOX_ID_UBOOT, cmd,
+					 MBOX_CMD_DIRECT, 0, NULL, 0,
+					 &reconfig_status_resp_len,
+					 reconfig_status_resp);
 
 	if (ret)
 		return ret;
@@ -516,16 +538,16 @@ int __secure mbox_get_fpga_config_status_psci(u32 cmd)
 int mbox_send_cmd(u8 id, u32 cmd, u8 is_indirect, u32 len, u32 *arg,
 		  u8 urgent, u32 *resp_buf_len, u32 *resp_buf)
 {
-	return mbox_send_cmd_common(id, cmd, is_indirect, len, arg, urgent,
-			       resp_buf_len, resp_buf);
+	return mbox_send_cmd_common_retry(id, cmd, is_indirect, len, arg,
+					  urgent, resp_buf_len, resp_buf);
 }
 
 int __secure mbox_send_cmd_psci(u8 id, u32 cmd, u8 is_indirect, u32 len,
 				u32 *arg, u8 urgent, u32 *resp_buf_len,
 				u32 *resp_buf)
 {
-	return mbox_send_cmd_common(id, cmd, is_indirect, len, arg, urgent,
-			       resp_buf_len, resp_buf);
+	return mbox_send_cmd_common_retry(id, cmd, is_indirect, len, arg,
+					  urgent, resp_buf_len, resp_buf);
 }
 
 int mbox_hps_stage_notify(u32 execution_stage)
