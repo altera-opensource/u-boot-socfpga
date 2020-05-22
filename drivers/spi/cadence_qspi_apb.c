@@ -693,6 +693,12 @@ int cadence_qspi_apb_write_setup(struct cadence_spi_platdata *plat,
 
 	/* Configure the opcode */
 	reg = op->cmd.opcode << CQSPI_REG_WR_INSTR_OPCODE_LSB;
+
+	if (op->data.buswidth == 8)
+		reg |= CQSPI_INST_TYPE_OCTAL << CQSPI_REG_WR_INSTR_TYPE_DATA_LSB;
+	else if (op->data.buswidth == 4)
+		reg |= CQSPI_INST_TYPE_QUAD << CQSPI_REG_WR_INSTR_TYPE_DATA_LSB;
+
 	writel(reg, plat->regbase + CQSPI_REG_WR_INSTR);
 
 	writel(op->addr.val, plat->regbase + CQSPI_REG_INDIRECTWRSTARTADDR);
