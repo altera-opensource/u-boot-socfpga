@@ -14,8 +14,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define RSU_VERSION_ACMF_ONE		0x00000100
-
 static __always_inline int mbox_polling_resp(u32 rout)
 {
 	static const struct socfpga_mailbox *mbox_base =
@@ -418,8 +416,8 @@ int mbox_rsu_status(u32 *resp_buf, u32 resp_buf_len)
 		return ret;
 
 	if (info->retry_counter != -1)
-		if (!(info->version & RSU_VERSION_ACMF_MASK))
-			info->version |= RSU_VERSION_ACMF_ONE;
+		if (!RSU_VERSION_ACMF_VERSION(info->version))
+			info->version |= FIELD_PREP(RSU_VERSION_ACMF_MASK, 1);
 
 	return ret;
 }
@@ -444,8 +442,8 @@ int __secure mbox_rsu_status_psci(u32 *resp_buf, u32 resp_buf_len)
 		return ret;
 
 	if (info->retry_counter != -1)
-		if (!(info->version & RSU_VERSION_ACMF_MASK))
-			info->version |= RSU_VERSION_ACMF_ONE;
+		if (!RSU_VERSION_ACMF_VERSION(info->version))
+			info->version |= FIELD_PREP(RSU_VERSION_ACMF_MASK, 1);
 
 	return ret;
 }
