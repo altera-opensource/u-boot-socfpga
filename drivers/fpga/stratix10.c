@@ -104,7 +104,7 @@ static int reconfig_status_polling_resp(void)
 		ret = mbox_get_fpga_config_status(MBOX_RECONFIG_STATUS);
 		if (ret) {
 			if (ret != MBOX_CFGSTAT_STATE_CONFIG) {
-				error("Failure in reconfig status mailbox "
+				pr_err("Failure in reconfig status mailbox "
 				      "command!\n");
 				return ret;
 			}

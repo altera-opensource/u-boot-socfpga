@@ -48,7 +48,7 @@ static int xhci_usb_ofdata_to_platdata(struct udevice *dev)
 	 */
 	plat->hcd_base = devfdt_get_addr(dev);
 	if (plat->hcd_base == FDT_ADDR_T_NONE) {
-		error("Can't get the XHCI register base address\n");
+		pr_err("Can't get the XHCI register base address\n");
 		return -ENXIO;
 	}
 
@@ -62,7 +62,7 @@ static int xhci_usb_ofdata_to_platdata(struct udevice *dev)
 	}
 
 	if (plat->phy_base == FDT_ADDR_T_NONE) {
-		error("Can't get the usbphy register address\n");
+		pr_err("Can't get the usbphy register address\n");
 		return -ENXIO;
 	}
 
@@ -119,7 +119,7 @@ static int rockchip_xhci_core_init(struct rockchip_xhci *rkxhci,
 
 	ret = dwc3_core_init(rkxhci->dwc3_reg);
 	if (ret) {
-		error("failed to initialize core\n");
+		pr_err("failed to initialize core\n");
 		return ret;
 	}
 
@@ -151,14 +151,14 @@ static int xhci_usb_probe(struct udevice *dev)
 	if (plat->vbus_supply) {
 		ret = regulator_set_enable(plat->vbus_supply, true);
 		if (ret) {
-			error("XHCI: failed to set VBus supply\n");
+			pr_err("XHCI: failed to set VBus supply\n");
 			return ret;
 		}
 	}
 
 	ret = rockchip_xhci_core_init(ctx, dev);
 	if (ret) {
-		error("XHCI: failed to initialize controller\n");
+		pr_err("XHCI: failed to initialize controller\n");
 		return ret;
 	}
 
@@ -181,7 +181,7 @@ static int xhci_usb_remove(struct udevice *dev)
 	if (plat->vbus_supply) {
 		ret = regulator_set_enable(plat->vbus_supply, false);
 		if (ret)
-			error("XHCI: failed to set VBus supply\n");
+			pr_err("XHCI: failed to set VBus supply\n");
 	}
 
 	return ret;
