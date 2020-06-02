@@ -142,10 +142,6 @@ static __always_inline int mbox_prepare_cmd_only(u8 id, u32 cmd,
 	u32 header;
 	int ret;
 
-	/* Total length is command + argument length */
-	if ((len + 1) > MBOX_CMD_BUFFER_SIZE)
-		return -EINVAL;
-
 	if (cmd > MBOX_MAX_CMD_INDEX)
 		return -EINVAL;
 
