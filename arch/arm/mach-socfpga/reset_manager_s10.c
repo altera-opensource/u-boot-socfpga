@@ -12,6 +12,17 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define POLL_FOR_ZERO(expr, timeout_ms)		\
+	{					\
+		int timeout = (timeout_ms);	\
+		while ((expr)) {		\
+			if (!timeout)		\
+				break;		\
+			timeout--;		\
+			__udelay(1000);		\
+		}				\
+	}
+
 /* Assert or de-assert SoCFPGA reset manager reset. */
 void socfpga_per_reset(u32 reset, int set)
 {
@@ -69,8 +80,8 @@ static __always_inline void socfpga_bridges_reset_common(int enable)
 		clrbits_le32(&reset_manager_base->brgmodrst, ~0);
 
 		/* Poll until all idleack to 0 */
-		while (readl(&system_manager_base->noc_idleack))
-			;
+		POLL_FOR_ZERO(readl(&system_manager_base->noc_idleack),
+			      300);
 	} else {
 		/* set idle request to all bridges */
 		writel(~0, &system_manager_base->noc_idlereq_set);
@@ -79,14 +90,14 @@ static __always_inline void socfpga_bridges_reset_common(int enable)
 		writel(1, &system_manager_base->noc_timeout);
 
 		/* Poll until all idleack to 1 */
-		while ((readl(&system_manager_base->noc_idleack) ^
-			(SYSMGR_NOC_H2F_MSK | SYSMGR_NOC_LWH2F_MSK)))
-			;
+		POLL_FOR_ZERO(readl(&system_manager_base->noc_idleack) ^
+			      (SYSMGR_NOC_H2F_MSK | SYSMGR_NOC_LWH2F_MSK),
+			      300);
 
 		/* Poll until all idlestatus to 1 */
-		while ((readl(&system_manager_base->noc_idlestatus) ^
-			(SYSMGR_NOC_H2F_MSK | SYSMGR_NOC_LWH2F_MSK)))
-			;
+		POLL_FOR_ZERO(readl(&system_manager_base->noc_idlestatus) ^
+			      (SYSMGR_NOC_H2F_MSK | SYSMGR_NOC_LWH2F_MSK),
+			      300);
 
 		/* Reset all bridges (except NOR DDR scheduler & F2S) */
 		setbits_le32(&reset_manager_base->brgmodrst,
