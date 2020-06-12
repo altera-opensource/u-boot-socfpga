@@ -101,14 +101,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 #define CONFIG_BOOTARGS "earlycon panic=-1"
 #endif
 
-#ifdef CONFIG_QSPI_BOOT
-#define CONFIG_BOOTCOMMAND "sf probe; run qspiload;run linux_qspi_enable;" \
-			   "rsu dtb; run qspiboot"
-#else
-#define CONFIG_BOOTCOMMAND "run fatscript; run mmcload;run linux_qspi_enable;" \
-			   "rsu dtb; run mmcboot"
-#endif
-
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"qspibootimageaddr=0x020E0000\0" \
 	"qspifdtaddr=0x020D0000\0" \
