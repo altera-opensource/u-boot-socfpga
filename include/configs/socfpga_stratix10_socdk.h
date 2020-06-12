@@ -91,6 +91,28 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 #endif /* CONFIG_CADENCE_QSPI */
 
 /*
+ * NAND support
+ */
+#ifdef CONFIG_NAND_DENALI
+#define CONFIG_SPL_NAND_RAW_ONLY
+#define CONFIG_SYS_NAND_ONFI_DETECTION
+#define CONFIG_SYS_MAX_NAND_DEVICE	1
+
+#define CONFIG_SYS_NAND_U_BOOT_SIZE	(1 * 1024 * 1024)
+#define CONFIG_SYS_NAND_U_BOOT_DST	CONFIG_SYS_TEXT_BASE
+
+/* Environment for NAND boot */
+#if defined(CONFIG_ENV_IS_IN_NAND)
+#undef CONFIG_ENV_OFFSET
+#undef CONFIG_ENV_SIZE
+#define CONFIG_ENV_OFFSET		0x00200000
+#define CONFIG_ENV_SIZE			(128 * 1024)
+#define CONFIG_ENV_OFFSET_REDUND	(CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
+#define CONFIG_ENV_SIZE_REDUND		CONFIG_ENV_SIZE
+#endif
+#endif /* CONFIG_NAND_DENALI */
+
+/*
  * Boot arguments passed to the boot command. The value of
  * CONFIG_BOOTARGS goes into the environment value "bootargs".
  * Do note the value will override also the chosen node in FDT blob.
@@ -122,6 +144,7 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 		"load mmc 0:1 ${loadaddr} ${bootfile};" \
 		"load mmc 0:1 ${fdt_addr} ${fdtimage}\0" \
 	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
+	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
 	"linux_qspi_enable=if sf probe; then " \
 		"echo Enabling QSPI at Linux DTB...;" \
 		"fdt addr ${fdt_addr}; fdt resize;" \
@@ -134,6 +157,11 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 	"scriptfile=u-boot.scr\0" \
 	"fatscript=if fatload mmc 0:1 ${scriptaddr} ${scriptfile};" \
 		   "then source ${scriptaddr}; fi\0" \
+	"nandroot=/dev/mtdblock5\0" \
+	"nandload=nand read ${loadaddr} kernel; nand read ${fdt_addr} dtb\0" \
+	"nandboot=setenv bootargs " CONFIG_BOOTARGS \
+			" root=${nandroot} rw rootwait rootfstype=jffs2; " \
+			"booti ${loadaddr} - ${fdt_addr}\0" \
 	"socfpga_legacy_reset_compat=1\0"
 
 /*
