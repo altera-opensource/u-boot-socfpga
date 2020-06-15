@@ -1410,7 +1410,7 @@ int nand_spl_load_image(u32 offset, u32 len, void *dst)
 			return err;
 
 		count -= page_align_overhead;
-		count = min(len, count);
+		count = min((size_t)len, (size_t)count);
 		memcpy(dst, page_buffer + page_align_overhead, count);
 		free(page_buffer);
 
