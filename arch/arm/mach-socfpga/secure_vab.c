@@ -18,29 +18,21 @@
 #define CHUNKSZ_PER_WD_RESET		(256 * 1024)
 
 /*
- * Search for the VAB certificate from the end of the image and
- * return the actual image size (excluding the VAB certificate).
+ * Read the length of the VAB certificate from the end of image
+ * and calculate the actual image size (excluding the VAB certificate).
  */
 static size_t get_img_size(u8 *img_buf, size_t img_buf_sz)
 {
 	u8 *img_buf_end = img_buf + img_buf_sz;
-	u8 *p = img_buf_end - VAB_CERT_HEADER_SIZE;
+	u32 cert_sz = get_unaligned_le32(img_buf_end - sizeof(u32));
+	u8 *p = img_buf_end - cert_sz - sizeof(u32);
 
-	while (p >= img_buf) {
-		if (get_unaligned_le32(p) == SDM_CERT_MAGIC_NUM &&
-		    get_unaligned_le32(p + VAB_CERT_MAGIC_OFFSET) ==
-		    FCS_HPS_VAB_MAGIC_NUM) {
-			return (size_t)(p - img_buf);
-		}
-		p--;
+	/* Ensure p is pointing within the img_buf */
+	if (p < img_buf || p > (img_buf_end - VAB_CERT_HEADER_SIZE))
+		return 0;
 
-		/*
-		 * Give up searching for VAB certitifcate if over
-		 * the maximum size of the certificate
-		 */
-		if (img_buf_end - p > MAX_CERT_SIZE)
-			break;
-	}
+	if (get_unaligned_le32(p) == SDM_CERT_MAGIC_NUM)
+		return (size_t)(p - img_buf);
 
 	return 0;
 }
@@ -92,7 +84,7 @@ void board_fit_image_post_process(void **p_image, size_t *p_size)
 
 	mbox_data_addr = img_addr + img_sz - sizeof(u32);
 	/* Size in word (32bits) */
-	mbox_data_sz = (ALIGN(*p_size - img_sz + sizeof(u32), 4)) >> 2;
+	mbox_data_sz = (ALIGN(*p_size - img_sz, 4)) >> 2;
 
 	debug("mbox_data_addr = 0x%016llx\n", mbox_data_addr);
 	debug("mbox_data_sz = %ld\n", mbox_data_sz);
