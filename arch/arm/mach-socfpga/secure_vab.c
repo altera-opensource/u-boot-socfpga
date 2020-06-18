@@ -167,5 +167,11 @@ void board_prep_linux(bootm_headers_t *images)
 		printf("Please use FIT with VAB signed images!\n");
 		hang();
 	}
+
+	env_set_hex("fdt_addr", (ulong)images->ft_addr);
+	debug("images->ft_addr = 0x%08lx\n", (ulong)images->ft_addr);
+
+	if (run_command(env_get("linux_qspi_enable"), 0))
+		printf("Warning: Failed to set Linux DTB QSPI frequency!\n");
 }
 #endif
