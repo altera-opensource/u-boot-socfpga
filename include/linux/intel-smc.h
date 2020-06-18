@@ -381,4 +381,25 @@ INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_FPGA_CONFIG_COMPLETED_WRITE)
 #define INTEL_SIP_SMC_RSU_DCMF_VERSION \
 	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_RSU_DCMF_VERSION)
 
+/*
+ * Request INTEL_SIP_SMC_RSU_MAX_RETRY
+ *
+ * Sync call used by service driver at EL1 to query max_retry parameter
+ *
+ * Call register usage:
+ * a0 INTEL_SIP_SMC_RSU_MAX_RETRY
+ * a1-7 not used
+ *
+ * Return status
+ * a0 INTEL_SIP_SMC_STATUS_OK
+ * a1 max_retry
+ *
+ * Or
+ *
+ * a0 INTEL_SIP_SMC_RSU_ERROR
+ */
+#define INTEL_SIP_SMC_FUNCID_RSU_MAX_RETRY 18
+#define INTEL_SIP_SMC_RSU_MAX_RETRY \
+	INTEL_SIP_SMC_FAST_CALL_VAL(INTEL_SIP_SMC_FUNCID_RSU_MAX_RETRY)
+
 #endif
