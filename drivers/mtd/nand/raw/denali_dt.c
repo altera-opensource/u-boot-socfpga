@@ -154,8 +154,8 @@ static int denali_dt_probe(struct udevice *dev)
 
 		/*
 		 * When the reset is deasserted, the initialization sequence is
-		 * kicked (bootstrap process). The driver must wait until it is
-		 * finished. Otherwise, it will result in unpredictable behavior.
+		 * kicked. The driver must wait until it is finished. Otherwise,
+		 * it will result in unpredictable behavior.
 		 */
 		ret = denali_wait_reset_complete(denali);
 		if (ret) {
