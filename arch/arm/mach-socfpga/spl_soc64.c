@@ -62,7 +62,7 @@ u32 spl_boot_device(void)
 	switch (device_get_uclass_id(dev)) {
 	case UCLASS_SPI_FLASH:
 		return BOOT_DEVICE_SPI;
-	case UCLASS_MISC:
+	case UCLASS_MTD:
 		return BOOT_DEVICE_NAND;
 	case UCLASS_MMC:
 		return BOOT_DEVICE_MMC1;
