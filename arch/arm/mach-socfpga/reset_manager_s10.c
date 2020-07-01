@@ -14,6 +14,17 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define POLL_FOR_ZERO(expr, timeout_ms)		\
+	{					\
+		int timeout = (timeout_ms);	\
+		while ((expr)) {		\
+			if (!timeout)		\
+				break;		\
+			timeout--;		\
+			__udelay(1000);		\
+		}				\
+	}
+
 /* Assert or de-assert SoCFPGA reset manager reset. */
 void socfpga_per_reset(u32 reset, int set)
 {
@@ -66,9 +77,8 @@ void socfpga_bridges_reset(int enable)
 			     ~0);
 
 		/* Poll until all idleack to 0 */
-		while (readl(socfpga_get_sysmgr_addr() +
-			     SYSMGR_SOC64_NOC_IDLEACK))
-			;
+		POLL_FOR_ZERO(readl(socfpga_get_sysmgr_addr() +
+				    SYSMGR_SOC64_NOC_IDLEACK), 300);
 	} else {
 		/* set idle request to all bridges */
 		writel(~0,
@@ -79,14 +89,16 @@ void socfpga_bridges_reset(int enable)
 		writel(1, socfpga_get_sysmgr_addr() + SYSMGR_SOC64_NOC_TIMEOUT);
 
 		/* Poll until all idleack to 1 */
-		while ((readl(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_NOC_IDLEACK) ^
-			(SYSMGR_NOC_H2F_MSK | SYSMGR_NOC_LWH2F_MSK)))
-			;
+		POLL_FOR_ZERO(readl(socfpga_get_sysmgr_addr() +
+				    SYSMGR_SOC64_NOC_IDLEACK) ^
+			      (SYSMGR_NOC_H2F_MSK | SYSMGR_NOC_LWH2F_MSK),
+			      300);
 
 		/* Poll until all idlestatus to 1 */
-		while ((readl(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_NOC_IDLESTATUS) ^
-			(SYSMGR_NOC_H2F_MSK | SYSMGR_NOC_LWH2F_MSK)))
-			;
+		POLL_FOR_ZERO(readl(socfpga_get_sysmgr_addr() +
+				    SYSMGR_SOC64_NOC_IDLESTATUS) ^
+			      (SYSMGR_NOC_H2F_MSK | SYSMGR_NOC_LWH2F_MSK),
+			      300);
 
 		/* Reset all bridges (except NOR DDR scheduler & F2S) */
 		setbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_BRGMODRST,
