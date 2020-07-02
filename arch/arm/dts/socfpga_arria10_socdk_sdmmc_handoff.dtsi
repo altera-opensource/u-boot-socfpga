@@ -177,7 +177,7 @@
 				<0x000000a0 0x0000000f>,	/* Register: pinmux_shared_io_q4_5 */
 				<0x000000a4 0x0000000f>,	/* Register: pinmux_shared_io_q4_6 */
 				<0x000000a8 0x0000000a>,	/* Register: pinmux_shared_io_q4_7 */
-				<0x000000ac 0x0000000a>,	/* Register: pinmux_shared_io_q4_8 */
+				<0x000000ac 0x0000000f>,	/* Register: pinmux_shared_io_q4_8 */
 				<0x000000b0 0x0000000c>,	/* Register: pinmux_shared_io_q4_9 */
 				<0x000000b4 0x0000000c>,	/* Register: pinmux_shared_io_q4_10 */
 				<0x000000b8 0x0000000c>,	/* Register: pinmux_shared_io_q4_11 */
