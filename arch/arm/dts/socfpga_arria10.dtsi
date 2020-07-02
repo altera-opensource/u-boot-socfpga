@@ -511,6 +511,7 @@
 			#size-cells = <0>;
 			compatible = "snps,dw-apb-gpio";
 			reg = <0xffc02900 0x100>;
+			resets = <&rst GPIO0_RESET>;
 			status = "disabled";
 
 			porta: gpio-controller@0 {
@@ -531,6 +532,7 @@
 			#size-cells = <0>;
 			compatible = "snps,dw-apb-gpio";
 			reg = <0xffc02a00 0x100>;
+			resets = <&rst GPIO1_RESET>;
 			status = "disabled";
 
 			portb: gpio-controller@0 {
@@ -551,6 +553,7 @@
 			#size-cells = <0>;
 			compatible = "snps,dw-apb-gpio";
 			reg = <0xffc02b00 0x100>;
+			resets = <&rst GPIO2_RESET>;
 			status = "disabled";
 
 			portc: gpio-controller@0 {
