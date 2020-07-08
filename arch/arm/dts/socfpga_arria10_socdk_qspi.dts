@@ -7,10 +7,11 @@
  */
 
 /dts-v1/;
+#include "socfpga_arria10_socdk_qspi_handoff.h"
 #include "socfpga_arria10_socdk.dtsi"
 #include "socfpga_arria10_socdk-u-boot.dtsi"
+#include "socfpga_arria10-handoff.dtsi"
 #include "socfpga_arria10_handoff_u-boot.dtsi"
-#include "socfpga_arria10_socdk_qspi_handoff.dtsi"
 
 / {
 	aliases {
