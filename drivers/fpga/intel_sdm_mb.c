@@ -117,10 +117,11 @@ static int send_bitstream(const void *rbf_data, size_t rbf_size)
 int intel_sdm_mb_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size)
 {
 	int ret;
+	u64 arg = 1;
 
 	debug("Invoking FPGA_CONFIG_START...\n");
 
-	ret = invoke_smc(INTEL_SIP_SMC_FPGA_CONFIG_START, NULL, 0, NULL, 0);
+	ret = invoke_smc(INTEL_SIP_SMC_FPGA_CONFIG_START, &arg, 1, NULL, 0);
 
 	if (ret) {
 		puts("Failure in RECONFIG mailbox command!\n");
