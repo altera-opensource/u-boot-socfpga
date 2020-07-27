@@ -91,7 +91,9 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
  * NAND support
  */
 #ifdef CONFIG_NAND_DENALI
+#ifndef CONFIG_SPL_FIT
 #define CONFIG_SPL_NAND_RAW_ONLY
+#endif
 #define CONFIG_SYS_NAND_ONFI_DETECTION
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 
