@@ -171,7 +171,9 @@ void board_prep_linux(bootm_headers_t *images)
 	env_set_hex("fdt_addr", (ulong)images->ft_addr);
 	debug("images->ft_addr = 0x%08lx\n", (ulong)images->ft_addr);
 
+#ifdef CONFIG_CADENCE_QSPI
 	if (run_command(env_get("linux_qspi_enable"), 0))
 		printf("Warning: Failed to set Linux DTB QSPI frequency!\n");
+#endif
 }
 #endif
