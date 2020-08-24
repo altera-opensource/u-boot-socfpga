@@ -920,6 +920,76 @@ static int display_max_retry(int argc, char * const argv[])
 	return CMD_RET_SUCCESS;
 }
 
+static int create_empty_cpb(int argc, char * const argv[])
+{
+	int ret;
+
+	if (argc != 1)
+		return CMD_RET_USAGE;
+
+	if (!initialized) {
+		if (rsu_init(NULL))
+			return CMD_RET_FAILURE;
+
+		initialized = 1;
+	}
+
+	ret = rsu_create_empty_cpb();
+
+	if (ret < 0)
+		return CMD_RET_FAILURE;
+
+	return CMD_RET_SUCCESS;
+}
+
+static int restore_cpb(int argc, char * const argv[])
+{
+	int ret;
+	u64 addr;
+	char *endp;
+
+	if (argc != 2)
+		return CMD_RET_USAGE;
+
+	if (!initialized) {
+		if (rsu_init(NULL))
+			return CMD_RET_FAILURE;
+
+		initialized = 1;
+	}
+
+	addr = simple_strtoul(argv[1], &endp, 16);
+	ret = rsu_restore_cpb(addr);
+	if (ret < 0)
+		return CMD_RET_FAILURE;
+
+	return CMD_RET_SUCCESS;
+}
+
+static int save_cpb(int argc, char * const argv[])
+{
+	int ret;
+	u64 addr;
+	char *endp;
+
+	if (argc != 2)
+		return CMD_RET_USAGE;
+
+	if (!initialized) {
+		if (rsu_init(NULL))
+			return CMD_RET_FAILURE;
+
+		initialized = 1;
+	}
+
+	addr =  simple_strtoul(argv[1], &endp, 16);
+	ret = rsu_save_cpb(addr);
+	if (ret < 0)
+		return CMD_RET_FAILURE;
+
+	return CMD_RET_SUCCESS;
+}
+
 struct func_t {
 	const char *cmd_string;
 	int (*func_ptr)(int cmd_argc, char * const cmd_argv[]);
@@ -953,7 +1023,10 @@ static const struct func_t rsu_func_t[] = {
 	{"reset_retry_counter", reset_retry_counter},
 	{"display_dcmf_version", display_dcmf_version},
 	{"display_dcmf_status", display_dcmf_status},
-	{"display_max_retry", display_max_retry}
+	{"display_max_retry", display_max_retry},
+	{"create_empty_cpb", create_empty_cpb},
+	{"restore_cpb", restore_cpb},
+	{"save_cpb", save_cpb}
 };
 
 int do_rsu(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
@@ -1011,5 +1084,8 @@ U_BOOT_CMD(
 	"display_dcmf_version - display DCMF versions and store them for SMC handler usage\n"
 	"display_dcmf_status - display DCMF status and store it for SMC handler usage\n"
 	"display_max_retry - display max_retry parameter, and store it for SMC handler usage\n"
+	"create_empty_cpb - create a empty CPB\n"
+	"restore_cpb <address> - restore CPB from an address\n"
+	"save_cpb <address> - save CPB to an address\n"
 	""
 );

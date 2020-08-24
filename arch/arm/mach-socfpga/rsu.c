@@ -55,6 +55,16 @@ void rsu_exit(void)
 }
 
 /**
+ * rsu_cpb_corrupted_info() - output warning info to user
+ */
+void rsu_cpb_corrupted_info(void)
+{
+	rsu_log(RSU_ERR, "corrupted CPB --");
+	rsu_log(RSU_ERR, "run rsu create_empty_cpb");
+	rsu_log(RSU_ERR, "or rsu restore_cpb <address> first\n");
+};
+
+/**
  * rsu_slot_count() - get the number of slots defined
  *
  * Returns: the number of defined slots
@@ -126,6 +136,11 @@ int rsu_slot_get_info(int slot, struct rsu_slot_info *info)
 	if (!info)
 		return -EARGS;
 
+	if (ll_intf->cpb_ops.corrupted()) {
+		rsu_cpb_corrupted_info();
+		return -ECORRUPTED_CPB;
+	}
+
 	if (slot < 0 || slot >= rsu_slot_count()) {
 		rsu_log(RSU_ERR, "invalid slot number\n");
 		return -ESLOTNUM;
@@ -187,6 +202,11 @@ int rsu_slot_priority(int slot)
 	if (!ll_intf)
 		return -EINTF;
 
+	if (ll_intf->cpb_ops.corrupted()) {
+		rsu_cpb_corrupted_info();
+		return -ECORRUPTED_CPB;
+	}
+
 	if (slot < 0 || slot >= rsu_slot_count()) {
 		rsu_log(RSU_ERR, "invalid slot number\n");
 		return -ESLOTNUM;
@@ -214,6 +234,11 @@ int rsu_slot_erase(int slot)
 
 	if (!ll_intf)
 		return -EINTF;
+
+	if (ll_intf->cpb_ops.corrupted()) {
+		rsu_cpb_corrupted_info();
+		return -ECORRUPTED_CPB;
+	}
 
 	if (slot < 0 || slot >= rsu_slot_count()) {
 		rsu_log(RSU_ERR, "invalid slot number\n");
@@ -260,6 +285,11 @@ int rsu_slot_program_buf(int slot, void *buf, int size)
 
 	if (!ll_intf)
 		return -EINTF;
+
+	if (ll_intf->cpb_ops.corrupted()) {
+		rsu_cpb_corrupted_info();
+		return -ECORRUPTED_CPB;
+	}
 
 	if (rsu_cb_buf_init(buf, size)) {
 		rsu_log(RSU_ERR, "Bad buf/size arguments\n");
@@ -349,6 +379,11 @@ int rsu_slot_verify_buf(int slot, void *buf, int size)
 	if (!ll_intf)
 		return -EINTF;
 
+	if (ll_intf->cpb_ops.corrupted()) {
+		rsu_cpb_corrupted_info();
+		return -ECORRUPTED_CPB;
+	}
+
 	if (slot < 0 || slot >= rsu_slot_count()) {
 		rsu_log(RSU_ERR, "invalid slot number\n");
 		return -ESLOTNUM;
@@ -424,6 +459,11 @@ int rsu_slot_enable(int slot)
 	if (!ll_intf)
 		return -EINTF;
 
+	if (ll_intf->cpb_ops.corrupted()) {
+		rsu_cpb_corrupted_info();
+		return -ECORRUPTED_CPB;
+	}
+
 	if (slot < 0 || slot >= rsu_slot_count()) {
 		rsu_log(RSU_ERR, "invalid slot number\n");
 		return -ESLOTNUM;
@@ -458,6 +498,11 @@ int rsu_slot_disable(int slot)
 	if (!ll_intf)
 		return -EINTF;
 
+	if (ll_intf->cpb_ops.corrupted()) {
+		rsu_cpb_corrupted_info();
+		return -ECORRUPTED_CPB;
+	}
+
 	if (slot < 0 || slot >= rsu_slot_count()) {
 		rsu_log(RSU_ERR, "invalid slot number\n");
 		return -ESLOTNUM;
@@ -489,6 +534,16 @@ int rsu_slot_load(int slot)
 
 	if (!ll_intf)
 		return -EINTF;
+
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
+
+	if (ll_intf->cpb_ops.corrupted()) {
+		rsu_cpb_corrupted_info();
+		return -ECORRUPTED_CPB;
+	}
 
 	if (slot < 0 || slot >= rsu_slot_count()) {
 		rsu_log(RSU_ERR, "invalid slot number\n");
@@ -591,6 +646,11 @@ int rsu_slot_delete(int slot)
 
 	if (!ll_intf)
 		return -EINTF;
+
+	if (ll_intf->cpb_ops.corrupted()) {
+		rsu_cpb_corrupted_info();
+		return -ECORRUPTED_CPB;
+	}
 
 	if (slot < 0 || slot >= rsu_slot_count()) {
 		rsu_log(RSU_ERR, "Invalid slot number\n");
@@ -880,4 +940,48 @@ int rsu_dcmf_status(u16 *status)
 		return ret;
 
 	return copy_dcmf_status_to_smc(status);
+}
+
+/**
+ * rsu_create_empty_cpb() - create a CPB with header field only
+ *
+ * This function is used to create a empty configuration pointer block
+ * (CPB) with the header field only.
+ *
+ * Returns: 0 on success, or error code
+ */
+int rsu_create_empty_cpb(void)
+{
+	return ll_intf->cpb_ops.empty();
+}
+
+/**
+ * rsu_restore_cpb() - restore the cpb from an address
+ * @address: the address which cpb will be restored from.
+ *
+ * This function is used to restore a saved CPB from an address.
+ *
+ * Returns: 0 on success, or error code
+ */
+int rsu_restore_cpb(u64 address)
+{
+	return ll_intf->cpb_ops.restore(address);
+}
+
+/**
+ * rsu_save_cpb() - save cpb to the address
+ * @address: the address which cpb will be saved to.
+ *
+ * This function is used to save CPB to an address.
+ *
+ * Returns: 0 on success, or error code
+ */
+int rsu_save_cpb(u64 address)
+{
+	if (ll_intf->cpb_ops.corrupted()) {
+		rsu_cpb_corrupted_info();
+		return -ECORRUPTED_CPB;
+	}
+
+	return ll_intf->cpb_ops.save(address);
 }
