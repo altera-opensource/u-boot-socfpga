@@ -55,6 +55,15 @@ void rsu_exit(void)
 }
 
 /**
+ * rsu_spt_corrupted_info() - output warning info to user
+ */
+void rsu_spt_corrupted_info(void)
+{
+	rsu_log(RSU_ERR, "corrupted SPT --");
+	rsu_log(RSU_ERR, "run rsu restore_spt <address> first\n");
+}
+
+/**
  * rsu_cpb_corrupted_info() - output warning info to user
  */
 void rsu_cpb_corrupted_info(void)
@@ -77,6 +86,11 @@ int rsu_slot_count(void)
 
 	if (!ll_intf)
 		return -EINTF;
+
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
 
 	partitions = ll_intf->partition.count();
 
@@ -102,6 +116,11 @@ int rsu_slot_by_name(char *name)
 
 	if (!ll_intf)
 		return -EINTF;
+
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
 
 	if (!name)
 		return -EARGS;
@@ -135,6 +154,11 @@ int rsu_slot_get_info(int slot, struct rsu_slot_info *info)
 
 	if (!info)
 		return -EARGS;
+
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
 
 	if (ll_intf->cpb_ops.corrupted()) {
 		rsu_cpb_corrupted_info();
@@ -174,6 +198,11 @@ int rsu_slot_size(int slot)
 	if (!ll_intf)
 		return -EINTF;
 
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
+
 	if (slot < 0 || slot >= rsu_slot_count()) {
 		rsu_log(RSU_ERR, "invalid slot number\n");
 		return -ESLOTNUM;
@@ -202,9 +231,19 @@ int rsu_slot_priority(int slot)
 	if (!ll_intf)
 		return -EINTF;
 
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
+
 	if (ll_intf->cpb_ops.corrupted()) {
 		rsu_cpb_corrupted_info();
 		return -ECORRUPTED_CPB;
+	}
+
+	if (slot < 0 || slot >= rsu_slot_count()) {
+		rsu_log(RSU_ERR, "invalid slot number\n");
+		return -ESLOTNUM;
 	}
 
 	if (slot < 0 || slot >= rsu_slot_count()) {
@@ -234,6 +273,11 @@ int rsu_slot_erase(int slot)
 
 	if (!ll_intf)
 		return -EINTF;
+
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
 
 	if (ll_intf->cpb_ops.corrupted()) {
 		rsu_cpb_corrupted_info();
@@ -285,6 +329,11 @@ int rsu_slot_program_buf(int slot, void *buf, int size)
 
 	if (!ll_intf)
 		return -EINTF;
+
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
 
 	if (ll_intf->cpb_ops.corrupted()) {
 		rsu_cpb_corrupted_info();
@@ -341,6 +390,11 @@ int rsu_slot_program_buf_raw(int slot, void *buf, int size)
 	if (!ll_intf)
 		return -EINTF;
 
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
+
 	if (slot < 0 || slot >= rsu_slot_count()) {
 		rsu_log(RSU_ERR, "invalid slot number\n");
 		return -ESLOTNUM;
@@ -378,6 +432,11 @@ int rsu_slot_verify_buf(int slot, void *buf, int size)
 
 	if (!ll_intf)
 		return -EINTF;
+
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
 
 	if (ll_intf->cpb_ops.corrupted()) {
 		rsu_cpb_corrupted_info();
@@ -423,6 +482,11 @@ int rsu_slot_verify_buf_raw(int slot, void *buf, int size)
 	if (!ll_intf)
 		return -EINTF;
 
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
+
 	if (slot < 0 || slot >= rsu_slot_count()) {
 		rsu_log(RSU_ERR, "invalid slot number\n");
 		return -ESLOTNUM;
@@ -458,6 +522,11 @@ int rsu_slot_enable(int slot)
 
 	if (!ll_intf)
 		return -EINTF;
+
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
 
 	if (ll_intf->cpb_ops.corrupted()) {
 		rsu_cpb_corrupted_info();
@@ -497,6 +566,11 @@ int rsu_slot_disable(int slot)
 
 	if (!ll_intf)
 		return -EINTF;
+
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
 
 	if (ll_intf->cpb_ops.corrupted()) {
 		rsu_cpb_corrupted_info();
@@ -582,6 +656,11 @@ int rsu_slot_load_factory(void)
 	if (!ll_intf)
 		return -EINTF;
 
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
+
 	partitions = ll_intf->partition.count();
 	for (part_num = 0; part_num < partitions; part_num++) {
 		if (!strcmp(name, ll_intf->partition.name(part_num)))
@@ -610,6 +689,11 @@ int rsu_slot_rename(int slot, char *name)
 
 	if (!ll_intf)
 		return -EINTF;
+
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
 
 	if (slot < 0 || slot >= rsu_slot_count()) {
 		rsu_log(RSU_ERR, "invalid slot number\n");
@@ -646,6 +730,11 @@ int rsu_slot_delete(int slot)
 
 	if (!ll_intf)
 		return -EINTF;
+
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
 
 	if (ll_intf->cpb_ops.corrupted()) {
 		rsu_cpb_corrupted_info();
@@ -690,6 +779,11 @@ int rsu_slot_create(char *name, u64 address, unsigned int size)
 {
 	if (!ll_intf)
 		return -EINTF;
+
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
 
 	if (rsu_misc_is_rsvd_name(name)) {
 		rsu_log(RSU_ERR, "Partition create uses a reserved name\n");
@@ -984,4 +1078,35 @@ int rsu_save_cpb(u64 address)
 	}
 
 	return ll_intf->cpb_ops.save(address);
+}
+
+/**
+ * rsu_restore_spt() - restore the spt from an address
+ * @address: the address which spt will be restored from.
+ *
+ * This function is used to restore a saved SPT from an address.
+ *
+ * Returns: 0 on success, or error code
+ */
+int rsu_restore_spt(u64 address)
+{
+	return ll_intf->spt_ops.restore(address);
+}
+
+/**
+ * rsu_save_spt() - save spt to the address
+ * @address: the address which spt will be saved to.
+ *
+ * This function is used to save SPT to an address.
+ *
+ * Returns: 0 on success, or error code
+ */
+int rsu_save_spt(u64 address)
+{
+	if (ll_intf->spt_ops.corrupted()) {
+		rsu_spt_corrupted_info();
+		return -ECORRUPTED_SPT;
+	}
+
+	return ll_intf->spt_ops.save(address);
 }
