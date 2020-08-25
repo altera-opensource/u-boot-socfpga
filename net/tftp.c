@@ -141,7 +141,8 @@ static unsigned short tftp_block_size_option = CONFIG_TFTP_BLOCKSIZE;
 
 static inline int store_block(int block, uchar *src, unsigned int len)
 {
-	ulong offset = block * tftp_block_size + tftp_block_wrap_offset;
+	ulong offset = block * tftp_block_size + tftp_block_wrap_offset -
+			tftp_block_size;
 	ulong newsize = offset + len;
 	ulong store_addr = tftp_load_addr + offset;
 #ifdef CONFIG_SYS_DIRECT_FLASH_TFTP
@@ -550,7 +551,7 @@ static void tftp_handler(uchar *pkt, unsigned dest, struct in_addr sip,
 		timeout_count_max = tftp_timeout_count_max;
 		net_set_timeout_handler(timeout_ms, tftp_timeout_handler);
 
-		if (store_block(tftp_cur_block - 1, pkt + 2, len)) {
+		if (store_block(tftp_cur_block, pkt + 2, len)) {
 			eth_halt();
 			net_set_state(NETLOOP_FAIL);
 			break;
