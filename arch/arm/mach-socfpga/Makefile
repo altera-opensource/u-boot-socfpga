@@ -95,6 +95,32 @@ obj-$(CONFIG_ARMV8_PSCI) += smc_rsu_s10.o
 endif
 endif
 
+ifdef CONFIG_TARGET_SOCFPGA_DM
+obj-y	+= clock_manager_dm.o
+obj-y	+= lowlevel_init_soc64.o
+obj-y	+= mailbox_s10.o
+obj-y	+= misc_soc64.o
+obj-y	+= mmu-arm64_s10.o
+obj-y	+= reset_manager_s10.o
+obj-$(CONFIG_SOCFPGA_SECURE_VAB_AUTH)	+= secure_vab.o
+obj-y	+= smmu_s10.o
+obj-y	+= system_manager_soc64.o
+obj-y	+= timer_s10.o
+obj-y	+= wrap_handoff_soc64.o
+obj-y	+= wrap_pll_config_soc64.o
+ifndef CONFIG_SPL_BUILD
+obj-y   += rsu.o
+obj-y   += rsu_ll_qspi.o
+obj-y   += rsu_misc.o
+obj-y	+= rsu_s10.o
+obj-$(CONFIG_ARMV8_PSCI) += psci.o
+obj-$(CONFIG_ARMV8_PSCI) += smc_ecc_dbe_s10.o
+obj-$(CONFIG_ARMV8_PSCI) += smc_fpga_reconfig_s10.o
+obj-$(CONFIG_ARMV8_PSCI) += smc_registers_s10.o
+obj-$(CONFIG_ARMV8_PSCI) += smc_rsu_s10.o
+endif
+endif
+
 ifdef CONFIG_SPL_BUILD
 ifdef CONFIG_TARGET_SOCFPGA_GEN5
 obj-y	+= spl_gen5.o
@@ -118,6 +144,11 @@ obj-y	+= spl_agilex.o
 endif
 ifdef CONFIG_TARGET_SOCFPGA_N5X
 obj-y	+= spl_n5x.o
+endif
+ifdef CONFIG_TARGET_SOCFPGA_DM
+obj-y	+= firewall.o
+obj-y	+= spl_dm.o
+obj-y	+= spl_soc64.o
 endif
 else
 obj-$(CONFIG_SPL_ATF) += secure_reg_helper.o
