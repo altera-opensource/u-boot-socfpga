@@ -71,6 +71,47 @@ int handoff_read(void *handoff_address, void *table, u32 table_len,
 			      (u32 *)handoff_address);
 			return -EPERM;
 		}
+	} else {
+#ifdef CONFIG_TARGET_SOCFPGA_DM
+		temp = readl(handoff_address);
+		if (temp == SOC64_HANDOFF_DDR_UMCTL2_MAGIC) {
+			debug("%s: umctl2 handoff data =\n{\n",
+			      __func__);
+		} else if (temp == SOC64_HANDOFF_DDR_PHY_MAGIC) {
+			debug("%s: PHY handoff data =\n{\n",
+			      __func__);
+		} else if (temp == SOC64_HANDOFF_DDR_PHY_INIT_ENGINE_MAGIC) {
+			debug("%s: PHY engine handoff data =\n{\n",
+			      __func__);
+		}
+
+		debug("handoff table address = 0x%p table length = 0x%x\n",
+		      table_x32, table_len);
+
+		if (temp == SOC64_HANDOFF_DDR_UMCTL2_MAGIC ||
+		    temp == SOC64_HANDOFF_DDR_PHY_MAGIC ||
+		    temp == SOC64_HANDOFF_DDR_PHY_INIT_ENGINE_MAGIC) {
+			/* Using handoff from Quartus tools if exists */
+			for (i = 0; i < table_len; i++) {
+				*table_x32 = readl(handoff_address +
+						SOC64_HANDOFF_OFFSET_DATA +
+						(i * 4));
+
+				if (!(i % 2))
+					debug(" No.%d Addr 0x%08x: ", i,
+					      *table_x32);
+				else
+					debug(" 0x%08x\n", *table_x32);
+
+				table_x32++;
+			}
+			debug("\n}\n");
+		} else {
+			debug("%s: Cannot find HANDOFF MAGIC ", __func__);
+			debug("at addr 0x%p\n", (u32 *)handoff_address);
+			return -EPERM;
+		}
+#endif
 	}
 
 	return 0;
