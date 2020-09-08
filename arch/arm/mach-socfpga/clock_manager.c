@@ -9,6 +9,7 @@
 #include <wait_bit.h>
 #include <asm/io.h>
 #include <asm/arch/clock_manager.h>
+#include <asm/arch/system_manager.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -61,6 +62,14 @@ int set_cpu_clk_info(void)
 
 	return 0;
 }
+
+#if defined(CONFIG_TARGET_SOCFPGA_SOC64)
+unsigned int cm_get_qspi_controller_clk_hz(void)
+{
+	return readl(socfpga_get_sysmgr_addr() +
+		     SYSMGR_SOC64_BOOT_SCRATCH_COLD0);
+}
+#endif
 
 #ifndef CONFIG_SPL_BUILD
 static int do_showclocks(struct cmd_tbl *cmdtp, int flag, int argc,
