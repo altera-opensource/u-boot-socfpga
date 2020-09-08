@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2016-2018 Intel Corporation <www.intel.com>
+ * Copyright (C) 2016-2020 Intel Corporation <www.intel.com>
  *
  */
 
@@ -21,6 +21,14 @@
 #define RSU_DEFAULT_LOG_LEVEL  7
 
 DECLARE_GLOBAL_DATA_PTR;
+
+/* Reset type */
+enum reset_type {
+	por_reset,
+	warm_reset,
+	cold_reset,
+	rsu_reset
+};
 
 /*
  * FPGA programming support for SoC FPGA Stratix 10
@@ -102,3 +110,63 @@ void arch_preboot_os(void)
 {
 	mbox_hps_stage_notify(HPS_EXECUTION_STATE_OS);
 }
+
+/* Only applicable to DM */
+#ifdef CONFIG_TARGET_SOCFPGA_DM
+static bool is_ddr_retention_enabled(u32 boot_scratch_cold0_reg)
+{
+	return boot_scratch_cold0_reg &
+	       ALT_SYSMGR_SCRATCH_REG_0_DDR_RETENTION_MASK;
+}
+
+static bool is_ddr_bitstream_sha_matching(u32 boot_scratch_cold0_reg)
+{
+	return boot_scratch_cold0_reg & ALT_SYSMGR_SCRATCH_REG_0_DDR_SHA_MASK;
+}
+
+static enum reset_type get_reset_type(u32 boot_scratch_cold0_reg)
+{
+	return (boot_scratch_cold0_reg &
+		ALT_SYSMGR_SCRATCH_REG_0_DDR_RESET_TYPE_MASK) >>
+		ALT_SYSMGR_SCRATCH_REG_0_DDR_RESET_TYPE_SHIFT;
+}
+
+bool is_ddr_init_skipped(void)
+{
+	u32 reg = readl(socfpga_get_sysmgr_addr() +
+			SYSMGR_SOC64_BOOT_SCRATCH_COLD0);
+
+	if (get_reset_type(reg) == por_reset) {
+		debug("%s: POR reset is triggered\n", __func__);
+		debug("%s: DDR init is required\n", __func__);
+		return false;
+	}
+
+	if (get_reset_type(reg) == warm_reset) {
+		debug("%s: Warm reset is triggered\n", __func__);
+		debug("%s: DDR init is skipped\n", __func__);
+		return true;
+	}
+
+	if ((get_reset_type(reg) == cold_reset) ||
+	    (get_reset_type(reg) == rsu_reset)) {
+		debug("%s: Cold/RSU reset is triggered\n", __func__);
+
+		if (is_ddr_retention_enabled(reg)) {
+			debug("%s: DDR retention bit is set\n", __func__);
+
+			if (is_ddr_bitstream_sha_matching(reg)) {
+				debug("%s: Matching in DDR bistream\n",
+				      __func__);
+				debug("%s: DDR init is skipped\n", __func__);
+				return true;
+			}
+
+			debug("%s: Mismatch in DDR bistream\n", __func__);
+		}
+	}
+
+	debug("%s: DDR init is required\n", __func__);
+	return false;
+}
+#endif
