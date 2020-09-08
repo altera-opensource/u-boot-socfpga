@@ -223,8 +223,7 @@ ifneq ($(CONFIG_TARGET_SOCFPGA_GEN5)$(CONFIG_TARGET_SOCFPGA_ARRIA10),)
 INPUTS-y	+= $(obj)/$(SPL_BIN).sfp
 endif
 
-ALL-$(CONFIG_TARGET_SOCFPGA_STRATIX10)	+= $(obj)/u-boot-spl-dtb.hex
-ALL-$(CONFIG_TARGET_SOCFPGA_AGILEX)	+= $(obj)/u-boot-spl-dtb.hex
+INPUTS-$(CONFIG_TARGET_SOCFPGA_SOC64)	+= $(obj)/u-boot-spl-dtb.hex
 
 ifdef CONFIG_ARCH_SUNXI
 INPUTS-y	+= $(obj)/sunxi-spl.bin
