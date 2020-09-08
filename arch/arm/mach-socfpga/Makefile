@@ -35,10 +35,10 @@ obj-y	+= misc_s10.o
 obj-y	+= mmu-arm64_s10.o
 obj-y	+= reset_manager_s10.o
 obj-y	+= smmu_s10.o
-obj-y	+= system_manager_s10.o
+obj-y	+= system_manager_soc64.o
 obj-y	+= timer_s10.o
-obj-y	+= wrap_pinmux_config_s10.o
-obj-y	+= wrap_pll_config_s10.o
+obj-y	+= wrap_handoff_soc64.o
+obj-y	+= wrap_pll_config_soc64.o
 ifndef CONFIG_SPL_BUILD
 obj-y	+= rsu_s10.o
 obj-y   += rsu.o
@@ -62,10 +62,10 @@ obj-y	+= mmu-arm64_s10.o
 obj-y	+= reset_manager_s10.o
 obj-$(CONFIG_SECURE_VAB_AUTH)	+= secure_vab.o
 obj-y	+= smmu_s10.o
-obj-y	+= system_manager_s10.o
+obj-y	+= system_manager_soc64.o
 obj-y	+= timer_s10.o
-obj-y	+= wrap_pinmux_config_s10.o
-obj-y	+= wrap_pll_config_s10.o
+obj-y	+= wrap_handoff_soc64.o
+obj-y	+= wrap_pll_config_soc64.o
 ifndef CONFIG_SPL_BUILD
 obj-y	+= rsu_s10.o
 obj-y   += rsu.o
