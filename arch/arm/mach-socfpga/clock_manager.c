@@ -66,8 +66,9 @@ int set_cpu_clk_info(void)
 #if defined(CONFIG_TARGET_SOCFPGA_SOC64)
 unsigned int cm_get_qspi_controller_clk_hz(void)
 {
-	return readl(socfpga_get_sysmgr_addr() +
-		     SYSMGR_SOC64_BOOT_SCRATCH_COLD0);
+	return (readl(socfpga_get_sysmgr_addr() +
+		     SYSMGR_SOC64_BOOT_SCRATCH_COLD0) &
+		     SYSMGR_SCRATCH_REG_0_QSPI_REFCLK_MASK) * CLOCK_1K;
 }
 #endif
 
