@@ -82,6 +82,7 @@
 
 #ifndef __ASSEMBLY__
 unsigned int cm_get_qspi_controller_clk_hz(void);
+#define CLOCK_1K	1000
 #define CONFIG_CQSPI_REF_CLK		cm_get_qspi_controller_clk_hz()
 #endif
 
