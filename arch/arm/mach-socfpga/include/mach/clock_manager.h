@@ -26,6 +26,8 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 #include <asm/arch/clock_manager_s10.h>
 #elif defined(CONFIG_TARGET_SOCFPGA_AGILEX)
 #include <asm/arch/clock_manager_agilex.h>
+#elif defined(CONFIG_TARGET_SOCFPGA_DM)
+#include <asm/arch/clock_manager_dm.h>
 #endif
 
 #endif /* _CLOCK_MANAGER_H_ */
