@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2016-2019 Intel Corporation <www.intel.com>
+ * Copyright (C) 2016-2020 Intel Corporation <www.intel.com>
  *
  */
 
@@ -233,6 +233,11 @@ static int altera_sdram_ofdata_to_platdata(struct udevice *dev)
 	struct altera_sdram_platdata *plat = dev->platdata;
 	fdt_addr_t addr;
 
+	/* These regs info are part of DDR handoff in bitstream */
+#ifdef CONFIG_TARGET_SOCFPGA_DM
+	return 0;
+#endif
+
 	addr = dev_read_addr_index(dev, 0);
 	if (addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
@@ -293,6 +298,7 @@ static struct ram_ops altera_sdram_ops = {
 static const struct udevice_id altera_sdram_ids[] = {
 	{ .compatible = "altr,sdr-ctl-s10" },
 	{ .compatible = "intel,sdr-ctl-agilex" },
+	{ .compatible = "intel,sdr-ctl-dm" },
 	{ /* sentinel */ }
 };
 

@@ -47,6 +47,10 @@ int qspi_flash_software_reset(void);
 int socfpga_get_fpga_config(void);
 #endif
 
+#if defined(CONFIG_TARGET_SOCFPGA_DM)
+bool is_ddr_init_skipped(void);
+#endif
+
 void do_bridge_reset(int enable, unsigned int mask);
 void socfpga_pl310_clear(void);
 void socfpga_get_managers_addr(void);
