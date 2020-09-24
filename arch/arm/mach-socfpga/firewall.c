@@ -114,4 +114,28 @@ void firewall_setup(void)
 					      FW_MPFE_SCR_HMC_ADAPTOR);
 #endif
 
+#if defined(CONFIG_TARGET_SOCFPGA_AGILEX) || \
+	defined(CONFIG_TARGET_SOCFPGA_STRATIX10)
+	/*
+	 * Enable both priviledged & non-prviledged access to various
+	 * peripherals
+	 */
+	writel(0xffffffff, SOCFPGA_FIREWALL_PRIV_MEMORYMAP_PRIV);
+#endif
+
+#ifdef CONFIG_TARGET_SOCFPGA_STRATIX10
+	 /* Enable access to DDR from FPGA */
+	clrbits_le32(CCU_REG_ADDR(CCU_FPGA_MPRT_ADBASE_MEMSPACE0),
+		     CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_FPGA_MPRT_ADBASE_MEMSPACE1A),
+		     CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_FPGA_MPRT_ADBASE_MEMSPACE1B),
+		     CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_FPGA_MPRT_ADBASE_MEMSPACE1C),
+		     CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_FPGA_MPRT_ADBASE_MEMSPACE1D),
+		     CCU_ADBASE_DI_MASK);
+	clrbits_le32(CCU_REG_ADDR(CCU_FPGA_MPRT_ADBASE_MEMSPACE1E),
+		     CCU_ADBASE_DI_MASK);
+#endif
 }
