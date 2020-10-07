@@ -86,3 +86,9 @@ u32 spl_boot_mode(const u32 boot_device)
 #endif
 }
 #endif
+
+/* board specific function prior loading SSBL / U-Boot */
+void spl_board_prepare_for_boot(void)
+{
+	mbox_hps_stage_notify(HPS_EXECUTION_STATE_SSBL);
+}
