@@ -213,8 +213,16 @@ int rsu_dtb(int argc, char * const argv[])
 	err = rsu_spt_cpb_list(argc, argv);
 	if (err == -ENOTSUPP)
 		return 0;
-	else if (err)
+	else if ((err == -ECOMM) || (err == -ENODEV) || (err == -EIO))
 		return err;
+	else if (err) {
+		/*
+		 * There was corruption occurred in SPT or CPB, doesn't
+		 * return error & let load process continue. So that Linux
+		 * can recovery the corrupted SPT or CPB.
+		 */
+		puts("Corrupted SPT or CPB, Linux will recovery them\n");
+	}
 
 	/* Extract the flash0's reg from Linux DTB */
 	nodeoffset = fdt_path_offset(working_fdt, "/__symbols__");
