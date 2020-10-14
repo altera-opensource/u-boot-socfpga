@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <env.h>
 #include <linux/errno.h>
 #include <asm/arch/mailbox_s10.h>
 #include <asm/arch/rsu.h>
@@ -291,6 +292,9 @@ static int save_spt_to_address(u64 address)
 	rsu_log(RSU_DEBUG, "%s - calc_crc is 0x%x\n", __func__, calc_crc);
 	memcpy(spt_data_dst, spt_data_src, SPT_SIZE);
 	memcpy(spt_data_dst + SPT_SIZE, &calc_crc, sizeof(calc_crc));
+	rsu_log(RSU_INFO, "%ld bytes SPT data saved\n",
+		SPT_SIZE + sizeof(calc_crc));
+	env_set_hex("filesize", SPT_SIZE + sizeof(calc_crc));
 
 	free(spt_data_src);
 	return ret;
@@ -765,6 +769,9 @@ static int save_cpb_to_address(u64 address)
 	rsu_log(RSU_DEBUG, "%s - calc_crc is 0x%x\n", __func__, calc_crc);
 	memcpy(cpb_data_dst, cpb_data_src, CPB_SIZE);
 	memcpy(cpb_data_dst + CPB_SIZE, &calc_crc, sizeof(calc_crc));
+	rsu_log(RSU_INFO, "%ld bytes CPB data saved\n",
+		CPB_SIZE + sizeof(calc_crc));
+	env_set_hex("fizesize", CPB_SIZE + sizeof(calc_crc));
 
 	free(cpb_data_src);
 	return ret;
