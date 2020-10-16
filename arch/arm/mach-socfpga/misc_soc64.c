@@ -77,6 +77,9 @@ int arch_misc_init(void)
 	env_set("rsu_protected_slot", "");
 	env_set("rsu_log_level", level);
 
+	/* setup for RSU sub-partition table checksum */
+	env_set("rsu_spt_checksum", "");
+
 	return 0;
 }
 #endif
