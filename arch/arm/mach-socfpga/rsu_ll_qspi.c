@@ -52,6 +52,8 @@
 #define CPB_IMAGE_PTR_OFFSET	24
 #define CPB_IMAGE_PTR_NSLOTS	508
 
+#define SPT_CHECKSUM_OFFSET	0x0C
+
 /**
  * struct sub_partition_table_partition - SPT partition structure
  * @name: sub-partition name
@@ -797,6 +799,26 @@ static int load_cpb(void)
 	int x;
 	int cpb0_good = 0;
 	int cpb1_good = 0;
+	struct rsu_status_info status_info;
+	int cpb0_corrupted = 0;
+
+	if (mbox_rsu_status((u32 *)&status_info,
+			    sizeof(status_info) / 4)) {
+		rsu_log(RSU_ERR, "FW doesn't support RSU\n");
+		return -EINVAL;
+	}
+
+	if (status_info.state == STATE_CPB0_CPB1_CORRUPTED) {
+		rsu_log(RSU_ERR, "FW detects both CPBs corrupted\n");
+		cpb_corrupted = true;
+		return -EINVAL;
+	}
+
+	if (status_info.state == STATE_CPB0_CORRUPTED) {
+		rsu_log(RSU_ERR,
+			"FW detects corrupted CPB0 but CPB1 is fine\n");
+		cpb0_corrupted = 1;
+	}
 
 	for (x = 0; x < spt.partitions; x++) {
 		if (strcmp(spt.partition[x].name, "CPB0") == 0)
@@ -824,15 +846,17 @@ static int load_cpb(void)
 		rsu_log(RSU_ERR, "Bad CPB1 is bad\n");
 	}
 
-	rsu_log(RSU_DEBUG, "Reading CPB0\n");
-	if (read_part(cpb0_part, 0, &cpb, sizeof(cpb)) == 0 &&
-	    cpb.header.magic_number == CPB_MAGIC_NUMBER) {
-		cpb_slots = (u64 *)
-			     &cpb.data[cpb.header.image_ptr_offset];
-		if (check_cpb() == 0)
-			cpb0_good = 1;
-	} else {
-		rsu_log(RSU_ERR, "Bad CPB0 is bad\n");
+	if (!cpb0_corrupted) {
+		rsu_log(RSU_DEBUG, "Reading CPB0\n");
+		if (read_part(cpb0_part, 0, &cpb, sizeof(cpb)) == 0 &&
+		    cpb.header.magic_number == CPB_MAGIC_NUMBER) {
+			cpb_slots = (u64 *)
+				     &cpb.data[cpb.header.image_ptr_offset];
+			if (check_cpb() == 0)
+				cpb0_good = 1;
+		} else {
+			rsu_log(RSU_ERR, "Bad CPB0 is bad\n");
+		}
 	}
 
 	if (cpb0_good && cpb1_good) {
