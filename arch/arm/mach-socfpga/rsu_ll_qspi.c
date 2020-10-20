@@ -771,7 +771,7 @@ static int save_cpb_to_address(u64 address)
 	memcpy(cpb_data_dst + CPB_SIZE, &calc_crc, sizeof(calc_crc));
 	rsu_log(RSU_INFO, "%ld bytes CPB data saved\n",
 		CPB_SIZE + sizeof(calc_crc));
-	env_set_hex("fizesize", CPB_SIZE + sizeof(calc_crc));
+	env_set_hex("filesize", CPB_SIZE + sizeof(calc_crc));
 
 	free(cpb_data_src);
 	return ret;
