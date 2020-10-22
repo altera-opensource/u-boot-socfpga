@@ -1207,7 +1207,21 @@ int sdram_mmr_init_full(struct udevice *dev)
 	priv->info.base = bd.bi_dram[0].start;
 	priv->info.size = gd->ram_size;
 
-	sdram_set_fw(&bd);
+	/* This enables nonsecure access to DDR */
+	/* mpuregion0addr_limit */
+	FW_MPU_DDR_SCR_WRITEL(gd->ram_size - 1,
+			      FW_MPU_DDR_SCR_MPUREGION0ADDR_LIMIT);
+	FW_MPU_DDR_SCR_WRITEL(((gd->ram_size - 1) >> SZ_32) &
+			      FW_MPU_DDR_SCR_NONMPUREGION0ADDR_LIMITEXT_FIELD,
+			      FW_MPU_DDR_SCR_MPUREGION0ADDR_LIMITEXT);
+
+	/* nonmpuregion0addr_limit */
+	FW_MPU_DDR_SCR_WRITEL(gd->ram_size - 1,
+			      FW_MPU_DDR_SCR_NONMPUREGION0ADDR_LIMIT);
+
+	/* Enable mpuregion0enable and nonmpuregion0enable */
+	FW_MPU_DDR_SCR_WRITEL(MPUREGION0_ENABLE | NONMPUREGION0_ENABLE,
+			      FW_MPU_DDR_SCR_EN_SET);
 
 	return 0;
 }
