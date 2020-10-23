@@ -12,11 +12,23 @@
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/smc_api.h>
 #include <asm/arch/system_manager.h>
+#include <asm/arch/timer.h>
 #include <dt-bindings/reset/altr,rst-mgr-s10.h>
 #include <exports.h>
 #include <linux/iopoll.h>
 #include <linux/intel-smc.h>
 DECLARE_GLOBAL_DATA_PTR;
+
+#define POLL_FOR_ZERO(expr, timeout_ms)		\
+	{					\
+		int timeout = (timeout_ms);	\
+		while ((expr)) {		\
+			if (!timeout)		\
+				break;		\
+			timeout--;		\
+			__socfpga_udelay(1000);	\
+		}				\
+	}
 
 /* Assert or de-assert SoCFPGA reset manager reset. */
 void socfpga_per_reset(u32 reset, int set)
