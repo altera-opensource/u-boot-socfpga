@@ -11,6 +11,7 @@
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/smc_api.h>
 #include <asm/arch/system_manager.h>
+#include <asm/arch/timer.h>
 #include <dt-bindings/reset/altr,rst-mgr-s10.h>
 #include <exports.h>
 #include <linux/intel-smc.h>
@@ -24,7 +25,7 @@ DECLARE_GLOBAL_DATA_PTR;
 			if (!timeout)		\
 				break;		\
 			timeout--;		\
-			__udelay(1000);		\
+			__socfpga_udelay(1000);	\
 		}				\
 	}
 

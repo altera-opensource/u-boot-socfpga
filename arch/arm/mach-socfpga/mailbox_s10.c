@@ -11,6 +11,7 @@
 #include <asm/arch/mailbox_s10.h>
 #include <asm/arch/smc_api.h>
 #include <asm/arch/system_manager.h>
+#include <asm/arch/timer.h>
 #include <asm/arch/rsu.h>
 #include <asm/secure.h>
 #include <asm/system.h>
@@ -39,7 +40,7 @@ static __always_inline int mbox_polling_resp(u32 rout)
 		if (rout != rin)
 			return 0;
 
-		__udelay(1000);
+		__socfpga_udelay(1000);
 		i--;
 	}
 
@@ -63,7 +64,7 @@ static __always_inline int mbox_wait_for_cmdbuf_empty(u32 cin)
 	while (timeout) {
 		if (mbox_is_cmdbuf_empty(cin))
 			return 0;
-		__udelay(1000);
+		__socfpga_udelay(1000);
 		timeout--;
 	}
 
@@ -83,7 +84,7 @@ static __always_inline int mbox_write_cmd_buffer(u32 *cin, u32 data,
 				MBOX_WRITEL(1, MBOX_DOORBELL_TO_SDM);
 				*is_cmdbuf_overflow = 1;
 			}
-			__udelay(1000);
+			__socfpga_udelay(1000);
 		} else {
 			/* write header to circular buffer */
 			MBOX_WRITE_CMD_BUF(data, (*cin)++);
@@ -229,7 +230,7 @@ static __always_inline int mbox_send_cmd_common(u8 id, u32 cmd, u8 is_indirect,
 		do {
 			if (MBOX_READL(MBOX_DOORBELL_FROM_SDM))
 				break;
-			__udelay(1000);
+			__socfpga_udelay(1000);
 		} while (--ret);
 
 		if (!ret)
@@ -318,7 +319,7 @@ static __always_inline int mbox_send_cmd_common_retry(u8 id, u32 cmd,
 		ret = mbox_send_cmd_common(id, cmd, is_indirect, len, arg,
 					   urgent, resp_buf_len, resp_buf);
 		if (ret == MBOX_RESP_TIMEOUT || ret == MBOX_RESP_DEVICE_BUSY)
-			__udelay(2000); /* wait for 2ms before resend */
+			__socfpga_udelay(2000); /* wait for 2ms before resend */
 		else
 			break;
 	}
