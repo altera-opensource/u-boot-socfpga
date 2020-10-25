@@ -1427,5 +1427,15 @@ int nand_spl_load_image(u32 offset, u32 len, void *dst)
 	return nand_read_skip_bad(mtd, offset, &count, &actual, mtd->size, dst);
 }
 
+/*
+ * This function is to adjust the load offset to skip bad blocks.
+ * The Denali NAND load image does skip bad blocks during read,
+ * hence this function is returning the offset as it is.
+ */
+u32 nand_spl_adjust_offset(u32 sector, u32 offs)
+{
+	return offs;
+}
+
 void nand_deselect(void) {}
 #endif
