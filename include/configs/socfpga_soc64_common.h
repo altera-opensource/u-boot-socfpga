@@ -102,17 +102,6 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 #define CONFIG_SYS_NAND_U_BOOT_DST	CONFIG_SYS_TEXT_BASE
 #endif /* CONFIG_NAND_DENALI */
 
-/*
- * Boot arguments passed to the boot command. The value of
- * CONFIG_BOOTARGS goes into the environment value "bootargs".
- * Do note the value will override also the chosen node in FDT blob.
- */
-#ifdef CONFIG_LINUX_DBE_WARM_RESET
-#define CONFIG_BOOTARGS "earlycon panic=-1 reboot=panic_warm"
-#else
-#define CONFIG_BOOTARGS "earlycon panic=-1"
-#endif
-
 #ifdef CONFIG_SECURE_VAB_AUTH
 #define CONFIG_BOOTFILE "kernel_vab.itb"
 #else
