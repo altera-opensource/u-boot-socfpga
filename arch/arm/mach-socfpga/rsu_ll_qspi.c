@@ -1822,7 +1822,9 @@ int rsu_ll_qspi_init(struct rsu_ll_intf **intf)
 		return -1;
 	}
 
-	if (load_cpb() && !cpb_corrupted) {
+	if (spt_corrupted) {
+		cpb_corrupted = true;
+	} else if (load_cpb() && !cpb_corrupted) {
 		rsu_log(RSU_ERR, "Bad CPB\n");
 		return -1;
 	}
