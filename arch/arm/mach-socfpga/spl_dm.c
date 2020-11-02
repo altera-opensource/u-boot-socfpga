@@ -72,9 +72,6 @@ void board_init_f(ulong dummy)
 
 	firewall_setup();
 
-	/* Setup and Initialize SMMU */
-	socfpga_init_smmu();
-
 	ret = uclass_get_device(UCLASS_CACHE, 0, &dev);
 	if (ret) {
 		printf("CCU init failed: %d\n", ret);
