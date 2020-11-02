@@ -90,5 +90,8 @@ u32 spl_boot_mode(const u32 boot_device)
 /* board specific function prior loading SSBL / U-Boot */
 void spl_perform_fixups(struct spl_image_info *spl_image)
 {
+	/* Setup and Initialize SMMU */
+	socfpga_init_smmu();
+
 	mbox_hps_stage_notify(HPS_EXECUTION_STATE_SSBL);
 }
