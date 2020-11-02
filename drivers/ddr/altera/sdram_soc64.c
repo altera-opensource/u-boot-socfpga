@@ -231,6 +231,68 @@ phys_size_t sdram_calculate_size(struct altera_sdram_platdata *plat)
 	return size;
 }
 
+void sdram_set_firewall(struct bd_info *bd)
+{
+	u32 i;
+	phys_size_t value;
+	u32 lower, upper;
+
+	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
+		if (!bd->bi_dram[i].size)
+			continue;
+
+		value = bd->bi_dram[i].start;
+
+		/* Keep first 1MB of SDRAM memory region as secure region when
+		 * using ATF flow, where the ATF code is located.
+		 */
+		if (IS_ENABLED(CONFIG_SPL_ATF) && i == 0)
+			value += SZ_1M;
+
+		/* Setting non-secure MPU region base and base extended */
+		lower = lower_32_bits(value);
+		upper = upper_32_bits(value);
+		FW_MPU_DDR_SCR_WRITEL(lower,
+				      FW_MPU_DDR_SCR_MPUREGION0ADDR_BASE +
+				      (i * 4 * sizeof(u32)));
+		FW_MPU_DDR_SCR_WRITEL(upper & 0xff,
+				      FW_MPU_DDR_SCR_MPUREGION0ADDR_BASEEXT +
+				      (i * 4 * sizeof(u32)));
+
+		/* Setting non-secure Non-MPU region base and base extended */
+		FW_MPU_DDR_SCR_WRITEL(lower,
+				      FW_MPU_DDR_SCR_NONMPUREGION0ADDR_BASE +
+				      (i * 4 * sizeof(u32)));
+		FW_MPU_DDR_SCR_WRITEL(upper & 0xff,
+				      FW_MPU_DDR_SCR_NONMPUREGION0ADDR_BASEEXT +
+				      (i * 4 * sizeof(u32)));
+
+		/* Setting non-secure MPU limit and limit extexded */
+		value = bd->bi_dram[i].start + bd->bi_dram[i].size - 1;
+
+		lower = lower_32_bits(value);
+		upper = upper_32_bits(value);
+
+		FW_MPU_DDR_SCR_WRITEL(lower,
+				      FW_MPU_DDR_SCR_MPUREGION0ADDR_LIMIT +
+				      (i * 4 * sizeof(u32)));
+		FW_MPU_DDR_SCR_WRITEL(upper & 0xff,
+				      FW_MPU_DDR_SCR_MPUREGION0ADDR_LIMITEXT +
+				      (i * 4 * sizeof(u32)));
+
+		/* Setting non-secure Non-MPU limit and limit extexded */
+		FW_MPU_DDR_SCR_WRITEL(lower,
+				      FW_MPU_DDR_SCR_NONMPUREGION0ADDR_LIMIT +
+				      (i * 4 * sizeof(u32)));
+		FW_MPU_DDR_SCR_WRITEL(upper & 0xff,
+				      FW_MPU_DDR_SCR_NONMPUREGION0ADDR_LIMITEXT +
+				      (i * 4 * sizeof(u32)));
+
+		FW_MPU_DDR_SCR_WRITEL(BIT(i) | BIT(i + 8),
+				      FW_MPU_DDR_SCR_EN_SET);
+	}
+}
+
 static int altera_sdram_ofdata_to_platdata(struct udevice *dev)
 {
 	struct altera_sdram_platdata *plat = dev->platdata;
