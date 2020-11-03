@@ -114,7 +114,6 @@ int arch_misc_init(void)
 	env_set("qspi_clock", qspi_string);
 
 	/* setup for RSU */
-	env_set("rsu_protected_slot", "");
 	env_set("rsu_log_level", level);
 
 	/* Export board_id as environment variable */
