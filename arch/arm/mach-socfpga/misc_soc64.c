@@ -73,8 +73,9 @@ int arch_misc_init(void)
 	sprintf(qspi_string, "<0x%08x>", cm_get_qspi_controller_clk_hz());
 	env_set("qspi_clock", qspi_string);
 
-	/* setup for RSU */
-	env_set("rsu_log_level", level);
+	/* for RSU, set log level to default if log level is not set */
+	if (!env_get("rsu_log_level"))
+		env_set("rsu_log_level", level);
 
 	return 0;
 }
