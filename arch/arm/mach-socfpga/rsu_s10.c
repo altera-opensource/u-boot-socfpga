@@ -85,24 +85,6 @@ static u32 rsu_spt_slot_find_cpb(void)
 	return 0;
 }
 
-static u32 rsu_get_boot_part_len(void)
-{
-	int i;
-	u32 offset = 0, len = 0;
-
-	/* look for last entry that has largest offset */
-	for (i = 0; i < rsu_spt.entries; i++) {
-		if (rsu_spt.spt_slot[i].offset[0] > offset) {
-			offset = rsu_spt.spt_slot[i].offset[0];
-			len = rsu_spt.spt_slot[i].length;
-		}
-	}
-
-	/* With the len, we shall know the boot partition size */
-	len += offset;
-	return roundup(len, 64 << 10);	/* align to 64kB, flash sector size */
-}
-
 int rsu_spt_cpb_list(int argc, char * const argv[])
 {
 	u32 spt_offset[4];
@@ -205,7 +187,8 @@ int rsu_dtb(int argc, char * const argv[])
 {
 	char flash0_string[100];
 	const char *fdt_flash0;
-	int nodeoffset, len;
+	int nodeoffset, len, end;
+	const fdt32_t *val;
 	u32 reg[2];
 	int err;
 
@@ -239,17 +222,35 @@ int rsu_dtb(int argc, char * const argv[])
 	strcpy(flash0_string, fdt_flash0);
 	printf("DTB: qspi_boot node at %s\n", flash0_string);
 
-	/* assemble new reg value for boot partition */
-	len = rsu_get_boot_part_len();
-	reg[0] = cpu_to_fdt32(rsu_spt0_offset);
-	reg[1] = cpu_to_fdt32(len  - rsu_spt0_offset);
-
-	/* update back to Linux DTB */
+	/* locate the boot partition */
 	nodeoffset = fdt_path_offset(working_fdt, flash0_string);
 	if (nodeoffset < 0) {
 		printf("DTB: %s node not found\n", flash0_string);
 		return -ENODEV;
 	}
+
+	/* determine initial end address of boot partition */
+	val = fdt_getprop(working_fdt, nodeoffset, "reg", &len);
+	if (!val) {
+		printf("DTB: %s.reg was not found\n", flash0_string);
+		return -ENODEV;
+	}
+	if (len != 2 * sizeof(fdt32_t)) {
+		printf("DTB: %s.reg has incorrect length\n", flash0_string);
+		return -ENODEV;
+	}
+	reg[0] = fdt32_to_cpu(val[0]);
+	reg[1] = fdt32_to_cpu(val[1]);
+	end = reg[0] + reg[1];
+
+	/* align to 64Kb flash sector size */
+	end = roundup(len, 64 * 1024);
+
+	/* assemble new reg value for boot partition */
+	reg[0] = cpu_to_fdt32(rsu_spt0_offset);
+	reg[1] = cpu_to_fdt32(end  - rsu_spt0_offset);
+
+	/* update back to Linux DTB */
 	return fdt_setprop(working_fdt, nodeoffset, "reg", reg, sizeof(reg));
 }
 
