@@ -16,6 +16,10 @@ config LINUX_DBE_WARM_RESET
 config NR_DRAM_BANKS
 	default 1
 
+config SECURE_VAB_AUTH_ALLOW_NON_FIT_IMAGE
+	bool "Allow non-FIT VAB signed images"
+	depends on SECURE_VAB_AUTH
+
 config SECURE_VAB_AUTH
 	bool "Enable boot image authentication with Secure Device Manager"
 	depends on TARGET_SOCFPGA_AGILEX || TARGET_SOCFPGA_DM

@@ -166,6 +166,7 @@ void board_fit_image_post_process(void **p_image, size_t *p_size)
 #ifndef CONFIG_SPL_BUILD
 void board_prep_linux(bootm_headers_t *images)
 {
+#ifndef CONFIG_SECURE_VAB_AUTH_ALLOW_NON_FIT_IMAGE
 	/*
 	 * Ensure the OS is always booted from FIT and with
 	 * VAB signed certificate
@@ -177,6 +178,7 @@ void board_prep_linux(bootm_headers_t *images)
 
 	env_set_hex("fdt_addr", (ulong)images->ft_addr);
 	debug("images->ft_addr = 0x%08lx\n", (ulong)images->ft_addr);
+#endif
 
 #ifdef CONFIG_CADENCE_QSPI
 	if (run_command(env_get("linux_qspi_enable"), 0))
