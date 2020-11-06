@@ -58,4 +58,6 @@ struct fcs_hps_vab_certificate_header {
 					(struct fcs_hps_vab_certificate_data, \
 					 fcs_sha384[0])
 
+int socfpga_vendor_authentication(void **p_image, size_t *p_size);
+
 #endif /* _SECURE_VAB_H_ */
