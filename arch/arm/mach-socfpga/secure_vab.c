@@ -12,6 +12,7 @@
 #include <asm/unaligned.h>
 #include <exports.h>
 #include <image.h>
+#include <linux/errno.h>
 #include <linux/intel-smc.h>
 #include <log.h>
 
@@ -37,7 +38,7 @@ static size_t get_img_size(u8 *img_buf, size_t img_buf_sz)
 	return 0;
 }
 
-void board_fit_image_post_process(void **p_image, size_t *p_size)
+int socfpga_vendor_authentication(void **p_image, size_t *p_size)
 {
 	int retry_count = 20;
 	u8 hash384[SHA384_SUM_LEN];
@@ -58,13 +59,13 @@ void board_fit_image_post_process(void **p_image, size_t *p_size)
 
 	if (!img_sz) {
 		puts("VAB certificate not found in image!\n");
-		goto fail;
+		return -ENOKEY;
 	}
 
 	if (!IS_ALIGNED(img_sz, sizeof(u32))) {
 		printf("Image size (%ld bytes) not aliged to 4 bytes!\n",
 		       img_sz);
-		goto fail;
+		return -EBFONT;
 	}
 
 	/* Generate HASH384 from the image */
@@ -79,7 +80,7 @@ void board_fit_image_post_process(void **p_image, size_t *p_size)
 	 */
 	if (memcmp(hash384, cert_hash_ptr, SHA384_SUM_LEN)) {
 		puts("SHA384 not match!\n");
-		goto fail;
+		return -EKEYREJECTED;
 	}
 
 	mbox_data_addr = img_addr + img_sz - sizeof(u32);
@@ -131,29 +132,35 @@ void board_fit_image_post_process(void **p_image, size_t *p_size)
 		if (ret == MBOX_RESP_UNKNOWN ||
 		    ret == MBOX_RESP_NOT_ALLOWED_UNDER_SECURITY_SETTINGS) {
 			/* SDM bypass authentication */
-			printf("Image Authentication bypassed at address "
-			       "0x%016llx (%ld bytes)\n", img_addr, img_sz);
-			return;
+			printf("%s 0x%016llx (%ld bytes)\n",
+			       "Image Authentication bypassed at address",
+			       img_addr, img_sz);
+			return 0;
 		}
 		puts("VAB certificate authentication failed in SDM");
-		if (ret == MBOX_RESP_DEVICE_BUSY)
-			puts("(SDM busy timeout)");
+		if (ret == MBOX_RESP_DEVICE_BUSY) {
+			puts("(SDM busy timeout)\n");
+			return -ETIMEDOUT;
+		}
 		puts("\n");
-		goto fail;
+		return -EKEYREJECTED;
 	} else {
 		/* If Certificate Process Status has error */
-		if (resp)
-			goto fail;
+		if (resp) {
+			puts("VAB certificate process failed\n");
+			return -ENOEXEC;
+		}
 	}
 
 	debug("Image Authentication passed\n");
 
-	return;
+	return 0;
+}
 
-fail:
-	printf("Image Authentication failed at address 0x%016llx "
-	       "(%ld bytes)\n", img_addr, img_sz);
-	hang();
+void board_fit_image_post_process(void **p_image, size_t *p_size)
+{
+	if (socfpga_vendor_authentication(p_image, p_size))
+		hang();
 }
 
 #ifndef CONFIG_SPL_BUILD
