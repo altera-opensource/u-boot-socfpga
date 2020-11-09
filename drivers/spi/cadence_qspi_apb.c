@@ -295,6 +295,7 @@ static unsigned int cadence_qspi_wait_idle(void *reg_base)
 
 	start = get_timer(0);
 	for ( ; get_timer(start) < timeout ; ) {
+		WATCHDOG_RESET();
 		if (CQSPI_REG_IS_IDLE(reg_base))
 			count++;
 		else
@@ -503,6 +504,7 @@ static int cadence_qspi_apb_exec_flash_cmd(void *reg_base,
 		if ((reg & CQSPI_REG_CMDCTRL_INPROGRESS) == 0)
 			break;
 		udelay(1);
+		WATCHDOG_RESET();
 	}
 
 	if (!retry) {
@@ -799,6 +801,7 @@ static int cadence_qspi_wait_for_data(struct cadence_spi_plat *plat)
 		if (reg)
 			return reg;
 		udelay(1);
+		WATCHDOG_RESET();
 	}
 
 	return -ETIMEDOUT;
@@ -843,6 +846,7 @@ cadence_qspi_apb_indirect_read_execute(struct cadence_spi_plat *plat,
 			rxbuf += bytes_to_read;
 			remaining -= bytes_to_read;
 			bytes_to_read = cadence_qspi_get_rd_sram_level(plat);
+			WATCHDOG_RESET();
 		}
 	}
 
@@ -1003,6 +1007,7 @@ cadence_qspi_apb_indirect_write_execute(struct cadence_spi_plat *plat,
 
 		bb_txbuf += write_bytes;
 		remaining -= write_bytes;
+		WATCHDOG_RESET();
 	}
 
 	/* Check indirect done status */
