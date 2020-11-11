@@ -1105,7 +1105,7 @@ static int empty_cpb(void)
 	c_header->image_ptr_slots = CPB_IMAGE_PTR_NSLOTS;
 
 	memset(&cpb, -1, CPB_SIZE);
-	memcpy(&cpb, c_header, sizeof(c_header));
+	memcpy(&cpb, c_header, sizeof(*c_header));
 
 	ret = writeback_cpb();
 	if (ret) {
