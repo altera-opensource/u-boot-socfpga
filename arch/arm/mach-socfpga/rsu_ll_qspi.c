@@ -1091,6 +1091,12 @@ static int empty_cpb(void)
 		u32 image_ptr_slots;
 	} *c_header;
 
+	if (spt_corrupted) {
+		rsu_log(RSU_ERR, "corrupted SPT ---");
+		rsu_log(RSU_ERR, "run rsu restore_spt <address> first\n");
+		return -EINVAL;
+	}
+
 	c_header = (struct cpb_header *)malloc(sizeof(struct cpb_header));
 	if (!c_header) {
 		rsu_log(RSU_ERR, "failed to allocate cpb_header\n");
@@ -1134,6 +1140,12 @@ static int restore_cpb_from_address(u64 address)
 	u32 crc_from_saved;
 	u32 magic_number;
 	char *cpb_data = (char *)address;
+
+	if (spt_corrupted) {
+		rsu_log(RSU_ERR, "corrupted SPT --");
+		rsu_log(RSU_ERR, "run rsu restore_spt <address> first\n");
+		return -EINVAL;
+	}
 
 	if (!cpb_data) {
 		rsu_log(RSU_ERR, "failed due to invalid address\n");
