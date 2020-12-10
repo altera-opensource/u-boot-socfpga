@@ -181,8 +181,8 @@ void board_prep_linux(bootm_headers_t *images)
 #endif
 
 #ifdef CONFIG_CADENCE_QSPI
-	if (run_command(env_get("linux_qspi_enable"), 0))
-		printf("Warning: Failed to set Linux DTB QSPI frequency!\n");
+	if (env_get("linux_qspi_enable"))
+		run_command(env_get("linux_qspi_enable"), 0);
 #endif
 }
 #endif
