@@ -151,7 +151,9 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 	"nandboot=setenv bootargs " CONFIG_BOOTARGS \
 			" root=${nandroot} rw rootwait rootfstype=jffs2; " \
 			"booti ${loadaddr} - ${fdt_addr}\0" \
-	"socfpga_legacy_reset_compat=1\0"
+	"socfpga_legacy_reset_compat=1\0" \
+	"rsu_status=rsu dtb; rsu display_dcmf_version; "\
+		"rsu display_dcmf_status; rsu display_max_retry\0"
 
 /*
  * Generic Interrupt Controller Definitions
