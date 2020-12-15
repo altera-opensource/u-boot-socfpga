@@ -121,6 +121,8 @@ static int cpb1_part = -1;
 static bool cpb_corrupted;
 static bool spt_corrupted;
 
+static int load_cpb(void);
+
 /**
  * get_part_offset() - get a selected partition offset
  * @part_num: the selected partition number
@@ -448,6 +450,12 @@ static int restore_spt_from_address(u64 address)
 	}
 
 	spt_corrupted = false;
+
+	/* try to reload CPB, as we have a new SPT */
+	cpb_corrupted = false;
+	if (load_cpb() && !cpb_corrupted)
+		rsu_log(RSU_ERR, "Bad CPB\n");
+
 	return 0;
 }
 
