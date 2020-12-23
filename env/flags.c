@@ -563,7 +563,7 @@ int env_flags_validate(const struct env_entry *item, const char *newval,
 		return 1;
 #endif
 
-#ifndef CONFIG_ENV_ACCESS_IGNORE_FORCE
+#ifdef CONFIG_ENV_ACCESS_IGNORE_FORCE
 	if (flag & H_FORCE) {
 		printf("## Error: Can't force access to \"%s\"\n", name);
 		return 0;
