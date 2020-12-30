@@ -1576,9 +1576,12 @@ u-boot.spr: spl/u-boot-spl.img u-boot.img FORCE
 
 ifneq ($(CONFIG_ARCH_SOCFPGA),)
 quiet_cmd_socboot = SOCBOOT $@
-cmd_socboot = cat	spl/u-boot-spl.sfp spl/u-boot-spl.sfp	\
-			spl/u-boot-spl.sfp \
-			spl/u-boot-spl.sfp > spl/u-boot-splx4.sfp ; \
+cmd_socboot = $(OBJCOPY) -I binary -O binary --gap-fill=0x0		\
+			--pad-to=$(CONFIG_SPL_PAD_TO)			\
+			spl/u-boot-spl.sfp spl/u-boot-spl.sfp &&	\
+		cat	spl/u-boot-spl.sfp spl/u-boot-spl.sfp		\
+			spl/u-boot-spl.sfp 				\
+			spl/u-boot-spl.sfp > spl/u-boot-splx4.sfp ;	\
 	      cat	spl/u-boot-splx4.sfp u-boot.img > $@ || rm -f $@
 u-boot-with-spl.sfp: spl/u-boot-spl.sfp u-boot.img FORCE
 	$(call if_changed,socboot)
