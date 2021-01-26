@@ -19,10 +19,50 @@
 #include <linux/intel-smc.h>
 DECLARE_GLOBAL_DATA_PTR;
 
+/* F2S manager registers */
+#define F2SDRAM_SIDEBAND_FLAGINSTATUS0	0x14
+#define F2SDRAM_SIDEBAND_FLAGOUTSET0	0x50
+#define F2SDRAM_SIDEBAND_FLAGOUTCLR0	0x54
+
+#ifdef CONFIG_TARGET_SOCFPGA_STRATIX10
+#define FLAGINSTATUS0_MPFE_NOC_IDLE	(BIT(0) | BIT(4) | BIT(8))
+#define FLAGINSTATUS0_MPFE_NOC_IDLEACK	(BIT(1) | BIT(5) | BIT(9))
+#define FLAGINSTATUS0_F2S_CMD_EMPTY	(BIT(2) | BIT(6) | BIT(10))
+#define FLAGINSTATUS0_F2S_RESP_EMPTY	(BIT(3) | BIT(7) | BIT(11))
+
+#define FLGAOUTSET0_MPFE_NOC_IDLEREQ	(BIT(0) | BIT(3) | BIT(6))
+#define FLGAOUTSET0_F2S_EN		(BIT(1) | BIT(4) | BIT(7))
+#define FLGAOUTSET0_F2S_FORCE_DRAIN	(BIT(2) | BIT(5) | BIT(8))
+
+#define FLGAOUTCLR0_F2S_IDLEREQ		(BIT(0) | BIT(3) | BIT(6))
+#else
+#define FLAGINSTATUS0_MPFE_NOC_IDLE	BIT(0)
+#define FLAGINSTATUS0_MPFE_NOC_IDLEACK	BIT(1)
+#define FLAGINSTATUS0_F2S_CMD_EMPTY	BIT(2)
+#define FLAGINSTATUS0_F2S_RESP_EMPTY	BIT(3)
+
+#define FLGAOUTSET0_MPFE_NOC_IDLEREQ	BIT(0)
+#define FLGAOUTSET0_F2S_EN		BIT(1)
+#define FLGAOUTSET0_F2S_FORCE_DRAIN	BIT(2)
+
+#define FLGAOUTCLR0_F2S_IDLEREQ		BIT(0)
+#endif
+
 #define POLL_FOR_ZERO(expr, timeout_ms)		\
 	{					\
 		int timeout = (timeout_ms);	\
 		while ((expr)) {		\
+			if (!timeout)		\
+				break;		\
+			timeout--;		\
+			__socfpga_udelay(1000);	\
+		}				\
+	}
+
+#define POLL_FOR_SET(expr, timeout_ms)		\
+	{					\
+		int timeout = (timeout_ms);	\
+		while (!(expr)) {		\
 			if (!timeout)		\
 				break;		\
 			timeout--;		\
@@ -68,6 +108,74 @@ void socfpga_per_reset_all(void)
 		      socfpga_get_rstmgr_addr() + RSTMGR_SOC64_PER0MODRST);
 	writel(~l4wd0, socfpga_get_rstmgr_addr() + RSTMGR_SOC64_PER0MODRST);
 	writel(0xffffffff, socfpga_get_rstmgr_addr() + RSTMGR_SOC64_PER1MODRST);
+}
+
+static __always_inline void socfpga_f2s_bridges_reset(int enable)
+{
+	int timeout_ms = 300;
+	u32 empty;
+
+	if (enable) {
+		clrbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_BRGMODRST,
+			     BRGMODRST_FPGA2SOC_BRIDGES);
+		clrbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
+			     F2SDRAM_SIDEBAND_FLAGOUTSET0,
+			     FLGAOUTSET0_MPFE_NOC_IDLEREQ);
+
+		POLL_FOR_ZERO((readl(SOCFPGA_F2SDRAM_MGR_ADDRESS +
+			      F2SDRAM_SIDEBAND_FLAGINSTATUS0) &
+			      FLAGINSTATUS0_MPFE_NOC_IDLEACK), timeout_ms);
+		clrbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
+			     F2SDRAM_SIDEBAND_FLAGOUTSET0,
+			     FLGAOUTSET0_F2S_FORCE_DRAIN);
+		setbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
+			     F2SDRAM_SIDEBAND_FLAGOUTSET0, FLGAOUTSET0_F2S_EN);
+
+		__socfpga_udelay(1); /* wait 1us */
+	} else {
+		setbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_HDSKEN,
+			     RSTMGR_HDSKEN_FPGAHSEN);
+		setbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_HDSKREQ,
+			     RSTMGR_HDSKREQ_FPGAHSREQ);
+		POLL_FOR_SET(readl(socfpga_get_rstmgr_addr() +
+			     RSTMGR_SOC64_HDSKACK), timeout_ms);
+		clrbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
+			     F2SDRAM_SIDEBAND_FLAGOUTSET0, FLGAOUTSET0_F2S_EN);
+		__socfpga_udelay(1);
+		setbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
+			     F2SDRAM_SIDEBAND_FLAGOUTSET0,
+			     FLGAOUTSET0_F2S_FORCE_DRAIN);
+		__socfpga_udelay(1);
+
+		do {
+			/*
+			 * Read response queue status twice to ensure it is
+			 * empty.
+			 */
+			empty = readl(SOCFPGA_F2SDRAM_MGR_ADDRESS +
+				      F2SDRAM_SIDEBAND_FLAGINSTATUS0) &
+				      FLAGINSTATUS0_F2S_RESP_EMPTY;
+			if (empty) {
+				empty = readl(SOCFPGA_F2SDRAM_MGR_ADDRESS +
+					      F2SDRAM_SIDEBAND_FLAGINSTATUS0) &
+					      FLAGINSTATUS0_F2S_RESP_EMPTY;
+				if (empty)
+					break;
+			}
+
+			timeout_ms--;
+			__socfpga_udelay(1000);
+		} while (timeout_ms);
+
+		setbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_BRGMODRST,
+			     BRGMODRST_FPGA2SOC_BRIDGES &
+			     ~RSTMGR_BRGMODRST_FPGA2SOC_MASK);
+		clrbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_HDSKREQ,
+			     RSTMGR_HDSKREQ_FPGAHSREQ);
+		setbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
+			     F2SDRAM_SIDEBAND_FLAGOUTCLR0,
+			     FLGAOUTCLR0_F2S_IDLEREQ);
+	}
 }
 
 static __always_inline void socfpga_s2f_bridges_reset(int enable)
@@ -123,13 +231,14 @@ void socfpga_bridges_reset(int enable)
 			hang();
 	} else {
 		socfpga_s2f_bridges_reset(enable);
-
+		socfpga_f2s_bridges_reset(enable);
 	}
 }
 
 void __secure socfpga_bridges_reset_psci(int enable)
 {
 	socfpga_s2f_bridges_reset(enable);
+	socfpga_f2s_bridges_reset(enable);
 }
 
 /*
