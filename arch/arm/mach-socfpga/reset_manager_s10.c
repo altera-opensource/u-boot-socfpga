@@ -226,9 +226,13 @@ void socfpga_bridges_reset(int enable)
 {
 	if (!IS_ENABLED(CONFIG_SPL_BUILD) && IS_ENABLED(CONFIG_SPL_ATF)) {
 		u64 arg = enable;
+		int ret;
 
-		if (invoke_smc(INTEL_SIP_SMC_HPS_SET_BRIDGES, &arg, 1, NULL, 0))
-			hang();
+		ret = invoke_smc(INTEL_SIP_SMC_HPS_SET_BRIDGES, &arg, 1, NULL,
+				 0);
+		if (ret)
+			printf("Failed to %s the HPS bridges, error %d\n",
+			       enable ? "enable" : "disable", ret);
 	} else {
 		socfpga_s2f_bridges_reset(enable);
 		socfpga_f2s_bridges_reset(enable);
