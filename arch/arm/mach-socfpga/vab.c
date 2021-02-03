@@ -20,10 +20,7 @@ static int do_vab(struct cmd_tbl *cmdtp, int flag, int argc,
 	addr = simple_strtoul(argv[1], NULL, 16);
 	len = simple_strtoul(argv[2], NULL, 16);
 
-	if (socfpga_vendor_authentication((void *)&addr, (size_t *)&len) == 0)
-		printf("%s 0x%016lx (%ld bytes)\n",
-		       "Image Authentication passed at address", addr, len);
-	else
+	if (socfpga_vendor_authentication((void *)&addr, (size_t *)&len) != 0)
 		return CMD_RET_FAILURE;
 
 	return 0;
