@@ -44,8 +44,7 @@ int socfpga_vendor_authentication(void **p_image, size_t *p_size)
 	u8 hash384[SHA384_SUM_LEN];
 	u64 img_addr, mbox_data_addr;
 	size_t img_sz, mbox_data_sz;
-	u8 *cert_hash_ptr;
-	u32 backup_word;
+	u8 *cert_hash_ptr, *mbox_relocate_data_addr;
 	u32 resp = 0, resp_len = 1;
 	int ret;
 
@@ -88,24 +87,35 @@ int socfpga_vendor_authentication(void **p_image, size_t *p_size)
 	mbox_data_sz = (ALIGN(*p_size - img_sz, 4)) >> 2;
 
 	debug("mbox_data_addr = 0x%016llx\n", mbox_data_addr);
-	debug("mbox_data_sz = %ld\n", mbox_data_sz);
+	debug("mbox_data_sz = %ld words\n", mbox_data_sz);
 
-	/* We need to use the 4 bytes before the certificate for T */
-	backup_word = *(u32 *)mbox_data_addr;
-	/* T = 0 */
-	*(u32 *)mbox_data_addr = 0;
+	/*
+	 * Relocate certificate to first memory block before trigger SMC call
+	 * to send mailbox command because ATF only able to access first
+	 * memory block.
+	 */
+	mbox_relocate_data_addr = (u8 *)malloc(mbox_data_sz * sizeof(u32));
+	if (mbox_relocate_data_addr == NULL) {
+		puts("Out of memory for VAB certificate relocation!\n");
+		return -ENOMEM;
+	}
+
+	memcpy(mbox_relocate_data_addr, (u8 *)mbox_data_addr, mbox_data_sz * sizeof(u32));
+	*(u32 *)mbox_relocate_data_addr = 0;
+
+	debug("mbox_relocate_data_addr = 0x%p\n", mbox_relocate_data_addr);
 
 	do {
 #if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_ATF)
 		/* Invoke SMC call to ATF to send the VAB certificate to SDM */
 		ret  = smc_send_mailbox(MBOX_VAB_SRC_CERT, mbox_data_sz,
-					(u32 *)mbox_data_addr, 0, &resp_len,
+					(u32 *)mbox_relocate_data_addr, 0, &resp_len,
 					&resp);
 #else
 		/* Send the VAB certficate to SDM for authentication */
 		ret = mbox_send_cmd(MBOX_ID_UBOOT, MBOX_VAB_SRC_CERT,
 				    MBOX_CMD_DIRECT, mbox_data_sz,
-				    (u32 *)mbox_data_addr, 0, &resp_len,
+				    (u32 *)mbox_relocate_data_addr, 0, &resp_len,
 				    &resp);
 #endif
 		/* If SDM is not available, just delay 50ms and retry again */
@@ -115,8 +125,8 @@ int socfpga_vendor_authentication(void **p_image, size_t *p_size)
 			break;
 	} while (--retry_count);
 
-	/* Restore the original 4 bytes */
-	*(u32 *)mbox_data_addr = backup_word;
+	/* Free the relocate certificate memory space */
+	free(mbox_relocate_data_addr);
 
 	/* Exclude the size of the VAB certificate from image size */
 	*p_size = img_sz;
