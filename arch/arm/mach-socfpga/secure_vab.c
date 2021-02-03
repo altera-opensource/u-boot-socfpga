@@ -139,8 +139,7 @@ int socfpga_vendor_authentication(void **p_image, size_t *p_size)
 		 * Unsupported mailbox command or device not in the
 		 * owned/secure state
 		 */
-		if (ret == MBOX_RESP_UNKNOWN ||
-		    ret == MBOX_RESP_NOT_ALLOWED_UNDER_SECURITY_SETTINGS) {
+		if (ret == MBOX_RESP_NOT_ALLOWED_UNDER_SECURITY_SETTINGS) {
 			/* SDM bypass authentication */
 			printf("%s 0x%016llx (%ld bytes)\n",
 			       "Image Authentication bypassed at address",
@@ -149,8 +148,11 @@ int socfpga_vendor_authentication(void **p_image, size_t *p_size)
 		}
 		puts("VAB certificate authentication failed in SDM");
 		if (ret == MBOX_RESP_DEVICE_BUSY) {
-			puts("(SDM busy timeout)\n");
+			puts(" (SDM busy timeout)\n");
 			return -ETIMEDOUT;
+		} else if (ret == MBOX_RESP_UNKNOWN) {
+			puts(" (Not supported)\n");
+			return -ESRCH;
 		}
 		puts("\n");
 		return -EKEYREJECTED;
@@ -162,7 +164,8 @@ int socfpga_vendor_authentication(void **p_image, size_t *p_size)
 		}
 	}
 
-	debug("Image Authentication passed\n");
+	printf("%s 0x%016llx (%ld bytes)\n",
+	       "Image Authentication passed at address", img_addr, img_sz);
 
 	return 0;
 }
