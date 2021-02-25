@@ -70,32 +70,20 @@ void socfpga_per_reset_all(void)
 	writel(0xffffffff, socfpga_get_rstmgr_addr() + RSTMGR_SOC64_PER1MODRST);
 }
 
-void socfpga_bridges_reset(int enable)
+static __always_inline void socfpga_s2f_bridges_reset(int enable)
 {
-#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_ATF)
-	u64 arg = enable;
-
-	int ret = invoke_smc(INTEL_SIP_SMC_HPS_SET_BRIDGES, &arg, 1, NULL, 0);
-	if (ret) {
-		printf("SMC call failed with error %d in %s.\n", ret, __func__);
-		return;
-	}
-#else
-	u32 reg;
-
 	if (enable) {
 		/* clear idle request to all bridges */
 		setbits_le32(socfpga_get_sysmgr_addr() +
 			     SYSMGR_SOC64_NOC_IDLEREQ_CLR, ~0);
 
-		/* Release all bridges from reset state */
+		/* Release SOC2FPGA bridges from reset state */
 		clrbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_BRGMODRST,
-			     ~0);
+			     BRGMODRST_SOC2FPGA_BRIDGES);
 
 		/* Poll until all idleack to 0 */
-		read_poll_timeout(readl, reg, !reg, 1000, 300000,
-				  socfpga_get_sysmgr_addr() +
-				  SYSMGR_SOC64_NOC_IDLEACK);
+		POLL_FOR_ZERO(readl(socfpga_get_sysmgr_addr() +
+			      SYSMGR_SOC64_NOC_IDLEACK), 300);
 	} else {
 		/* set idle request to all bridges */
 		writel(~0,
@@ -106,74 +94,42 @@ void socfpga_bridges_reset(int enable)
 		writel(1, socfpga_get_sysmgr_addr() + SYSMGR_SOC64_NOC_TIMEOUT);
 
 		/* Poll until all idleack to 1 */
-		read_poll_timeout(readl, reg,
-				  reg == (SYSMGR_NOC_H2F_MSK |
-					  SYSMGR_NOC_LWH2F_MSK),
-				  1000, 300000,
-				  socfpga_get_sysmgr_addr() +
-				  SYSMGR_SOC64_NOC_IDLEACK);
+		POLL_FOR_ZERO(readl(socfpga_get_sysmgr_addr() +
+				    SYSMGR_SOC64_NOC_IDLEACK) ^
+			      (SYSMGR_NOC_H2F_MSK | SYSMGR_NOC_LWH2F_MSK),
+			      300);
 
 		/* Poll until all idlestatus to 1 */
-		read_poll_timeout(readl, reg,
-				  reg == (SYSMGR_NOC_H2F_MSK |
-					  SYSMGR_NOC_LWH2F_MSK),
-				  1000, 300000,
-				  socfpga_get_sysmgr_addr() +
-				  SYSMGR_SOC64_NOC_IDLESTATUS);
+		POLL_FOR_ZERO(readl(socfpga_get_sysmgr_addr() +
+				    SYSMGR_SOC64_NOC_IDLESTATUS) ^
+			      (SYSMGR_NOC_H2F_MSK | SYSMGR_NOC_LWH2F_MSK),
+			      300);
 
-		/* Reset all bridges (except NOR DDR scheduler & F2S) */
+		/* Reset all SOC2FPGA bridges (except NOR DDR scheduler & F2S) */
 		setbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_BRGMODRST,
-			     ~(RSTMGR_BRGMODRST_DDRSCH_MASK |
-			       RSTMGR_BRGMODRST_FPGA2SOC_MASK));
+			     BRGMODRST_SOC2FPGA_BRIDGES);
 
 		/* Disable NOC timeout */
 		writel(0, socfpga_get_sysmgr_addr() + SYSMGR_SOC64_NOC_TIMEOUT);
 	}
-#endif
+}
+
+void socfpga_bridges_reset(int enable)
+{
+	if (!IS_ENABLED(CONFIG_SPL_BUILD) && IS_ENABLED(CONFIG_SPL_ATF)) {
+		u64 arg = enable;
+
+		if (invoke_smc(INTEL_SIP_SMC_HPS_SET_BRIDGES, &arg, 1, NULL, 0))
+			hang();
+	} else {
+		socfpga_s2f_bridges_reset(enable);
+
+	}
 }
 
 void __secure socfpga_bridges_reset_psci(int enable)
 {
-	if (enable) {
-		/* clear idle request to all bridges */
-		setbits_le32(SOCFPGA_SYSMGR_ADDRESS +
-			     SYSMGR_SOC64_NOC_IDLEREQ_CLR, ~0);
-
-		/* Release all bridges from reset state */
-		clrbits_le32(SOCFPGA_RSTMGR_ADDRESS + RSTMGR_SOC64_BRGMODRST,
-			     ~0);
-
-		/* Poll until all idleack to 0 */
-		while (readl(SOCFPGA_SYSMGR_ADDRESS +
-			     SYSMGR_SOC64_NOC_IDLEACK))
-			;
-	} else {
-		/* set idle request to all bridges */
-		writel(~0,
-		       SOCFPGA_SYSMGR_ADDRESS +
-		       SYSMGR_SOC64_NOC_IDLEREQ_SET);
-
-		/* Enable the NOC timeout */
-		writel(1, SOCFPGA_SYSMGR_ADDRESS + SYSMGR_SOC64_NOC_TIMEOUT);
-
-		/* Poll until all idleack to 1 */
-		while ((readl(SOCFPGA_SYSMGR_ADDRESS + SYSMGR_SOC64_NOC_IDLEACK) ^
-			(SYSMGR_NOC_H2F_MSK | SYSMGR_NOC_LWH2F_MSK)))
-			;
-
-		/* Poll until all idlestatus to 1 */
-		while ((readl(SOCFPGA_SYSMGR_ADDRESS + SYSMGR_SOC64_NOC_IDLESTATUS) ^
-			(SYSMGR_NOC_H2F_MSK | SYSMGR_NOC_LWH2F_MSK)))
-			;
-
-		/* Reset all bridges (except NOR DDR scheduler & F2S) */
-		setbits_le32(SOCFPGA_RSTMGR_ADDRESS + RSTMGR_SOC64_BRGMODRST,
-			     ~(RSTMGR_BRGMODRST_DDRSCH_MASK |
-			       RSTMGR_BRGMODRST_FPGA2SOC_MASK));
-
-		/* Disable NOC timeout */
-		writel(0, SOCFPGA_SYSMGR_ADDRESS + SYSMGR_SOC64_NOC_TIMEOUT);
-	}
+	socfpga_s2f_bridges_reset(enable);
 }
 
 /*
