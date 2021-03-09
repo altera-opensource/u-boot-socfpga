@@ -81,8 +81,8 @@ static void ncore_ccu_init_dirs(void __iomem *base)
 				hang();
 			}
 
-			/* Enable snoop filter, a bit per snoop filter */
-			setbits_le32((ulong)CCU_DIR_REG_ADDR(base, DIRUSFER, i),
+			/* Disable snoop filter, a bit per snoop filter */
+			clrbits_le32((ulong)CCU_DIR_REG_ADDR(base, DIRUSFER, i),
 				     BIT(f));
 		}
 	}
