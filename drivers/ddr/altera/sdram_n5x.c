@@ -1207,6 +1207,8 @@ int sdram_mmr_init_full(struct udevice *dev)
 	priv->info.base = bd.bi_dram[0].start;
 	priv->info.size = gd->ram_size;
 
+	sdram_size_check(&bd);
+
 	sdram_set_firewall(&bd);
 
 	return 0;
