@@ -9,7 +9,6 @@
 	memory {
 		#address-cells = <2>;
 		#size-cells = <2>;
-		auto-size;
 		u-boot,dm-pre-reloc;
 	};
 
