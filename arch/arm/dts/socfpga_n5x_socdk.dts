@@ -113,12 +113,12 @@
 		#size-cells = <1>;
 		compatible = "mt25qu02g";
 		reg = <0>;
-		spi-max-frequency = <50000000>;
+		spi-max-frequency = <100000000>;
 
 		m25p,fast-read;
 		cdns,page-size = <256>;
 		cdns,block-size = <16>;
-		cdns,read-delay = <1>;
+		cdns,read-delay = <3>;
 		cdns,tshsl-ns = <50>;
 		cdns,tsd2d-ns = <50>;
 		cdns,tchsh-ns = <4>;
