@@ -9,13 +9,6 @@
 
 #include <configs/socfpga_soc64_common.h>
 
-#undef CONFIG_BOOTARGS
-#ifdef CONFIG_SECURE_VAB_AUTH
-#define CONFIG_BOOTARGS "earlycon panic=-1 mem=2048M"
-#else
-#define CONFIG_BOOTARGS "earlycon panic=-1 earlyprintk=ttyS0,115200"
-#endif
-
 #undef CONFIG_EXTRA_ENV_SETTINGS
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"loadaddr=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
