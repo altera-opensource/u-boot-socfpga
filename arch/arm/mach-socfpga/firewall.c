@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2016-2019 Intel Corporation <www.intel.com>
+ * Copyright (C) 2016-2022 Intel Corporation <www.intel.com>
  *
  */
 
@@ -105,7 +105,8 @@ void firewall_setup(void)
 	writel(SYSMGR_DMAPERIPH_ALL_NS,
 	       socfpga_get_sysmgr_addr() + SYSMGR_SOC64_DMA_PERIPH);
 
-#if defined(CONFIG_TARGET_SOCFPGA_AGILEX) || defined(CONFIG_TARGET_SOCFPGA_DM)
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX) || \
+		IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 	/* Disable the MPFE Firewall for SMMU */
 	writel(FIREWALL_MPFE_SCR_DISABLE_ALL, SOCFPGA_FW_MPFE_SCR_ADDRESS +
 					      FW_MPFE_SCR_HMC);
