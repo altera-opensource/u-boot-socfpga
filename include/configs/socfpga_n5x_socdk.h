@@ -13,7 +13,7 @@
 #ifdef CONFIG_SECURE_VAB_AUTH
 #define CONFIG_BOOTARGS "earlycon panic=-1 mem=2048M"
 #else
-#define CONFIG_BOOTARGS "earlycon panic=-1 earlyprintk=ttyS0,4800"
+#define CONFIG_BOOTARGS "earlycon panic=-1 earlyprintk=ttyS0,115200"
 #endif
 
 #undef CONFIG_EXTRA_ENV_SETTINGS

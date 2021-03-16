@@ -15,7 +15,7 @@
 	};
 
 	chosen {
-		stdout-path = "serial0:4800n8";
+		stdout-path = "serial0:115200n8";
 		u-boot,boot0 = <&mmc>;
 	};
 
@@ -95,7 +95,6 @@
 
 &uart0 {
 	status = "okay";
-	clock-frequency = <76800>;
 };
 
 &usb0 {
