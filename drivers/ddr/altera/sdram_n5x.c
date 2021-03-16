@@ -200,20 +200,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define MR5_BIT4	BIT(4)
 
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
-#define PSI_LL_SLAVE_APS_PER_OFST	0x00000000
-#define alt_write_hword(addr, val)	(writew(val, addr))
-#define SDM_HPS_PERI_ADDR_TRANSLATION(_HPS_OFFSET_) \
-	(PSI_LL_SLAVE_APS_PER_OFST + (_HPS_OFFSET_))
-#define DDR_PHY_BASE	0xF8800000
-#define SNPS_PHY_TRANSLATION(_PHY_OFFSET_) \
-	(PSI_LL_SLAVE_APS_PER_OFST + ((DDR_PHY_BASE + ((_PHY_OFFSET_) << 1))))
-#define dwc_ddrphy_apb_wr(dest, data) \
-	alt_write_hword(SNPS_PHY_TRANSLATION(dest), data)
-#define b_max 1
-#define timing_group_max 4
-#endif
-
 enum ddr_type {
 	DDRTYPE_LPDDR4_0,
 	DDRTYPE_LPDDR4_1,
@@ -541,10 +527,6 @@ static int scrubber_ddr_config(phys_addr_t umctl2_base,
 	writel(0, umctl2_base + DDR4_SBRRANGE0_OFFSET);
 	writel(0, umctl2_base + DDR4_SBRRANGE1_OFFSET);
 
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
-	writel(0x0FFFFFFF, umctl2_base + DDR4_SBRRANGE0_OFFSET);
-#endif
-
 	/* Enables scrubber */
 	setbits_le32(umctl2_base + DDR4_SBRCTL_OFFSET, DDR4_SBRCTL_SCRUB_EN);
 
@@ -734,75 +716,6 @@ static int init_phy(struct ddr_handoff *ddr_handoff_info)
 		      ddr_handoff_info->phy_base)));
 	}
 
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
-	u8 numdbyte = 0x0009;
-	u8 byte, lane;
-	u32 b_addr, c_addr;
-
-	/* Program TxOdtDrvStren bx_p0 */
-	for (byte = 0; byte < numdbyte; byte++) {
-		c_addr = byte << 13;
-
-		for (lane = 0; lane <= b_max ; lane++) {
-			b_addr = lane << 9;
-			writew(0x00, (uintptr_t)
-			       (ddr_handoff_info->phy_base +
-			       DDR_PHY_TXODTDRVSTREN_B0_P0 + c_addr +
-			       b_addr));
-		}
-	}
-
-	/* Program TxOdtDrvStren bx_p1 */
-	for (byte = 0; byte < numdbyte; byte++) {
-		c_addr = byte << 13;
-
-		for (lane = 0; lane <= b_max ; lane++) {
-			b_addr = lane << 9;
-			writew(0x00, (uintptr_t)
-			       (ddr_handoff_info->phy_base +
-			       DDR_PHY_TXODTDRVSTREN_B0_P1 + c_addr +
-			       b_addr));
-		}
-	}
-
-	/*
-	 * [phyinit_C_initPhyConfig] Pstate=0, Memclk=1600MHz,
-	 * Programming ARdPtrInitVal to 0x2
-	 * DWC_DDRPHYA_MASTER0_ARdPtrInitVal_p0
-	 */
-	dwc_ddrphy_apb_wr(0x2002e, 0x3);
-
-	/* [phyinit_C_initPhyConfig] Pstate=1,
-	 * Memclk=1067MHz, Programming ARdPtrInitVal to 0x2
-	 * DWC_DDRPHYA_MASTER0_ARdPtrInitVal_p1
-	 */
-	dwc_ddrphy_apb_wr(0x12002e, 0x3);
-
-	/* DWC_DDRPHYA_MASTER0_DfiFreqXlat0 */
-	dwc_ddrphy_apb_wr(0x200f0, 0x6666);
-
-	/* DWC_DDRPHYA_DBYTE0_DFIMRL_p0 */
-	dwc_ddrphy_apb_wr(0x10020, 0x4);
-	/* DWC_DDRPHYA_DBYTE1_DFIMRL_p0 */
-	dwc_ddrphy_apb_wr(0x11020, 0x4);
-	/* DWC_DDRPHYA_DBYTE2_DFIMRL_p0 */
-	dwc_ddrphy_apb_wr(0x12020, 0x4);
-	/* DWC_DDRPHYA_DBYTE3_DFIMRL_p0 */
-	dwc_ddrphy_apb_wr(0x13020, 0x4); //
-	/*  DWC_DDRPHYA_DBYTE4_DFIMRL_p0 */
-	dwc_ddrphy_apb_wr(0x14020, 0x4);
-	/* DWC_DDRPHYA_DBYTE5_DFIMRL_p0 */
-	dwc_ddrphy_apb_wr(0x15020, 0x4);
-	/* DWC_DDRPHYA_DBYTE6_DFIMRL_p0 */
-	dwc_ddrphy_apb_wr(0x16020, 0x4);
-	/* DWC_DDRPHYA_DBYTE7_DFIMRL_p0 */
-	dwc_ddrphy_apb_wr(0x17020, 0x4);
-	/* DWC_DDRPHYA_DBYTE8_DFIMRL_p0 */
-	dwc_ddrphy_apb_wr(0x18020, 0x4);
-	/* DWC_DDRPHYA_MASTER0_HwtMRL_p0 */
-	dwc_ddrphy_apb_wr(0x20020, 0x4);
-#endif
-
 	printf("DDR PHY configuration is completed\n");
 
 	return 0;
@@ -842,34 +755,6 @@ static void phy_init_engine(struct ddr_handoff *ddr_handoff_info)
 		debug("rd = 0x%08x\n", readw((uintptr_t)(value +
 		      ddr_handoff_info->phy_base)));
 	}
-
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
-	u8 numdbyte = 0x0009;
-	u8 byte, timing_group;
-	u32 b_addr, c_addr;
-
-	/* Enable access to the PHY configuration registers */
-	clrbits_le16(ddr_handoff_info->phy_base + DDR_PHY_APBONLY0_OFFSET,
-		     DDR_PHY_MICROCONTMUXSEL);
-
-	/* Program RXPBDLYTG0 bx_p0 */
-	for (byte = 0; byte < numdbyte; byte++) {
-		c_addr = byte << 9;
-
-		for (timing_group = 0; timing_group <= timing_group_max;
-			timing_group++) {
-			b_addr = timing_group << 1;
-			writew(0x00, (uintptr_t)
-			       (ddr_handoff_info->phy_base +
-			       DDR_PHY_RXPBDLYTG0_R0 + c_addr +
-			       b_addr));
-		}
-	}
-
-	/* Isolate the APB access from internal CSRs */
-	setbits_le16(ddr_handoff_info->phy_base + DDR_PHY_APBONLY0_OFFSET,
-		     DDR_PHY_MICROCONTMUXSEL);
-#endif
 
 	printf("End of loading PHY Init Engine\n");
 }
