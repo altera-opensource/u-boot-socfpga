@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- *  Copyright (C) 2013-2017 Altera Corporation <www.altera.com>
+ *  Copyright (C) 2013-2021 Altera Corporation <www.altera.com>
  */
 
 #ifndef _CLOCK_MANAGER_H_
