@@ -322,13 +322,6 @@ enum region_size {
 	ONE_SIXTY_FOURTH
 };
 
-enum ddr_type {
-	DDRTYPE_LPDDR4_0,
-	DDRTYPE_LPDDR4_1,
-	DDRTYPE_DDR4,
-	DDRTYPE_UNKNOWN
-};
-
 /* Reset type */
 enum reset_type {
 	POR_RESET,
