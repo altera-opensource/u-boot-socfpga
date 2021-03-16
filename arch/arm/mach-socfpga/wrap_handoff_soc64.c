@@ -105,7 +105,6 @@ int socfpga_handoff_read(void *handoff_address, void *table, u32 table_len)
 	}
 
 	debug(" No.%d Addr 0x%08x: ", i, *table_x32);
-
 	for (i = 1; i < table_len; i++) {
 		table_x32++;
 

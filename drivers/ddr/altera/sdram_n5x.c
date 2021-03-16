@@ -867,7 +867,6 @@ static int init_umctl2(phys_addr_t umctl2_handoff_base,
 
 	/* Enable controller from issuing read/write to SDRAM */
 	clrbits_le32(umctl2_base + DDR4_DBG1_OFFSET, DDR4_DBG1_DISDQ);
-
 	return 0;
 }
 
@@ -950,7 +949,6 @@ static int init_phy(struct ddr_handoff *ddr_handoff_info)
 	handoff_process(ddr_handoff_info, ddr_handoff_info->phy_handoff_base,
 			ddr_handoff_info->phy_handoff_length,
 			ddr_handoff_info->phy_base);
-
 	printf("DDR PHY configuration is completed\n");
 
 	return 0;
@@ -1186,7 +1184,6 @@ int populate_ddr_handoff(struct ddr_handoff *handoff)
 	handoff->train_dmem_length = SOC64_HANDOFF_DDR_TRAIN_DMEM_LENGTH;
 	debug("%s: PHY train DMEM length = 0x%x\n",
 	      __func__, (u32)handoff->train_dmem_length);
-
 	return 0;
 }
 
@@ -2291,7 +2288,6 @@ int sdram_mmr_init_full(struct udevice *dev)
 	priv->info.size = gd->ram_size;
 
 	sdram_size_check(&bd);
-
 	sdram_set_firewall(&bd);
 
 	return 0;
