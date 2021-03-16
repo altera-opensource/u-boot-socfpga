@@ -13,6 +13,7 @@
 #include <dm.h>
 #include <dt-bindings/clock/n5x-clock.h>
 #include <malloc.h>
+#include <common.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
