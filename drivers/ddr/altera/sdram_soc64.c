@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2016-2020 Intel Corporation <www.intel.com>
+ * Copyright (C) 2016-2021 Intel Corporation <www.intel.com>
  *
  */
 
@@ -300,7 +300,7 @@ static int altera_sdram_of_to_plat(struct udevice *dev)
 	fdt_addr_t addr;
 
 	/* These regs info are part of DDR handoff in bitstream */
-#ifdef CONFIG_TARGET_SOCFPGA_DM
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 	return 0;
 #endif
 
