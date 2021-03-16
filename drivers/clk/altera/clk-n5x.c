@@ -35,14 +35,12 @@ static void clk_write_bypass_perpll(struct socfpga_clk_plat *plat, u32 val)
 	cm_wait_for_fsm();
 }
 
-#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 /* function to write the ctrl register which requires a poll of the busy bit */
 static void clk_write_ctrl(struct socfpga_clk_plat *plat, u32 val)
 {
 	CM_REG_WRITEL(plat, val, CLKMGR_CTRL);
 	cm_wait_for_fsm();
 }
-#endif
 
 /*
  * Setup clocks while making no assumptions about previous state of the clocks.
@@ -55,7 +53,6 @@ static void clk_basic_init(struct udevice *dev,
 	if (!cfg)
 		return;
 
-#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 #if IS_ENABLED(CONFIG_SPL_BUILD)
 	/* Always force clock manager into boot mode before any configuration */
 	clk_write_ctrl(plat,
@@ -64,7 +61,6 @@ static void clk_basic_init(struct udevice *dev,
 	/* Skip clock configuration in SSBL if it's not in boot mode */
 	if (!(CM_REG_READL(plat, CLKMGR_CTRL) & CLKMGR_CTRL_BOOTMODE))
 		return;
-#endif
 #endif
 
 
@@ -101,7 +97,6 @@ static void clk_basic_init(struct udevice *dev,
 
 	cm_wait_for_lock(CLKMGR_STAT_ALLPLL_LOCKED_MASK);
 
-#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 	CM_REG_WRITEL(plat, cfg->alt_emacactr, CLKMGR_ALTR_EMACACTR);
 	CM_REG_WRITEL(plat, cfg->alt_emacbctr, CLKMGR_ALTR_EMACBCTR);
 	CM_REG_WRITEL(plat, cfg->alt_emacptpctr, CLKMGR_ALTR_EMACPTPCTR);
@@ -110,7 +105,6 @@ static void clk_basic_init(struct udevice *dev,
 	CM_REG_WRITEL(plat, cfg->alt_s2fuser0ctr, CLKMGR_ALTR_S2FUSER0CTR);
 	CM_REG_WRITEL(plat, cfg->alt_s2fuser1ctr, CLKMGR_ALTR_S2FUSER1CTR);
 	CM_REG_WRITEL(plat, cfg->alt_psirefctr, CLKMGR_ALTR_PSIREFCTR);
-#endif
 
 	/* Configure ping pong counters in altera group */
 	CM_REG_WRITEL(plat, CLKMGR_LOSTLOCK_SET_MASK, CLKMGR_MAINPLL_LOSTLOCK);
@@ -136,11 +130,9 @@ static void clk_basic_init(struct udevice *dev,
 	CM_REG_CLRBITS(plat, CLKMGR_ALTR_EXTCNTRST,
 		       CLKMGR_ALT_EXTCNTRST_ALLCNTRST_MASK);
 
-#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 	/* Out of boot mode */
 	clk_write_ctrl(plat,
 		       CM_REG_READL(plat, CLKMGR_CTRL) & ~CLKMGR_CTRL_BOOTMODE);
-#endif
 }
 
 static u32 clk_get_5_1_clk_src(struct socfpga_clk_plat *plat, u32 reg)
@@ -296,7 +288,6 @@ static u32 clk_get_sdmmc_clk_hz(struct socfpga_clk_plat *plat)
 	return clock / 4;
 }
 
-#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 static u32 clk_get_l4_sp_clk_hz(struct socfpga_clk_plat *plat)
 {
 	u64 clock = clk_get_l3_main_clk_hz(plat);
@@ -307,7 +298,6 @@ static u32 clk_get_l4_sp_clk_hz(struct socfpga_clk_plat *plat)
 
 	return clock;
 }
-#endif
 
 static u32 clk_get_l4_mp_clk_hz(struct socfpga_clk_plat *plat)
 {
@@ -435,11 +425,7 @@ static ulong socfpga_clk_get_rate(struct clk *clk)
 	case N5X_L4_MP_CLK:
 		return clk_get_l4_mp_clk_hz(plat);
 	case N5X_L4_SP_CLK:
-#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 		return clk_get_l4_sp_clk_hz(plat);
-#else
-		return 76800;
-#endif
 	case N5X_SDMMC_CLK:
 		return clk_get_sdmmc_clk_hz(plat);
 	case N5X_EMAC0_CLK:
