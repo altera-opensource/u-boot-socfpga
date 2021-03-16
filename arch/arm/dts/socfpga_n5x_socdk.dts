@@ -1,11 +1,11 @@
 // SPDX-License-Identifier:     GPL-2.0
 /*
- * Copyright (C) 2020, Intel Corporation
+ * Copyright (C) 2020-2021, Intel Corporation
  */
-#include "socfpga_dm.dtsi"
+#include "socfpga_n5x.dtsi"
 
 / {
-	model = "SoCFPGA Diamond Mesa SoCDK";
+	model = "SoCFPGA N5X SoCDK";
 
 	aliases {
 		serial0 = &uart0;

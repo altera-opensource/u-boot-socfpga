@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0
  *
- * Copyright (C) 2016-2020 Intel Corporation <www.intel.com>
+ * Copyright (C) 2016-2021 Intel Corporation <www.intel.com>
  *
  */
 
@@ -27,7 +27,7 @@
 	defined(CONFIG_TARGET_SOCFPGA_AGILEX)
 #define SOC64_HANDOFF_BASE			0xFFE3F000
 #define SOC64_HANDOFF_MISC			(SOC64_HANDOFF_BASE + 0x610)
-#elif defined(CONFIG_TARGET_SOCFPGA_DM)
+#elif IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 #define SOC64_HANDOFF_BASE			0xFFE5F000
 #define SOC64_HANDOFF_MISC			(SOC64_HANDOFF_BASE + 0x630)
 

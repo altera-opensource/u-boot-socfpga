@@ -3,7 +3,7 @@
 # (C) Copyright 2000-2003
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
-# Copyright (C) 2012-2020 Altera Corporation <www.altera.com>
+# Copyright (C) 2012-2021 Altera Corporation <www.altera.com>
 
 obj-y	+= board.o
 obj-y	+= clock_manager.o
@@ -79,8 +79,8 @@ obj-$(CONFIG_ARMV8_PSCI) += smc_rsu_s10.o
 endif
 endif
 
-ifdef CONFIG_TARGET_SOCFPGA_DM
-obj-y	+= clock_manager_dm.o
+ifdef CONFIG_TARGET_SOCFPGA_N5X
+obj-y	+= clock_manager_n5x.o
 obj-y	+= lowlevel_init_soc64.o
 obj-y	+= mailbox_s10.o
 obj-y	+= misc_soc64.o
@@ -127,9 +127,9 @@ obj-y	+= firewall.o
 obj-y	+= spl_agilex.o
 obj-y	+= spl_soc64.o
 endif
-ifdef CONFIG_TARGET_SOCFPGA_DM
+ifdef CONFIG_TARGET_SOCFPGA_N5X
 obj-y	+= firewall.o
-obj-y	+= spl_dm.o
+obj-y	+= spl_n5x.o
 obj-y	+= spl_soc64.o
 endif
 else

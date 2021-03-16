@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2020 Intel Corporation <www.intel.com>
+ * Copyright (C) 2020-2021 Intel Corporation <www.intel.com>
  */
 
-#ifndef	_CLK_MEM_DM_
-#define	_CLK_MEM_DM_
+#ifndef	_CLK_MEM_N5X_
+#define	_CLK_MEM_N5X_
 
 #ifndef __ASSEMBLY__
 #include <linux/bitops.h>
@@ -81,4 +81,4 @@
 #define MEMCLKMGR_EXTCNTRST_ALLCNTRST			\
 	(MEMCLKMGR_EXTCNTRST_C0CNTRST)
 
-#endif /* _CLK_MEM_DM_ */
+#endif /* _CLK_MEM_N5X_ */

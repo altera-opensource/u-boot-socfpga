@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: GPL-2.0
  *
- * Copyright (C) 2020 Intel Corporation <www.intel.com>
+ * Copyright (C) 2020-2021 Intel Corporation <www.intel.com>
  *
  */
 
-#ifndef __CONFIG_SOCFGPA_DM_H__
-#define __CONFIG_SOCFGPA_DM_H__
+#ifndef __CONFIG_SOCFGPA_N5X_H__
+#define __CONFIG_SOCFGPA_N5X_H__
 
 #include <configs/socfpga_soc64_common.h>
 
@@ -47,4 +47,4 @@
 	"fatscript=if fatload mmc 0:1 ${scriptaddr} ${scriptfile};" \
 		   "then source ${scriptaddr}; fi\0"
 
-#endif	/* __CONFIG_SOCFGPA_DM_H__ */
+#endif	/* __CONFIG_SOCFGPA_N5X_H__ */

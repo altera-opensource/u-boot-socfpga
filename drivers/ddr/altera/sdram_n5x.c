@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2020 Intel Corporation <www.intel.com>
+ * Copyright (C) 2020-2021 Intel Corporation <www.intel.com>
  *
  */
 
@@ -200,7 +200,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define MR5_BIT4	BIT(4)
 
-#ifdef CONFIG_TARGET_SOCFPGA_DM
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 #define PSI_LL_SLAVE_APS_PER_OFST	0x00000000
 #define alt_write_hword(addr, val)	(writew(val, addr))
 #define SDM_HPS_PERI_ADDR_TRANSLATION(_HPS_OFFSET_) \
@@ -523,7 +523,7 @@ static int scrubbing_ddr_config(struct ddr_handoff *ddr_handoff_info)
 	writel(0, ddr_handoff_info->umctl2_base + DDR4_SBRRANGE0_OFFSET);
 	writel(0, ddr_handoff_info->umctl2_base + DDR4_SBRRANGE1_OFFSET);
 
-#ifdef CONFIG_TARGET_SOCFPGA_DM
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 	writel(0x0FFFFFFF, ddr_handoff_info->umctl2_base +
 	       DDR4_SBRRANGE0_OFFSET);
 #endif
@@ -752,7 +752,7 @@ static int init_phy(struct ddr_handoff *ddr_handoff_info)
 		      ddr_handoff_info->phy_base)));
 	}
 
-#ifdef CONFIG_TARGET_SOCFPGA_DM
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 	u8 numdbyte = 0x0009;
 	u8 byte, lane;
 	u32 b_addr, c_addr;
@@ -861,7 +861,7 @@ static void phy_init_engine(struct ddr_handoff *ddr_handoff_info)
 		      ddr_handoff_info->phy_base)));
 	}
 
-#ifdef CONFIG_TARGET_SOCFPGA_DM
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 	u8 numdbyte = 0x0009;
 	u8 byte, timing_group;
 	u32 b_addr, c_addr;

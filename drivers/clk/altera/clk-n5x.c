@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2020 Intel Corporation <www.intel.com>
+ * Copyright (C) 2020-2021 Intel Corporation <www.intel.com>
  */
 
 #include <common.h>
@@ -10,7 +10,7 @@
 #include <dm.h>
 #include <dm/lists.h>
 #include <dm/util.h>
-#include <dt-bindings/clock/dm-clock.h>
+#include <dt-bindings/clock/n5x-clock.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -34,7 +34,7 @@ static void clk_write_bypass_perpll(struct socfpga_clk_platdata *plat, u32 val)
 	cm_wait_for_fsm();
 }
 
-#ifndef CONFIG_TARGET_SOCFPGA_DM
+#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 /* function to write the ctrl register which requires a poll of the busy bit */
 static void clk_write_ctrl(struct socfpga_clk_platdata *plat, u32 val)
 {
@@ -54,7 +54,7 @@ static void clk_basic_init(struct udevice *dev,
 	if (!cfg)
 		return;
 
-#ifndef CONFIG_TARGET_SOCFPGA_DM
+#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 #ifdef CONFIG_SPL_BUILD
 	/* Always force clock manager into boot mode before any configuration */
 	clk_write_ctrl(plat,
@@ -76,7 +76,7 @@ static void clk_basic_init(struct udevice *dev,
 	CM_REG_SETBITS(plat, CLKMGR_PERPLL_PLLCTRL,
 		       CLKMGR_PLLCTRL_BYPASS_MASK);
 
-#ifndef CONFIG_TARGET_SOCFPGA_DM
+#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 	/* setup main PLL */
 	CM_REG_WRITEL(plat, cfg->main_pll_pllglob, CLKMGR_MAINPLL_PLLGLOB);
 	CM_REG_WRITEL(plat, cfg->main_pll_plldiv, CLKMGR_MAINPLL_PLLDIV);
@@ -101,7 +101,7 @@ static void clk_basic_init(struct udevice *dev,
 
 	cm_wait_for_lock(CLKMGR_STAT_ALLPLL_LOCKED_MASK);
 
-#ifndef CONFIG_TARGET_SOCFPGA_DM
+#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 	CM_REG_WRITEL(plat, cfg->alt_emacactr, CLKMGR_ALTR_EMACACTR);
 	CM_REG_WRITEL(plat, cfg->alt_emacbctr, CLKMGR_ALTR_EMACBCTR);
 	CM_REG_WRITEL(plat, cfg->alt_emacptpctr, CLKMGR_ALTR_EMACPTPCTR);
@@ -136,7 +136,7 @@ static void clk_basic_init(struct udevice *dev,
 	CM_REG_CLRBITS(plat, CLKMGR_ALTR_EXTCNTRST,
 		       CLKMGR_ALT_EXTCNTRST_ALLCNTRST_MASK);
 
-#ifndef CONFIG_TARGET_SOCFPGA_DM
+#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 	/* Out of boot mode */
 	clk_write_ctrl(plat,
 		       CM_REG_READL(plat, CLKMGR_CTRL) & ~CLKMGR_CTRL_BOOTMODE);
@@ -296,7 +296,7 @@ static u32 clk_get_sdmmc_clk_hz(struct socfpga_clk_platdata *plat)
 	return clock / 4;
 }
 
-#ifndef CONFIG_TARGET_SOCFPGA_DM
+#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 static u32 clk_get_l4_sp_clk_hz(struct socfpga_clk_platdata *plat)
 {
 	u64 clock = clk_get_l3_main_clk_hz(plat);
@@ -339,13 +339,13 @@ static u32 clk_get_emac_clk_hz(struct socfpga_clk_platdata *plat, u32 emac_id)
 
 	/* Get EMAC clock source */
 	ctl = CM_REG_READL(plat, CLKMGR_PERPLL_EMACCTL);
-	if (emac_id == DM_EMAC0_CLK)
+	if (emac_id == N5X_EMAC0_CLK)
 		ctl = (ctl >> CLKMGR_PERPLLGRP_EMACCTL_EMAC0SELB_OFFSET) &
 		       CLKMGR_PERPLLGRP_EMACCTL_EMAC0SELB_MASK;
-	else if (emac_id == DM_EMAC1_CLK)
+	else if (emac_id == N5X_EMAC1_CLK)
 		ctl = (ctl >> CLKMGR_PERPLLGRP_EMACCTL_EMAC1SELB_OFFSET) &
 		       CLKMGR_PERPLLGRP_EMACCTL_EMAC1SELB_MASK;
-	else if (emac_id == DM_EMAC2_CLK)
+	else if (emac_id == N5X_EMAC2_CLK)
 		ctl = (ctl >> CLKMGR_PERPLLGRP_EMACCTL_EMAC2SELB_OFFSET) &
 		       CLKMGR_PERPLLGRP_EMACCTL_EMAC2SELB_MASK;
 	else
@@ -426,30 +426,30 @@ static ulong socfpga_clk_get_rate(struct clk *clk)
 	struct socfpga_clk_platdata *plat = dev_get_platdata(clk->dev);
 
 	switch (clk->id) {
-	case DM_MPU_CLK:
+	case N5X_MPU_CLK:
 		return clk_get_mpu_clk_hz(plat);
-	case DM_L4_MAIN_CLK:
+	case N5X_L4_MAIN_CLK:
 		return clk_get_l4_main_clk_hz(plat);
-	case DM_L4_SYS_FREE_CLK:
+	case N5X_L4_SYS_FREE_CLK:
 		return clk_get_l4_sys_free_clk_hz(plat);
-	case DM_L4_MP_CLK:
+	case N5X_L4_MP_CLK:
 		return clk_get_l4_mp_clk_hz(plat);
-	case DM_L4_SP_CLK:
-#ifndef CONFIG_TARGET_SOCFPGA_DM
+	case N5X_L4_SP_CLK:
+#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 		return clk_get_l4_sp_clk_hz(plat);
 #else
 		return 76800;
 #endif
-	case DM_SDMMC_CLK:
+	case N5X_SDMMC_CLK:
 		return clk_get_sdmmc_clk_hz(plat);
-	case DM_EMAC0_CLK:
-	case DM_EMAC1_CLK:
-	case DM_EMAC2_CLK:
+	case N5X_EMAC0_CLK:
+	case N5X_EMAC1_CLK:
+	case N5X_EMAC2_CLK:
 		return clk_get_emac_clk_hz(plat, clk->id);
-	case DM_USB_CLK:
-	case DM_NAND_X_CLK:
+	case N5X_USB_CLK:
+	case N5X_NAND_X_CLK:
 		return clk_get_l4_mp_clk_hz(plat);
-	case DM_NAND_CLK:
+	case N5X_NAND_CLK:
 		return clk_get_l4_mp_clk_hz(plat) / 4;
 	default:
 		return -ENXIO;
@@ -489,12 +489,12 @@ static struct clk_ops socfpga_clk_ops = {
 };
 
 static const struct udevice_id socfpga_clk_match[] = {
-	{ .compatible = "intel,dm-clkmgr" },
+	{ .compatible = "intel,n5x-clkmgr" },
 	{}
 };
 
-U_BOOT_DRIVER(socfpga_dm_clk) = {
-	.name		= "clk-dm",
+U_BOOT_DRIVER(socfpga_n5x_clk) = {
+	.name		= "clk-n5x",
 	.id		= UCLASS_CLK,
 	.of_match	= socfpga_clk_match,
 	.ops		= &socfpga_clk_ops,

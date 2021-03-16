@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2020 Intel Corporation <www.intel.com>
+ * Copyright (C) 2020-2021 Intel Corporation <www.intel.com>
  *
  */
 
@@ -11,7 +11,7 @@
 #include <asm/arch/clock_manager.h>
 #include <asm/arch/system_manager.h>
 #include <asm/io.h>
-#include <dt-bindings/clock/dm-clock.h>
+#include <dt-bindings/clock/n5x-clock.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -23,7 +23,7 @@ static ulong cm_get_rate_dm(u32 id)
 	int ret;
 
 	ret = uclass_get_device_by_driver(UCLASS_CLK,
-					  DM_GET_DRIVER(socfpga_dm_clk),
+					  DM_GET_DRIVER(socfpga_n5x_clk),
 					  &dev);
 	if (ret)
 		return 0;
@@ -54,26 +54,26 @@ static u32 cm_get_rate_dm_khz(u32 id)
 
 unsigned long cm_get_mpu_clk_hz(void)
 {
-	return cm_get_rate_dm(DM_MPU_CLK);
+	return cm_get_rate_dm(N5X_MPU_CLK);
 }
 
 unsigned int cm_get_l4_sys_free_clk_hz(void)
 {
-	return cm_get_rate_dm(DM_L4_SYS_FREE_CLK);
+	return cm_get_rate_dm(N5X_L4_SYS_FREE_CLK);
 }
 
 void cm_print_clock_quick_summary(void)
 {
 	printf("MPU       %10d kHz\n",
-	       cm_get_rate_dm_khz(DM_MPU_CLK));
+	       cm_get_rate_dm_khz(N5X_MPU_CLK));
 	printf("L4 Main	    %8d kHz\n",
-	       cm_get_rate_dm_khz(DM_L4_MAIN_CLK));
+	       cm_get_rate_dm_khz(N5X_L4_MAIN_CLK));
 	printf("L4 sys free %8d kHz\n",
-	       cm_get_rate_dm_khz(DM_L4_SYS_FREE_CLK));
+	       cm_get_rate_dm_khz(N5X_L4_SYS_FREE_CLK));
 	printf("L4 MP       %8d kHz\n",
-	       cm_get_rate_dm_khz(DM_L4_MP_CLK));
+	       cm_get_rate_dm_khz(N5X_L4_MP_CLK));
 	printf("L4 SP       %8d kHz\n",
-	       cm_get_rate_dm_khz(DM_L4_SP_CLK));
+	       cm_get_rate_dm_khz(N5X_L4_SP_CLK));
 	printf("SDMMC       %8d kHz\n",
-	       cm_get_rate_dm_khz(DM_SDMMC_CLK));
+	       cm_get_rate_dm_khz(N5X_SDMMC_CLK));
 }

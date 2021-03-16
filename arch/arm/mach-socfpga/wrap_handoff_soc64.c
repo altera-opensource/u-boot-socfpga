@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2020 Intel Corporation <www.intel.com>
+ * Copyright (C) 2020-2021 Intel Corporation <www.intel.com>
  *
  */
 
@@ -72,7 +72,7 @@ int handoff_read(void *handoff_address, void *table, u32 table_len,
 			return -EPERM;
 		}
 	} else {
-#ifdef CONFIG_TARGET_SOCFPGA_DM
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 		temp = readl(handoff_address);
 		if (temp == SOC64_HANDOFF_DDR_UMCTL2_MAGIC) {
 			debug("%s: umctl2 handoff data =\n{\n",

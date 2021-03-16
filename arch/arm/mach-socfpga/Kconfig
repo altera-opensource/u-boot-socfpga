@@ -22,7 +22,7 @@ config SECURE_VAB_AUTH_ALLOW_NON_FIT_IMAGE
 
 config SECURE_VAB_AUTH
 	bool "Enable boot image authentication with Secure Device Manager"
-	depends on TARGET_SOCFPGA_AGILEX || TARGET_SOCFPGA_DM
+	depends on TARGET_SOCFPGA_AGILEX || TARGET_SOCFPGA_N5X
 	select FIT_IMAGE_POST_PROCESS
 	select SHA512_ALGO
 	select SHA384
@@ -101,7 +101,7 @@ config TARGET_SOCFPGA_CYCLONE5
 	bool
 	select TARGET_SOCFPGA_GEN5
 
-config TARGET_SOCFPGA_DM
+config TARGET_SOCFPGA_N5X
 	bool
 	select TARGET_SOCFPGA_SOC64
 	select ARMV8_MULTIENTRY
@@ -112,9 +112,9 @@ config TARGET_SOCFPGA_DM
 	select SPL_ALTERA_SDRAM
 	select SPL_CLK if SPL
 
-config TARGET_SOCFPGA_DM_SOCDK
-	bool "Intel SOCFPGA SoCDK (Diamond Mesa)"
-	select TARGET_SOCFPGA_DM
+config TARGET_SOCFPGA_N5X_SOCDK
+	bool "Intel SOCFPGA SoCDK (N5X)"
+	select TARGET_SOCFPGA_N5X
 
 config TARGET_SOCFPGA_GEN5
 	bool
@@ -221,7 +221,7 @@ config SYS_BOARD
 	default "de0-nano-soc" if TARGET_SOCFPGA_TERASIC_DE0_NANO
 	default "de1-soc" if TARGET_SOCFPGA_TERASIC_DE1_SOC
 	default "de10-nano" if TARGET_SOCFPGA_TERASIC_DE10_NANO
-	default "dm-socdk" if TARGET_SOCFPGA_DM_SOCDK
+	default "n5x-socdk" if TARGET_SOCFPGA_N5X_SOCDK
 	default "is1" if TARGET_SOCFPGA_IS1
 	default "mcvevk" if TARGET_SOCFPGA_ARIES_MCVEVK
 	default "secu1" if TARGET_SOCFPGA_ARRIA5_SECU1
@@ -233,7 +233,7 @@ config SYS_BOARD
 
 config SYS_VENDOR
 	default "intel" if TARGET_SOCFPGA_AGILEX_SOCDK
-	default "intel" if TARGET_SOCFPGA_DM_SOCDK
+	default "intel" if TARGET_SOCFPGA_N5X_SOCDK
 	default "altera" if TARGET_SOCFPGA_ARRIA5_SOCDK
 	default "altera" if TARGET_SOCFPGA_ARRIA10_SOCDK
 	default "altera" if TARGET_SOCFPGA_CYCLONE5_SOCDK
@@ -261,7 +261,7 @@ config SYS_CONFIG_NAME
 	default "socfpga_de0_nano_soc" if TARGET_SOCFPGA_TERASIC_DE0_NANO
 	default "socfpga_de1_soc" if TARGET_SOCFPGA_TERASIC_DE1_SOC
 	default "socfpga_de10_nano" if TARGET_SOCFPGA_TERASIC_DE10_NANO
-	default "socfpga_dm_socdk" if TARGET_SOCFPGA_DM_SOCDK
+	default "socfpga_n5x_socdk" if TARGET_SOCFPGA_N5X_SOCDK
 	default "socfpga_is1" if TARGET_SOCFPGA_IS1
 	default "socfpga_mcvevk" if TARGET_SOCFPGA_ARIES_MCVEVK
 	default "socfpga_sockit" if TARGET_SOCFPGA_TERASIC_SOCKIT
