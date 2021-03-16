@@ -2,10 +2,10 @@
 /*
  * U-Boot additions
  *
- * Copyright (C) 2020 Intel Corporation <www.intel.com>
+ * Copyright (C) 2020-2021 Intel Corporation <www.intel.com>
  */
 
-#include "socfpga_dm-u-boot.dtsi"
+#include "socfpga_n5x-u-boot.dtsi"
 
 /{
 	aliases {

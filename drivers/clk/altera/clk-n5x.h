@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2020 Intel Corporation <www.intel.com>
+ * Copyright (C) 2020-2021 Intel Corporation <www.intel.com>
  */
 
-#ifndef	_CLK_DM_
-#define	_CLK_DM_
+#ifndef	_CLK_N5X_
+#define	_CLK_N5X_
 
 #ifndef __ASSEMBLY__
 #include <linux/bitops.h>
@@ -214,4 +214,4 @@ struct cm_config {
 
 #define CLKMGR_ALT_EXTCNTRST_ALLCNTRST_MASK		GENMASK(15, 0)
 
-#endif /* _CLK_DM_ */
+#endif /* _CLK_N5X_ */

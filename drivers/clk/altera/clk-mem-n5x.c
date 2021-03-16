@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2020 Intel Corporation <www.intel.com>
+ * Copyright (C) 2020-2021 Intel Corporation <www.intel.com>
  */
 
 #include <common.h>
 #include <asm/arch/clock_manager.h>
 #include <asm/io.h>
-#include "clk-mem-dm.h"
+#include "clk-mem-n5x.h"
 #include <clk-uclass.h>
-#include <dt-bindings/clock/dm-clock.h>
+#include <dt-bindings/clock/n5x-clock.h>
 #include <dm.h>
 #include <dm/lists.h>
 #include <dm/util.h>
@@ -121,12 +121,12 @@ static struct clk_ops socfpga_mem_clk_ops = {
 };
 
 static const struct udevice_id socfpga_mem_clk_match[] = {
-	{ .compatible = "intel,dm-mem-clkmgr" },
+	{ .compatible = "intel,n5x-mem-clkmgr" },
 	{}
 };
 
-U_BOOT_DRIVER(socfpga_dm_mem_clk) = {
-	.name		= "mem-clk-dm",
+U_BOOT_DRIVER(socfpga_n5x_mem_clk) = {
+	.name		= "mem-clk-n5x",
 	.id		= UCLASS_CLK,
 	.of_match	= socfpga_mem_clk_match,
 	.ops		= &socfpga_mem_clk_ops,

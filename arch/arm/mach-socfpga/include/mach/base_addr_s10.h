@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2016-2017 Intel Corporation <www.intel.com>
+ * Copyright (C) 2016-2021 Intel Corporation <www.intel.com>
  */
 
 #ifndef _SOCFPGA_S10_BASE_HARDWARE_H_
@@ -11,7 +11,8 @@
 #define SOCFPGA_HMC_MMR_IO48_ADDRESS		0xf8010000
 #define SOCFPGA_SDR_ADDRESS			0xf8011000
 #define SOCFPGA_FW_MPFE_SCR_ADDRESS		0xf8020000
-#if defined(CONFIG_TARGET_SOCFPGA_AGILEX) || defined(CONFIG_TARGET_SOCFPGA_DM)
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX) || \
+		IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 #define SOCFPGA_FW_MPU_DDR_SCR_ADDRESS		0xf8020200
 #else
 #define SOCFPGA_FW_MPU_DDR_SCR_ADDRESS		0xf8020100
