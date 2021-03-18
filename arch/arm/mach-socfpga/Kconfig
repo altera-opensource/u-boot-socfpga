@@ -111,7 +111,6 @@ config TARGET_SOCFPGA_N5X
 	select ARMV8_SET_SMPEN
 	select BINMAN if SPL_ATF
 	select CLK
-	select FPGA_INTEL_SDM_MAILBOX
 	select NCORE_CACHE
 	select SPL_ALTERA_SDRAM
 	select SPL_CLK if SPL
