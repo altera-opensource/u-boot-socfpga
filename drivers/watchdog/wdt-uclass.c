@@ -118,7 +118,18 @@ int wdt_expire_now(struct udevice *dev, ulong flags)
  */
 void watchdog_reset(void)
 {
-	static ulong next_reset;
+	/*
+	 * In Intel SOCFPGA device, watchdog need to be enabled before ddr
+	 * initialization. The watchdog_reset function need to be fully
+	 * executed in onchip ram, so, next_reset need to be stored in
+	 * .data section. During compilation, parameter with zero initial
+	 * value will be stored in .bss section which is in ddr.
+	 *
+	 * As workaround for Intel SOCFPGA device, initialize next_reset
+	 * with non-zero value so that this parameter can be located at .data
+	 * section in onchip ram.
+	 */
+	static ulong next_reset = 1;
 	ulong now;
 
 	/* Exit if GD is not ready or watchdog is not initialized yet */
