@@ -39,6 +39,9 @@ DECLARE_GLOBAL_DATA_PTR;
 #define TIMEOUT_5000MS    5000
 
 /* DDR4 umctl2 */
+#define DDR4_MSTR_OFFSET		0x0
+#define DDR4_FREQ_RATIO			BIT(22)
+
 #define DDR4_STAT_OFFSET		0x4
 #define DDR4_STAT_SELFREF_TYPE		(BIT(5) | BIT(4))
 #define DDR4_STAT_SELFREF_TYPE_SHIFT	4
@@ -94,6 +97,38 @@ DECLARE_GLOBAL_DATA_PTR;
 #define DDR4_CRCPARSTAT_DFI_ALERT_ERR_NO_SW	BIT(19)
 #define DDR4_CRCPARSTAT_CMD_IN_ERR_WINDOW	BIT(29)
 
+#define DDR4_RANKCTL_OFFSET			0xF4
+#define DDR4_RANKCTL_DIFF_RANK_RD_GAP		(BIT(7) | BIT(6) | BIT(5) | \
+						 BIT(4))
+#define DDR4_RANKCTL_DIFF_RANK_WR_GAP		(BIT(11) | BIT(10) | BIT(9) | \
+						 BIT(8))
+#define DDR4_RANKCTL_DIFF_RANK_RD_GAP_MSB	BIT(24)
+#define DDR4_RANKCTL_DIFF_RANK_WR_GAP_MSB	BIT(26)
+#define DDR4_RANKCTL_DIFF_RANK_RD_GAP_SHIFT	4
+#define DDR4_RANKCTL_DIFF_RANK_WR_GAP_SHIFT	8
+#define DDR4_RANKCTL_DIFF_RANK_RD_GAP_MSB_SHIFT	24
+#define DDR4_RANKCTL_DIFF_RANK_WR_GAP_MSB_SHIFT	26
+
+#define DDR4_RANKCTL1_OFFSET	0xF8
+#define DDR4_RANKCTL1_WR2RD_DR	(BIT(5) | BIT(4) | BIT(3) | BIT(2) | BIT(1) | \
+				 BIT(0))
+
+#define DDR4_DRAMTMG2_OFFSET	0x108
+#define DDR4_DRAMTMG2_WR2RD	(BIT(5) | BIT(4) | BIT(3) | BIT(2) | BIT(1) | \
+				 BIT(0))
+#define DDR4_DRAMTMG2_RD2WR	(BIT(13) | BIT(12) | BIT(11) | BIT(10) | \
+				 BIT(9) | BIT(8))
+#define DDR4_DRAMTMG2_RD2WR_SHIFT	8
+
+#define DDR4_DRAMTMG9_OFFSET	0x124
+#define DDR4_DRAMTMG9_W2RD_S	(BIT(5) | BIT(4) | BIT(3) | BIT(2) | BIT(1) | \
+				 BIT(0))
+
+#define DDR4_DFITMG1_OFFSET	0x194
+#define DDR4_DFITMG1_DFI_T_WRDATA_DELAY	(BIT(20) | BIT(19) | BIT(18) | \
+					 BIT(17) | BIT(16))
+#define DDR4_DFITMG1_DFI_T_WRDATA_SHIFT	16
+
 #define DDR4_DFIMISC_OFFSET			0x1B0
 #define DDR4_DFIMISC_DFI_INIT_COMPLETE_EN	BIT(0)
 #define DDR4_DFIMISC_DFI_INIT_START		BIT(5)
@@ -146,12 +181,59 @@ DECLARE_GLOBAL_DATA_PTR;
 /* DDR PHY */
 #define DDR_PHY_TXODTDRVSTREN_B0_P0		0x2009A
 #define DDR_PHY_RXPBDLYTG0_R0			0x200D0
+#define DDR_PHY_DBYTE0_TXDQDLYTG0_U0_P0		0x201A0
+
+#define DDR_PHY_DBYTE0_TXDQDLYTG0_U1_P0		0x203A0
+#define DDR_PHY_DBYTE1_TXDQDLYTG0_U0_P0		0x221A0
+#define DDR_PHY_DBYTE1_TXDQDLYTG0_U1_P0		0x223A0
+#define DDR_PHY_TXDQDLYTG0_COARSE_DELAY	(BIT(9) | BIT(8) | BIT(7) | BIT(6))
+#define DDR_PHY_TXDQDLYTG0_COARSE_DELAY_SHIFT	6
+
 #define DDR_PHY_CALRATE_OFFSET			0x40110
 #define DDR_PHY_CALZAP_OFFSET			0x40112
 #define DDR_PHY_SEQ0BDLY0_P0_OFFSET		0x40016
 #define DDR_PHY_SEQ0BDLY1_P0_OFFSET		0x40018
 #define DDR_PHY_SEQ0BDLY2_P0_OFFSET		0x4001A
 #define DDR_PHY_SEQ0BDLY3_P0_OFFSET		0x4001C
+
+#define DDR_PHY_MEMRESETL_OFFSET		0x400C0
+#define DDR_PHY_MEMRESETL_VALUE			BIT(0)
+#define DDR_PHY_PROTECT_MEMRESET		BIT(1)
+
+#define DDR_PHY_CALBUSY_OFFSET			0x4012E
+#define DDR_PHY_CALBUSY				BIT(0)
+
+#define DDR_PHY_TRAIN_IMEM_OFFSET		0xA0000
+#define DDR_PHY_TRAIN_DMEM_OFFSET		0xA8000
+
+#define DMEM_MB_CDD_RR_1_0_OFFSET		0xA802C
+#define DMEM_MB_CDD_RR_0_1_OFFSET		0xA8030
+#define DMEM_MB_CDD_WW_1_0_OFFSET		0xA8038
+#define DMEM_MB_CDD_WW_0_1_OFFSET		0xA803C
+#define DMEM_MB_CDD_RW_1_1_OFFSET		0xA8046
+#define DMEM_MB_CDD_RW_1_0_OFFSET		0xA8048
+#define DMEM_MB_CDD_RW_0_1_OFFSET		0xA804A
+#define DMEM_MB_CDD_RW_0_0_OFFSET		0xA804C
+
+#define DMEM_MB_CDD_CHA_RR_1_0_OFFSET		0xA8026
+#define DMEM_MB_CDD_CHA_RR_0_1_OFFSET		0xA8026
+#define DMEM_MB_CDD_CHB_RR_1_0_OFFSET		0xA8058
+#define DMEM_MB_CDD_CHB_RR_0_1_OFFSET		0xA805A
+#define DMEM_MB_CDD_CHA_WW_1_0_OFFSET		0xA8030
+#define DMEM_MB_CDD_CHA_WW_0_1_OFFSET		0xA8030
+#define DMEM_MB_CDD_CHB_WW_1_0_OFFSET		0xA8062
+#define DMEM_MB_CDD_CHB_WW_0_1_OFFSET		0xA8064
+
+#define DMEM_MB_CDD_CHA_RW_1_1_OFFSET		0xA8028
+#define DMEM_MB_CDD_CHA_RW_1_0_OFFSET		0xA8028
+#define DMEM_MB_CDD_CHA_RW_0_1_OFFSET		0xA802A
+#define DMEM_MB_CDD_CHA_RW_0_0_OFFSET		0xA802A
+
+#define DMEM_MB_CDD_CHB_RW_1_1_OFFSET		0xA805A
+#define DMEM_MB_CDD_CHB_RW_1_0_OFFSET		0xA805C
+#define DMEM_MB_CDD_CHB_RW_0_1_OFFSET		0xA805c
+#define DMEM_MB_CDD_CHB_RW_0_0_OFFSET		0xA805E
+
 #define DDR_PHY_SEQ0DISABLEFLAG0_OFFSET		0x120018
 #define DDR_PHY_SEQ0DISABLEFLAG1_OFFSET		0x12001A
 #define DDR_PHY_SEQ0DISABLEFLAG2_OFFSET		0x12001C
@@ -160,16 +242,41 @@ DECLARE_GLOBAL_DATA_PTR;
 #define DDR_PHY_SEQ0DISABLEFLAG5_OFFSET		0x120022
 #define DDR_PHY_SEQ0DISABLEFLAG6_OFFSET		0x120024
 #define DDR_PHY_SEQ0DISABLEFLAG7_OFFSET		0x120026
+
 #define DDR_PHY_UCCLKHCLKENABLES_OFFSET		0x180100
+#define DDR_PHY_UCCLKHCLKENABLES_UCCLKEN	BIT(0)
+#define DDR_PHY_UCCLKHCLKENABLES_HCLKEN		BIT(1)
+
+#define DDR_PHY_UCTWRITEPROT_OFFSET		0x180066
+#define DDR_PHY_UCTWRITEPROT			BIT(0)
 
 #define DDR_PHY_APBONLY0_OFFSET			0x1A0000
 #define DDR_PHY_MICROCONTMUXSEL			BIT(0)
+
+#define DDR_PHY_UCTSHADOWREGS_OFFSET			0x1A0008
+#define DDR_PHY_UCTSHADOWREGS_UCTWRITEPROTESHADOW	BIT(0)
+
+#define DDR_PHY_DCTWRITEPROT_OFFSET		0x1A0062
+#define DDR_PHY_DCTWRITEPROT			BIT(0)
+
+#define DDR_PHY_UCTWRITEONLYSHADOW_OFFSET	0x1A0064
+#define DDR_PHY_UCTDATWRITEONLYSHADOW_OFFSET	0x1A0068
 
 #define DDR_PHY_MICRORESET_OFFSET		0x1A0132
 #define DDR_PHY_MICRORESET_STALL		BIT(0)
 #define DDR_PHY_MICRORESET_RESET		BIT(3)
 
 #define DDR_PHY_TXODTDRVSTREN_B0_P1		0x22009A
+
+/* For firmware training */
+#define HW_DBG_TRACE_CONTROL_OFFSET	0x18
+#define FW_TRAINING_COMPLETED_STAT	0x07
+#define FW_TRAINING_FAILED_STAT		0xFF
+#define FW_COMPLETION_MSG_ONLY_MODE	0xFF
+#define FW_STREAMING_MSG_ID		0x08
+#define GET_LOWHW_DATA(x)		((x) & 0xFFFF)
+#define GET_LOWB_DATA(x)		((x) & 0xFF)
+#define GET_HIGHB_DATA(x)		(((x) & 0xFF00) >> 8)
 
 /* Operating mode */
 #define INIT_OPM			0x000
@@ -222,6 +329,16 @@ struct ddr_handoff {
 	phys_addr_t phy_engine_handoff_base;
 	size_t phy_engine_total_length;
 	size_t phy_engine_handoff_length;
+	phys_addr_t train_imem_base;
+	phys_addr_t train_dmem_base;
+	size_t train_imem_length;
+	size_t train_dmem_length;
+};
+
+/* Message mode */
+enum message_mode {
+	MAJOR_MESSAGE,
+	STREAMING_MESSAGE
 };
 
 static int clr_ca_parity_error_status(phys_addr_t umctl2_base)
@@ -914,6 +1031,26 @@ int populate_ddr_handoff(struct ddr_handoff *ddr_handoff_info)
 		return -ENOEXEC;
 	}
 
+	ddr_handoff_info->train_imem_base = ddr_handoff_info->phy_base +
+						DDR_PHY_TRAIN_IMEM_OFFSET;
+	debug("%s: PHY train IMEM base = 0x%x\n",
+	      __func__, (u32)ddr_handoff_info->train_imem_base);
+
+	ddr_handoff_info->train_dmem_base = ddr_handoff_info->phy_base +
+						DDR_PHY_TRAIN_DMEM_OFFSET;
+	debug("%s: PHY train DMEM base = 0x%x\n",
+	      __func__, (u32)ddr_handoff_info->train_dmem_base);
+
+	ddr_handoff_info->train_imem_length =
+		SOC64_HANDOFF_DDR_TRAIN_IMEM_LENGTH;
+	debug("%s: PHY train IMEM length = 0x%x\n",
+	      __func__, (u32)ddr_handoff_info->train_imem_length);
+
+	ddr_handoff_info->train_dmem_length =
+		SOC64_HANDOFF_DDR_TRAIN_DMEM_LENGTH;
+	debug("%s: PHY train DMEM length = 0x%x\n",
+	      __func__, (u32)ddr_handoff_info->train_dmem_length);
+
 	return 0;
 }
 
@@ -1103,6 +1240,637 @@ static int ddr_post_handoff_config(phys_addr_t umctl2_base,
 	return ret;
 }
 
+static int configure_1d_training_firmware(struct ddr_handoff *ddr_handoff_info)
+{
+	int ret = 0;
+
+	printf("Configuring 1D training firmware ...\n");
+
+	/* Reset SDRAM */
+	writew(DDR_PHY_PROTECT_MEMRESET,
+	       (uintptr_t)(ddr_handoff_info->phy_base +
+	       DDR_PHY_MEMRESETL_OFFSET));
+
+	/* Enable access to the PHY configuration registers */
+	clrbits_le16(ddr_handoff_info->phy_base + DDR_PHY_APBONLY0_OFFSET,
+		     DDR_PHY_MICROCONTMUXSEL);
+
+	/* Copy 1D train IMEM bin */
+	memcpy((void *)ddr_handoff_info->train_imem_base,
+	       (const void *)SOC64_HANDOFF_DDR_TRAIN_IMEM_1D_SECTION,
+	       ddr_handoff_info->train_imem_length);
+
+	ret = memcmp((void *)ddr_handoff_info->train_imem_base,
+		     (const void *)SOC64_HANDOFF_DDR_TRAIN_IMEM_1D_SECTION,
+		     ddr_handoff_info->train_imem_length);
+	if (ret) {
+		debug("%s: Failed to copy 1D train IMEM binary\n", __func__);
+		/* Isolate the APB access from internal CSRs */
+		setbits_le16(ddr_handoff_info->phy_base +
+			     DDR_PHY_APBONLY0_OFFSET, DDR_PHY_MICROCONTMUXSEL);
+		return ret;
+	}
+
+	memcpy((void *)ddr_handoff_info->train_dmem_base,
+	       (const void *)SOC64_HANDOFF_DDR_TRAIN_DMEM_1D_SECTION,
+	       ddr_handoff_info->train_dmem_length);
+
+	ret = memcmp((void *)ddr_handoff_info->train_dmem_base,
+		     (const void *)SOC64_HANDOFF_DDR_TRAIN_DMEM_1D_SECTION,
+		     ddr_handoff_info->train_dmem_length);
+	if (ret)
+		debug("%s: Failed to copy 1D train DMEM binary\n", __func__);
+
+	/* Isolate the APB access from internal CSRs */
+	setbits_le16(ddr_handoff_info->phy_base + DDR_PHY_APBONLY0_OFFSET,
+		     DDR_PHY_MICROCONTMUXSEL);
+
+	return ret;
+}
+
+static int configure_2d_training_firmware(struct ddr_handoff *ddr_handoff_info)
+{
+	int ret = 0;
+
+	printf("Configuring 2D training firmware ...\n");
+
+	/* Reset SDRAM */
+	writew(DDR_PHY_PROTECT_MEMRESET,
+	       (uintptr_t)(ddr_handoff_info->phy_base +
+	       DDR_PHY_MEMRESETL_OFFSET));
+
+	/* Enable access to the PHY configuration registers */
+	clrbits_le16(ddr_handoff_info->phy_base + DDR_PHY_APBONLY0_OFFSET,
+		     DDR_PHY_MICROCONTMUXSEL);
+
+	/* Copy 2D train IMEM bin */
+	memcpy((void *)ddr_handoff_info->train_imem_base,
+	       (const void *)SOC64_HANDOFF_DDR_TRAIN_IMEM_2D_SECTION,
+	       ddr_handoff_info->train_imem_length);
+
+	ret = memcmp((void *)ddr_handoff_info->train_imem_base,
+		     (const void *)SOC64_HANDOFF_DDR_TRAIN_IMEM_2D_SECTION,
+		     ddr_handoff_info->train_imem_length);
+	if (ret) {
+		debug("%s: Failed to copy 2D train IMEM binary\n", __func__);
+		/* Isolate the APB access from internal CSRs */
+		setbits_le16(ddr_handoff_info->phy_base +
+			     DDR_PHY_APBONLY0_OFFSET, DDR_PHY_MICROCONTMUXSEL);
+		return ret;
+	}
+
+	memcpy((void *)ddr_handoff_info->train_dmem_base,
+	       (const void *)SOC64_HANDOFF_DDR_TRAIN_DMEM_2D_SECTION,
+	       ddr_handoff_info->train_dmem_length);
+
+	ret = memcmp((void *)ddr_handoff_info->train_dmem_base,
+		     (const void *)SOC64_HANDOFF_DDR_TRAIN_DMEM_2D_SECTION,
+		     ddr_handoff_info->train_dmem_length);
+	if (ret)
+		debug("%s: Failed to copy 2D train DMEM binary\n", __func__);
+
+	/* Isolate the APB access from internal CSRs */
+	setbits_le16(ddr_handoff_info->phy_base + DDR_PHY_APBONLY0_OFFSET,
+		     DDR_PHY_MICROCONTMUXSEL);
+
+	return ret;
+}
+
+static void calibrating_sdram(struct ddr_handoff *ddr_handoff_info)
+{
+	/* Init mailbox protocol */
+	setbits_le16(ddr_handoff_info->phy_base + DDR_PHY_DCTWRITEPROT_OFFSET,
+		     DDR_PHY_DCTWRITEPROT);
+
+	/* Init mailbox protocol */
+	setbits_le16(ddr_handoff_info->phy_base + DDR_PHY_UCTWRITEPROT_OFFSET,
+		     DDR_PHY_UCTWRITEPROT);
+
+	/* Reset and stalling ARC processor */
+	setbits_le16(ddr_handoff_info->phy_base + DDR_PHY_MICRORESET_OFFSET,
+		     DDR_PHY_MICRORESET_RESET | DDR_PHY_MICRORESET_STALL);
+
+	/* Release ARC processor */
+	clrbits_le16(ddr_handoff_info->phy_base + DDR_PHY_MICRORESET_OFFSET,
+		     DDR_PHY_MICRORESET_RESET);
+
+	/* Starting PHY firmware execution */
+	clrbits_le16(ddr_handoff_info->phy_base + DDR_PHY_MICRORESET_OFFSET,
+		     DDR_PHY_MICRORESET_STALL);
+}
+
+static int get_mail(struct ddr_handoff *handoff, enum message_mode mode,
+		    u32 *message_id)
+{
+	int ret;
+
+	/* Polling major messages from PMU */
+	ret = wait_for_bit_le16((const void *)(handoff->phy_base +
+				DDR_PHY_UCTSHADOWREGS_OFFSET),
+				DDR_PHY_UCTSHADOWREGS_UCTWRITEPROTESHADOW,
+				false, TIMEOUT_200MS, false);
+	if (ret) {
+		debug("%s: Timeout while waiting for",
+		      __func__);
+		debug(" major messages from PMU\n");
+		return ret;
+	}
+
+	*message_id = readw((uintptr_t)(handoff->phy_base +
+			    DDR_PHY_UCTWRITEONLYSHADOW_OFFSET));
+
+	if (mode == STREAMING_MESSAGE)
+		*message_id |= readw((uintptr_t)((handoff->phy_base +
+				     DDR_PHY_UCTDATWRITEONLYSHADOW_OFFSET))) <<
+				     SZ_16;
+
+	/* Ack the receipt of the major message */
+	clrbits_le16(handoff->phy_base + DDR_PHY_DCTWRITEPROT_OFFSET,
+		     DDR_PHY_DCTWRITEPROT);
+
+	ret = wait_for_bit_le16((const void *)(handoff->phy_base +
+				DDR_PHY_UCTSHADOWREGS_OFFSET),
+				DDR_PHY_UCTSHADOWREGS_UCTWRITEPROTESHADOW,
+				true, TIMEOUT_200MS, false);
+	if (ret) {
+		debug("%s: Timeout while waiting for",
+		      __func__);
+		debug(" ack the receipt of the major message completed\n");
+		return ret;
+	}
+
+	/* Complete protocol */
+	setbits_le16(handoff->phy_base + DDR_PHY_DCTWRITEPROT_OFFSET,
+		     DDR_PHY_DCTWRITEPROT);
+
+	return ret;
+}
+
+static int get_mail_streaming(struct ddr_handoff *handoff,
+			      enum message_mode mode, u32 *index)
+{
+	int ret;
+
+	*index = readw((uintptr_t)(handoff->phy_base +
+		       DDR_PHY_UCTWRITEONLYSHADOW_OFFSET));
+
+	if (mode == STREAMING_MESSAGE)
+		*index |= readw((uintptr_t)((handoff->phy_base +
+				DDR_PHY_UCTDATWRITEONLYSHADOW_OFFSET))) <<
+				SZ_16;
+
+	/* Ack the receipt of the major message */
+	clrbits_le16(handoff->phy_base + DDR_PHY_DCTWRITEPROT_OFFSET,
+		     DDR_PHY_DCTWRITEPROT);
+
+	ret = wait_for_bit_le16((const void *)(handoff->phy_base +
+				DDR_PHY_UCTSHADOWREGS_OFFSET),
+				DDR_PHY_UCTSHADOWREGS_UCTWRITEPROTESHADOW,
+				true, TIMEOUT_200MS, false);
+	if (ret) {
+		debug("%s: Timeout while waiting for",
+		      __func__);
+		debug(" ack the receipt of the major message completed\n");
+		return ret;
+	}
+
+	/* Complete protocol */
+	setbits_le16(handoff->phy_base + DDR_PHY_DCTWRITEPROT_OFFSET,
+		     DDR_PHY_DCTWRITEPROT);
+
+	return 0;
+}
+
+static int decode_streaming_message(struct ddr_handoff *ddr_handoff_info,
+				    u32 *streaming_index)
+{
+	int i = 0, ret;
+	u32 temp;
+
+	temp = *streaming_index;
+
+	while (i < GET_LOWHW_DATA(temp)) {
+		ret = get_mail(ddr_handoff_info, STREAMING_MESSAGE,
+			       streaming_index);
+		if (ret)
+			return ret;
+
+		printf("args[%d]: 0x%x ", i, *streaming_index);
+		i++;
+	}
+
+	return 0;
+}
+
+static int poll_for_training_complete(struct ddr_handoff *ddr_handoff_info)
+{
+	int ret;
+	u32 message_id = 0;
+	u32 streaming_index = 0;
+
+	while ((message_id != FW_TRAINING_COMPLETED_STAT) &&
+	       (message_id != FW_TRAINING_FAILED_STAT)) {
+		ret = get_mail(ddr_handoff_info, MAJOR_MESSAGE, &message_id);
+		if (ret)
+			return ret;
+
+		 printf("Major message id = 0%x\n", message_id);
+
+		if (message_id == FW_STREAMING_MSG_ID) {
+			ret = get_mail_streaming(ddr_handoff_info,
+						 STREAMING_MESSAGE,
+						 &streaming_index);
+			if (ret)
+				return ret;
+
+			printf("streaming index 0%x : ", streaming_index);
+
+			decode_streaming_message(ddr_handoff_info,
+						 &streaming_index);
+
+			printf("\n");
+		}
+	}
+
+	if (message_id == FW_TRAINING_COMPLETED_STAT) {
+		printf("DDR firmware training completed\n");
+	} else if (message_id == FW_TRAINING_FAILED_STAT) {
+		printf("DDR firmware training failed\n");
+		hang();
+	}
+
+	return 0;
+}
+
+static void enable_phy_clk_for_csr_access(struct ddr_handoff *handoff,
+					  bool enable)
+{
+	if (enable) {
+		/* Enable PHY clk */
+		setbits_le16((uintptr_t)(handoff->phy_base +
+			     DDR_PHY_UCCLKHCLKENABLES_OFFSET),
+			     DDR_PHY_UCCLKHCLKENABLES_UCCLKEN |
+			     DDR_PHY_UCCLKHCLKENABLES_HCLKEN);
+	} else {
+		/* Disable PHY clk */
+		clrbits_le16((uintptr_t)(handoff->phy_base +
+			     DDR_PHY_UCCLKHCLKENABLES_OFFSET),
+			     DDR_PHY_UCCLKHCLKENABLES_UCCLKEN |
+			     DDR_PHY_UCCLKHCLKENABLES_HCLKEN);
+	}
+}
+
+/* helper function for updating train result to umctl2 RANKCTL register */
+static void set_cal_res_to_rankctrl(u32 reg_addr, u16 update_value,
+				    u32 mask, u32 msb_mask, u32 shift)
+{
+	u32 reg, value;
+
+	reg = readl((uintptr_t)reg_addr);
+
+	debug("max value divided by 2 is 0x%x\n", update_value);
+	debug("umclt2 register 0x%x value is 0%x before ", reg_addr, reg);
+	debug("update with train result\n");
+
+	value = (reg & mask) >> shift;
+
+	value += update_value + 3;
+
+	/* reg value greater than 0xF, set one to diff_rank_wr_gap_msb */
+	if (value > 0xF)
+		setbits_le32((u32 *)(uintptr_t)reg_addr, msb_mask);
+	else
+		clrbits_le32((u32 *)(uintptr_t)reg_addr, msb_mask);
+
+	reg = readl((uintptr_t)reg_addr);
+
+	value = (value << shift) & mask;
+
+	/* update register */
+	writel((reg & (~mask)) | value, (uintptr_t)reg_addr);
+
+	reg = readl((uintptr_t)reg_addr);
+	debug("umclt2 register 0x%x value is 0%x before ", reg_addr, reg);
+	debug("update with train result\n");
+}
+
+/* helper function for updating train result to register */
+static void set_cal_res_to_reg(u32 reg_addr, u16 update_value, u32 mask,
+			       u32 shift)
+{
+	u32 reg, value;
+
+	reg = readl((uintptr_t)reg_addr);
+
+	debug("max value divided by 2 is 0x%x\n", update_value);
+	debug("umclt2 register 0x%x value is 0%x before ", reg_addr, reg);
+	debug("update with train result\n");
+
+	value = (reg & mask) >> shift;
+
+	value = ((value + update_value + 3) << shift) & mask;
+
+	/* update register */
+	writel((reg & (~mask)) | value, (uintptr_t)reg_addr);
+
+	reg = readl((uintptr_t)reg_addr);
+	debug("umclt2 register 0x%x value is 0%x before ", reg_addr, reg);
+	debug("update with train result\n");
+}
+
+static u16 get_max_txdqsdlytg0_ux_p0(struct ddr_handoff *handoff, u32 reg,
+				     u8 numdbyte, u16 upd_val)
+{
+	u32 b_addr;
+	u16 val;
+	u8 byte;
+
+	/* Getting max value from DBYTEx TxDqsDlyTg0_ux_p0 */
+	for (byte = 0; byte < numdbyte; byte++) {
+		b_addr = byte << 13;
+
+		/* TxDqsDlyTg0[9:6] is the coarse delay */
+		val = (readw((uintptr_t)(handoff->phy_base +
+			     reg + b_addr)) &
+			     DDR_PHY_TXDQDLYTG0_COARSE_DELAY) >>
+			     DDR_PHY_TXDQDLYTG0_COARSE_DELAY_SHIFT;
+
+		upd_val = max(val, upd_val);
+	}
+
+	return upd_val;
+}
+
+static int set_cal_res_to_umctl2(struct ddr_handoff *handoff,
+				 phys_addr_t umctl2_base,
+				 enum ddr_type umctl2_type)
+{
+	int ret;
+	u8 numdbyte = 0x8;
+	u16 upd_val, val;
+	u32 dramtmg2_reg_addr, rankctl_reg_addr, reg_addr;
+
+	/* Enable quasi-dynamic programing of the controller registers */
+	clrbits_le32(umctl2_base + DDR4_SWCTL_OFFSET, DDR4_SWCTL_SW_DONE);
+
+	ret = enable_quasi_dynamic_reg_grp3(umctl2_base, umctl2_type);
+	if (ret)
+		return ret;
+
+	/* Enable access to the PHY configuration registers */
+	clrbits_le16(handoff->phy_base + DDR_PHY_APBONLY0_OFFSET,
+		     DDR_PHY_MICROCONTMUXSEL);
+
+	if (umctl2_type == DDRTYPE_DDR4) {
+		val = GET_HIGHB_DATA(readw((uintptr_t)(handoff->phy_base +
+				     DMEM_MB_CDD_WW_1_0_OFFSET)));
+
+		upd_val = GET_LOWB_DATA(readw((uintptr_t)(handoff->phy_base +
+					DMEM_MB_CDD_WW_0_1_OFFSET)));
+	} else if (umctl2_type == DDRTYPE_LPDDR4_0) {
+		val = GET_LOWB_DATA(readw((uintptr_t)(handoff->phy_base +
+				    DMEM_MB_CDD_CHA_WW_1_0_OFFSET)));
+
+		upd_val = GET_HIGHB_DATA(readw((uintptr_t)(handoff->phy_base +
+					 DMEM_MB_CDD_CHA_WW_0_1_OFFSET)));
+	} else if (umctl2_type == DDRTYPE_LPDDR4_1) {
+		val = GET_HIGHB_DATA(readw((uintptr_t)(handoff->phy_base +
+				     DMEM_MB_CDD_CHB_WW_1_0_OFFSET)));
+
+		upd_val = GET_LOWB_DATA(readw((uintptr_t)(handoff->phy_base +
+					DMEM_MB_CDD_CHB_WW_0_1_OFFSET)));
+	}
+
+	upd_val = max(val, upd_val);
+	debug("max value is 0x%x\n", upd_val);
+
+	/* Divided by two is required when running in freq ratio 1:2 */
+	if (!(readl(umctl2_base + DDR4_MSTR_OFFSET) & DDR4_FREQ_RATIO))
+		upd_val = DIV_ROUND_CLOSEST(upd_val, 2);
+
+	debug("Update train value to umctl2 RANKCTL.diff_rank_wr_gap\n");
+	rankctl_reg_addr = umctl2_base + DDR4_RANKCTL_OFFSET;
+	/* Update train value to umctl2 RANKCTL.diff_rank_wr_gap */
+	set_cal_res_to_rankctrl(rankctl_reg_addr, upd_val,
+				DDR4_RANKCTL_DIFF_RANK_WR_GAP,
+				DDR4_RANKCTL_DIFF_RANK_WR_GAP_MSB,
+				DDR4_RANKCTL_DIFF_RANK_WR_GAP_SHIFT);
+
+	debug("Update train value to umctl2 DRAMTMG2.W2RD\n");
+	dramtmg2_reg_addr = umctl2_base + DDR4_DRAMTMG2_OFFSET;
+	/* Update train value to umctl2 dramtmg2.wr2rd */
+	set_cal_res_to_reg(dramtmg2_reg_addr, upd_val, DDR4_DRAMTMG2_WR2RD, 0);
+
+	if (umctl2_type == DDRTYPE_DDR4) {
+		printf("Update train value to umctl2 DRAMTMG9.W2RD_S\n");
+		reg_addr = umctl2_base + DDR4_DRAMTMG9_OFFSET;
+		/* Update train value to umctl2 dramtmg9.wr2rd_s */
+		set_cal_res_to_reg(reg_addr, upd_val, DDR4_DRAMTMG9_W2RD_S, 0);
+	}
+
+	if (umctl2_type == DDRTYPE_DDR4) {
+		val = GET_HIGHB_DATA(readw((uintptr_t)(handoff->phy_base +
+				     DMEM_MB_CDD_RR_1_0_OFFSET)));
+
+		upd_val = GET_LOWB_DATA(readw((uintptr_t)(handoff->phy_base +
+					DMEM_MB_CDD_RR_0_1_OFFSET)));
+	} else if (umctl2_type == DDRTYPE_LPDDR4_0) {
+		val = GET_LOWB_DATA(readw((uintptr_t)(handoff->phy_base +
+				    DMEM_MB_CDD_CHA_RR_1_0_OFFSET)));
+
+		upd_val = GET_HIGHB_DATA(readw((uintptr_t)(handoff->phy_base +
+					 DMEM_MB_CDD_CHA_RR_0_1_OFFSET)));
+	} else if (umctl2_type == DDRTYPE_LPDDR4_1) {
+		val = GET_HIGHB_DATA(readw((uintptr_t)(handoff->phy_base +
+				     DMEM_MB_CDD_CHB_RR_1_0_OFFSET)));
+
+		upd_val = GET_LOWB_DATA(readw((uintptr_t)(handoff->phy_base +
+					DMEM_MB_CDD_CHB_RR_0_1_OFFSET)));
+	}
+
+	upd_val = max(val, upd_val);
+	debug("max value is 0x%x\n", upd_val);
+
+	/* Divided by two is required when running in freq ratio 1:2 */
+	if (!(readl(umctl2_base + DDR4_MSTR_OFFSET) & DDR4_FREQ_RATIO))
+		upd_val = DIV_ROUND_CLOSEST(upd_val, 2);
+
+	debug("Update train value to umctl2 RANKCTL.diff_rank_rd_gap\n");
+	/* Update train value to umctl2 RANKCTL.diff_rank_rd_gap */
+	set_cal_res_to_rankctrl(rankctl_reg_addr, upd_val,
+				DDR4_RANKCTL_DIFF_RANK_RD_GAP,
+				DDR4_RANKCTL_DIFF_RANK_RD_GAP_MSB,
+				DDR4_RANKCTL_DIFF_RANK_RD_GAP_SHIFT);
+
+	if (umctl2_type == DDRTYPE_DDR4) {
+		val = GET_HIGHB_DATA(readw((uintptr_t)(handoff->phy_base +
+				     DMEM_MB_CDD_RW_1_1_OFFSET)));
+
+		upd_val = GET_LOWB_DATA(readw((uintptr_t)(handoff->phy_base +
+					DMEM_MB_CDD_RW_1_0_OFFSET)));
+
+		upd_val = max(val, upd_val);
+
+		val = GET_HIGHB_DATA(readw((uintptr_t)(handoff->phy_base +
+				     DMEM_MB_CDD_RW_0_1_OFFSET)));
+
+		upd_val = max(val, upd_val);
+
+		val = GET_LOWB_DATA(readw((uintptr_t)(handoff->phy_base +
+				    DMEM_MB_CDD_RW_0_0_OFFSET)));
+
+		upd_val = max(val, upd_val);
+	} else if (umctl2_type == DDRTYPE_LPDDR4_0) {
+		val = GET_LOWB_DATA(readw((uintptr_t)(handoff->phy_base +
+				    DMEM_MB_CDD_CHA_RW_1_1_OFFSET)));
+
+		upd_val = GET_HIGHB_DATA(readw((uintptr_t)(handoff->phy_base +
+					 DMEM_MB_CDD_CHA_RW_1_0_OFFSET)));
+
+		upd_val = max(val, upd_val);
+
+		val = GET_LOWB_DATA(readw((uintptr_t)(handoff->phy_base +
+				    DMEM_MB_CDD_CHA_RW_0_1_OFFSET)));
+
+		upd_val = max(val, upd_val);
+
+		val = GET_HIGHB_DATA(readw((uintptr_t)(handoff->phy_base +
+				     DMEM_MB_CDD_CHA_RW_0_0_OFFSET)));
+
+		upd_val = max(val, upd_val);
+	} else if (umctl2_type == DDRTYPE_LPDDR4_1) {
+		val = GET_HIGHB_DATA(readw((uintptr_t)(handoff->phy_base +
+				     DMEM_MB_CDD_CHB_RW_1_1_OFFSET)));
+
+		upd_val = GET_LOWB_DATA(readw((uintptr_t)(handoff->phy_base +
+					DMEM_MB_CDD_CHB_RW_1_0_OFFSET)));
+
+		upd_val = max(val, upd_val);
+
+		val = GET_HIGHB_DATA(readw((uintptr_t)(handoff->phy_base +
+				     DMEM_MB_CDD_CHB_RW_0_1_OFFSET)));
+
+		upd_val = max(val, upd_val);
+
+		val = GET_LOWB_DATA(readw((uintptr_t)(handoff->phy_base +
+				    DMEM_MB_CDD_CHB_RW_0_0_OFFSET)));
+
+		upd_val = max(val, upd_val);
+	}
+
+	debug("max value is 0x%x\n", upd_val);
+
+	/* Divided by two is required when running in freq ratio 1:2 */
+	if (!(readl(umctl2_base + DDR4_MSTR_OFFSET) & DDR4_FREQ_RATIO))
+		upd_val = DIV_ROUND_CLOSEST(upd_val, 2);
+
+	debug("Update train value to umctl2 dramtmg2.rd2wr\n");
+	/* Update train value to umctl2 dramtmg2.rd2wr */
+	set_cal_res_to_reg(dramtmg2_reg_addr, upd_val, DDR4_DRAMTMG2_RD2WR,
+			   DDR4_DRAMTMG2_RD2WR_SHIFT);
+
+	/* Checking ECC is enabled?, lpddr4 using inline ECC */
+	val = readl(umctl2_base + DDR4_ECCCFG0_OFFSET) & DDR4_ECC_MODE;
+	if (val && umctl2_type == DDRTYPE_DDR4)
+		numdbyte = 0x9;
+
+	upd_val = 0;
+
+	/* Getting max value from DBYTEx TxDqsDlyTg0_u0_p0 */
+	upd_val = get_max_txdqsdlytg0_ux_p0(handoff,
+					    DDR_PHY_DBYTE0_TXDQDLYTG0_U0_P0,
+					    numdbyte, upd_val);
+
+	/* Getting max value from DBYTEx TxDqsDlyTg0_u1_p0 */
+	upd_val = get_max_txdqsdlytg0_ux_p0(handoff,
+					    DDR_PHY_DBYTE0_TXDQDLYTG0_U1_P0,
+					    numdbyte, upd_val);
+
+	debug("TxDqsDlyTg0 max value is 0x%x\n", upd_val);
+
+	/* Divided by two is required when running in freq ratio 1:2 */
+	if (!(readl(umctl2_base + DDR4_MSTR_OFFSET) & DDR4_FREQ_RATIO))
+		upd_val = DIV_ROUND_CLOSEST(upd_val, 2);
+
+	reg_addr = umctl2_base + DDR4_DFITMG1_OFFSET;
+	/* Update train value to umctl2 dfitmg1.dfi_wrdata_delay */
+	set_cal_res_to_reg(reg_addr, upd_val, DDR4_DFITMG1_DFI_T_WRDATA_DELAY,
+			   DDR4_DFITMG1_DFI_T_WRDATA_SHIFT);
+
+	/* Complete quasi-dynamic register programming */
+	setbits_le32(umctl2_base + DDR4_SWCTL_OFFSET, DDR4_SWCTL_SW_DONE);
+
+	/* Polling programming done */
+	ret = wait_for_bit_le32((const void *)(umctl2_base +
+				DDR4_SWSTAT_OFFSET), DDR4_SWSTAT_SW_DONE_ACK,
+				true, TIMEOUT_200MS, false);
+	if (ret) {
+		debug("%s: Timeout while waiting for", __func__);
+		debug(" programming done\n");
+	}
+
+	/* Isolate the APB access from internal CSRs */
+	setbits_le16(handoff->phy_base + DDR_PHY_APBONLY0_OFFSET,
+		     DDR_PHY_MICROCONTMUXSEL);
+
+	return ret;
+}
+
+static int start_ddr_calibration(struct ddr_handoff *ddr_handoff_info)
+{
+	int ret;
+
+	/* Implement 1D training firmware */
+	ret = configure_1d_training_firmware(ddr_handoff_info);
+	if (ret) {
+		debug("%s: Failed to configure 1D training firmware\n",
+		      __func__);
+		return ret;
+	}
+
+	calibrating_sdram(ddr_handoff_info);
+
+	ret = poll_for_training_complete(ddr_handoff_info);
+	if (ret) {
+		debug("%s: Failed to get FW training completed\n",
+		      __func__);
+		return ret;
+	}
+
+	/* Updating training result to DDR controller */
+	if (ddr_handoff_info->umctl2_type == DDRTYPE_DDR4) {
+		ret = set_cal_res_to_umctl2(ddr_handoff_info,
+					    ddr_handoff_info->umctl2_base,
+					    ddr_handoff_info->umctl2_type);
+		if (ret) {
+			debug("%s: Failed to update train result to ",
+			      __func__);
+			debug("DDR controller\n");
+			return ret;
+		}
+	}
+
+	/* Implement 2D training firmware */
+	ret = configure_2d_training_firmware(ddr_handoff_info);
+	if (ret) {
+		if (ret) {
+			debug("%s: Failed to update train result to ",
+			      __func__);
+			debug("DDR controller\n");
+			return ret;
+		}
+	}
+
+	calibrating_sdram(ddr_handoff_info);
+
+	ret = poll_for_training_complete(ddr_handoff_info);
+	if (ret)
+		debug("%s: Failed to get FW training completed\n",
+		      __func__);
+
+	return ret;
+}
+
 int sdram_mmr_init_full(struct udevice *dev)
 {
 	u32 user_backup;
@@ -1176,6 +1944,16 @@ int sdram_mmr_init_full(struct udevice *dev)
 			debug("%s: Failed to inilialize DDR PHY\n", __func__);
 			return ret;
 		}
+
+		enable_phy_clk_for_csr_access(&ddr_handoff_info, true);
+
+		ret = start_ddr_calibration(&ddr_handoff_info);
+		if (ret) {
+			debug("%s: Failed to calibrate DDR\n", __func__);
+			return ret;
+		}
+
+		enable_phy_clk_for_csr_access(&ddr_handoff_info, false);
 
 		/* Reset ARC processor when no using for security purpose */
 		setbits_le16(ddr_handoff_info.phy_base +
