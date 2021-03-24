@@ -336,6 +336,13 @@ enum reset_type {
 	COLD_RESET
 };
 
+enum ddr_type {
+	DDRTYPE_LPDDR4_0,
+	DDRTYPE_LPDDR4_1,
+	DDRTYPE_DDR4,
+	DDRTYPE_UNKNOWN
+};
+
 /* DDR handoff structure */
 struct ddr_handoff {
 	/* Memory reset manager base */
