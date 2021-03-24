@@ -26,6 +26,9 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+/* MPFE NOC registers */
+#define FPGA2SDRAM_MGR_MAIN_SIDEBANDMGR_FLAGOUTSET0	0xF8024050
+
 /* Memory reset manager */
 #define MEM_RST_MGR_STATUS	0x8
 
@@ -83,6 +86,11 @@ DECLARE_GLOBAL_DATA_PTR;
 #define DDR4_ECCCFG0_OFFSET		0x70
 #define DDR4_ECC_MODE			(BIT(2) | BIT(1) | BIT(0))
 #define DDR4_DIS_SCRUB			BIT(4)
+#define LPDDR4_ECCCFG0_ECC_REGION_MAP_GRANU_SHIFT	30
+#define LPDDR4_ECCCFG0_ECC_REGION_MAP_SHIFT	8
+
+#define DDR4_ECCCFG1_OFFSET		0x74
+#define LPDDR4_ECCCFG1_ECC_REGIONS_PARITY_LOCK	BIT(4)
 
 #define DDR4_CRCPARCTL0_OFFSET			0xC0
 #define DDR4_CRCPARCTL0_DFI_ALERT_ERR_INIT_CLR	BIT(1)
@@ -96,6 +104,9 @@ DECLARE_GLOBAL_DATA_PTR;
 #define DDR4_CRCPARSTAT_DFI_ALERT_ERR_FATL_INT	BIT(17)
 #define DDR4_CRCPARSTAT_DFI_ALERT_ERR_NO_SW	BIT(19)
 #define DDR4_CRCPARSTAT_CMD_IN_ERR_WINDOW	BIT(29)
+
+#define DDR4_INIT0_OFFSET			0xD0
+#define DDR4_INIT0_SKIP_RAM_INIT		(BIT(31) | BIT(30))
 
 #define DDR4_RANKCTL_OFFSET			0xF4
 #define DDR4_RANKCTL_DIFF_RANK_RD_GAP		(BIT(7) | BIT(6) | BIT(5) | \
@@ -307,6 +318,17 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define MR5_BIT4	BIT(4)
 
+/* Value for ecc_region_map */
+#define ALL_PROTECTED	0x7F
+
+/* Region size for ECCCFG0.ecc_region_map */
+enum region_size {
+	ONE_EIGHT,
+	ONE_SIXTEENTH,
+	ONE_THIRTY_SECOND,
+	ONE_SIXTY_FOURTH
+};
+
 enum ddr_type {
 	DDRTYPE_LPDDR4_0,
 	DDRTYPE_LPDDR4_1,
@@ -322,6 +344,11 @@ struct ddr_handoff {
 	size_t umctl2_total_length;
 	enum ddr_type umctl2_type;
 	size_t umctl2_handoff_length;
+	phys_addr_t umctl2_2nd_handoff_base;
+	phys_addr_t umctl2_2nd_base;
+	size_t umctl2_2nd_total_length;
+	enum ddr_type umctl2_2nd_type;
+	size_t umctl2_2nd_handoff_length;
 	phys_addr_t phy_handoff_base;
 	phys_addr_t phy_base;
 	size_t phy_total_length;
@@ -597,6 +624,17 @@ static enum ddr_type get_ddr_type(phys_addr_t ddr_type_location)
 	return DDRTYPE_UNKNOWN;
 }
 
+static void use_lpddr4_interleaving(bool set)
+{
+	if (set) {
+		printf("Starting LPDDR4 interleaving configuration ...\n");
+		setbits_le32(FPGA2SDRAM_MGR_MAIN_SIDEBANDMGR_FLAGOUTSET0, BIT(5));
+	} else {
+		printf("Starting LPDDR4 non-interleaving configuration ...\n");
+		clrbits_le32(FPGA2SDRAM_MGR_MAIN_SIDEBANDMGR_FLAGOUTSET0, BIT(5));
+	}
+}
+
 static void use_ddr4(enum ddr_type type)
 {
 	if (type == DDRTYPE_DDR4) {
@@ -607,6 +645,8 @@ static void use_ddr4(enum ddr_type type)
 		printf("Starting LPDDR4 configuration ...\n");
 		clrbits_le32(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_DDR_MODE,
 			     SYSMGR_SOC64_DDR_MODE_MSK);
+
+		use_lpddr4_interleaving(false);
 	}
 }
 
@@ -619,18 +659,49 @@ static int scrubber_ddr_config(phys_addr_t umctl2_base,
 	/* Reset to default value, prevent scrubber stop due to lower power */
 	writel(0, umctl2_base + DDR4_PWRCTL_OFFSET);
 
-	/* Disable input traffic per port */
-	clrbits_le32(umctl2_base + DDR4_PCTRL0_OFFSET,
-		     DDR4_PCTRL0_PORT_EN);
-
 	/* Backup user settings */
 	backup[0] = readl(umctl2_base + DDR4_SBRCTL_OFFSET);
 	backup[1] = readl(umctl2_base + DDR4_SBRWDATA0_OFFSET);
-	backup[2] = readl(umctl2_base + DDR4_SBRWDATA1_OFFSET);
-	backup[3] = readl(umctl2_base + DDR4_SBRSTART0_OFFSET);
-	backup[4] = readl(umctl2_base + DDR4_SBRSTART1_OFFSET);
+	backup[2] = readl(umctl2_base + DDR4_SBRSTART0_OFFSET);
+	if (umctl2_type == DDRTYPE_DDR4) {
+		backup[3] = readl(umctl2_base + DDR4_SBRWDATA1_OFFSET);
+		backup[4] = readl(umctl2_base + DDR4_SBRSTART1_OFFSET);
+	}
 	backup[5] = readl(umctl2_base + DDR4_SBRRANGE0_OFFSET);
 	backup[6] = readl(umctl2_base + DDR4_SBRRANGE1_OFFSET);
+	backup[7] = readl(umctl2_base + DDR4_ECCCFG0_OFFSET);
+	backup[8] = readl(umctl2_base + DDR4_ECCCFG1_OFFSET);
+
+	if (umctl2_type != DDRTYPE_DDR4) {
+		/* Lock ECC region, ensure this regions is not being accessed */
+		setbits_le32(umctl2_base + DDR4_ECCCFG1_OFFSET,
+			     LPDDR4_ECCCFG1_ECC_REGIONS_PARITY_LOCK);
+	}
+	/* Disable input traffic per port */
+	clrbits_le32(umctl2_base + DDR4_PCTRL0_OFFSET, DDR4_PCTRL0_PORT_EN);
+	/* Disables scrubber */
+	clrbits_le32(umctl2_base + DDR4_SBRCTL_OFFSET, DDR4_SBRCTL_SCRUB_EN);
+	/* Polling all scrub writes data have been sent */
+	ret = wait_for_bit_le32((const void *)(umctl2_base +
+				DDR4_SBRSTAT_OFFSET), DDR4_SBRSTAT_SCRUB_BUSY,
+				false, TIMEOUT_5000MS, false);
+	if (ret) {
+		debug("%s: Timeout while waiting for", __func__);
+		debug(" sending all scrub data\n");
+		return ret;
+	}
+
+	/* LPDDR4 supports inline ECC only */
+	if (umctl2_type != DDRTYPE_DDR4) {
+		/*
+		 * Setting all regions for protected, this is required for
+		 * srubber to init whole LPDDR4 expect ECC region
+		 */
+		writel(((ONE_EIGHT <<
+		       LPDDR4_ECCCFG0_ECC_REGION_MAP_GRANU_SHIFT) |
+		       (ALL_PROTECTED << LPDDR4_ECCCFG0_ECC_REGION_MAP_SHIFT)),
+		       umctl2_base + DDR4_ECCCFG0_OFFSET);
+	}
 
 	/* Scrub_burst = 1, scrub_mode = 1(performs writes) */
 	writel(DDR_SBRCTL_SCRUB_BURST_1 | DDR4_SBRCTL_SCRUB_WRITE,
@@ -638,15 +709,16 @@ static int scrubber_ddr_config(phys_addr_t umctl2_base,
 
 	/* Zeroing whole DDR */
 	writel(0, umctl2_base + DDR4_SBRWDATA0_OFFSET);
-	writel(0, umctl2_base + DDR4_SBRWDATA1_OFFSET);
 	writel(0, umctl2_base + DDR4_SBRSTART0_OFFSET);
-	writel(0, umctl2_base + DDR4_SBRSTART1_OFFSET);
+	if (umctl2_type == DDRTYPE_DDR4) {
+		writel(0, umctl2_base + DDR4_SBRWDATA1_OFFSET);
+		writel(0, umctl2_base + DDR4_SBRSTART1_OFFSET);
+	}
 	writel(0, umctl2_base + DDR4_SBRRANGE0_OFFSET);
 	writel(0, umctl2_base + DDR4_SBRRANGE1_OFFSET);
 
 	/* Enables scrubber */
 	setbits_le32(umctl2_base + DDR4_SBRCTL_OFFSET, DDR4_SBRCTL_SCRUB_EN);
-
 	/* Polling all scrub writes commands have been sent */
 	ret = wait_for_bit_le32((const void *)(umctl2_base +
 				DDR4_SBRSTAT_OFFSET), DDR4_SBRSTAT_SCRUB_DONE,
@@ -662,8 +734,8 @@ static int scrubber_ddr_config(phys_addr_t umctl2_base,
 				DDR4_SBRSTAT_OFFSET), DDR4_SBRSTAT_SCRUB_BUSY,
 				false, TIMEOUT_5000MS, false);
 	if (ret) {
-		debug("%s: Timeout while waiting for", __func__);
-		debug(" sending all scrub data\n");
+		printf("%s: Timeout while waiting for", __func__);
+		printf(" sending all scrub data\n");
 		return ret;
 	}
 
@@ -673,11 +745,23 @@ static int scrubber_ddr_config(phys_addr_t umctl2_base,
 	/* Restore user settings */
 	writel(backup[0], umctl2_base + DDR4_SBRCTL_OFFSET);
 	writel(backup[1], umctl2_base + DDR4_SBRWDATA0_OFFSET);
-	writel(backup[2], umctl2_base + DDR4_SBRWDATA1_OFFSET);
-	writel(backup[3], umctl2_base + DDR4_SBRSTART0_OFFSET);
-	writel(backup[4], umctl2_base + DDR4_SBRSTART1_OFFSET);
+	writel(backup[2], umctl2_base + DDR4_SBRSTART0_OFFSET);
+	if (umctl2_type == DDRTYPE_DDR4) {
+		writel(backup[3], umctl2_base + DDR4_SBRWDATA1_OFFSET);
+		writel(backup[4], umctl2_base + DDR4_SBRSTART1_OFFSET);
+	}
 	writel(backup[5], umctl2_base + DDR4_SBRRANGE0_OFFSET);
 	writel(backup[6], umctl2_base + DDR4_SBRRANGE1_OFFSET);
+	writel(backup[7], umctl2_base + DDR4_ECCCFG0_OFFSET);
+	writel(backup[8], umctl2_base + DDR4_ECCCFG1_OFFSET);
+
+	/* Enables ECC scrub on scrubber */
+	if (!(readl(umctl2_base + DDR4_SBRCTL_OFFSET) &
+	    DDR4_SBRCTL_SCRUB_WRITE)) {
+		/* Enables scrubber */
+		setbits_le32(umctl2_base + DDR4_SBRCTL_OFFSET,
+			     DDR4_SBRCTL_SCRUB_EN);
+	}
 
 	return 0;
 }
@@ -691,7 +775,12 @@ static int init_umctl2(phys_addr_t umctl2_handoff_base,
 	u32 i;
 	int ret;
 
-	printf("Initializing DDR controller ...\n");
+	if (umctl2_type == DDRTYPE_DDR4)
+		printf("Initializing DDR4 controller ...\n");
+	else if (umctl2_type == DDRTYPE_LPDDR4_0)
+		printf("Initializing LPDDR4_0 controller ...\n");
+	else if (umctl2_type == DDRTYPE_LPDDR4_1)
+		printf("Initializing LPDDR4_1 controller ...\n");
 
 	/* Prevent controller from issuing read/write to SDRAM */
 	setbits_le32(umctl2_base + DDR4_DBG1_OFFSET, DDR4_DBG1_DISDQ);
@@ -737,6 +826,24 @@ static int init_umctl2(phys_addr_t umctl2_handoff_base,
 
 	/* Disable self resfresh */
 	clrbits_le32(umctl2_base + DDR4_PWRCTL_OFFSET, DDR4_PWRCTL_SELFREF_EN);
+
+	if (umctl2_type == DDRTYPE_LPDDR4_0 || umctl2_type == DDRTYPE_LPDDR4_1) {
+		/* Setting selfref_sw to 1, based on lpddr4 requirement */
+		setbits_le32(umctl2_base + DDR4_PWRCTL_OFFSET,
+			     DDR4_PWRCTL_SELFREF_SW);
+
+		/* Backup user settings, restore after DDR up running */
+		user_backup++;
+		*user_backup = readl(umctl2_base + DDR4_INIT0_OFFSET) &
+				     DDR4_INIT0_SKIP_RAM_INIT;
+
+		/*
+		 * Setting INIT0.skip_dram_init to 0x3, based on lpddr4
+		 * requirement
+		 */
+		setbits_le32(umctl2_base + DDR4_INIT0_OFFSET,
+			     DDR4_INIT0_SKIP_RAM_INIT);
+	}
 
 	/* Complete quasi-dynamic register programming */
 	setbits_le32(umctl2_base + DDR4_SWCTL_OFFSET, DDR4_SWCTL_SW_DONE);
@@ -808,10 +915,21 @@ static int init_phy(struct ddr_handoff *ddr_handoff_info)
 
 	printf("Initializing DDR PHY ...\n");
 
-	ret = phy_pre_handoff_config(ddr_handoff_info->umctl2_base,
-				     ddr_handoff_info->umctl2_type);
-	if (ret)
-		return ret;
+	if (ddr_handoff_info->umctl2_type == DDRTYPE_DDR4 ||
+	    ddr_handoff_info->umctl2_type == DDRTYPE_LPDDR4_0) {
+		ret = phy_pre_handoff_config(ddr_handoff_info->umctl2_base,
+					     ddr_handoff_info->umctl2_type);
+		if (ret)
+			return ret;
+	}
+
+	if (ddr_handoff_info->umctl2_2nd_type == DDRTYPE_LPDDR4_1) {
+		ret = phy_pre_handoff_config
+			(ddr_handoff_info->umctl2_2nd_base,
+			 ddr_handoff_info->umctl2_2nd_type);
+		if (ret)
+			return ret;
+	}
 
 	/* Execute PHY configuration handoff */
 	handoff_read((void *)ddr_handoff_info->phy_handoff_base, handoff_table,
@@ -936,6 +1054,70 @@ int populate_ddr_handoff(struct ddr_handoff *ddr_handoff_info)
 				ddr_handoff_info->umctl2_total_length;
 	debug("%s: Next handoff section header location = 0x%llx\n", __func__,
 	      next_section_header);
+
+	/*
+	 * Checking next section handoff is umctl2 or PHY, and changing
+	 * subsequent implementation accordingly
+	 */
+	if (readl(next_section_header) == SOC64_HANDOFF_DDR_UMCTL2_MAGIC) {
+		/* Get the next umctl2 handoff section address */
+		ddr_handoff_info->umctl2_2nd_handoff_base =
+			next_section_header;
+		debug("%s: umctl2 2nd handoff base = 0x%x\n", __func__,
+		      (u32)ddr_handoff_info->umctl2_2nd_handoff_base);
+
+		/* Get 2nd DDR type */
+		ddr_handoff_info->umctl2_2nd_type =
+			get_ddr_type(ddr_handoff_info->umctl2_2nd_handoff_base
+				     + SOC64_HANDOFF_DDR_UMCTL2_TYPE_OFFSET);
+		if (ddr_handoff_info->umctl2_2nd_type == DDRTYPE_LPDDR4_0 ||
+		    ddr_handoff_info->umctl2_2nd_type == DDRTYPE_UNKNOWN) {
+			debug("%s: Wrong DDR handoff format, the 2nd DDR ",
+			      __func__);
+			debug("type must be LPDDR4_1\n");
+			return -ENOEXEC;
+		}
+
+		/* 2nd umctl2 base physical address */
+		ddr_handoff_info->umctl2_2nd_base =
+			readl(ddr_handoff_info->umctl2_2nd_handoff_base +
+			      SOC64_HANDOFF_DDR_UMCTL2_BASE_ADDR_OFFSET);
+		debug("%s: umctl2_2nd base = 0x%x\n", __func__,
+		      (u32)ddr_handoff_info->umctl2_2nd_base);
+
+		/* Get the total length of 2nd DDR umctl2 handoff section */
+		ddr_handoff_info->umctl2_2nd_total_length =
+			readl(ddr_handoff_info->umctl2_2nd_handoff_base +
+			      SOC64_HANDOFF_OFFSET_LENGTH);
+		debug("%s: Umctl2_2nd total length in byte = 0x%x\n", __func__,
+		      (u32)ddr_handoff_info->umctl2_2nd_total_length);
+
+		/*
+		 * Get the length of user setting data in DDR umctl2 handoff
+		 * section
+		 */
+		ddr_handoff_info->umctl2_2nd_handoff_length =
+		get_handoff_size((void *)
+				 ddr_handoff_info->umctl2_2nd_handoff_base,
+				 little_endian);
+		debug("%s: umctl2_2nd handoff length in word(32-bit) = 0x%x\n",
+		      __func__,
+		     (u32)ddr_handoff_info->umctl2_2nd_handoff_length);
+
+		/* Wrong format on user setting data */
+		if (ddr_handoff_info->umctl2_2nd_handoff_length < 0) {
+			debug("%s: Wrong format on umctl2 user setting data\n",
+			      __func__);
+			return -ENOEXEC;
+		}
+
+		/* Get the next handoff section address */
+		next_section_header =
+			ddr_handoff_info->umctl2_2nd_handoff_base +
+			ddr_handoff_info->umctl2_2nd_total_length;
+		debug("%s: Next handoff section header location = 0x%llx\n",
+		      __func__, next_section_header);
+	}
 
 	/* Checking next section handoff is PHY ? */
 	if (readl(next_section_header) == SOC64_HANDOFF_DDR_PHY_MAGIC) {
@@ -1871,9 +2053,108 @@ static int start_ddr_calibration(struct ddr_handoff *ddr_handoff_info)
 	return ret;
 }
 
+static int init_controller(struct ddr_handoff *ddr_handoff_info,
+			   u32 *user_backup, u32 *user_backup_2nd)
+{
+	int ret = 0;
+
+	if (ddr_handoff_info->umctl2_type == DDRTYPE_DDR4  ||
+	    ddr_handoff_info->umctl2_type == DDRTYPE_LPDDR4_0) {
+		/* Initialize 1st DDR controller */
+		ret = init_umctl2(ddr_handoff_info->umctl2_handoff_base,
+				  ddr_handoff_info->umctl2_base,
+				  ddr_handoff_info->umctl2_type,
+				  ddr_handoff_info->umctl2_handoff_length,
+				  user_backup);
+		if (ret) {
+			debug("%s: Failed to inilialize first controller\n",
+			      __func__);
+			return ret;
+		}
+	}
+
+	if (ddr_handoff_info->umctl2_2nd_type == DDRTYPE_LPDDR4_1) {
+		/* Initialize 2nd DDR controller */
+		ret = init_umctl2(ddr_handoff_info->umctl2_2nd_handoff_base,
+				  ddr_handoff_info->umctl2_2nd_base,
+				  ddr_handoff_info->umctl2_2nd_type,
+				  ddr_handoff_info->umctl2_2nd_handoff_length,
+				  user_backup_2nd);
+		if (ret)
+			debug("%s: Failed to inilialize 2nd controller\n",
+			      __func__);
+	}
+
+	return ret;
+}
+
+static int dfi_init(struct ddr_handoff *ddr_handoff_info)
+{
+	int ret;
+
+	ret = ddr_start_dfi_init(ddr_handoff_info->umctl2_base,
+				 ddr_handoff_info->umctl2_type);
+	if (ret)
+		return ret;
+
+	if (ddr_handoff_info->umctl2_2nd_type == DDRTYPE_LPDDR4_1)
+		ret = ddr_start_dfi_init(ddr_handoff_info->umctl2_2nd_base,
+					 ddr_handoff_info->umctl2_2nd_type);
+
+	return ret;
+}
+
+static int check_dfi_init(struct ddr_handoff *handoff)
+{
+	int ret;
+
+	ret = ddr_check_dfi_init_complete(handoff->umctl2_base,
+					  handoff->umctl2_type);
+	if (ret)
+		return ret;
+
+	if (handoff->umctl2_2nd_type == DDRTYPE_LPDDR4_1)
+		ret = ddr_check_dfi_init_complete(handoff->umctl2_2nd_base,
+						  handoff->umctl2_2nd_type);
+
+	return ret;
+}
+
+static int trigger_sdram_init(struct ddr_handoff *handoff)
+{
+	int ret;
+
+	ret = ddr_trigger_sdram_init(handoff->umctl2_base,
+				     handoff->umctl2_type);
+	if (ret)
+		return ret;
+
+	if (handoff->umctl2_2nd_type == DDRTYPE_LPDDR4_1)
+		ret = ddr_trigger_sdram_init(handoff->umctl2_2nd_base,
+					     handoff->umctl2_2nd_type);
+
+	return ret;
+}
+
+static int ddr_post_config(struct ddr_handoff *handoff)
+{
+	int ret;
+
+	ret = ddr_post_handoff_config(handoff->umctl2_base,
+				      handoff->umctl2_type);
+	if (ret)
+		return ret;
+
+	if (handoff->umctl2_2nd_type == DDRTYPE_LPDDR4_1)
+		ret = ddr_post_handoff_config(handoff->umctl2_2nd_base,
+					      handoff->umctl2_2nd_type);
+
+	return ret;
+}
+
 int sdram_mmr_init_full(struct udevice *dev)
 {
-	u32 user_backup;
+	u32 user_backup[2], user_backup_2nd[2];
 	int ret;
 	struct bd_info bd;
 	struct ddr_handoff ddr_handoff_info;
@@ -1891,7 +2172,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 	use_ddr4(ddr_handoff_info.umctl2_type);
 
 	if (!is_ddr_init_skipped()) {
-		printf("%s: SDRAM init in progress ...\n", __func__);
+		printf("SDRAM init in progress ...\n");
 
 		/*
 		 * Polling reset complete, must be high to ensure DDR subsystem
@@ -1913,20 +2194,12 @@ int sdram_mmr_init_full(struct udevice *dev)
 		if (ret)
 			return ret;
 
-		if (ddr_handoff_info.umctl2_type == DDRTYPE_DDR4) {
-			/* Initialize 1st DDR controller */
-			ret =
-			init_umctl2(ddr_handoff_info.umctl2_handoff_base,
-				    ddr_handoff_info.umctl2_base,
-				    ddr_handoff_info.umctl2_type,
-				    ddr_handoff_info.umctl2_handoff_length,
-				    &user_backup);
-			if (ret) {
-				debug("%s: Failed to inilialize DDR ",
-				      __func__);
-				debug("controller\n");
-				return ret;
-			}
+		ret = init_controller(&ddr_handoff_info, user_backup,
+				      user_backup_2nd);
+		if (ret) {
+			debug("%s: Failed to inilialize DDR controller\n",
+			      __func__);
+			return ret;
 		}
 
 		/* Release the controller from reset */
@@ -1963,36 +2236,51 @@ int sdram_mmr_init_full(struct udevice *dev)
 		/* DDR freq set to support DDR4-3200 */
 		phy_init_engine(&ddr_handoff_info);
 
-		ret = ddr_start_dfi_init(ddr_handoff_info.umctl2_base,
-					 ddr_handoff_info.umctl2_type);
+		ret = dfi_init(&ddr_handoff_info);
 		if (ret)
 			return ret;
 
-		ret = ddr_check_dfi_init_complete
-			(ddr_handoff_info.umctl2_base,
-			 ddr_handoff_info.umctl2_type);
+		ret = check_dfi_init(&ddr_handoff_info);
 		if (ret)
 			return ret;
 
-		ret = ddr_trigger_sdram_init(ddr_handoff_info.umctl2_base,
-					     ddr_handoff_info.umctl2_type);
+		ret = trigger_sdram_init(&ddr_handoff_info);
 		if (ret)
 			return ret;
 
-		ret = ddr_post_handoff_config(ddr_handoff_info.umctl2_base,
-					      ddr_handoff_info.umctl2_type);
+		ret = ddr_post_config(&ddr_handoff_info);
 		if (ret)
 			return ret;
 
 		/* Restore user settings */
-		writel(user_backup, ddr_handoff_info.umctl2_base +
+		writel(user_backup[0], ddr_handoff_info.umctl2_base +
 		       DDR4_PWRCTL_OFFSET);
+
+		if (ddr_handoff_info.umctl2_2nd_type == DDRTYPE_LPDDR4_0)
+			setbits_le32(ddr_handoff_info.umctl2_base +
+				     DDR4_INIT0_OFFSET, user_backup[1]);
+
+		if (ddr_handoff_info.umctl2_2nd_type == DDRTYPE_LPDDR4_1) {
+			/* Restore user settings */
+			writel(user_backup_2nd[0],
+			       ddr_handoff_info.umctl2_2nd_base +
+			       DDR4_PWRCTL_OFFSET);
+
+			setbits_le32(ddr_handoff_info.umctl2_2nd_base +
+				     DDR4_INIT0_OFFSET, user_backup_2nd[1]);
+		}
 
 		/* Enable input traffic per port */
 		setbits_le32(ddr_handoff_info.umctl2_base + DDR4_PCTRL0_OFFSET,
 			     DDR4_PCTRL0_PORT_EN);
 
-		printf("%s: DDR init success\n", __func__);
+		if (ddr_handoff_info.umctl2_2nd_type == DDRTYPE_LPDDR4_1) {
+			/* Enable input traffic per port */
+			setbits_le32(ddr_handoff_info.umctl2_2nd_base +
+				     DDR4_PCTRL0_OFFSET, DDR4_PCTRL0_PORT_EN);
+		}
+
+		printf("DDR init success\n");
 	}
 
 	/* Get bank configuration from devicetree */
