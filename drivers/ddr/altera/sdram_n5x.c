@@ -339,16 +339,16 @@ enum ddr_type {
 /* DDR handoff structure */
 struct ddr_handoff {
 	phys_addr_t mem_reset_base;
-	phys_addr_t umctl2_handoff_base;
-	phys_addr_t umctl2_base;
-	size_t umctl2_total_length;
-	enum ddr_type umctl2_type;
-	size_t umctl2_handoff_length;
-	phys_addr_t umctl2_2nd_handoff_base;
-	phys_addr_t umctl2_2nd_base;
-	size_t umctl2_2nd_total_length;
-	enum ddr_type umctl2_2nd_type;
-	size_t umctl2_2nd_handoff_length;
+	phys_addr_t cntlr_handoff_base;
+	phys_addr_t cntlr_base;
+	size_t cntlr_total_length;
+	enum ddr_type cntlr_t;
+	size_t cntlr_handoff_length;
+	phys_addr_t cntlr2_handoff_base;
+	phys_addr_t cntlr2_base;
+	size_t cntlr2_total_length;
+	enum ddr_type cntlr2_t;
+	size_t cntlr2_handoff_length;
 	phys_addr_t phy_handoff_base;
 	phys_addr_t phy_base;
 	size_t phy_total_length;
@@ -409,7 +409,7 @@ static int clr_ca_parity_error_status(phys_addr_t umctl2_base)
 	return 0;
 }
 
-static int ddr4_retry_software_sequence(phys_addr_t umctl2_base)
+static int ddr_retry_software_sequence(phys_addr_t umctl2_base)
 {
 	u32 value;
 	int ret;
@@ -493,8 +493,7 @@ static int ensure_retry_procedure_complete(phys_addr_t umctl2_base)
 				      DDR4_CRCPARSTAT_DFI_ALERT_ERR_INT;
 
 			if (value) {
-				ret =
-				ddr4_retry_software_sequence(umctl2_base);
+				ret = ddr_retry_software_sequence(umctl2_base);
 				debug("%s: DFI alert error interrupt ",
 				      __func__);
 				debug("is set\n");
@@ -915,18 +914,18 @@ static int init_phy(struct ddr_handoff *ddr_handoff_info)
 
 	printf("Initializing DDR PHY ...\n");
 
-	if (ddr_handoff_info->umctl2_type == DDRTYPE_DDR4 ||
-	    ddr_handoff_info->umctl2_type == DDRTYPE_LPDDR4_0) {
-		ret = phy_pre_handoff_config(ddr_handoff_info->umctl2_base,
-					     ddr_handoff_info->umctl2_type);
+	if (ddr_handoff_info->cntlr_t == DDRTYPE_DDR4 ||
+	    ddr_handoff_info->cntlr_t == DDRTYPE_LPDDR4_0) {
+		ret = phy_pre_handoff_config(ddr_handoff_info->cntlr_base,
+					     ddr_handoff_info->cntlr_t);
 		if (ret)
 			return ret;
 	}
 
-	if (ddr_handoff_info->umctl2_2nd_type == DDRTYPE_LPDDR4_1) {
+	if (ddr_handoff_info->cntlr2_t == DDRTYPE_LPDDR4_1) {
 		ret = phy_pre_handoff_config
-			(ddr_handoff_info->umctl2_2nd_base,
-			 ddr_handoff_info->umctl2_2nd_type);
+			(ddr_handoff_info->cntlr2_base,
+			 ddr_handoff_info->cntlr2_t);
 		if (ret)
 			return ret;
 	}
@@ -956,23 +955,22 @@ static int init_phy(struct ddr_handoff *ddr_handoff_info)
 	return 0;
 }
 
-static void phy_init_engine(struct ddr_handoff *ddr_handoff_info)
+static void phy_init_engine(struct ddr_handoff *handoff)
 {
 	u32 i, value;
-	u32 handoff_table[ddr_handoff_info->phy_engine_handoff_length];
+	u32 handoff_table[handoff->phy_engine_handoff_length];
 
 	printf("Load PHY Init Engine ...\n");
 
 	/* Execute PIE production code handoff */
-	handoff_read((void *)ddr_handoff_info->phy_engine_handoff_base,
+	handoff_read((void *)handoff->phy_engine_handoff_base,
 		     handoff_table,
-		     (u32)ddr_handoff_info->phy_engine_handoff_length,
+		     (u32)handoff->phy_engine_handoff_length,
 		     little_endian);
 
-	for (i = 0; i < ddr_handoff_info->phy_engine_handoff_length;
-	    i = i + 2) {
+	for (i = 0; i < handoff->phy_engine_handoff_length; i = i + 2) {
 		debug("Handoff addr: 0x%8llx ", handoff_table[i] +
-		      ddr_handoff_info->phy_base);
+		      handoff->phy_base);
 
 		/*
 		 * Convert PHY odd offset to even offset that supported by
@@ -980,98 +978,91 @@ static void phy_init_engine(struct ddr_handoff *ddr_handoff_info)
 		 */
 		value = handoff_table[i] << 1;
 		debug("%s: Absolute addr: 0x%08llx, APB offset: 0x%08x ",
-		      __func__, value + ddr_handoff_info->phy_base, value);
+		      __func__, value + handoff->phy_base, value);
 		debug("PHY offset: 0x%08x", handoff_table[i]);
 		debug(" wr = 0x%08x ", handoff_table[i + 1]);
 
 		writew(handoff_table[i + 1], (uintptr_t)(value +
-		       ddr_handoff_info->phy_base));
+		       handoff->phy_base));
 
 		debug("rd = 0x%08x\n", readw((uintptr_t)(value +
-		      ddr_handoff_info->phy_base)));
+		      handoff->phy_base)));
 	}
 
 	printf("End of loading PHY Init Engine\n");
 }
 
-int populate_ddr_handoff(struct ddr_handoff *ddr_handoff_info)
+int populate_ddr_handoff(struct ddr_handoff *handoff)
 {
 	phys_addr_t next_section_header;
 
 	/* DDR handoff */
-	ddr_handoff_info->mem_reset_base = SOC64_HANDOFF_DDR_MEMRESET_BASE;
+	handoff->mem_reset_base = SOC64_HANDOFF_DDR_MEMRESET_BASE;
 	debug("%s: DDR memory reset base = 0x%x\n", __func__,
-	      (u32)ddr_handoff_info->mem_reset_base);
+	      (u32)handoff->mem_reset_base);
 	debug("%s: DDR memory reset address = 0x%x\n", __func__,
-	      readl(ddr_handoff_info->mem_reset_base));
+	      readl(handoff->mem_reset_base));
 
 	/* Beginning of DDR controller handoff */
-	ddr_handoff_info->umctl2_handoff_base =
-		SOC64_HANDOFF_DDR_UMCTL2_SECTION;
-	debug("%s: umctl2 handoff base = 0x%x\n", __func__,
-	      (u32)ddr_handoff_info->umctl2_handoff_base);
+	handoff->cntlr_handoff_base = SOC64_HANDOFF_DDR_UMCTL2_SECTION;
+	debug("%s: cntlr handoff base = 0x%x\n", __func__,
+	      (u32)handoff->cntlr_handoff_base);
 
 	/* Get 1st DDR type */
-	ddr_handoff_info->umctl2_type =
-		get_ddr_type(ddr_handoff_info->umctl2_handoff_base +
-			     SOC64_HANDOFF_DDR_UMCTL2_TYPE_OFFSET);
-	if (ddr_handoff_info->umctl2_type == DDRTYPE_LPDDR4_1 ||
-	    ddr_handoff_info->umctl2_type == DDRTYPE_UNKNOWN) {
+	handoff->cntlr_t = get_ddr_type(handoff->cntlr_handoff_base +
+					SOC64_HANDOFF_DDR_UMCTL2_TYPE_OFFSET);
+	if (handoff->cntlr_t == DDRTYPE_LPDDR4_1 ||
+	    handoff->cntlr_t == DDRTYPE_UNKNOWN) {
 		debug("%s: Wrong DDR handoff format, the 1st DDR ", __func__);
 		debug("type must be DDR4 or LPDDR4_0\n");
 		return -ENOEXEC;
 	}
 
-	/* 1st umctl2 base physical address */
-	ddr_handoff_info->umctl2_base =
-		readl(ddr_handoff_info->umctl2_handoff_base +
-		      SOC64_HANDOFF_DDR_UMCTL2_BASE_ADDR_OFFSET);
-	debug("%s: umctl2 base = 0x%x\n", __func__,
-	      (u32)ddr_handoff_info->umctl2_base);
+	/* 1st cntlr base physical address */
+	handoff->cntlr_base = readl(handoff->cntlr_handoff_base +
+				    SOC64_HANDOFF_DDR_UMCTL2_BASE_ADDR_OFFSET);
+	debug("%s: cntlr base = 0x%x\n", __func__, (u32)handoff->cntlr_base);
 
-	/* Get the total length of DDR umctl2 handoff section */
-	ddr_handoff_info->umctl2_total_length =
-			readl(ddr_handoff_info->umctl2_handoff_base +
-			      SOC64_HANDOFF_OFFSET_LENGTH);
+	/* Get the total length of DDR cntlr handoff section */
+	handoff->cntlr_total_length = readl(handoff->cntlr_handoff_base +
+					    SOC64_HANDOFF_OFFSET_LENGTH);
 	debug("%s: Umctl2 total length in byte = 0x%x\n", __func__,
-	      (u32)ddr_handoff_info->umctl2_total_length);
+	      (u32)handoff->cntlr_total_length);
 
-	/* Get the length of user setting data in DDR umctl2 handoff section */
-	ddr_handoff_info->umctl2_handoff_length =
-		get_handoff_size((void *)ddr_handoff_info->umctl2_handoff_base,
-				 little_endian);
+	/* Get the length of user setting data in DDR cntlr handoff section */
+	handoff->cntlr_handoff_length = get_handoff_size((void *)
+						handoff->cntlr_handoff_base,
+						little_endian);
 	debug("%s: Umctl2 handoff length in word(32-bit) = 0x%x\n", __func__,
-	      (u32)ddr_handoff_info->umctl2_handoff_length);
+	      (u32)handoff->cntlr_handoff_length);
 
 	/* Wrong format on user setting data */
-	if (ddr_handoff_info->umctl2_handoff_length < 0) {
+	if (handoff->cntlr_handoff_length < 0) {
 		debug("%s: Wrong format on user setting data\n", __func__);
 		return -ENOEXEC;
 	}
 
 	/* Get the next handoff section address */
-	next_section_header = ddr_handoff_info->umctl2_handoff_base +
-				ddr_handoff_info->umctl2_total_length;
+	next_section_header = handoff->cntlr_handoff_base +
+				handoff->cntlr_total_length;
 	debug("%s: Next handoff section header location = 0x%llx\n", __func__,
 	      next_section_header);
 
 	/*
-	 * Checking next section handoff is umctl2 or PHY, and changing
+	 * Checking next section handoff is cntlr or PHY, and changing
 	 * subsequent implementation accordingly
 	 */
 	if (readl(next_section_header) == SOC64_HANDOFF_DDR_UMCTL2_MAGIC) {
-		/* Get the next umctl2 handoff section address */
-		ddr_handoff_info->umctl2_2nd_handoff_base =
-			next_section_header;
+		/* Get the next cntlr handoff section address */
+		handoff->cntlr2_handoff_base = next_section_header;
 		debug("%s: umctl2 2nd handoff base = 0x%x\n", __func__,
-		      (u32)ddr_handoff_info->umctl2_2nd_handoff_base);
+		      (u32)handoff->cntlr2_handoff_base);
 
 		/* Get 2nd DDR type */
-		ddr_handoff_info->umctl2_2nd_type =
-			get_ddr_type(ddr_handoff_info->umctl2_2nd_handoff_base
-				     + SOC64_HANDOFF_DDR_UMCTL2_TYPE_OFFSET);
-		if (ddr_handoff_info->umctl2_2nd_type == DDRTYPE_LPDDR4_0 ||
-		    ddr_handoff_info->umctl2_2nd_type == DDRTYPE_UNKNOWN) {
+		handoff->cntlr2_t = get_ddr_type(handoff->cntlr2_handoff_base +
+					SOC64_HANDOFF_DDR_UMCTL2_TYPE_OFFSET);
+		if (handoff->cntlr2_t == DDRTYPE_LPDDR4_0 ||
+		    handoff->cntlr2_t == DDRTYPE_UNKNOWN) {
 			debug("%s: Wrong DDR handoff format, the 2nd DDR ",
 			      __func__);
 			debug("type must be LPDDR4_1\n");
@@ -1079,42 +1070,38 @@ int populate_ddr_handoff(struct ddr_handoff *ddr_handoff_info)
 		}
 
 		/* 2nd umctl2 base physical address */
-		ddr_handoff_info->umctl2_2nd_base =
-			readl(ddr_handoff_info->umctl2_2nd_handoff_base +
-			      SOC64_HANDOFF_DDR_UMCTL2_BASE_ADDR_OFFSET);
-		debug("%s: umctl2_2nd base = 0x%x\n", __func__,
-		      (u32)ddr_handoff_info->umctl2_2nd_base);
+		handoff->cntlr2_base = readl(handoff->cntlr2_handoff_base +
+					SOC64_HANDOFF_DDR_UMCTL2_BASE_ADDR_OFFSET);
+		debug("%s: cntlr2 base = 0x%x\n", __func__,
+		      (u32)handoff->cntlr2_base);
 
 		/* Get the total length of 2nd DDR umctl2 handoff section */
-		ddr_handoff_info->umctl2_2nd_total_length =
-			readl(ddr_handoff_info->umctl2_2nd_handoff_base +
-			      SOC64_HANDOFF_OFFSET_LENGTH);
+		handoff->cntlr2_total_length = readl(handoff->cntlr2_handoff_base +
+						SOC64_HANDOFF_OFFSET_LENGTH);
 		debug("%s: Umctl2_2nd total length in byte = 0x%x\n", __func__,
-		      (u32)ddr_handoff_info->umctl2_2nd_total_length);
+		      (u32)handoff->cntlr2_total_length);
 
 		/*
 		 * Get the length of user setting data in DDR umctl2 handoff
 		 * section
 		 */
-		ddr_handoff_info->umctl2_2nd_handoff_length =
-		get_handoff_size((void *)
-				 ddr_handoff_info->umctl2_2nd_handoff_base,
-				 little_endian);
-		debug("%s: umctl2_2nd handoff length in word(32-bit) = 0x%x\n",
+		handoff->cntlr2_handoff_length = get_handoff_size((void *)
+						  handoff->cntlr2_handoff_base,
+						  little_endian);
+		debug("%s: cntlr2 handoff length in word(32-bit) = 0x%x\n",
 		      __func__,
-		     (u32)ddr_handoff_info->umctl2_2nd_handoff_length);
+		     (u32)handoff->cntlr2_handoff_length);
 
 		/* Wrong format on user setting data */
-		if (ddr_handoff_info->umctl2_2nd_handoff_length < 0) {
+		if (handoff->cntlr2_handoff_length < 0) {
 			debug("%s: Wrong format on umctl2 user setting data\n",
 			      __func__);
 			return -ENOEXEC;
 		}
 
 		/* Get the next handoff section address */
-		next_section_header =
-			ddr_handoff_info->umctl2_2nd_handoff_base +
-			ddr_handoff_info->umctl2_2nd_total_length;
+		next_section_header = handoff->cntlr2_handoff_base +
+					handoff->cntlr2_total_length;
 		debug("%s: Next handoff section header location = 0x%llx\n",
 		      __func__, next_section_header);
 	}
@@ -1122,45 +1109,42 @@ int populate_ddr_handoff(struct ddr_handoff *ddr_handoff_info)
 	/* Checking next section handoff is PHY ? */
 	if (readl(next_section_header) == SOC64_HANDOFF_DDR_PHY_MAGIC) {
 		/* DDR PHY handoff */
-		ddr_handoff_info->phy_handoff_base = next_section_header;
+		handoff->phy_handoff_base = next_section_header;
 		debug("%s: PHY handoff base = 0x%x\n", __func__,
-		      (u32)ddr_handoff_info->phy_handoff_base);
+		      (u32)handoff->phy_handoff_base);
 
 		/* PHY base physical address */
-		ddr_handoff_info->phy_base =
-			readl(ddr_handoff_info->phy_handoff_base +
-			      SOC64_HANDOFF_DDR_PHY_BASE_OFFSET);
+		handoff->phy_base = readl(handoff->phy_handoff_base +
+					SOC64_HANDOFF_DDR_PHY_BASE_OFFSET);
 		debug("%s: PHY base = 0x%x\n", __func__,
-		      (u32)ddr_handoff_info->phy_base);
+		      (u32)handoff->phy_base);
 
 		/* Get the total length of PHY handoff section */
-		ddr_handoff_info->phy_total_length =
-				readl(ddr_handoff_info->phy_handoff_base +
-				      SOC64_HANDOFF_OFFSET_LENGTH);
+		handoff->phy_total_length = readl(handoff->phy_handoff_base +
+						SOC64_HANDOFF_OFFSET_LENGTH);
 		debug("%s: PHY total length in byte = 0x%x\n", __func__,
-		      (u32)ddr_handoff_info->phy_total_length);
+		      (u32)handoff->phy_total_length);
 
 		/*
 		 * Get the length of user setting data in DDR PHY handoff
 		 * section
 		 */
-		ddr_handoff_info->phy_handoff_length =
-		get_handoff_size((void *)ddr_handoff_info->phy_handoff_base,
-				 little_endian);
+		handoff->phy_handoff_length = get_handoff_size((void *)
+						handoff->phy_handoff_base,
+						little_endian);
 		debug("%s: PHY handoff length in word(32-bit) = 0x%x\n",
-		      __func__, (u32)ddr_handoff_info->phy_handoff_length);
+		      __func__, (u32)handoff->phy_handoff_length);
 
 		/* Wrong format on PHY user setting data */
-		if (ddr_handoff_info->phy_handoff_length < 0) {
+		if (handoff->phy_handoff_length < 0) {
 			debug("%s: Wrong format on PHY user setting data\n",
 			      __func__);
 			return -ENOEXEC;
 		}
 
 		/* Get the next handoff section address */
-		next_section_header =
-			ddr_handoff_info->phy_handoff_base +
-			ddr_handoff_info->phy_total_length;
+		next_section_header = handoff->phy_handoff_base +
+					handoff->phy_total_length;
 		debug("%s: Next handoff section header location = 0x%llx\n",
 		      __func__, next_section_header);
 	} else {
@@ -1174,32 +1158,30 @@ int populate_ddr_handoff(struct ddr_handoff *ddr_handoff_info)
 	if (readl(next_section_header) ==
 		SOC64_HANDOFF_DDR_PHY_INIT_ENGINE_MAGIC) {
 		/* DDR PHY Engine handoff */
-		ddr_handoff_info->phy_engine_handoff_base =
-			next_section_header;
+		handoff->phy_engine_handoff_base = next_section_header;
 		debug("%s: PHY init engine handoff base = 0x%x\n", __func__,
-		      (u32)ddr_handoff_info->phy_engine_handoff_base);
+		      (u32)handoff->phy_engine_handoff_base);
 
 		/* Get the total length of PHY init engine handoff section */
-		ddr_handoff_info->phy_engine_total_length =
-			readl(ddr_handoff_info->phy_engine_handoff_base +
-			      SOC64_HANDOFF_OFFSET_LENGTH);
+		handoff->phy_engine_total_length =
+				readl(handoff->phy_engine_handoff_base +
+				      SOC64_HANDOFF_OFFSET_LENGTH);
 		debug("%s: PHY engine total length in byte = 0x%x\n", __func__,
-		      (u32)ddr_handoff_info->phy_engine_total_length);
+		      (u32)handoff->phy_engine_total_length);
 
 		/*
 		 * Get the length of user setting data in DDR PHY init engine
 		 * handoff section
 		 */
-		ddr_handoff_info->phy_engine_handoff_length =
-		get_handoff_size((void *)
-				 ddr_handoff_info->phy_engine_handoff_base,
-				 little_endian);
+		handoff->phy_engine_handoff_length =
+			get_handoff_size((void *)
+					 handoff->phy_engine_handoff_base,
+					 little_endian);
 		debug("%s: PHY engine handoff length in word(32-bit) = 0x%x\n",
-		      __func__,
-		      (u32)ddr_handoff_info->phy_engine_handoff_length);
+		      __func__, (u32)handoff->phy_engine_handoff_length);
 
 		/* Wrong format on PHY init engine setting data */
-		if (ddr_handoff_info->phy_engine_handoff_length < 0) {
+		if (handoff->phy_engine_handoff_length < 0) {
 			debug("%s: Wrong format on PHY init engine ",
 			      __func__);
 			debug("user setting data\n");
@@ -1213,25 +1195,23 @@ int populate_ddr_handoff(struct ddr_handoff *ddr_handoff_info)
 		return -ENOEXEC;
 	}
 
-	ddr_handoff_info->train_imem_base = ddr_handoff_info->phy_base +
+	handoff->train_imem_base = handoff->phy_base +
 						DDR_PHY_TRAIN_IMEM_OFFSET;
 	debug("%s: PHY train IMEM base = 0x%x\n",
-	      __func__, (u32)ddr_handoff_info->train_imem_base);
+	      __func__, (u32)handoff->train_imem_base);
 
-	ddr_handoff_info->train_dmem_base = ddr_handoff_info->phy_base +
+	handoff->train_dmem_base = handoff->phy_base +
 						DDR_PHY_TRAIN_DMEM_OFFSET;
 	debug("%s: PHY train DMEM base = 0x%x\n",
-	      __func__, (u32)ddr_handoff_info->train_dmem_base);
+	      __func__, (u32)handoff->train_dmem_base);
 
-	ddr_handoff_info->train_imem_length =
-		SOC64_HANDOFF_DDR_TRAIN_IMEM_LENGTH;
+	handoff->train_imem_length = SOC64_HANDOFF_DDR_TRAIN_IMEM_LENGTH;
 	debug("%s: PHY train IMEM length = 0x%x\n",
-	      __func__, (u32)ddr_handoff_info->train_imem_length);
+	      __func__, (u32)handoff->train_imem_length);
 
-	ddr_handoff_info->train_dmem_length =
-		SOC64_HANDOFF_DDR_TRAIN_DMEM_LENGTH;
+	handoff->train_dmem_length = SOC64_HANDOFF_DDR_TRAIN_DMEM_LENGTH;
 	debug("%s: PHY train DMEM length = 0x%x\n",
-	      __func__, (u32)ddr_handoff_info->train_dmem_length);
+	      __func__, (u32)handoff->train_dmem_length);
 
 	return 0;
 }
@@ -2020,10 +2000,10 @@ static int start_ddr_calibration(struct ddr_handoff *ddr_handoff_info)
 	}
 
 	/* Updating training result to DDR controller */
-	if (ddr_handoff_info->umctl2_type == DDRTYPE_DDR4) {
+	if (ddr_handoff_info->cntlr_t == DDRTYPE_DDR4) {
 		ret = set_cal_res_to_umctl2(ddr_handoff_info,
-					    ddr_handoff_info->umctl2_base,
-					    ddr_handoff_info->umctl2_type);
+					    ddr_handoff_info->cntlr_base,
+					    ddr_handoff_info->cntlr_t);
 		if (ret) {
 			debug("%s: Failed to update train result to ",
 			      __func__);
@@ -2058,13 +2038,13 @@ static int init_controller(struct ddr_handoff *ddr_handoff_info,
 {
 	int ret = 0;
 
-	if (ddr_handoff_info->umctl2_type == DDRTYPE_DDR4  ||
-	    ddr_handoff_info->umctl2_type == DDRTYPE_LPDDR4_0) {
+	if (ddr_handoff_info->cntlr_t == DDRTYPE_DDR4  ||
+	    ddr_handoff_info->cntlr_t == DDRTYPE_LPDDR4_0) {
 		/* Initialize 1st DDR controller */
-		ret = init_umctl2(ddr_handoff_info->umctl2_handoff_base,
-				  ddr_handoff_info->umctl2_base,
-				  ddr_handoff_info->umctl2_type,
-				  ddr_handoff_info->umctl2_handoff_length,
+		ret = init_umctl2(ddr_handoff_info->cntlr_handoff_base,
+				  ddr_handoff_info->cntlr_base,
+				  ddr_handoff_info->cntlr_t,
+				  ddr_handoff_info->cntlr_handoff_length,
 				  user_backup);
 		if (ret) {
 			debug("%s: Failed to inilialize first controller\n",
@@ -2073,12 +2053,12 @@ static int init_controller(struct ddr_handoff *ddr_handoff_info,
 		}
 	}
 
-	if (ddr_handoff_info->umctl2_2nd_type == DDRTYPE_LPDDR4_1) {
+	if (ddr_handoff_info->cntlr2_t == DDRTYPE_LPDDR4_1) {
 		/* Initialize 2nd DDR controller */
-		ret = init_umctl2(ddr_handoff_info->umctl2_2nd_handoff_base,
-				  ddr_handoff_info->umctl2_2nd_base,
-				  ddr_handoff_info->umctl2_2nd_type,
-				  ddr_handoff_info->umctl2_2nd_handoff_length,
+		ret = init_umctl2(ddr_handoff_info->cntlr2_handoff_base,
+				  ddr_handoff_info->cntlr2_base,
+				  ddr_handoff_info->cntlr2_t,
+				  ddr_handoff_info->cntlr2_handoff_length,
 				  user_backup_2nd);
 		if (ret)
 			debug("%s: Failed to inilialize 2nd controller\n",
@@ -2092,14 +2072,14 @@ static int dfi_init(struct ddr_handoff *ddr_handoff_info)
 {
 	int ret;
 
-	ret = ddr_start_dfi_init(ddr_handoff_info->umctl2_base,
-				 ddr_handoff_info->umctl2_type);
+	ret = ddr_start_dfi_init(ddr_handoff_info->cntlr_base,
+				 ddr_handoff_info->cntlr_t);
 	if (ret)
 		return ret;
 
-	if (ddr_handoff_info->umctl2_2nd_type == DDRTYPE_LPDDR4_1)
-		ret = ddr_start_dfi_init(ddr_handoff_info->umctl2_2nd_base,
-					 ddr_handoff_info->umctl2_2nd_type);
+	if (ddr_handoff_info->cntlr2_t == DDRTYPE_LPDDR4_1)
+		ret = ddr_start_dfi_init(ddr_handoff_info->cntlr2_base,
+					 ddr_handoff_info->cntlr2_t);
 
 	return ret;
 }
@@ -2108,14 +2088,14 @@ static int check_dfi_init(struct ddr_handoff *handoff)
 {
 	int ret;
 
-	ret = ddr_check_dfi_init_complete(handoff->umctl2_base,
-					  handoff->umctl2_type);
+	ret = ddr_check_dfi_init_complete(handoff->cntlr_base,
+					  handoff->cntlr_t);
 	if (ret)
 		return ret;
 
-	if (handoff->umctl2_2nd_type == DDRTYPE_LPDDR4_1)
-		ret = ddr_check_dfi_init_complete(handoff->umctl2_2nd_base,
-						  handoff->umctl2_2nd_type);
+	if (handoff->cntlr2_t == DDRTYPE_LPDDR4_1)
+		ret = ddr_check_dfi_init_complete(handoff->cntlr2_base,
+						  handoff->cntlr2_t);
 
 	return ret;
 }
@@ -2124,14 +2104,14 @@ static int trigger_sdram_init(struct ddr_handoff *handoff)
 {
 	int ret;
 
-	ret = ddr_trigger_sdram_init(handoff->umctl2_base,
-				     handoff->umctl2_type);
+	ret = ddr_trigger_sdram_init(handoff->cntlr_base,
+				     handoff->cntlr_t);
 	if (ret)
 		return ret;
 
-	if (handoff->umctl2_2nd_type == DDRTYPE_LPDDR4_1)
-		ret = ddr_trigger_sdram_init(handoff->umctl2_2nd_base,
-					     handoff->umctl2_2nd_type);
+	if (handoff->cntlr2_t == DDRTYPE_LPDDR4_1)
+		ret = ddr_trigger_sdram_init(handoff->cntlr2_base,
+					     handoff->cntlr2_t);
 
 	return ret;
 }
@@ -2140,14 +2120,14 @@ static int ddr_post_config(struct ddr_handoff *handoff)
 {
 	int ret;
 
-	ret = ddr_post_handoff_config(handoff->umctl2_base,
-				      handoff->umctl2_type);
+	ret = ddr_post_handoff_config(handoff->cntlr_base,
+				      handoff->cntlr_t);
 	if (ret)
 		return ret;
 
-	if (handoff->umctl2_2nd_type == DDRTYPE_LPDDR4_1)
-		ret = ddr_post_handoff_config(handoff->umctl2_2nd_base,
-					      handoff->umctl2_2nd_type);
+	if (handoff->cntlr2_t == DDRTYPE_LPDDR4_1)
+		ret = ddr_post_handoff_config(handoff->cntlr2_base,
+					      handoff->cntlr2_t);
 
 	return ret;
 }
@@ -2169,7 +2149,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 		}
 
 	/* Set the MPFE NoC mux to correct DDR controller type */
-	use_ddr4(ddr_handoff_info.umctl2_type);
+	use_ddr4(ddr_handoff_info.cntlr_t);
 
 	if (!is_ddr_init_skipped()) {
 		printf("SDRAM init in progress ...\n");
@@ -2253,30 +2233,30 @@ int sdram_mmr_init_full(struct udevice *dev)
 			return ret;
 
 		/* Restore user settings */
-		writel(user_backup[0], ddr_handoff_info.umctl2_base +
+		writel(user_backup[0], ddr_handoff_info.cntlr_base +
 		       DDR4_PWRCTL_OFFSET);
 
-		if (ddr_handoff_info.umctl2_2nd_type == DDRTYPE_LPDDR4_0)
-			setbits_le32(ddr_handoff_info.umctl2_base +
+		if (ddr_handoff_info.cntlr2_t == DDRTYPE_LPDDR4_0)
+			setbits_le32(ddr_handoff_info.cntlr_base +
 				     DDR4_INIT0_OFFSET, user_backup[1]);
 
-		if (ddr_handoff_info.umctl2_2nd_type == DDRTYPE_LPDDR4_1) {
+		if (ddr_handoff_info.cntlr2_t == DDRTYPE_LPDDR4_1) {
 			/* Restore user settings */
 			writel(user_backup_2nd[0],
-			       ddr_handoff_info.umctl2_2nd_base +
+			       ddr_handoff_info.cntlr2_base +
 			       DDR4_PWRCTL_OFFSET);
 
-			setbits_le32(ddr_handoff_info.umctl2_2nd_base +
+			setbits_le32(ddr_handoff_info.cntlr2_base +
 				     DDR4_INIT0_OFFSET, user_backup_2nd[1]);
 		}
 
 		/* Enable input traffic per port */
-		setbits_le32(ddr_handoff_info.umctl2_base + DDR4_PCTRL0_OFFSET,
+		setbits_le32(ddr_handoff_info.cntlr_base + DDR4_PCTRL0_OFFSET,
 			     DDR4_PCTRL0_PORT_EN);
 
-		if (ddr_handoff_info.umctl2_2nd_type == DDRTYPE_LPDDR4_1) {
+		if (ddr_handoff_info.cntlr2_t == DDRTYPE_LPDDR4_1) {
 			/* Enable input traffic per port */
-			setbits_le32(ddr_handoff_info.umctl2_2nd_base +
+			setbits_le32(ddr_handoff_info.cntlr2_base +
 				     DDR4_PCTRL0_OFFSET, DDR4_PCTRL0_PORT_EN);
 		}
 
