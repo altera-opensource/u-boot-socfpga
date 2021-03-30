@@ -109,6 +109,10 @@
 	"nandboot=setenv bootargs " CONFIG_BOOTARGS \
 			" root=${nandroot} rw rootwait rootfstype=jffs2; " \
 			"booti ${loadaddr} - ${fdt_addr}\0" \
+	"nandfitboot=setenv bootargs " CONFIG_BOOTARGS \
+			" root=${nandroot} rw rootwait rootfstype=jffs2; " \
+			"bootm ${loadaddr}\0" \
+	"nandfitload=nand read ${loadaddr} kernel\0" \
 	"socfpga_legacy_reset_compat=1\0" \
 	"rsu_status=rsu dtb; rsu display_dcmf_version; "\
 		"rsu display_dcmf_status; rsu display_max_retry\0"
