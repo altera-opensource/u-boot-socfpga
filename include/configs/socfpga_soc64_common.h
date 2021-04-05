@@ -74,6 +74,9 @@
 		"sf read ${fdt_addr} ${qspifdtaddr} ${fdtimagesize}\0" \
 	"qspiboot=setenv bootargs earlycon root=/dev/mtdblock1 rw " \
 		"rootfstype=jffs2 rootwait;booti ${loadaddr} - ${fdt_addr}\0" \
+	"qspifitload=sf read ${loadaddr} ${qspibootimageaddr} ${bootimagesize}\0" \
+	"qspifitboot=setenv bootargs earlycon root=/dev/mtdblock1 rw " \
+		"rootfstype=jffs2 rootwait;bootm ${loadaddr}\0" \
 	"loadaddr=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
 	"bootfile=" CONFIG_BOOTFILE "\0" \
 	"fdt_addr=8000000\0" \
