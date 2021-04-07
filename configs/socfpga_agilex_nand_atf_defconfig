@@ -26,7 +26,7 @@ CONFIG_BOOTDELAY=5
 CONFIG_USE_BOOTARGS=y
 CONFIG_BOOTARGS="earlycon panic=-1"
 CONFIG_USE_BOOTCOMMAND=y
-CONFIG_BOOTCOMMAND="run nandfitload; run linux_qspi_enable; run rsu_status; run nandfitboot"
+CONFIG_BOOTCOMMAND="run nandfitload; run rsu_status; run nandfitboot"
 CONFIG_SPL_MTD_SUPPORT=y
 CONFIG_SPL_NAND_SUPPORT=y
 CONFIG_SPL_CACHE=y
