@@ -39,9 +39,6 @@ u32 spl_boot_device(void)
 
 #ifdef CONFIG_SPL_BUILD
 
-/* Define board data structure */
-static struct bd_info bdata __attribute__ ((section(".data")));
-
 void spl_board_init(void)
 {
 #if defined(CONFIG_NXP_ESBC) && defined(CONFIG_FSL_LSCH2)
@@ -78,7 +75,7 @@ void board_init_f(ulong dummy)
 	get_clocks();
 
 	preloader_console_init();
-	gd->bd = &bdata;
+	spl_set_bd();
 
 #ifdef CONFIG_SYS_I2C
 #ifdef CONFIG_SPL_I2C_SUPPORT
