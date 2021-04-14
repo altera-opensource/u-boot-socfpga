@@ -10,6 +10,8 @@
 #include <asm/arch/mailbox_s10.h>
 #include <asm/arch/smc_api.h>
 #include <asm/arch/smmu_s10.h>
+#include <asm/cache.h>
+#include <cpu_func.h>
 #include <linux/delay.h>
 #include <linux/intel-smc.h>
 
@@ -122,6 +124,8 @@ int intel_sdm_mb_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size)
 	u64 arg = 1;
 
 	debug("Invoking FPGA_CONFIG_START...\n");
+
+	flush_dcache_range((unsigned long)rbf_data, (unsigned long)(rbf_data + rbf_size));
 
 	ret = invoke_smc(INTEL_SIP_SMC_FPGA_CONFIG_START, &arg, 1, NULL, 0);
 
@@ -395,6 +399,8 @@ int intel_sdm_mb_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size)
 	int ret;
 	u32 resp_len = 2;
 	u32 resp_buf[2];
+
+	flush_dcache_range((unsigned long)rbf_data, (unsigned long)(rbf_data + rbf_size));
 
 	/*
 	 * Don't start the FPGA reconfiguration if bitstream location exceed the
