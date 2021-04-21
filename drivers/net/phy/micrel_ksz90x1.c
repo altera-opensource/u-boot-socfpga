@@ -111,6 +111,7 @@ static int ksz90x1_of_config_group(struct phy_device *phydev,
 {
 	struct udevice *dev = phydev->dev;
 	struct phy_driver *drv = phydev->drv;
+	struct ofnode_phandle_args phandle;
 	int val[4];
 	int i, changed = 0, offset, max;
 	u16 regval = 0;
@@ -127,8 +128,14 @@ static int ksz90x1_of_config_group(struct phy_device *phydev,
 	}
 
 	if (!ofnode_valid(node)) {
-		/* No node found, look in the Ethernet node */
-		node = dev_ofnode(dev);
+		if (dev_read_phandle_with_args(dev, "phy-handle", NULL, 0, 0,
+					       &phandle)) {
+			/* No phy-handle found, look in the Ethernet node */
+			node = dev_ofnode(dev);
+		} else {
+			/* phy-handle found */
+			node = phandle.node;
+		}
 	}
 
 	for (i = 0; i < ofcfg->grpsz; i++) {
