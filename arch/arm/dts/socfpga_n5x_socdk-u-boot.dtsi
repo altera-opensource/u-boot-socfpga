@@ -19,13 +19,14 @@
 		sfconfig = <0 0 100000000 3>;
 	};
 
+	chosen {
+		stdout-path = "serial0:115200n8";
+		u-boot,spl-boot-order = &mmc;
+	};
+
 	memory {
 		/*
-<<<<<<< HEAD
 		 * Memory type: DDR4 (non-interleaving mode)
-=======
-		 * Memory type: DDR4
->>>>>>> ddr: altera: n5x: Enhance driver to support LPDDR4
 		 * 16GB
 		 *     <0 0x00000000 0 0x80000000>,
 		 *     <4 0x80000000 3 0x80000000>;
