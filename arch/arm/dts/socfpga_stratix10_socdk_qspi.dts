@@ -5,10 +5,3 @@
 
 #include "socfpga_stratix10_socdk.dts"
 #include "socfpga_stratix10_socdk-u-boot.dtsi"
-
-/ {
-	chosen {
-		u-boot,boot0 = <&flash0>;
-	};
-
-};
