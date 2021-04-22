@@ -31,6 +31,13 @@ config SECURE_VAB_AUTH
 	 All images loaded from FIT will be authenticated by Secure Device
 	 Manager.
 
+config CMD_SMC_REG
+	bool "Enable 'smc_reg' command"
+	depends on SPL_ATF
+	help
+	 Allows accessing registers exposed throgh SMC handler. Most useful for
+	 development and testing
+
 config SPL_SIZE_LIMIT
 	default 0x10000 if TARGET_SOCFPGA_GEN5
 
