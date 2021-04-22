@@ -26,6 +26,12 @@
 	u-boot,dm-pre-reloc;
 };
 
+&nand {
+	status = "okay";
+	nand-bus-width = <16>;
+	u-boot,dm-pre-reloc;
+};
+
 &qspi {
 	status = "okay";
 	u-boot,dm-pre-reloc;
