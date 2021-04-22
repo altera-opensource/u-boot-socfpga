@@ -41,6 +41,8 @@
 };
 
 &nand {
+	status = "okay";
+	nand-bus-width = <16>;
 	u-boot,dm-pre-reloc;
 };
 
