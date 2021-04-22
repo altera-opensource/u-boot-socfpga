@@ -8,6 +8,11 @@
 #include "socfpga_agilex-u-boot.dtsi"
 
 /{
+	chosen {
+		stdout-path = "serial0:115200n8";
+		u-boot,spl-boot-order = &mmc,&flash0,&nand;
+	};
+
 	aliases {
 		spi0 = &qspi;
 		i2c0 = &i2c1;
