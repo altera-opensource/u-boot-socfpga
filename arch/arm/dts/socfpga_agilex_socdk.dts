@@ -14,11 +14,6 @@
 		ethernet2 = &gmac2;
 	};
 
-	chosen {
-		stdout-path = "serial0:115200n8";
-		u-boot,boot0 = <&mmc>;
-	};
-
 	leds {
 		compatible = "gpio-leds";
 		hps0 {
