@@ -103,7 +103,7 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
  * Environment variable
  */
 
-#ifdef CONFIG_FIT
+#if IS_ENABLED(CONFIG_SPL_ATF)
 #define CONFIG_BOOTFILE "kernel.itb"
 #else
 #define CONFIG_BOOTFILE "Image"
