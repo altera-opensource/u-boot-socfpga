@@ -70,6 +70,12 @@
 /*
  * Environment variable
  */
+#if IS_ENABLED(CONFIG_SPL_ATF)
+#define CONFIG_BOOTFILE "kernel.itb"
+#else
+#define CONFIG_BOOTFILE "Image"
+#endif
+
 #if IS_ENABLED(CONFIG_DISTRO_DEFAULTS)
 #if IS_ENABLED(CONFIG_CMD_MMC)
 #define BOOT_TARGET_DEVICES_MMC(func) func(MMC, mmc, 0)
