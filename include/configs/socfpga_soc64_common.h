@@ -65,6 +65,12 @@
 /*
  * Environment variable
  */
+#if IS_ENABLED(CONFIG_SPL_ATF)
+#define CONFIG_BOOTFILE "kernel.itb"
+#else
+#define CONFIG_BOOTFILE "Image"
+#endif
+
 #define CFG_EXTRA_ENV_SETTINGS \
 	"qspibootimageaddr=0x020E0000\0" \
 	"qspifdtaddr=0x020D0000\0" \
