@@ -115,8 +115,9 @@ void firewall_setup(void)
 					      FW_MPFE_SCR_HMC_ADAPTOR);
 #endif
 
-#if defined(CONFIG_TARGET_SOCFPGA_AGILEX) || \
-	defined(CONFIG_TARGET_SOCFPGA_STRATIX10)
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX) || \
+	IS_ENABLED(CONFIG_TARGET_SOCFPGA_STRATIX10) || \
+	IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 	/*
 	 * Enable both priviledged & non-prviledged access to various
 	 * peripherals
