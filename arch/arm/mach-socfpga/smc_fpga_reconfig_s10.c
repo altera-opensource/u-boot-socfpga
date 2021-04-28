@@ -234,7 +234,7 @@ static void __secure smc_socfpga_config_start(unsigned long function_id,
 	/* Check whether config type is full reconfiguration */
 	if (!is_partial_reconfig) {
 		/* Disable bridge */
-		socfpga_bridges_reset_psci(0);
+		socfpga_bridges_reset_psci(0, ~0);
 	}
 
 ret:
@@ -404,7 +404,7 @@ static void __secure smc_socfpga_config_isdone(unsigned long function_id)
 
 	/* Check whether config type is full reconfiguration */
 	if (!is_partial_reconfig)
-		socfpga_bridges_reset_psci(1);	/* Enable bridge */
+		socfpga_bridges_reset_psci(1, ~0);	/* Enable bridge */
 ret:
 	SMC_RET_REG_MEM(r);
 }
