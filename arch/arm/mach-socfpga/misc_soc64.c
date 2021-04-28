@@ -102,7 +102,7 @@ void do_bridge_reset(int enable, unsigned int mask)
 		return;
 	}
 
-	socfpga_bridges_reset(enable);
+	socfpga_bridges_reset(enable, mask);
 }
 
 void arch_preboot_os(void)
