@@ -135,6 +135,8 @@ void board_prep_linux(bootm_headers_t *images)
 	if (IS_ENABLED(CONFIG_CADENCE_QSPI)) {
 		if (env_get("linux_qspi_enable"))
 			run_command(env_get("linux_qspi_enable"), 0);
+		if (env_get("rsu_status"))
+			run_command(env_get("rsu_status"), 0);
 	}
 }
 #endif
