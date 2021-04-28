@@ -9,8 +9,8 @@
 void reset_deassert_peripherals_handoff(void);
 int cpu_has_been_warmreset(void);
 void print_reset_info(void);
-void socfpga_bridges_reset(int enable);
-void socfpga_bridges_reset_psci(int enable);
+void socfpga_bridges_reset(int enable, unsigned int mask);
+void socfpga_bridges_reset_psci(int enable, unsigned int mask);
 void l2_reset_cpu(void);
 void l2_reset_cpu_psci(void);
 
@@ -33,13 +33,6 @@ void l2_reset_cpu_psci(void);
 #define RSTMGR_BRGMODRST_F2SDRAM1_MASK		BIT(4)
 #define RSTMGR_BRGMODRST_F2SDRAM2_MASK		BIT(5)
 #define RSTMGR_BRGMODRST_DDRSCH_MASK		BIT(6)
-
-#define BRGMODRST_SOC2FPGA_BRIDGES	(RSTMGR_BRGMODRST_SOC2FPGA_MASK | \
-					 RSTMGR_BRGMODRST_LWSOC2FPGA_MASK)
-#define BRGMODRST_FPGA2SOC_BRIDGES	(RSTMGR_BRGMODRST_FPGA2SOC_MASK | \
-					 RSTMGR_BRGMODRST_F2SDRAM0_MASK | \
-					 RSTMGR_BRGMODRST_F2SDRAM1_MASK | \
-					 RSTMGR_BRGMODRST_F2SDRAM2_MASK)
 
 #define RSTMGR_HDSKEN_FPGAHSEN		BIT(2)
 #define RSTMGR_HDSKREQ_FPGAHSREQ	BIT(2)
