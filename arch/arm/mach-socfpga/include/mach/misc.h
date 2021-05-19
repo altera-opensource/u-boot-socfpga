@@ -48,10 +48,6 @@ int qspi_flash_software_reset(void);
 int is_fpga_config_ready(void);
 #endif
 
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
-bool is_ddr_init_skipped(void);
-#endif
-
 void do_bridge_reset(int enable, unsigned int mask);
 void socfpga_pl310_clear(void);
 void socfpga_get_managers_addr(void);
