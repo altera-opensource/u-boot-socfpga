@@ -61,6 +61,48 @@ static int intel_get_freeze_br_addr(fdt_addr_t *addr, unsigned int region)
 	return ret;
 }
 
+static int intel_freeze_br_req_ack(fdt_addr_t addr, u32 req_ack)
+{
+	u32 status, illegal, ctrl;
+	int ret = -ETIMEDOUT;
+	unsigned long start = get_timer(0);
+
+	while (1) {
+		illegal = readl(addr + FREEZE_CSR_ILLEGAL_REQ_OFFSET);
+		if (illegal) {
+			printf("illegal request 0x%x detected\n", illegal);
+
+			writel(illegal, addr + FREEZE_CSR_ILLEGAL_REQ_OFFSET);
+
+			illegal = readl(addr + FREEZE_CSR_ILLEGAL_REQ_OFFSET);
+			if (illegal)
+				printf("illegal request not cleared 0x%x\n", illegal);
+
+			ret = -EINVAL;
+			break;
+		}
+
+		status = readl(addr + FREEZE_CSR_STATUS_OFFSET);
+		status &= req_ack;
+		if (status) {
+			ctrl = readl(addr + FREEZE_CSR_CTRL_OFFSET);
+			printf("%s request %x acknowledged %x %x\n",
+                                __func__, req_ack, status, ctrl);
+
+			ret = 0;
+			break;
+		}
+
+		if (get_timer(start) > FREEZE_TIMEOUT)
+			break;
+
+		udelay(1);
+		WATCHDOG_RESET();
+	}
+
+	return ret;
+}
+
 static int intel_freeze_br_do_freeze(unsigned int region)
 {
 	u32 status;
@@ -80,11 +122,7 @@ static int intel_freeze_br_do_freeze(unsigned int region)
 
 	writel(FREEZE_CSR_CTRL_FREEZE_REQ, addr + FREEZE_CSR_CTRL_OFFSET);
 
-	ret = wait_for_bit_le32((const u32 *)(addr +
-				 FREEZE_CSR_STATUS_OFFSET),
-				 FREEZE_CSR_STATUS_FREEZE_REQ_DONE, true,
-				 FREEZE_TIMEOUT, false);
-
+	ret = intel_freeze_br_req_ack(addr, FREEZE_CSR_STATUS_FREEZE_REQ_DONE);
 	if (ret)
 		writel(0, addr + FREEZE_CSR_CTRL_OFFSET);
 	else
@@ -114,10 +152,7 @@ static int intel_freeze_br_do_unfreeze(unsigned int region)
 
 	writel(FREEZE_CSR_CTRL_UNFREEZE_REQ, addr + FREEZE_CSR_CTRL_OFFSET);
 
-	ret = wait_for_bit_le32((const u32 *)(addr +
-				 FREEZE_CSR_STATUS_OFFSET),
-				 FREEZE_CSR_STATUS_UNFREEZE_REQ_DONE, true,
-				 FREEZE_TIMEOUT, false);
+	ret = intel_freeze_br_req_ack(addr, FREEZE_CSR_STATUS_UNFREEZE_REQ_DONE);
 
 	writel(0, addr + FREEZE_CSR_CTRL_OFFSET);
 
