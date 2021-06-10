@@ -632,11 +632,6 @@ int rsu_slot_load(int slot)
 
 	offset = ll_intf->partition.offset(part_num);
 
-	if (ll_intf->priority.get(part_num) <= 0) {
-		rsu_log(RSU_ERR, "Try to reboot from an erased slot\n");
-		return -EERASE;
-	}
-
 	return ll_intf->fw_ops.load(offset);
 }
 
