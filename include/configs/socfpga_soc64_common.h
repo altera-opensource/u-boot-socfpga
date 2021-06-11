@@ -161,7 +161,10 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 	"nandfitload=nand read ${loadaddr} kernel\0" \
 	"socfpga_legacy_reset_compat=1\0" \
 	"rsu_status=rsu dtb; rsu display_dcmf_version; "\
-		"rsu display_dcmf_status; rsu display_max_retry\0"
+		"rsu display_dcmf_status; rsu display_max_retry\0" \
+	"smc_fid_rd=0xC2000007\0" \
+	"smc_fid_wr=0xC2000008\0" \
+	"smc_fid_upd=0xC2000009\0 " \
 
 /*
  * External memory configurations
