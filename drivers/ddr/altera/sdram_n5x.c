@@ -1102,8 +1102,8 @@ static void phy_ocram(phys_addr_t phy_base, phys_addr_t phy_offset,
 	}
 }
 
-static void cal_data_ocram(phys_addr_t phy_base, u32 addr,
-			   enum data_process proc)
+static int cal_data_ocram(phys_addr_t phy_base, u32 addr,
+			  enum data_process proc)
 {
 	/*
 	 * This array variable contains a list of PHY registers required for
@@ -1428,6 +1428,13 @@ static void cal_data_ocram(phys_addr_t phy_base, u32 addr,
 			       cal->header.ddrconfig_hash,
 			       CHUNKSZ_PER_WD_RESET);
 
+		if (SOC64_HANDOFF_BASE < ((uintptr_t)(&cal->data) +
+		    cal->header.data_len)) {
+			debug("%s: Backup cal data overflow HPS handoff\n",
+			      __func__);
+			return -ENOEXEC;
+		}
+
 		crc32_wd_buf((u8 *)&cal->data, cal->header.data_len,
 			     (u8 *)&cal->header.caldata_crc32,
 			     CHUNKSZ_PER_WD_RESET);
@@ -1436,6 +1443,8 @@ static void cal_data_ocram(phys_addr_t phy_base, u32 addr,
 	/* Isolate the APB access from internal CSRs */
 	setbits_le16(phy_base + DDR_PHY_APBONLY0_OFFSET,
 		     DDR_PHY_MICROCONTMUXSEL);
+
+	return 0;
 }
 
 static bool is_ddrconfig_hash_match(const void *buffer)
@@ -1552,6 +1561,12 @@ static bool is_cal_bak_data_valid(void)
 		return false;
 	}
 
+	if (SOC64_HANDOFF_BASE < (SOC64_OCRAM_PHY_BACKUP_BASE +
+	    cal->header.data_len + sizeof(struct cal_header_t))) {
+		debug("%s: Backup cal data overflow HPS handoff\n", __func__);
+		return false;
+	}
+
 	/* Load header + DDR bak cal into OCRAM buffer */
 	ret = request_firmware_into_buf(dev,
 					qspi_offset,
@@ -1561,6 +1576,12 @@ static bool is_cal_bak_data_valid(void)
 					0);
 	if (ret < 0) {
 		debug("FPGA: Failed to read DDR bak cal data from flash.\n");
+		return false;
+	}
+
+	if (SOC64_HANDOFF_BASE < ((uintptr_t)(&cal->data) +
+	    cal->header.data_len)) {
+		debug("%s: Backup cal data overflow HPS handoff\n", __func__);
 		return false;
 	}
 
@@ -1623,9 +1644,11 @@ static int init_phy(struct ddr_handoff *ddr_handoff_info,
 			ddr_handoff_info->phy_handoff_length,
 			ddr_handoff_info->phy_base);
 	} else {
-		cal_data_ocram(ddr_handoff_info->phy_base,
-			       SOC64_OCRAM_PHY_BACKUP_BASE, LOADING);
+		ret = cal_data_ocram(ddr_handoff_info->phy_base,
+				     SOC64_OCRAM_PHY_BACKUP_BASE, LOADING);
 
+		if (ret)
+			return ret;
 		/*
 		 * Invalidate the section used for processing the PHY
 		 * backup calibration data
@@ -2929,10 +2952,14 @@ int sdram_mmr_init_full(struct udevice *dev)
 			 * Backup calibration data to OCRAM first, these data
 			 * might be permanant stored to flash in later
 			 */
-			if (is_ddr_retention_enabled(reg))
-				cal_data_ocram(ddr_handoff_info.phy_base,
-					       SOC64_OCRAM_PHY_BACKUP_BASE,
-					       STORE);
+			if (is_ddr_retention_enabled(reg)) {
+				ret = cal_data_ocram(ddr_handoff_info.phy_base,
+						   SOC64_OCRAM_PHY_BACKUP_BASE,
+						   STORE);
+
+				if (ret)
+					return ret;
+			}
 
 		} else {
 			/* Updating training result to DDR controller */
