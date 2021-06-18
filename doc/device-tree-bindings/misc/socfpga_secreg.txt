@@ -1,0 +1,26 @@
+* Firewall and privilege register settings in device tree
+
+Required properties:
+--------------------
+
+- compatible: should contain "intel,socfpga-secreg"
+- intel,offset-settings: 32-bit offset address of block register, and then
+						 followed by 32-bit value settings.
+
+Example:
+--------
+
+		socfpga_secreg: socfpga-secreg {
+			compatible = "intel,socfpga-secreg";
+			#address-cells = <1>;
+			#size-cells = <1>;
+			u-boot,dm-pre-reloc;
+
+			i_sys_mgr@ffd12000 {
+				reg = <0xffd12000 0x00000228>;
+				intel,offset-settings =
+					<0x00000020 0xff010000>,
+					<0x00000024 0xffffffff>;
+				u-boot,dm-pre-reloc;
+			};
+		};
