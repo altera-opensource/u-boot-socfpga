@@ -4,14 +4,15 @@
  *
  */
 
+#include <exports.h>
+#include <log.h>
+#include <malloc.h>
 #include <asm/arch/mailbox_s10.h>
 #include <asm/arch/secure_vab.h>
 #include <asm/arch/smc_api.h>
 #include <asm/unaligned.h>
-#include <exports.h>
 #include <linux/errno.h>
 #include <linux/intel-smc.h>
-#include <log.h>
 
 #define CHUNKSZ_PER_WD_RESET		(256 * SZ_1K)
 
