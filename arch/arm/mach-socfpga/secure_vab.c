@@ -4,13 +4,13 @@
  *
  */
 
-#include <exports.h>
 #include <log.h>
 #include <malloc.h>
 #include <asm/arch/mailbox_s10.h>
 #include <asm/arch/secure_vab.h>
 #include <asm/arch/smc_api.h>
 #include <asm/unaligned.h>
+#include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/intel-smc.h>
 
