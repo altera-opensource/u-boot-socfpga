@@ -120,17 +120,14 @@ ifdef CONFIG_TARGET_SOCFPGA_ARRIA10
 obj-y	+= spl_a10.o
 endif
 ifdef CONFIG_TARGET_SOCFPGA_STRATIX10
-obj-y	+= firewall.o
 obj-y	+= spl_s10.o
 obj-y	+= spl_soc64.o
 endif
 ifdef CONFIG_TARGET_SOCFPGA_AGILEX
-obj-y	+= firewall.o
 obj-y	+= spl_agilex.o
 obj-y	+= spl_soc64.o
 endif
 ifdef CONFIG_TARGET_SOCFPGA_N5X
-obj-y	+= firewall.o
 obj-y	+= spl_n5x.o
 obj-y	+= spl_soc64.o
 endif
