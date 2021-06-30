@@ -74,6 +74,7 @@ obj-y	+= rsu_misc.o
 obj-y	+= rsu_s10.o
 obj-$(CONFIG_ARMV8_PSCI) += psci.o
 obj-$(CONFIG_ARMV8_PSCI) += smc_ecc_dbe_s10.o
+obj-$(CONFIG_ARMV8_PSCI) += smc_fpga_reconfig_s10.o
 obj-$(CONFIG_ARMV8_PSCI) += smc_registers_s10.o
 obj-$(CONFIG_ARMV8_PSCI) += smc_rsu_s10.o
 endif	
@@ -99,7 +100,7 @@ obj-$(CONFIG_SOCFPGA_SECURE_VAB_AUTH)	+= secure_vab.o
 obj-y	+= smmu_s10.o
 obj-y	+= system_manager_soc64.o
 obj-y	+= timer_s10.o
-obj-$(CONFIG_SOCFPGA_SECURE_VAB_AUTH)	+= vab.o
+obj-$(CONFIG_SOCFPGA_SECURE_VAB_AUTH)  += vab.o
 obj-y	+= wrap_handoff_soc64.o
 obj-y	+= wrap_pll_config_soc64.o
 ifndef CONFIG_SPL_BUILD
@@ -122,21 +123,20 @@ obj-y	+= wrap_iocsr_config.o
 obj-y	+= wrap_pinmux_config.o
 obj-y	+= wrap_sdram_config.o
 endif
-ifdef CONFIG_TARGET_SOCFPGA_SOC64
-obj-y	+= firewall.o
-obj-y	+= spl_soc64.o
-endif
 ifdef CONFIG_TARGET_SOCFPGA_ARRIA10
 obj-y	+= spl_a10.o
 endif
 ifdef CONFIG_TARGET_SOCFPGA_STRATIX10
 obj-y	+= spl_s10.o
+obj-y	+= spl_soc64.o
 endif
 ifdef CONFIG_TARGET_SOCFPGA_AGILEX
 obj-y	+= spl_agilex.o
+obj-y	+= spl_soc64.o
 endif
 ifdef CONFIG_TARGET_SOCFPGA_N5X
 obj-y	+= spl_n5x.o
+obj-y	+= spl_soc64.o
 endif
 ifdef CONFIG_TARGET_SOCFPGA_AGILEX5
 obj-y	+= spl_soc64.o
