@@ -2345,7 +2345,7 @@ static void set_cal_res_to_rankctrl(u32 reg_addr, u16 update_value,
 
 	debug("max value divided by 2 is 0x%x\n", update_value);
 	debug("umclt2 register 0x%x value is 0%x before ", reg_addr, reg);
-	debug("update with train result\n");
+	debug("updating with train result\n");
 
 	value = (reg & mask) >> shift;
 
@@ -2365,8 +2365,8 @@ static void set_cal_res_to_rankctrl(u32 reg_addr, u16 update_value,
 	writel((reg & (~mask)) | value, (uintptr_t)reg_addr);
 
 	reg = readl((uintptr_t)reg_addr);
-	debug("umclt2 register 0x%x value is 0%x before ", reg_addr, reg);
-	debug("update with train result\n");
+	debug("umclt2 register 0x%x value is 0%x after ", reg_addr, reg);
+	debug("updating with train result\n");
 }
 
 /* helper function for updating train result to register */
@@ -2379,7 +2379,7 @@ static void set_cal_res_to_reg(u32 reg_addr, u16 update_value, u32 mask,
 
 	debug("max value divided by 2 is 0x%x\n", update_value);
 	debug("umclt2 register 0x%x value is 0%x before ", reg_addr, reg);
-	debug("update with train result\n");
+	debug("updating with train result\n");
 
 	value = (reg & mask) >> shift;
 
@@ -2389,8 +2389,8 @@ static void set_cal_res_to_reg(u32 reg_addr, u16 update_value, u32 mask,
 	writel((reg & (~mask)) | value, (uintptr_t)reg_addr);
 
 	reg = readl((uintptr_t)reg_addr);
-	debug("umclt2 register 0x%x value is 0%x before ", reg_addr, reg);
-	debug("update with train result\n");
+	debug("umclt2 register 0x%x value is 0%x after ", reg_addr, reg);
+	debug("updating with train result\n");
 }
 
 static u16 get_max_txdqsdlytg0_ux_p0(struct ddr_handoff *handoff, u32 reg,
