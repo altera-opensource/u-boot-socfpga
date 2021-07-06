@@ -500,4 +500,13 @@ config ESM_PMIC
 	  Support ESM (Error Signal Monitor) on PMIC devices. ESM is used
 	  typically to reboot the board in error condition.
 
+config SPL_SOCFPGA_SEC_REG
+	bool "Enable register setting from device tree in SPL"
+	depends on SPL
+	help
+	  Enable register setting from device tree in SPL, which require
+	  high privilege access like firewall registers. This also
+	  provides user a clean interface and all register settings are
+	  centralized in one place, device tree.
+
 endmenu
