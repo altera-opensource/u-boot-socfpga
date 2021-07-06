@@ -132,6 +132,8 @@
 &spi1 {
 	clocks = <&clkmgr N5X_L4_MAIN_CLK>;
 
+};
+
 &socfpga_secreg {
 	soc_noc_fw_mpfe_csr_inst_0_mpfe_scr@f8020000 {
 		reg = <0xf8020000 0x0000001c>;
