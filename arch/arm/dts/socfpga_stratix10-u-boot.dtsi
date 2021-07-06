@@ -2,7 +2,22 @@
 /*
  * U-Boot additions
  *
- * Copyright (C) 2020 Intel Corporation <www.intel.com>
+ * Copyright (C) 2020-2021 Intel Corporation <www.intel.com>
  */
 
+#include "socfpga_soc64_u-boot.dtsi"
 #include "socfpga_soc64_fit-u-boot.dtsi"
+
+&socfpga_secreg {
+	i_ccu_noc_registers@f7000000 {
+		reg = <0xf7000000 0x00049e60>;
+		intel,offset-settings =
+			<0x000105a0 0x00000000>,
+			<0x000105c0 0x00000000>,
+			<0x000105e0 0x00000000>,
+			<0x00010600 0x00000000>,
+			<0x00010620 0x00000000>,
+			<0x00010640 0x00000000>;
+		u-boot,dm-pre-reloc;
+	};
+};
