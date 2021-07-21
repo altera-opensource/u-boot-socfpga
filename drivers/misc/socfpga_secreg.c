@@ -8,6 +8,7 @@
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
+#include <linux/sizes.h>
 
 static int socfpga_secreg_probe(struct udevice *dev)
 {
@@ -53,10 +54,10 @@ static int socfpga_secreg_probe(struct udevice *dev)
 			debug("%s(intel,offset-settings 0x%llx : 0x%llx)\n",
 			      __func__, offset, val);
 
-			if (blk_sz <= offset) {
-				printf("%s: Overflow as offset 0x%llx",
+			if (blk_sz < offset + SZ_4) {
+				printf("%s: Overflow as offset 0x%llx or reg",
 				       __func__, offset);
-				printf(" is larger than block size 0x%x\n",
+				printf(" write is more than block size 0x%x\n",
 				       blk_sz);
 				return -EINVAL;
 			}
