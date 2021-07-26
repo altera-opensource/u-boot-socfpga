@@ -19,8 +19,6 @@ struct socfpga_rsu_s10_cpb rsu_cpb = {0};
 struct socfpga_rsu_s10_spt rsu_spt = {0};
 u32 rsu_spt0_offset = 0, rsu_spt1_offset = 0;
 
-static int initialized;
-
 static int rsu_print_status(void)
 {
 	struct rsu_status_info status_info;
@@ -261,14 +259,12 @@ static int slot_count(int argc, char * const argv[])
 	if (argc != 1)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	count = rsu_slot_count();
+	rsu_exit();
+
 	if (count < 0)
 		return CMD_RET_FAILURE;
 
@@ -285,14 +281,12 @@ static int slot_by_name(int argc, char * const argv[])
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	slot = rsu_slot_by_name(name);
+	rsu_exit();
+
 	if (slot < 0)
 		return CMD_RET_FAILURE;
 
@@ -310,15 +304,13 @@ static int slot_get_info(int argc, char * const argv[])
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	slot = simple_strtoul(argv[1], &endp, 16);
 	ret = rsu_slot_get_info(slot, &info);
+	rsu_exit();
+
 	if (ret)
 		return CMD_RET_FAILURE;
 
@@ -342,15 +334,13 @@ static int slot_size(int argc, char * const argv[])
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	slot = simple_strtoul(argv[1], &endp, 16);
 	size = rsu_slot_size(slot);
+	rsu_exit();
+
 	if (size < 0)
 		return CMD_RET_FAILURE;
 
@@ -367,15 +357,13 @@ static int slot_priority(int argc, char * const argv[])
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	slot = simple_strtoul(argv[1], &endp, 16);
 	priority = rsu_slot_priority(slot);
+	rsu_exit();
+
 	if (priority < 0)
 		return CMD_RET_FAILURE;
 
@@ -392,15 +380,13 @@ static int slot_erase(int argc, char * const argv[])
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	slot = simple_strtoul(argv[1], &endp, 16);
 	ret = rsu_slot_erase(slot);
+	rsu_exit();
+
 	if (ret)
 		return CMD_RET_FAILURE;
 
@@ -421,18 +407,16 @@ static int slot_program_buf(int argc, char * const argv[])
 	if (argc != 4)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	slot = simple_strtoul(argv[1], &endp, 16);
 	address = simple_strtoul(argv[2], &endp, 16);
 	size = simple_strtoul(argv[3], &endp, 16);
 
 	ret = rsu_slot_program_buf(slot, (void *)address, size);
+	rsu_exit();
+
 	if (ret)
 		return CMD_RET_FAILURE;
 
@@ -457,18 +441,16 @@ static int slot_program_factory_update_buf(int argc, char * const argv[])
 	if (argc != 4)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	slot = simple_strtoul(argv[1], &endp, 16);
 	address = simple_strtoul(argv[2], &endp, 16);
 	size = simple_strtoul(argv[3], &endp, 16);
 
 	ret = rsu_slot_program_factory_update_buf(slot, (void *)address, size);
+	rsu_exit();
+
 	if (ret)
 		return CMD_RET_FAILURE;
 
@@ -493,18 +475,16 @@ static int slot_program_buf_raw(int argc, char * const argv[])
 	if (argc != 4)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	slot = simple_strtoul(argv[1], &endp, 16);
 	address = simple_strtoul(argv[2], &endp, 16);
 	size = simple_strtoul(argv[3], &endp, 16);
 
 	ret = rsu_slot_program_buf_raw(slot, (void *)address, size);
+	rsu_exit();
+
 	if (ret)
 		return CMD_RET_FAILURE;
 
@@ -529,18 +509,16 @@ static int slot_verify_buf(int argc, char * const argv[])
 	if (argc != 4)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	slot = simple_strtoul(argv[1], &endp, 16);
 	address = simple_strtoul(argv[2], &endp, 16);
 	size = simple_strtoul(argv[3], &endp, 16);
 
 	ret = rsu_slot_verify_buf(slot, (void *)address, size);
+	rsu_exit();
+
 	if (ret)
 		return CMD_RET_FAILURE;
 
@@ -565,18 +543,16 @@ static int slot_verify_buf_raw(int argc, char * const argv[])
 	if (argc != 4)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	slot = simple_strtoul(argv[1], &endp, 16);
 	address = simple_strtoul(argv[2], &endp, 16);
 	size = simple_strtoul(argv[3], &endp, 16);
 
 	ret = rsu_slot_verify_buf_raw(slot, (void *)address, size);
+	rsu_exit();
+
 	if (ret)
 		return CMD_RET_FAILURE;
 
@@ -597,15 +573,13 @@ static int slot_enable(int argc, char * const argv[])
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	slot = simple_strtoul(argv[1], &endp, 16);
 	ret = rsu_slot_enable(slot);
+	rsu_exit();
+
 	if (ret < 0)
 		return CMD_RET_FAILURE;
 
@@ -622,15 +596,13 @@ static int slot_disable(int argc, char * const argv[])
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	slot = simple_strtoul(argv[1], &endp, 16);
 	ret = rsu_slot_disable(slot);
+	rsu_exit();
+
 	if (ret < 0)
 		return CMD_RET_FAILURE;
 
@@ -647,15 +619,13 @@ static int slot_load(int argc, char * const argv[])
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	slot = simple_strtoul(argv[1], &endp, 16);
 	ret = rsu_slot_load(slot);
+	rsu_exit();
+
 	if (ret < 0)
 		return CMD_RET_FAILURE;
 
@@ -670,14 +640,12 @@ static int slot_load_factory(int argc, char * const argv[])
 	if (argc != 1)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	ret = rsu_slot_load_factory();
+	rsu_exit();
+
 	if (ret < 0)
 		return CMD_RET_FAILURE;
 
@@ -695,17 +663,15 @@ static int slot_rename(int argc, char * const argv[])
 	if (argc != 3)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	slot = simple_strtoul(argv[1], &endp, 16);
 	name = argv[2];
 
 	ret = rsu_slot_rename(slot, name);
+	rsu_exit();
+
 	if (ret < 0)
 		return CMD_RET_FAILURE;
 
@@ -722,16 +688,14 @@ static int slot_delete(int argc, char * const argv[])
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	slot = simple_strtoul(argv[1], &endp, 16);
 
 	ret = rsu_slot_delete(slot);
+	rsu_exit();
+
 	if (ret < 0)
 		return CMD_RET_FAILURE;
 
@@ -750,18 +714,16 @@ static int slot_create(int argc, char * const argv[])
 	if (argc != 4)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	name = argv[1];
 	address = simple_strtoul(argv[2], &endp, 16);
 	size = simple_strtoul(argv[3], &endp, 16);
 
 	ret = rsu_slot_create(name, address, size);
+	rsu_exit();
+
 	if (ret < 0)
 		return CMD_RET_FAILURE;
 
@@ -778,14 +740,12 @@ static int status_log(int argc, char * const argv[])
 	if (argc != 1)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	ret = rsu_status_log(&info);
+	rsu_exit();
+
 	if (ret < 0)
 		return CMD_RET_FAILURE;
 
@@ -810,15 +770,13 @@ static int notify(int argc, char * const argv[])
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	stage = simple_strtoul(argv[1], &endp, 16);
 	ret = rsu_notify(stage);
+	rsu_exit();
+
 	if (ret)
 		return CMD_RET_FAILURE;
 
@@ -829,14 +787,12 @@ static int clear_error_status(int argc, char * const argv[])
 {
 	int ret;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	ret = rsu_clear_error_status();
+	rsu_exit();
+
 	if (ret)
 		return CMD_RET_FAILURE;
 
@@ -847,14 +803,12 @@ static int reset_retry_counter(int argc, char * const argv[])
 {
 	int ret;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	ret = rsu_reset_retry_counter();
+	rsu_exit();
+
 	if (ret)
 		return CMD_RET_FAILURE;
 
@@ -866,14 +820,12 @@ static int display_dcmf_version(int argc, char * const argv[])
 	int i, ret;
 	u32 versions[4];
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	ret = rsu_dcmf_version(versions);
+	rsu_exit();
+
 	if (ret)
 		return CMD_RET_FAILURE;
 
@@ -891,14 +843,12 @@ static int display_dcmf_status(int argc, char * const argv[])
 	int i, ret;
 	u16 status[4];
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	ret = rsu_dcmf_status(status);
+	rsu_exit();
+
 	if (ret)
 		return CMD_RET_FAILURE;
 
@@ -913,14 +863,12 @@ static int display_max_retry(int argc, char * const argv[])
 	int ret;
 	u8 value;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	ret = rsu_max_retry(&value);
+	rsu_exit();
+
 	if (ret)
 		return CMD_RET_FAILURE;
 
@@ -936,14 +884,11 @@ static int create_empty_cpb(int argc, char * const argv[])
 	if (argc != 1)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	ret = rsu_create_empty_cpb();
+	rsu_exit();
 
 	if (ret < 0)
 		return CMD_RET_FAILURE;
@@ -960,15 +905,13 @@ static int restore_cpb(int argc, char * const argv[])
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	addr = simple_strtoul(argv[1], &endp, 16);
 	ret = rsu_restore_cpb(addr);
+	rsu_exit();
+
 	if (ret < 0)
 		return CMD_RET_FAILURE;
 
@@ -984,15 +927,13 @@ static int save_cpb(int argc, char * const argv[])
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	addr =  simple_strtoul(argv[1], &endp, 16);
 	ret = rsu_save_cpb(addr);
+	rsu_exit();
+
 	if (ret < 0)
 		return CMD_RET_FAILURE;
 
@@ -1008,15 +949,13 @@ static int restore_spt(int argc, char * const argv[])
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	addr = simple_strtoul(argv[1], &endp, 16);
 	ret = rsu_restore_spt(addr);
+	rsu_exit();
+
 	if (ret < 0)
 		return CMD_RET_FAILURE;
 
@@ -1032,15 +971,13 @@ static int save_spt(int argc, char * const argv[])
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	addr =  simple_strtoul(argv[1], &endp, 16);
 	ret = rsu_save_spt(addr);
+	rsu_exit();
+
 	if (ret < 0)
 		return CMD_RET_FAILURE;
 
@@ -1055,14 +992,12 @@ static int check_running_factory(int argc, char * const argv[])
 	if (argc != 1)
 		return CMD_RET_USAGE;
 
-	if (!initialized) {
-		if (rsu_init(NULL))
-			return CMD_RET_FAILURE;
-
-		initialized = 1;
-	}
+	if (rsu_init(NULL))
+		return CMD_RET_FAILURE;
 
 	ret = rsu_running_factory(&factory);
+	rsu_exit();
+
 	if (ret)
 		return CMD_RET_FAILURE;
 
