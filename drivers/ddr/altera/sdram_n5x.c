@@ -1001,24 +1001,20 @@ static int init_umctl2(phys_addr_t umctl2_handoff_base,
 	/* Disable self resfresh */
 	clrbits_le32(umctl2_base + DDR4_PWRCTL_OFFSET, DDR4_PWRCTL_SELFREF_EN);
 
-	if (umctl2_type == DDRTYPE_LPDDR4_0 ||
-	    umctl2_type == DDRTYPE_LPDDR4_1) {
-		/* Setting selfref_sw to 1, based on lpddr4 requirement */
-		setbits_le32(umctl2_base + DDR4_PWRCTL_OFFSET,
-			     DDR4_PWRCTL_SELFREF_SW);
+	/* Setting selfref_sw to 1, based on ddr4 / lpddr4 requirement */
+	setbits_le32(umctl2_base + DDR4_PWRCTL_OFFSET, DDR4_PWRCTL_SELFREF_SW);
 
-		/* Backup user settings, restore after DDR up running */
-		user_backup++;
-		*user_backup = readl(umctl2_base + DDR4_INIT0_OFFSET) &
-				     DDR4_INIT0_SKIP_RAM_INIT;
+	/* Backup user settings, restore after DDR up running */
+	user_backup++;
+	*user_backup = readl(umctl2_base + DDR4_INIT0_OFFSET) &
+			     DDR4_INIT0_SKIP_RAM_INIT;
 
-		/*
-		 * Setting INIT0.skip_dram_init to 0x3, based on lpddr4
-		 * requirement
-		 */
-		setbits_le32(umctl2_base + DDR4_INIT0_OFFSET,
-			     DDR4_INIT0_SKIP_RAM_INIT);
-	}
+	/*
+	 * Setting INIT0.skip_dram_init to 0x3, based on ddr4 / lpddr4
+	 * requirement
+	 */
+	setbits_le32(umctl2_base + DDR4_INIT0_OFFSET,
+		     DDR4_INIT0_SKIP_RAM_INIT);
 
 	/* Complete quasi-dynamic register programming */
 	setbits_le32(umctl2_base + DDR4_SWCTL_OFFSET, DDR4_SWCTL_SW_DONE);
