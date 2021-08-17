@@ -138,13 +138,10 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 		"load mmc 0:1 ${loadaddr} ${bootfile}\0" \
 	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
 	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
-	"qspi_read_delay_reg=0xff8d2010\0 " \
 	"linux_qspi_enable=if sf probe; then " \
 		"echo Enabling QSPI at Linux DTB...;" \
 		"fdt addr ${fdt_addr}; fdt resize;" \
 		"fdt set /soc/spi@ff8d2000 status okay;" \
-		"setexpr readdelay *${qspi_read_delay_reg} \\\\& 0x1E;" \
-		"fdt set /soc/spi@ff8d2000/flash@0 cdns,read-delay <0x${readdelay}>;" \
 		"if fdt set /soc/clocks/qspi-clk clock-frequency" \
 		" ${qspi_clock}; then" \
 		" else fdt set /soc/clkmgr/clocks/qspi_clk clock-frequency" \
