@@ -14,6 +14,29 @@
 };
 
 &binman {
+	u-boot-script {
+		filename = "u-boot.scr";
+		fit {
+			description = "FIT image for u-boot script";
+			#address-cells = <1>;
+
+			images {
+				script {
+					description = "U-Boot script";
+					type = "script";
+					compression = "none";
+					data: blob-ext {
+						filename = "u-boot.txt";
+					};
+
+					hash {
+						algo = "crc32";
+					};
+				};
+			};
+		};
+	};
+
 	u-boot {
 		filename = "u-boot.itb";
 		fit {
