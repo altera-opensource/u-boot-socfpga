@@ -111,15 +111,15 @@
 	"scriptfile=u-boot.scr\0" \
 	"fatscript=if fatload mmc 0:1 ${scriptaddr} ${scriptfile};" \
 		   "then source ${scriptaddr}:script; fi\0" \
-	"nandroot=/dev/mtdblock5\0" \
-	"nandload=nand read ${loadaddr} kernel; nand read ${fdt_addr} dtb\0" \
+	"nandroot=ubi0:rootfs\0" \
+	"nandload=ubi part root; ubi readvol ${loadaddr} kernel; ubi readvol ${fdt_addr} dtb\0" \
 	"nandboot=setenv bootargs " CONFIG_BOOTARGS \
-			" root=${nandroot} rw rootwait rootfstype=jffs2; " \
+			" root=${nandroot} rw rootwait rootfstype=ubifs ubi.mtd=1; " \
 			"booti ${loadaddr} - ${fdt_addr}\0" \
 	"nandfitboot=setenv bootargs " CONFIG_BOOTARGS \
-			" root=${nandroot} rw rootwait rootfstype=jffs2; " \
+			" root=${nandroot} rw rootwait rootfstype=ubifs ubi.mtd=1; " \
 			"bootm ${loadaddr}\0" \
-	"nandfitload=nand read ${loadaddr} kernel\0" \
+	"nandfitload=ubi part root; ubi readvol ${loadaddr} kernel\0" \
 	"socfpga_legacy_reset_compat=1\0" \
 	"rsu_status=rsu dtb; rsu display_dcmf_version; "\
 		"rsu display_dcmf_status; rsu display_max_retry\0" \
