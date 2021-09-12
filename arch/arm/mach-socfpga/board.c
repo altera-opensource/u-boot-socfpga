@@ -130,13 +130,16 @@ u8 socfpga_get_board_id(void)
 	return board_id;
 }
 
-#ifdef CONFIG_SPL_BUILD
-__weak int board_fit_config_name_match(const char *name)
+#if IS_ENABLED(CONFIG_SPL_BUILD) && IS_ENABLED(CONFIG_TARGET_SOCFPGA_SOC64)
+int board_fit_config_name_match(const char *name)
 {
-	/* Just empty function now - can't decide what to choose */
-	debug("%s: %s\n", __func__, name);
+	char board_name[10];
 
-	return 0;
+	sprintf(board_name, "board_%u", socfpga_get_board_id());
+
+	debug("Board name: %s\n", board_name);
+
+	return strcmp(name, board_name);
 }
 #endif
 
