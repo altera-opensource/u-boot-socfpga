@@ -99,7 +99,9 @@ void spl_perform_fixups(struct spl_image_info *spl_image)
 /* This function is to map specified node onto SPL boot devices */
 static int spl_node_to_boot_device(int node)
 {
+	const void *blob = gd->fdt_blob;
 	struct udevice *parent;
+	const char *prop;
 
 	if (!uclass_get_device_by_of_offset(UCLASS_MMC, node, &parent))
 		return BOOT_DEVICE_MMC1;
@@ -107,8 +109,16 @@ static int spl_node_to_boot_device(int node)
 		return BOOT_DEVICE_SPI;
 	else if (!uclass_get_device_by_of_offset(UCLASS_MTD, node, &parent))
 		return BOOT_DEVICE_NAND;
-	else
-		return -1;
+
+	prop = fdt_getprop(blob, node, "device_type", NULL);
+	if (prop) {
+		if (!strcmp(prop, "memory"))
+			return BOOT_DEVICE_RAM;
+
+		printf("%s: unknown device_type %s\n", __func__, prop);
+	}
+
+	return -1;
 }
 
 static void default_spl_boot_list(u32 *spl_boot_list, int length)
