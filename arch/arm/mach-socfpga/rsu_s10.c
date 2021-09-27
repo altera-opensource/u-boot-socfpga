@@ -217,7 +217,7 @@ int rsu_dtb(int argc, char * const argv[])
 		puts("DTB: qspi_boot alias node not found. Check your dts\n");
 		return -ENODEV;
 	}
-	strcpy(flash0_string, fdt_flash0);
+	strncpy(flash0_string, fdt_flash0, sizeof(flash0_string));
 	printf("DTB: qspi_boot node at %s\n", flash0_string);
 
 	/* locate the boot partition */
