@@ -5,7 +5,7 @@
 #include "socfpga_agilex.dtsi"
 
 / {
-	model = "SoCFPGA Agilex n6010";
+	model = "SoCFPGA Agilex n6000";
 
 	aliases {
 		serial0 = &uart0;

@@ -42,8 +42,6 @@
 	u-boot {
 		fit {
 			images {
-				/delete-node/ atf;
-
 				kernel_uboot {
 					description = "Linux Kernel";
 					type = "kernel";
@@ -92,8 +90,10 @@
 			};
 
 			configurations {
-				conf {
+				board-0 {
+#if !defined(CONFIG_SPL_ATF)
 					/delete-property/ firmware;
+#endif
 				};
 
 				linux_conf {
