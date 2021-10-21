@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2017-2022 Intel Corporation <www.intel.com>
+ * Copyright (C) 2017-2023 Intel Corporation <www.intel.com>
  */
 
 #ifndef	_SDRAM_SOC64_H_
@@ -19,6 +19,11 @@ struct altera_sdram_plat {
 	fdt_addr_t mpfe_base_addr;
 	bool dualport;
 	bool dualemif;
+};
+#elif IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX7)
+struct altera_sdram_plat {
+	fdt_addr_t mpfe_base_addr;
+	bool multichannel_interleaving;
 };
 #else
 
