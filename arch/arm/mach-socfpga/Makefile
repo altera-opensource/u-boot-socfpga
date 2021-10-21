@@ -182,6 +182,10 @@ ifdef CONFIG_TARGET_SOCFPGA_AGILEX5
 obj-y	+= spl_agilex5.o
 obj-y	+= spl_soc64.o
 endif
+ifdef CONFIG_TARGET_SOCFPGA_AGILEX7
+obj-y	+= spl_agilex7.o
+obj-y	+= spl_soc64.o
+endif
 else
 obj-$(CONFIG_SPL_ATF) += secure_reg_helper.o
 obj-$(CONFIG_SPL_ATF) += smc_api.o
