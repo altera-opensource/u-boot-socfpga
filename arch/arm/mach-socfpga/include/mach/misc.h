@@ -38,8 +38,10 @@ static inline bool socfpga_is_booting_from_fpga(void)
 #ifdef CONFIG_TARGET_SOCFPGA_ARRIA10
 void socfpga_init_security_policies(void);
 void socfpga_sdram_remap_zero(void);
+void force_periph_program(unsigned int status);
 void set_regular_boot(unsigned int status);
 bool is_regular_boot_valid(void);
+bool is_periph_program_force(void);
 int qspi_flash_software_reset(void);
 #endif
 
