@@ -147,7 +147,6 @@ void spl_board_init(void)
 
 			/* Re-program IOSSM to stabilize IO system */
 			fpgamgr_program(buf, FPGA_BUFSIZ, 0);
-
 			force_periph_program(false);
 		}
 	}
