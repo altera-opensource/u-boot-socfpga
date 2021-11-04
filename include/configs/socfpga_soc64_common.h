@@ -100,9 +100,26 @@
 #define BOOTENV_DEV_NAME_QSPI(devtypeu, devtypel, instance) \
 	"qspi "
 
+#if IS_ENABLED(CONFIG_CMD_NAND)
+# define BOOT_TARGET_DEVICES_NAND(func)	func(NAND, nand, na)
+#else
+# define BOOT_TARGET_DEVICES_NAND(func)
+#endif
+
+#define BOOTENV_DEV_NAND(devtypeu, devtypel, instance) \
+	"bootcmd_nand=ubi part root && " \
+	"ubi readvol ${scriptaddr} script && " \
+	"echo NAND: Trying to boot script at ${scriptaddr} && " \
+	"source ${scriptaddr}; " \
+	"echo NAND: SCRIPT FAILED: continuing...;\0"
+
+#define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
+	"nand "
+
 #define BOOT_TARGET_DEVICES(func) \
 	BOOT_TARGET_DEVICES_MMC(func) \
-	BOOT_TARGET_DEVICES_QSPI(func)
+	BOOT_TARGET_DEVICES_QSPI(func) \
+	BOOT_TARGET_DEVICES_NAND(func)
 
 #include <config_distro_bootcmd.h>
 
@@ -132,6 +149,7 @@
 		" ${qspi_clock}; echo QSPI clock frequency updated; fi; fi\0" \
 	"scriptaddr=0x81000000\0" \
 	"scriptfile=boot.scr\0" \
+	"nandroot=ubi0:rootfs\0" \
 	"socfpga_legacy_reset_compat=1\0" \
 	"smc_fid_rd=0xC2000007\0" \
 	"smc_fid_wr=0xC2000008\0" \
@@ -164,7 +182,10 @@
 		" ${qspi_clock}; echo QSPI clock frequency updated; fi; fi\0" \
 	"scriptaddr=0x05FF0000\0" \
 	"scriptfile=boot.scr\0" \
+	"nandroot=ubi0:rootfs\0" \
 	"socfpga_legacy_reset_compat=1\0" \
+	"rsu_status=rsu dtb; rsu display_dcmf_version; "\
+		"rsu display_dcmf_status; rsu display_max_retry\0" \
 	"smc_fid_rd=0xC2000007\0" \
 	"smc_fid_wr=0xC2000008\0" \
 	"smc_fid_upd=0xC2000009\0 " \
