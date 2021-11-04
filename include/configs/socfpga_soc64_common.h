@@ -69,6 +69,84 @@
 #define CONFIG_BOOTFILE "Image"
 #endif
 
+#if IS_ENABLED(CONFIG_DISTRO_DEFAULTS)
+#if IS_ENABLED(CONFIG_CMD_MMC)
+#define BOOT_TARGET_DEVICES_MMC(func) func(MMC, mmc, 0)
+#else
+#define BOOT_TARGET_DEVICES_MMC(func)
+#endif
+
+#if IS_ENABLED(CONFIG_CMD_SF)
+#define BOOT_TARGET_DEVICES_QSPI(func) func(QSPI, qspi, na)
+#else
+#define BOOT_TARGET_DEVICES_QSPI(func)
+#endif
+
+#define BOOTENV_DEV_QSPI(devtypeu, devtypel, instance) \
+	"bootcmd_qspi=sf probe && " \
+	"sf read ${scriptaddr} ${qspiscriptaddr} ${scriptsize} && " \
+	"echo QSPI: Trying to boot script at ${scriptaddr} && " \
+	"source ${scriptaddr}; " \
+	"echo QSPI: SCRIPT FAILED: continuing...;\0"
+
+#define BOOTENV_DEV_NAME_QSPI(devtypeu, devtypel, instance) \
+	"qspi "
+
+#if IS_ENABLED(CONFIG_CMD_NAND)
+# define BOOT_TARGET_DEVICES_NAND(func)	func(NAND, nand, na)
+#else
+# define BOOT_TARGET_DEVICES_NAND(func)
+#endif
+
+#define BOOTENV_DEV_NAND(devtypeu, devtypel, instance) \
+	"bootcmd_nand=ubi part root && " \
+	"ubi readvol ${scriptaddr} script && " \
+	"echo NAND: Trying to boot script at ${scriptaddr} && " \
+	"source ${scriptaddr}; " \
+	"echo NAND: SCRIPT FAILED: continuing...;\0"
+
+#define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
+	"nand "
+
+#define BOOT_TARGET_DEVICES(func) \
+	BOOT_TARGET_DEVICES_MMC(func) \
+	BOOT_TARGET_DEVICES_QSPI(func) \
+	BOOT_TARGET_DEVICES_NAND(func)
+
+#include <config_distro_bootcmd.h>
+#define CFG_EXTRA_ENV_SETTINGS \
+	"kernel_addr_r=0x2000000\0" \
+	"fdt_addr_r=0x6000000\0" \
+	"qspiscriptaddr=0x02110000\0" \
+	"scriptsize=0x00010000\0" \
+	"qspibootimageaddr=0x02120000\0" \
+	"bootimagesize=0x03200000\0" \
+	"loadaddr=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
+	"bootfile=" CONFIG_BOOTFILE "\0" \
+	"mmcroot=/dev/mmcblk0p2\0" \
+	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
+	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
+	"linux_qspi_enable=if sf probe; then " \
+		"echo Enabling QSPI at Linux DTB...;" \
+		"fdt addr ${fdt_addr}; fdt resize;" \
+		"fdt set /soc/spi@ff8d2000 status okay;" \
+		"if fdt set /soc/clocks/qspi-clk clock-frequency" \
+		" ${qspi_clock}; then" \
+		" else fdt set /soc/clkmgr/clocks/qspi_clk clock-frequency" \
+		" ${qspi_clock}; fi; fi\0" \
+	"scriptaddr=0x05FF0000\0" \
+	"scriptfile=boot.scr\0" \
+	"nandroot=ubi0:rootfs\0" \
+	"socfpga_legacy_reset_compat=1\0" \
+	"rsu_status=rsu dtb; rsu display_dcmf_version; "\
+		"rsu display_dcmf_status; rsu display_max_retry\0" \
+	"smc_fid_rd=0xC2000007\0" \
+	"smc_fid_wr=0xC2000008\0" \
+	"smc_fid_upd=0xC2000009\0 " \
+	BOOTENV
+
+#else
+
 #define CFG_EXTRA_ENV_SETTINGS \
 	"qspibootimageaddr=0x020E0000\0" \
 	"qspifdtaddr=0x020D0000\0" \
@@ -125,7 +203,8 @@
 		"rsu display_dcmf_status; rsu display_max_retry\0" \
 	"smc_fid_rd=0xC2000007\0" \
 	"smc_fid_wr=0xC2000008\0" \
-	"smc_fid_upd=0xC2000009\0 " \
+	"smc_fid_upd=0xC2000009\0 "
+#endif /*#if IS_ENABLED(CONFIG_DISTRO_DEFAULTS)*/
 
 /*
  * External memory configurations
