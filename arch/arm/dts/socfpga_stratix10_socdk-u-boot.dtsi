@@ -91,3 +91,6 @@
 	};
 };
 
+&binman {
+	/delete-node/ kernel;
+};
