@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2014       Panasonic Corporation
  * Copyright (C) 2013-2014, Altera Corporation <www.altera.com>
- * Copyright (C) 2009-2010, Intel Corporation and its suppliers.
+ * Copyright (C) 2009-2021, Intel Corporation and its suppliers.
  */
 
 #include <common.h>
@@ -1378,6 +1378,17 @@ free_buf:
 }
 
 #ifdef CONFIG_SPL_BUILD
+struct mtd_info *nand_get_mtd(void)
+{
+	struct mtd_info *mtd;
+
+	mtd = get_nand_dev_by_index(nand_curr_device);
+	if (!mtd)
+		hang();
+
+	return mtd;
+}
+
 int nand_spl_load_image(u32 offset, u32 len, void *dst)
 {
 	size_t count = len, actual = 0, page_align_overhead = 0;
@@ -1389,9 +1400,7 @@ int nand_spl_load_image(u32 offset, u32 len, void *dst)
 	if (!len || !dst)
 		return -EINVAL;
 
-	mtd = get_nand_dev_by_index(nand_curr_device);
-	if (!mtd)
-		hang();
+	mtd = nand_get_mtd();
 
 	if ((offset & (mtd->writesize - 1)) != 0) {
 		page_buffer = malloc_cache_aligned(mtd->writesize);
@@ -1428,12 +1437,31 @@ int nand_spl_load_image(u32 offset, u32 len, void *dst)
 }
 
 /*
- * This function is to adjust the load offset to skip bad blocks.
- * The Denali NAND load image does skip bad blocks during read,
- * hence this function is returning the offset as it is.
+ * The offset at which the image to be loaded from NAND is located is
+ * retrieved from the itb header. The presence of bad blocks in the area
+ * of the NAND where the itb image is located could invalidate the offset
+ * which must therefore be adjusted taking into account the state of the
+ * sectors concerned
  */
 u32 nand_spl_adjust_offset(u32 sector, u32 offs)
 {
+	u32 sector_align_offset, sector_align_end_offset;
+	struct mtd_info *mtd;
+
+	mtd = nand_get_mtd();
+
+	sector_align_offset = sector & (~(mtd->erasesize - 1));
+
+	sector_align_end_offset = (sector + offs) & (~(mtd->erasesize - 1));
+
+	while (sector_align_offset <= sector_align_end_offset) {
+		if (nand_block_isbad(mtd, sector_align_offset)) {
+			offs += mtd->erasesize;
+			sector_align_end_offset += mtd->erasesize;
+		}
+		sector_align_offset += mtd->erasesize;
+	}
+
 	return offs;
 }
 
