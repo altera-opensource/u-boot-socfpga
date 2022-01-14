@@ -10,10 +10,6 @@
 /* Memory configurations */
 #define PHYS_SDRAM_1_SIZE		0x40000000	/* 1GiB on SoCDK */
 
-/* Booting Linux */
-#define CONFIG_LOADADDR		0x01000000
-#define CONFIG_SYS_LOAD_ADDR	CONFIG_LOADADDR
-
 /* QSPI boot */
 #define FDT_SIZE		__stringify(0x00010000)
 #define KERNEL_SIZE		__stringify(0x005d0000)
