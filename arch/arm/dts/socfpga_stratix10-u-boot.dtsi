@@ -2,7 +2,7 @@
 /*
  * U-Boot additions
  *
- * Copyright (C) 2020-2021 Intel Corporation <www.intel.com>
+ * Copyright (C) 2020-2022 Intel Corporation <www.intel.com>
  */
 
 #include "socfpga_soc64_u-boot.dtsi"
@@ -12,6 +12,7 @@
 	i_ccu_noc_registers@f7000000 {
 		reg = <0xf7000000 0x00049e60>;
 		intel,offset-settings =
+			/* Enable access to DDR region from FPGA */
 			<0x000105a0 0x00000000>,
 			<0x000105c0 0x00000000>,
 			<0x000105e0 0x00000000>,
