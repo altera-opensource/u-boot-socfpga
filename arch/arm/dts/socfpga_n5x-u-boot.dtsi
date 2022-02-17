@@ -2,7 +2,7 @@
 /*
  * U-Boot additions
  *
- * Copyright (C) 2020-2021 Intel Corporation <www.intel.com>
+ * Copyright (C) 2020-2022 Intel Corporation <www.intel.com>
  */
 
 #include "socfpga_soc64_u-boot.dtsi"
@@ -138,7 +138,9 @@
 	soc_noc_fw_mpfe_csr_inst_0_mpfe_scr@f8020000 {
 		reg = <0xf8020000 0x0000001c>;
 		intel,offset-settings =
+			/* Disable MPFE firewall for SMMU */
 			<0x00000000 0x00010101>,
+			/* Disable MPFE firewall for HMC adapter */
 			<0x00000004 0x00000001>;
 		u-boot,dm-pre-reloc;
 	};
