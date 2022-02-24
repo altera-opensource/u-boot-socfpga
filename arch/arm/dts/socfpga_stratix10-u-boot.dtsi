@@ -132,4 +132,22 @@
 			<0x000004c 0x00000000>;
 		u-boot,dm-pre-reloc;
 	};
+
+	/*
+	 * Example of ccu_mem0_I_main QOS settings with
+	 * default reset value for the sake of easy reference
+	 * by users. Users may choose to remove any of these register
+	 * configurations that they do not require in their specific
+	 * implementation.
+	 */
+	soc_ddr_scheduler_inst_0_ccu_mem0_I_main_QosGenerator@f8022080 {
+		reg = <0xf8022080 0x0000001c>;
+		intel,offset-settings =
+			<0x0000008 0x80000000>,
+			<0x000000c 0x00000001>,
+			<0x0000010 0x00000BFE>,
+			<0x0000014 0x00000008>,
+			<0x0000018 0x00000000>;
+		u-boot,dm-pre-reloc;
+	};
 };
