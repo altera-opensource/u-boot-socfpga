@@ -148,6 +148,8 @@
 #else
 
 #define CFG_EXTRA_ENV_SETTINGS \
+	"kernel_comp_addr_r=0x9000000\0" \
+	"kernel_comp_size=0x01000000\0" \
 	"qspibootimageaddr=0x020E0000\0" \
 	"qspifdtaddr=0x020D0000\0" \
 	"bootimagesize=0x01F00000\0" \
