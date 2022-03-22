@@ -44,7 +44,7 @@
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 
 /* Extend size of kernel image for uncompression */
-#define CONFIG_SYS_BOOTM_LEN		(32 * 1024 * 1024)
+#define CONFIG_SYS_BOOTM_LEN		(64 * 1024 * 1024)
 
 /*
  * U-Boot run time memory configurations
