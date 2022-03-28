@@ -12,6 +12,33 @@
 	i_ccu_noc_registers@f7000000 {
 		reg = <0xf7000000 0x00049e60>;
 		intel,offset-settings =
+			/* Enable access to DDR reg from CPU */
+			<0x0004400 0xF8000000>,
+
+			/* Enable access to DDR region from CPU */
+			<0x00045c0 0x00000000>,
+			<0x00045e0 0x00000000>,
+			<0x0004600 0x00000000>,
+			<0x0004620 0x00000000>,
+			<0x0004640 0x00000000>,
+			<0x0004660 0x00000000>,
+
+			/* Enable access to DDR region from IO master */
+			<0x00018560 0x00000000>,
+			<0x00018580 0x00000000>,
+			<0x000185a0 0x00000000>,
+			<0x000185c0 0x00000000>,
+			<0x000185e0 0x00000000>,
+			<0x00018600 0x00000000>,
+
+			/* Enable access to DDR region from TCU */
+			<0x0002c520 0x00000000>,
+			<0x0002c540 0x00000000>,
+			<0x0002c560 0x00000000>,
+			<0x0002c580 0x00000000>,
+			<0x0002c5a0 0x00000000>,
+			<0x0002c5c0 0x00000000>,
+
 			/* Enable access to DDR region from FPGA */
 			<0x000105a0 0x00000000>,
 			<0x000105c0 0x00000000>,
