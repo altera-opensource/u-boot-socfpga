@@ -23,6 +23,10 @@
 			<0x0004640 0x00000000>,
 			<0x0004660 0x00000000>,
 
+			/* Disable ocram security at CCU for non secure access */
+			<0x0004688 0xfffc0000>,
+			<0x0018628 0xfffc0000>,
+
 			/* Enable access to DDR region from IO master */
 			<0x00018560 0x00000000>,
 			<0x00018580 0x00000000>,
