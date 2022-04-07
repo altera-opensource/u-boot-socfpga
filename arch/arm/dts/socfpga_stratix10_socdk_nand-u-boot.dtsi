@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright Altera Corporation (C) 2020. All rights reserved.
+ *
+ * Copyright (C) 2022 Intel Corporation
  */
 
 #include "socfpga_stratix10_socdk-u-boot.dtsi"
@@ -10,9 +12,29 @@
 		#address-cells = <2>;
 		#size-cells = <2>;
 		device_type = "memory";
-		/* 4GB */
+		/*
+		 * Recommended Aliasing addresses
+		 *
+		 * 16GB
+		 *     <0 0x00000000 0 0x80000000>,
+		 *     <0x10 0x80000000 3 0x80000000>;
+		 *
+		 * 8GB
+		 *     <0 0x00000000 0 0x80000000>,
+		 *     <0x10 0x80000000 1 0x80000000>;
+		 *
+		 * 4GB
+		 *     <0 0x00000000 0 0x80000000>,
+		 *     <0x10 0x80000000 0 0x80000000>;
+		 *
+		 * 2GB
+		 *     <0 0x00000000 0 0x80000000>;
+		 *
+		 * Note: Need to set CONFIG_NR_DRAM_BANKS=1 for 2GB in defconfig
+		 *       Default CONFIG_NR_DRAM_BANKS=2 is used for other DDR size
+		 */
 		reg = <0 0x00000000 0 0x80000000>,
-		      <1 0x80000000 0 0x80000000>;
+		      <0x10 0x80000000 0 0x80000000>;
 		u-boot,dm-pre-reloc;
 	};
 
