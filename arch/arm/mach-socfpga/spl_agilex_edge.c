@@ -29,11 +29,14 @@ DECLARE_GLOBAL_DATA_PTR;
 void board_init_f(ulong dummy)
 {
 	int ret;
-	struct udevice *dev;
 
 	ret = spl_early_init();
 	if (ret)
 		hang();
+
+#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)
+
+	struct udevice *dev;
 
 	socfpga_get_managers_addr();
 
@@ -58,11 +61,13 @@ void board_init_f(ulong dummy)
 	 */
 	if (CONFIG_IS_ENABLED(WDT))
 		initr_watchdog();
+#endif
 
 	preloader_console_init();
 	print_reset_info();
 	cm_print_clock_quick_summary();
 
+#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)
 	ret = uclass_get_device_by_name(UCLASS_NOP, "socfpga-secreg", &dev);
 	if (ret) {
 		printf("Firewall & secure settings init failed: %d\n", ret);
@@ -88,4 +93,5 @@ void board_init_f(ulong dummy)
 #ifdef CONFIG_CADENCE_QSPI
 	mbox_qspi_open();
 #endif
+#endif /* CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS */
 }
