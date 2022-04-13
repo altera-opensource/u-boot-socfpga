@@ -1,11 +1,12 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- *  Copyright (C) 2016-2019 Intel Corporation <www.intel.com>
+ *  Copyright (C) 2016-2022 Intel Corporation <www.intel.com>
  */
 
 #ifndef _RESET_MANAGER_SOC64_H_
 #define _RESET_MANAGER_SOC64_H_
 
+#ifndef __ASSEMBLY__
 void reset_deassert_peripherals_handoff(void);
 int cpu_has_been_warmreset(void);
 void print_reset_info(void);
@@ -13,6 +14,7 @@ void socfpga_bridges_reset(int enable, unsigned int mask);
 void socfpga_bridges_reset_psci(int enable, unsigned int mask);
 void l2_reset_cpu(void);
 void l2_reset_cpu_psci(void);
+#endif
 
 #define RSTMGR_SOC64_STATUS	0x00
 #define RSTMGR_SOC64_HDSKEN	0x10
@@ -38,14 +40,20 @@ void l2_reset_cpu_psci(void);
 #define RSTMGR_HDSKREQ_FPGAHSREQ	BIT(2)
 
 /* SDM, Watchdogs and MPU warm reset mask */
-#define RSTMGR_STAT_SDMWARMRST		BIT(1)
+#define RSTMGR_STAT_SDMWARMRST		0x2
 #define RSTMGR_STAT_MPU0RST_BITPOS	8
 #define RSTMGR_STAT_L4WD0RST_BITPOS	16
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
+#define RSTMGR_STAT_L4WD0RST_BIT	0x1F0000
+#define RSTMGR_L4WD_MPU_WARMRESET_MASK	RSTMGR_STAT_SDMWARMRST | \
+		RSTMGR_STAT_L4WD0RST_BIT
+#else
 #define RSTMGR_L4WD_MPU_WARMRESET_MASK	(RSTMGR_STAT_SDMWARMRST | \
 		GENMASK(RSTMGR_STAT_MPU0RST_BITPOS + 3, \
 			RSTMGR_STAT_MPU0RST_BITPOS) | \
 		GENMASK(RSTMGR_STAT_L4WD0RST_BITPOS + 3, \
 			RSTMGR_STAT_L4WD0RST_BITPOS))
+#endif
 
 /*
  * SocFPGA Stratix10 reset IDs, bank mapping is as follows:

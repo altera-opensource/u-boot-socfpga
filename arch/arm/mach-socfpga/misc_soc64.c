@@ -51,8 +51,11 @@ static Altera_desc altera_fpga[] = {
 #if defined(CONFIG_DISPLAY_CPUINFO)
 int print_cpuinfo(void)
 {
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
+	puts("CPU:   Intel FPGA SoCFPGA Platform (ARMv8 64bit Cortex-A55/A76)\n");
+#else
 	puts("CPU:   Intel FPGA SoCFPGA Platform (ARMv8 64bit Cortex-A53)\n");
-
+#endif
 	return 0;
 }
 #endif
@@ -60,6 +63,7 @@ int print_cpuinfo(void)
 #ifdef CONFIG_ARCH_MISC_INIT
 int arch_misc_init(void)
 {
+#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU))
 	char qspi_string[13];
 	char level[4];
 	char id[3];
@@ -75,6 +79,7 @@ int arch_misc_init(void)
 	/* Export board_id as environment variable */
 	sprintf(id, "%u", socfpga_get_board_id());
 	env_set("board_id", id);
+#endif
 
 	return 0;
 }

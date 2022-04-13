@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2020-2021 Intel Corporation <www.intel.com>
+ * Copyright (C) 2020-2022 Intel Corporation <www.intel.com>
  *
  */
 
@@ -19,7 +19,12 @@ static enum endianness check_endianness(u32 handoff)
 	case SOC64_HANDOFF_MAGIC_FPGA:
 	case SOC64_HANDOFF_MAGIC_DELAY:
 	case SOC64_HANDOFF_MAGIC_CLOCK:
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
+	case SOC64_HANDOFF_MAGIC_PERI:
+	case SOC64_HANDOFF_MAGIC_SDRAM:
+#else
 	case SOC64_HANDOFF_MAGIC_MISC:
+#endif
 		return BIG_ENDIAN;
 #if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 	case SOC64_HANDOFF_DDR_UMCTL2_MAGIC:

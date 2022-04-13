@@ -26,6 +26,7 @@
 #include <div64.h>
 #include "mmc_private.h"
 
+#define TIMEOUT_TEN_MS  10
 #define DEFAULT_CMD6_TIMEOUT_MS  500
 
 static int mmc_set_signal_voltage(struct mmc *mmc, uint signal_voltage);
@@ -597,6 +598,11 @@ static int sd_send_op_cond(struct mmc *mmc, bool uhs_en)
 	int err;
 	struct mmc_cmd cmd;
 
+	/* lower timeout, to speed up mmc init since both uses same flow */
+	if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU) ||
+	    IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS))
+		timeout = TIMEOUT_TEN_MS;
+
 	while (1) {
 		cmd.cmdidx = MMC_CMD_APP_CMD;
 		cmd.resp_type = MMC_RSP_R1;
@@ -635,7 +641,7 @@ static int sd_send_op_cond(struct mmc *mmc, bool uhs_en)
 			break;
 
 		if (timeout-- <= 0)
-			return -EOPNOTSUPP;
+			return -ETIMEDOUT;
 
 		udelay(1000);
 	}

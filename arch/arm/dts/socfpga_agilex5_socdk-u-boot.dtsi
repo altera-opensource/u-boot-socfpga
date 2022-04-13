@@ -1,0 +1,81 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * U-Boot additions
+ *
+ * Copyright (C) 2022 Intel Corporation <www.intel.com>
+ */
+
+#include "socfpga_agilex5-u-boot.dtsi"
+
+/{
+	aliases {
+		spi0 = &qspi;
+		freeze_br0 = &freeze_controller;
+	};
+
+	soc {
+		freeze_controller: freeze_controller@f9000450 {
+			compatible = "altr,freeze-bridge-controller";
+			reg = <0xf9000450 0x00000010>;
+			status = "disabled";
+		};
+	};
+
+	memory {
+		/* 2GB on Simics*/
+		reg = <0 0x80000000 0 0x80000000>;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+		u-boot,spl-boot-order = &mmc,&flash0,"/memory";
+	};
+};
+
+&flash0 {
+	compatible = "jedec,spi-nor";
+	spi-tx-bus-width = <4>;
+	spi-rx-bus-width = <4>;
+	u-boot,dm-pre-reloc;
+};
+
+&nand {
+	status = "okay";
+	nand-bus-width = <16>;
+	u-boot,dm-pre-reloc;
+};
+
+&mmc {
+	status = "okay";
+	bus-width = <4>;
+	cap-sd-highspeed;
+	mmc-ddr-1_8v;
+	cap-mmc-highspeed;
+	u-boot,dm-pre-reloc;
+};
+
+&combophy0 {
+	status = "okay";
+	u-boot,dm-pre-reloc;
+};
+
+&qspi {
+	status = "okay";
+};
+
+&watchdog0 {
+	u-boot,dm-pre-reloc;
+};
+
+#if !defined(CONFIG_SOCFPGA_SECURE_VAB_AUTH)
+&fdt_0_blob {
+	filename = "arch/arm/dts/socfpga_agilex5_socdk.dtb";
+};
+
+/* To add NAND dtb when ready in future */
+
+&binman {
+	/delete-node/ kernel;
+};
+#endif
+

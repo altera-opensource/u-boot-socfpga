@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0
  *
- * Copyright (C) 2017-2019 Intel Corporation <www.intel.com>
+ * Copyright (C) 2017-2022 Intel Corporation <www.intel.com>
  *
  */
 
@@ -40,8 +40,22 @@
 /*
  * U-Boot run time memory configurations
  */
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
+#define CONFIG_SYS_INIT_RAM_ADDR	0x0
+#define CONFIG_SYS_INIT_RAM_SIZE	0x80000
+#else
 #define CONFIG_SYS_INIT_RAM_ADDR	0xFFE00000
 #define CONFIG_SYS_INIT_RAM_SIZE	0x40000
+#endif
+#ifdef CONFIG_SPL_BUILD
+#define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_INIT_RAM_ADDR  \
+					+ CONFIG_SYS_INIT_RAM_SIZE \
+					- SOC64_HANDOFF_SIZE)
+#else
+#define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_TEXT_BASE \
+					+ 0x100000)
+#endif
+#define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_INIT_SP_ADDR)
 
 /*
  * U-Boot environment configurations
@@ -106,12 +120,55 @@
 #define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
 	"nand "
 
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS)
+#define BOOT_TARGET_DEVICES(func) \
+	BOOT_TARGET_DEVICES_MMC(func) \
+	BOOT_TARGET_DEVICES_QSPI(func)
+#else
 #define BOOT_TARGET_DEVICES(func) \
 	BOOT_TARGET_DEVICES_MMC(func) \
 	BOOT_TARGET_DEVICES_QSPI(func) \
 	BOOT_TARGET_DEVICES_NAND(func)
+#endif
 
 #include <config_distro_bootcmd.h>
+
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
+
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	"kernel_addr_r=0x82000000\0" \
+	"fdt_addr_r=0x86000000\0" \
+	"qspiscriptaddr=0x02110000\0" \
+	"scriptsize=0x00010000\0" \
+	"qspibootimageaddr=0x02120000\0" \
+	"bootimagesize=0x03200000\0" \
+	"loadaddr=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
+	"bootfile=" CONFIG_BOOTFILE "\0" \
+	"mmcroot=/dev/mmcblk0p2\0" \
+	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
+	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
+	"linux_qspi_enable=if sf probe; then " \
+		"echo Enabling QSPI at Linux DTB...;" \
+		"fdt addr ${fdt_addr}; fdt resize;" \
+		"fdt set /soc/spi@108d2000 status okay;" \
+		"if fdt set /clocks/qspi-clk clock-frequency" \
+		" ${qspi_clock}; then echo QSPI clock frequency updated;" \
+		" elif fdt set /soc/clkmgr/clocks/qspi_clk clock-frequency" \
+		" ${qspi_clock}; then echo QSPI clock frequency updated;" \
+		" else fdt set /clocks/qspi-clk clock-frequency" \
+		" ${qspi_clock}; echo QSPI clock frequency updated; fi; fi\0" \
+	"scriptaddr=0x81000000\0" \
+	"scriptfile=boot.scr\0" \
+	"nandroot=ubi0:rootfs\0" \
+	"rsu_status=rsu dtb; rsu display_dcmf_version; "\
+		"rsu display_dcmf_status; rsu display_max_retry\0" \
+	"smc_fid_rd=0xC2000007\0" \
+	"smc_fid_wr=0xC2000008\0" \
+	"smc_fid_upd=0xC2000009\0 " \
+	BOOTENV
+
+#else
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"kernel_addr_r=0x2000000\0" \
 	"fdt_addr_r=0x6000000\0" \
@@ -144,6 +201,7 @@
 	"smc_fid_wr=0xC2000008\0" \
 	"smc_fid_upd=0xC2000009\0 " \
 	BOOTENV
+#endif /*#IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)*/
 
 #else
 
@@ -213,15 +271,30 @@
 /*
  * External memory configurations
  */
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
+#define PHYS_SDRAM_1			0x80000000
+#define PHYS_SDRAM_1_SIZE		(1 * 1024 * 1024 * 1024)
+#define CONFIG_SYS_SDRAM_BASE		0x80000000
+#else
 #define PHYS_SDRAM_1			0x0
 #define PHYS_SDRAM_1_SIZE		(1 * 1024 * 1024 * 1024)
 #define CONFIG_SYS_SDRAM_BASE		0
+#endif
 
 /*
  * Serial / UART configurations
  */
 #define CONFIG_SYS_NS16550_CLK		100000000
 #define CONFIG_SYS_NS16550_MEM32
+
+/*
+ * Timer & watchdog configurations
+ */
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS)
+#define COUNTER_FREQUENCY		80000000
+#else
+#define COUNTER_FREQUENCY		400000000
+#endif
 
 /*
  * SDMMC configurations
