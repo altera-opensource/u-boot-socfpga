@@ -79,10 +79,12 @@ config TARGET_SOCFPGA_AGILEX
 
 config TARGET_SOCFPGA_AGILEX5
 	bool
+	select ARMV8_SET_SMPEN
 	select BINMAN if SPL_ATF
 	select CLK
 	select FPGA_INTEL_SDM_MAILBOX
 	select GICV3
+	select NCORE_CACHE
 	select SPL_CLK if SPL
 	select TARGET_SOCFPGA_SOC64
 
