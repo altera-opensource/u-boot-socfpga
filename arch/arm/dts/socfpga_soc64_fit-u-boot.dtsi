@@ -28,7 +28,11 @@
 					os = "U-Boot";
 					arch = "arm64";
 					compression = "none";
+				#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+					load = <0x80200000>;
+				#else
 					load = <0x00200000>;
+				#endif
 					uboot_blob: blob-ext {
 						filename = "u-boot-nodtb.bin";
 					};
@@ -43,8 +47,13 @@
 					os = "arm-trusted-firmware";
 					arch = "arm64";
 					compression = "none";
+				#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+					load = <0x80000000>;
+					entry = <0x80000000>;
+				#else
 					load = <0x00001000>;
 					entry = <0x00001000>;
+				#endif
 					atf_blob: blob-ext {
 						filename = "bl31.bin";
 					};
