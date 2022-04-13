@@ -51,8 +51,22 @@
 /*
  * U-Boot run time memory configurations
  */
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+#define CFG_SYS_INIT_RAM_ADDR	0x0
+#define CFG_SYS_INIT_RAM_SIZE	0x80000
+#else
 #define CFG_SYS_INIT_RAM_ADDR	0xFFE00000
 #define CFG_SYS_INIT_RAM_SIZE	0x40000
+#endif
+#ifdef CONFIG_SPL_BUILD
+#define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_INIT_RAM_ADDR  \
+					+ CONFIG_SYS_INIT_RAM_SIZE \
+					- SOC64_HANDOFF_SIZE)
+#else
+#define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_TEXT_BASE \
+					+ 0x100000)
+#endif
+#define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_INIT_SP_ADDR)
 
 /*
  * U-Boot environment configurations
@@ -227,9 +241,15 @@
 /*
  * External memory configurations
  */
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+#define PHYS_SDRAM_1			0x80000000
+#define PHYS_SDRAM_1_SIZE		(1 * 1024 * 1024 * 1024)
+#define CFG_SYS_SDRAM_BASE		0x80000000
+#else
 #define PHYS_SDRAM_1			0x0
 #define PHYS_SDRAM_1_SIZE		(1 * 1024 * 1024 * 1024)
 #define CFG_SYS_SDRAM_BASE		0
+#endif
 
 /*
  * Serial / UART configurations
