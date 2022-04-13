@@ -73,6 +73,16 @@ config TARGET_SOCFPGA_AGILEX
 	select SPL_CLK if SPL
 	select TARGET_SOCFPGA_SOC64
 
+config TARGET_SOCFPGA_AGILEX_EDGE
+	bool
+	select ARMV8_SET_SMPEN
+	select BINMAN if SPL_ATF
+	select CLK
+	select FPGA_INTEL_SDM_MAILBOX
+	select NCORE_CACHE
+	select SPL_CLK if SPL
+	select TARGET_SOCFPGA_SOC64
+
 config TARGET_SOCFPGA_ARRIA5
 	bool
 	select TARGET_SOCFPGA_GEN5
@@ -153,6 +163,10 @@ config TARGET_SOCFPGA_AGILEX_SOCDK
 	bool "Intel SOCFPGA SoCDK (Agilex)"
 	select TARGET_SOCFPGA_AGILEX
 
+config TARGET_SOCFPGA_AGILEX_EDGE_SOCDK
+	bool "Intel SOCFPGA SoCDK (Agilex Edge)"
+	select TARGET_SOCFPGA_AGILEX_EDGE
+
 config TARGET_SOCFPGA_ARIES_MCVEVK
 	bool "Aries MCVEVK (Cyclone V)"
 	select TARGET_SOCFPGA_CYCLONE5
@@ -226,6 +240,7 @@ config TARGET_SOCFPGA_TERASIC_SOCKIT
 endchoice
 
 config SYS_BOARD
+	default "agilex-edge-socdk" if TARGET_SOCFPGA_AGILEX_EDGE_SOCDK
 	default "agilex-n6010" if TARGET_SOCFPGA_AGILEX_N6010
 	default "agilex-socdk" if TARGET_SOCFPGA_AGILEX_SOCDK
 	default "arria5-socdk" if TARGET_SOCFPGA_ARRIA5_SOCDK
@@ -249,6 +264,7 @@ config SYS_BOARD
 	default "vining_fpga" if TARGET_SOCFPGA_SOFTING_VINING_FPGA
 
 config SYS_VENDOR
+	default "intel" if TARGET_SOCFPGA_AGILEX_EDGE_SOCDK
 	default "intel" if TARGET_SOCFPGA_AGILEX_N6010
 	default "intel" if TARGET_SOCFPGA_AGILEX_SOCDK
 	default "intel" if TARGET_SOCFPGA_N5X_SOCDK
@@ -272,6 +288,7 @@ config SYS_SOC
 	default "socfpga"
 
 config SYS_CONFIG_NAME
+	default "socfpga_agilex_edge_socdk" if TARGET_SOCFPGA_AGILEX_EDGE_SOCDK
 	default "socfpga_agilex_n6010" if TARGET_SOCFPGA_AGILEX_N6010
 	default "socfpga_agilex_socdk" if TARGET_SOCFPGA_AGILEX_SOCDK
 	default "socfpga_arria5_secu1" if TARGET_SOCFPGA_ARRIA5_SECU1
