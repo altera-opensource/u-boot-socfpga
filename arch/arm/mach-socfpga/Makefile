@@ -82,7 +82,7 @@ endif
 
 ifdef CONFIG_TARGET_SOCFPGA_AGILEX_EDGE
 obj-y	+= clock_manager_agilex_edge.o
-obj-y	+= lowlevel_init_soc64.o
+obj-y	+= lowlevel_init_agilex_edge.o
 obj-y	+= mailbox_s10.o
 obj-y	+= misc_soc64.o
 obj-y	+= mmu-arm64_s10.o
