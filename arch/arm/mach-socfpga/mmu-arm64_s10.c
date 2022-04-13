@@ -10,6 +10,38 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+static struct mm_region socfpga_agilex_edge_mem_map[] = {
+	{
+		/* OCRAM 1MB but available 256KB */
+		.virt	= 0x00000000UL,
+		.phys	= 0x00000000UL,
+		.size	= 0x00040000UL,
+		.attrs	= PTE_BLOCK_MEMTYPE(MT_NORMAL) |
+				PTE_BLOCK_INNER_SHARE,
+	}, {
+		/* DEVICE */
+		.virt	= 0x10808000UL,
+		.phys	= 0x10808000UL,
+		.size	= 0x0F7F8000UL,
+		.attrs	= PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
+				PTE_BLOCK_NON_SHARE |
+				PTE_BLOCK_PXN | PTE_BLOCK_UXN,
+	}, {
+		/* MEM 2GB */
+		.virt	= 0x80000000UL,
+		.phys	= 0x80000000UL,
+		.size	= 0x80000000UL,
+		.attrs	= PTE_BLOCK_MEMTYPE(MT_NORMAL) |
+				PTE_BLOCK_INNER_SHARE,
+	}, {
+		/* List terminator */
+	},
+};
+
+struct mm_region *mem_map = socfpga_agilex_edge_mem_map;
+
+#else
 static struct mm_region socfpga_stratix10_mem_map[] = {
 	{
 		/* MEM 2GB*/
@@ -70,3 +102,4 @@ static struct mm_region socfpga_stratix10_mem_map[] = {
 };
 
 struct mm_region *mem_map = socfpga_stratix10_mem_map;
+#endif
