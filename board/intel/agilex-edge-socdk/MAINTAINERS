@@ -1,0 +1,6 @@
+SOCFPGA BOARD
+M:	Yau Wai Gan <yau.wai.gan@intel.com>
+S:	Maintained
+F:	board/intel/agilex-edge-socdk/
+F:	include/configs/socfpga_agilex_edge_socdk.h
+F:	configs/socfpga_agilex_edge_defconfig
