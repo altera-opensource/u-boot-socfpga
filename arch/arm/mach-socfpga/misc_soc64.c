@@ -51,8 +51,11 @@ static Altera_desc altera_fpga[] = {
 #if defined(CONFIG_DISPLAY_CPUINFO)
 int print_cpuinfo(void)
 {
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+	puts("CPU:   Intel FPGA SoCFPGA Platform (ARMv8 64bit Cortex-A55/A76)\n");
+#else
 	puts("CPU:   Intel FPGA SoCFPGA Platform (ARMv8 64bit Cortex-A53)\n");
-
+#endif
 	return 0;
 }
 #endif
