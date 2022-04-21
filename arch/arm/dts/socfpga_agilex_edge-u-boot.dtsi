@@ -16,12 +16,6 @@
 
 	soc {
 		u-boot,dm-pre-reloc;
-
-		ccu: cache-controller@1c000000 {
-			compatible = "arteris,ncore-ccu";
-			reg = <0x1c000000 0x100000>;
-			u-boot,dm-pre-reloc;
-		};
 	};
 };
 
