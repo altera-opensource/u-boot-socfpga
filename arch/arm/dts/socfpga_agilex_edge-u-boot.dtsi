@@ -15,7 +15,116 @@
 	};
 
 	soc {
-		u-boot,dm-pre-reloc;
+		socfpga_secreg: socfpga-secreg {
+			compatible = "intel,socfpga-secreg";
+			#address-cells = <1>;
+			#size-cells = <1>;
+			u-boot,dm-pre-reloc;
+
+			/* DSU */
+			i_ccu_caiu0@1c000000 {
+				reg = <0x1c000000 0x00001000>;
+				/* General purpose region (GPR) configuration */
+				intel,offset-settings =
+					/* DII1 (MPFE Regs) */
+					<0x00000400 0xc0e00200>,
+					<0x00000404 0x00018000>,
+					<0x00000408 0x00000000>,
+					/* DII2 (GIC Regs) */
+					<0x00000410 0xc0800400>,
+					<0x00000414 0x0001d000>,
+					<0x00000418 0x00000000>,
+					/* DII0 (LWHPS2FPGA)
+					<0x00000420 0xc1100000>,
+					<0x00000424 0x00020000>,
+					<0x00000428 0x00000000>,
+					/* DII0 (HPS2FPGA_1GB)
+					<0x00000430 0xc1200001>,
+					<0x00000434 0x00040000>,
+					<0x00000438 0x00000000>,
+					/* DII0 (HPS2FPGA_15GB) */
+					<0x00000450 0xc1600000>,
+					<0x00000454 0x00400000>,
+					<0x00000458 0x00000000>,
+					/* DII0 (HPS2FPGA_240GB) */
+					<0x00000470 0xc1a00000>,
+					<0x00000474 0x04000000>,
+					<0x00000478 0x00000000>;
+				u-boot,dm-pre-reloc;
+			};
+
+			/* F2SOC */
+			i_ccu_ncaiu0@1c001000 {
+				reg = <0x1c001000 0x00001000>;
+				/* General purpose region (GPR) configuration */
+				intel,offset-settings =
+					/* DII0 (PSS Peripheral) */
+					<0x00000400 0xc0e00200>,
+					<0x00000404 0x00010000>,
+					<0x00000408 0x00000000>,
+					/* DII1 (MPFE Regs) */
+					<0x00000410 0xc0e00200>,
+					<0x00000414 0x00018000>,
+					<0x00000418 0x00000000>,
+					/* DII2 (GIC Regs) */
+					<0x00000420 0xc0800400>,
+					<0x00000424 0x0001d000>,
+					<0x00000428 0x00000000>,
+					/* DII0 (LWHPS2FPGA)
+					<0x00000430 0xc1100000>,
+					<0x00000434 0x00020000>,
+					<0x00000438 0x00000000>,
+					/* DII0 (HPS2FPGA_1GB)
+					<0x00000440 0xc1200001>,
+					<0x00000444 0x00040000>,
+					<0x00000448 0x00000000>,
+					/* DII0 (HPS2FPGA_15GB) */
+					<0x00000460 0xc1600000>,
+					<0x00000464 0x00400000>,
+					<0x00000468 0x00000000>,
+					/* DII0 (HPS2FPGA_240GB) */
+					<0x00000480 0xc1a00000>,
+					<0x00000484 0x04000000>,
+					<0x00000488 0x00000000>;
+				u-boot,dm-pre-reloc;
+			};
+
+			/* PSS NOC */
+			i_ccu_ncaiu3@1c004000 {
+				reg = <0x1c004000 0x00001000>;
+				/* General purpose region (GPR) configuration */
+				intel,offset-settings =
+					/* DII0 (PSS Peripheral) */
+					<0x00000400 0xc0e00200>,
+					<0x00000404 0x00010000>,
+					<0x00000408 0x00000000>,
+					/* DII1 (MPFE Regs) */
+					<0x00000410 0xc0e00200>,
+					<0x00000414 0x00018000>,
+					<0x00000418 0x00000000>,
+					/* DII2 (GIC Regs) */
+					<0x00000420 0xc0800400>,
+					<0x00000424 0x0001d000>,
+					<0x00000428 0x00000000>,
+					/* DII0 (LWHPS2FPGA)
+					<0x00000430 0xc1100000>,
+					<0x00000434 0x00020000>,
+					<0x00000438 0x00000000>,
+					/* DII0 (HPS2FPGA_1GB)
+					<0x00000440 0xc1200001>,
+					<0x00000444 0x00040000>,
+					<0x00000448 0x00000000>,
+					/* DII0 (HPS2FPGA_15GB) */
+					<0x00000460 0xc1600000>,
+					<0x00000464 0x00400000>,
+					<0x00000468 0x00000000>,
+					/* DII0 (HPS2FPGA_240GB) */
+					<0x00000480 0xc1a00000>,
+					<0x00000484 0x04000000>,
+					<0x00000488 0x00000000>;
+				u-boot,dm-pre-reloc;
+			};
+		};
 	};
 };
 
