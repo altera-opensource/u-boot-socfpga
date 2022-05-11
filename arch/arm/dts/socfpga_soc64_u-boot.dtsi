@@ -2,7 +2,7 @@
 /*
  * U-Boot additions
  *
- * Copyright (C) 2021 Intel Corporation <www.intel.com>
+ * Copyright (C) 2021-2022 Intel Corporation <www.intel.com>
  */
 
 / {
@@ -16,7 +16,9 @@
 			i_sys_mgr_core@ffd12000 {
 				reg = <0xffd12000 0x00000230>;
 				intel,offset-settings =
+					/* Enable non-secure interface to DMA */
 					<0x00000020 0xff010000>,
+					/* Enable non-secure interface to DMA periph */
 					<0x00000024 0xffffffff>;
 				u-boot,dm-pre-reloc;
 			};
@@ -24,6 +26,7 @@
 			noc_fw_l4_per_l4_per_scr@ffd21000 {
 				reg = <0xffd21000 0x00000074>;
 				intel,offset-settings =
+					/* Disable L4 periphs firewall */
 					<0x00000000 0x01010001>,
 					<0x00000004 0x01010001>,
 					<0x0000000c 0x01010001>,
@@ -53,6 +56,7 @@
 			noc_fw_l4_sys_l4_sys_scr@ffd21100 {
 				reg = <0xffd21100 0x00000098>;
 				intel,offset-settings =
+					/* Disable L4 system firewall */
 					<0x00000008 0x01010001>,
 					<0x0000000c 0x01010001>,
 					<0x00000010 0x01010001>,
@@ -85,18 +89,21 @@
 
 			noc_fw_soc2fpga_soc2fpga_scr@ffd21200 {
 				reg = <0xffd21200 0x00000004>;
+				/* Disable soc2fpga security access */
 				intel,offset-settings = <0x00000000 0x0ffe0101>;
 				u-boot,dm-pre-reloc;
 			};
 
 			noc_fw_lwsoc2fpga_lwsoc2fpga_scr@ffd21300 {
 				reg = <0xffd21300 0x00000004>;
+				/* Disable lightweight soc2fpga security access */
 				intel,offset-settings = <0x00000000 0x0ffe0101>;
 				u-boot,dm-pre-reloc;
 			};
 
 			noc_fw_tcu_tcu_scr@ffd21400 {
 				reg = <0xffd21400 0x00000004>;
+				/* Disable DMA ECC security access, for SMMU use */
 				intel,offset-settings = <0x00000000 0x01010001>;
 				u-boot,dm-pre-reloc;
 			};
@@ -104,6 +111,7 @@
 			noc_fw_priv_MemoryMap_priv@ffd24800 {
 				reg = <0xffd24800 0x0000000c>;
 				intel,offset-settings =
+					/* Enable non-prviledged access to various periphs */
 					<0x00000000 0xfff73ffb>;
 				u-boot,dm-pre-reloc;
 			};
