@@ -4,7 +4,7 @@
  */
 
 /dts-v1/;
-#include <dt-bindings/reset/altr,rst-mgr-s10.h>
+#include <dt-bindings/reset/altr,rst-mgr-agx-edge.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/clock/agilex-edge-clock.h>
 
