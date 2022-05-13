@@ -256,7 +256,7 @@ void socfpga_get_managers_addr(void)
 	if (ret)
 		hang();
 
-#ifdef CONFIG_TARGET_SOCFPGA_AGILEX
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
 	ret = socfpga_get_base_addr("intel,agilex-clkmgr",
 				    &socfpga_clkmgr_base);
 #elif IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
