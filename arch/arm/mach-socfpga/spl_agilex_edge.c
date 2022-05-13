@@ -34,11 +34,11 @@ void board_init_f(ulong dummy)
 	if (ret)
 		hang();
 
+	socfpga_get_managers_addr();
+
 #if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)
 
 	struct udevice *dev;
-
-	socfpga_get_managers_addr();
 
 	/* Ensure watchdog is paused when debugging is happening */
 	writel(SYSMGR_WDDBG_PAUSE_ALL_CPU,
