@@ -69,16 +69,17 @@ config TARGET_SOCFPGA_AGILEX
 	select BINMAN if SPL_ATF
 	select CLK
 	select FPGA_INTEL_SDM_MAILBOX
+	select GICV2
 	select NCORE_CACHE
 	select SPL_CLK if SPL
 	select TARGET_SOCFPGA_SOC64
 
 config TARGET_SOCFPGA_AGILEX_EDGE
 	bool
-	select ARMV8_SET_SMPEN
 	select BINMAN if SPL_ATF
 	select CLK
 	select FPGA_INTEL_SDM_MAILBOX
+	select GICV3
 	select NCORE_CACHE
 	select SPL_CLK if SPL
 	select TARGET_SOCFPGA_SOC64
@@ -92,6 +93,7 @@ config TARGET_SOCFPGA_ARRIA5
 
 config TARGET_SOCFPGA_ARRIA10
 	bool
+	select GICV2
 	select SPL_ALTERA_SDRAM
 	select SPL_BOARD_INIT if SPL
 	select SPL_CACHE if SPL
@@ -114,8 +116,30 @@ config TARGET_SOCFPGA_CYCLONE5
 	bool
 	select TARGET_SOCFPGA_GEN5
 
+config TARGET_SOCFPGA_N5X
+	bool
+	select TARGET_SOCFPGA_SOC64
+	select ARMV8_MULTIENTRY
+	select ARMV8_SET_SMPEN
+	select BINMAN if SPL_ATF
+	select CLK
+	select GICV2
+	select NCORE_CACHE
+	select SPL_ALTERA_SDRAM
+	select SPL_CLK if SPL
+
+config TARGET_SOCFPGA_AGILEX_N6010
+	bool "Intel SOCFPGA n6010 (Agilex)"
+	select TARGET_SOCFPGA_AGILEX
+	select BINMAN if !SPL_ATF
+
+config TARGET_SOCFPGA_N5X_SOCDK
+	bool "Intel SOCFPGA SoCDK (N5X)"
+	select TARGET_SOCFPGA_N5X
+
 config TARGET_SOCFPGA_GEN5
 	bool
+	select GICV2
 	select DESIGNWARE_WATCHDOG
 	select SPL_ALTERA_SDRAM
 	select SPL_CACHE if SPL
@@ -132,6 +156,8 @@ config TARGET_SOCFPGA_N5X
 	select ARMV8_SET_SMPEN
 	select BINMAN if SPL_ATF
 	select CLK
+	select FPGA_INTEL_SDM_MAILBOX
+	select GICV2
 	select NCORE_CACHE
 	select SPL_ALTERA_SDRAM
 	select SPL_CLK if SPL
@@ -156,6 +182,7 @@ config TARGET_SOCFPGA_STRATIX10
 	select BINMAN if SPL_ATF
 	select FPGA_INTEL_SDM_MAILBOX
 	select FPGA_STRATIX10
+	select GICV2
 	select TARGET_SOCFPGA_SOC64
 
 choice
