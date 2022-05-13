@@ -84,6 +84,9 @@ config TARGET_SOCFPGA_AGILEX_EDGE
 	select SPL_CLK if SPL
 	select TARGET_SOCFPGA_SOC64
 
+config TARGET_SOCFPGA_AGILEX_EDGE_EMU
+	bool "Enable build that bootable only on Agilex Edge Emulator"
+
 config TARGET_SOCFPGA_AGILEX_EDGE_SIMICS
 	bool "Enable build that bootable only on Agilex Edge Simics platform"
 
