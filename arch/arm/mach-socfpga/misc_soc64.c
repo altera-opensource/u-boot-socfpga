@@ -105,6 +105,7 @@ int print_cpuinfo(void)
 #ifdef CONFIG_ARCH_MISC_INIT
 int arch_misc_init(void)
 {
+#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS)
 	char qspi_string[13];
 	char level[4];
 	unsigned long id;
@@ -120,6 +121,7 @@ int arch_misc_init(void)
 	/* Export board_id as environment variable */
 	id = socfpga_get_board_id();
 	env_set_ulong("board_id", id);
+#endif
 
 	return 0;
 }
