@@ -18,7 +18,7 @@
 int socfpga_secure_convert_reg_id_to_addr(u32 id, phys_addr_t *reg_addr)
 {
 	switch (id) {
-#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)
+#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
 	case SOCFPGA_SECURE_REG_SYSMGR_SOC64_SDMMC:
 		*reg_addr = socfpga_get_sysmgr_addr() + SYSMGR_SOC64_SDMMC;
 		break;
