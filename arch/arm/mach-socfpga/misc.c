@@ -155,9 +155,7 @@ void socfpga_fpga_add(void *fpga_desc)
 
 int arch_cpu_init(void)
 {
-#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)
 	socfpga_get_managers_addr();
-#endif
 
 #ifdef CONFIG_HW_WATCHDOG
 	/*
@@ -166,7 +164,7 @@ int arch_cpu_init(void)
 	 * timeout value is still active which might too short for Linux
 	 * booting.
 	 */
-#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)
+#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU))
 	hw_watchdog_init();
 #endif
 #else
