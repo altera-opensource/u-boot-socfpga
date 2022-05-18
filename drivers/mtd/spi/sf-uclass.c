@@ -63,8 +63,22 @@ struct spi_flash *spi_flash_probe(unsigned int busnum, unsigned int cs,
 	snprintf(name, sizeof(name), "spi_flash@%d:%d", busnum, cs);
 	str = strdup(name);
 #endif
-	ret = _spi_get_bus_and_cs(busnum, cs, max_hz, spi_mode,
-				  "jedec_spi_nor", str, &bus, &slave);
+
+	if (_spi_get_bus_and_cs(busnum, cs, max_hz, spi_mode,
+				"jedec_spi_nor", str, &bus, &slave))
+		return NULL;
+
+	return dev_get_uclass_priv(slave->dev);
+}
+
+int spi_flash_probe_bus_cs(unsigned int busnum, unsigned int cs,
+			   struct udevice **devp)
+{
+	struct spi_slave *slave;
+	struct udevice *bus;
+	int ret;
+
+	ret = spi_get_bus_and_cs(busnum, cs, &bus, &slave);
 	if (ret)
 		return ret;
 
