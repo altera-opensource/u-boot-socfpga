@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2019 Intel Corporation <www.intel.com>
+ * Copyright (C) 2019-2022 Intel Corporation <www.intel.com>
  *
  */
 
@@ -143,9 +143,6 @@ int sdram_mmr_init_full(struct udevice *dev)
 			     (DDR_HMC_ECCCTL2_RMW_EN_SET_MSK |
 			      DDR_HMC_ECCCTL2_AWB_EN_SET_MSK));
 	}
-
-	/* Enable non-secure reads/writes to HMC Adapter for SDRAM ECC */
-	writel(FW_HMC_ADAPTOR_MPU_MASK, FW_HMC_ADAPTOR_REG_ADDR);
 
 	sdram_size_check(&bd);
 
