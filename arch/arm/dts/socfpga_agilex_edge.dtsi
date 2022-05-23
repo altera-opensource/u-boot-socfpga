@@ -373,9 +373,9 @@
 			status = "disabled";
 		};
 
-		sysmgr: sysmgr@ffd12000 {
+		sysmgr: sysmgr@10d12000 {
 			compatible = "altr,sys-mgr-s10","altr,sys-mgr";
-			reg = <0xffd12000 0x500>;
+			reg = <0x10d12000 0x500>;
 		};
 
 		/* Local timer */
