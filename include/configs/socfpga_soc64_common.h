@@ -257,6 +257,16 @@
 #define CFG_SYS_NS16550_CLK		100000000
 
 /*
+=======
+ * Timer & watchdog configurations
+ */
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)
+#define COUNTER_FREQUENCY		80000000
+#else
+#define COUNTER_FREQUENCY		400000000
+#endif
+
+/*
  * SDMMC configurations
  */
 /*
