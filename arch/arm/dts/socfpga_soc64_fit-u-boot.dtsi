@@ -2,7 +2,7 @@
 /*
  * U-Boot additions
  *
- * Copyright (C) 2020 Intel Corporation <www.intel.com>
+ * Copyright (C) 2020-2022 Intel Corporation <www.intel.com>
  */
 
 #if defined(CONFIG_FIT)
@@ -97,8 +97,8 @@
 					arch = "arm64";
 					os = "linux";
 					compression = "none";
-					load = <0x4080000>;
-					entry = <0x4080000>;
+					load = <0x6000000>;
+					entry = <0x6000000>;
 					kernel_blob: blob-ext {
 						filename = "Image";
 					};
