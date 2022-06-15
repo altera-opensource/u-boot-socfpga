@@ -100,7 +100,7 @@ int emif_reset(struct altera_sdram_plat *plat)
 	return 0;
 }
 
-#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
+#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE))
 int poll_hmc_clock_status(void)
 {
 	return wait_for_bit_le32((const void *)(socfpga_get_sysmgr_addr() +
@@ -252,6 +252,7 @@ phys_size_t sdram_calculate_size(struct altera_sdram_plat *plat)
 	return size;
 }
 
+#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
 void sdram_set_firewall(struct bd_info *bd)
 {
 	u32 i;
@@ -313,6 +314,7 @@ void sdram_set_firewall(struct bd_info *bd)
 				      FW_MPU_DDR_SCR_EN_SET);
 	}
 }
+#endif
 
 static int altera_sdram_of_to_plat(struct udevice *dev)
 {
@@ -385,6 +387,7 @@ static const struct udevice_id altera_sdram_ids[] = {
 	{ .compatible = "altr,sdr-ctl-s10" },
 	{ .compatible = "intel,sdr-ctl-agilex" },
 	{ .compatible = "intel,sdr-ctl-n5x" },
+	{ .compatible = "intel,sdr-ctl-agilex_edge" },
 	{ /* sentinel */ }
 };
 
