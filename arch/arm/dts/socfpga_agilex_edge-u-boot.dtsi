@@ -195,7 +195,7 @@
 };
 
 &sdr {
-	compatible = "intel,sdr-ctl-agilex";
+	compatible = "intel,sdr-ctl-agilex_edge";
 	reg = <0xf8000400 0x80>,
 	      <0xf8010000 0x190>,
 	      <0xf8011000 0x500>;
