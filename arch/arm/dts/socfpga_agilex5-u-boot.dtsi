@@ -190,6 +190,13 @@
 	bootph-all;
 };
 
+&sdr {
+	compatible = "intel,sdr-ctl-agilex5";
+	reg = <0x18000000 0x400000>;
+	resets = <&rst DDRSCH_RESET>;
+	bootph-all;
+};
+
 &sysmgr {
 	compatible = "altr,sys-mgr", "syscon";
 	bootph-all;
