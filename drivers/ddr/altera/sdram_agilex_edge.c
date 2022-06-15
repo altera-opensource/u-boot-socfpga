@@ -32,6 +32,10 @@ int sdram_mmr_init_full(struct udevice *dev)
 	phys_size_t hw_size;
 	struct bd_info bd = {0};
 
+	/* assigning the SDRAM size */
+	/* hardcoded to 512MB */
+	phys_size_t size = 0x20000000;
+
 	if (size <= 0)
 		hw_size = PHYS_SDRAM_1_SIZE;
 	else
