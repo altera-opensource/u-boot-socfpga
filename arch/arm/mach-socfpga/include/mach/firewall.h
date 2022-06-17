@@ -136,10 +136,6 @@ struct socfpga_firwall_l4_sys {
 #define FW_MPU_DDR_SCR_NONMPUREGION0ADDR_LIMITEXT	0x9c
 #define FW_MPU_DDR_SCR_NONMPUREGION0ADDR_LIMITEXT_FIELD	0xff
 
-/* Firewall MPFE SCR Registers */
-#define FW_MPFE_SCR_HMC					0x00
-#define FW_MPFE_SCR_HMC_ADAPTOR				0x04
-
 #define MPUREGION0_ENABLE				BIT(0)
 #define NONMPUREGION0_ENABLE				BIT(8)
 
