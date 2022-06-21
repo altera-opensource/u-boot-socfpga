@@ -168,9 +168,11 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 		"fdt addr ${fdt_addr}; fdt resize;" \
 		"fdt set /soc/spi@ff8d2000 status okay;" \
 		"if fdt set /soc/clocks/qspi-clk clock-frequency" \
-		" ${qspi_clock}; then" \
-		" else fdt set /soc/clkmgr/clocks/qspi_clk clock-frequency" \
-		" ${qspi_clock}; fi; fi\0" \
+		" ${qspi_clock}; then echo QSPI clock frequency updated;" \
+		" elif fdt set /soc/clkmgr/clocks/qspi_clk clock-frequency" \
+		" ${qspi_clock}; then echo QSPI clock frequency updated;" \
+		" else fdt set /clocks/qspi-clk clock-frequency" \
+		" ${qspi_clock}; echo QSPI clock frequency updated; fi; fi\0" \
 	"scriptaddr=0x05FF0000\0" \
 	"scriptfile=boot.scr\0" \
 	"nandroot=ubi0:rootfs\0" \
@@ -221,9 +223,11 @@ unsigned int cm_get_qspi_controller_clk_hz(void);
 		"fdt addr ${fdt_addr}; fdt resize;" \
 		"fdt set /soc/spi@ff8d2000 status okay;" \
 		"if fdt set /soc/clocks/qspi-clk clock-frequency" \
-		" ${qspi_clock}; then" \
-		" else fdt set /soc/clkmgr/clocks/qspi_clk clock-frequency" \
-		" ${qspi_clock}; fi; fi\0" \
+		" ${qspi_clock}; then echo QSPI clock frequency updated;" \
+		" elif fdt set /soc/clkmgr/clocks/qspi_clk clock-frequency" \
+		" ${qspi_clock}; then echo QSPI clock frequency updated;" \
+		" else fdt set /clocks/qspi-clk clock-frequency" \
+		" ${qspi_clock}; echo QSPI clock frequency updated; fi; fi\0" \
 	"scriptaddr=0x02100000\0" \
 	"scriptfile=u-boot.scr\0" \
 	"fatscript=if fatload mmc 0:1 ${scriptaddr} ${scriptfile};" \
