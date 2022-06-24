@@ -124,8 +124,6 @@ void board_init_f(ulong dummy)
 
 #if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU))
 
-	struct udevice *dev;
-
 	/* Ensure watchdog is paused when debugging is happening */
 	writel(SYSMGR_WDDBG_PAUSE_ALL_CPU,
 	       socfpga_get_sysmgr_addr() + SYSMGR_SOC64_WDDBG);
@@ -151,12 +149,15 @@ void board_init_f(ulong dummy)
 	print_reset_info();
 	cm_print_clock_quick_summary();
 
-#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU))
+	struct udevice *dev;
+
 	ret = uclass_get_device_by_name(UCLASS_NOP, "socfpga-secreg", &dev);
 	if (ret) {
 		printf("Firewall & secure settings init failed: %d\n", ret);
 		hang();
 	}
+
+#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU))
 
 	ret = uclass_get_device(UCLASS_CACHE, 0, &dev);
 	if (ret) {
