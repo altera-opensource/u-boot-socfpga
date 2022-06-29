@@ -157,14 +157,6 @@ void board_init_f(ulong dummy)
 		hang();
 	}
 
-#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU))
-
-	ret = uclass_get_device(UCLASS_CACHE, 0, &dev);
-	if (ret) {
-		debug("CCU init failed: %d\n", ret);
-		hang();
-	}
-
 #if CONFIG_IS_ENABLED(ALTERA_SDRAM)
 	ret = uclass_get_device(UCLASS_RAM, 0, &dev);
 	if (ret) {
@@ -172,6 +164,14 @@ void board_init_f(ulong dummy)
 		hang();
 	}
 #endif
+
+#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU))
+
+	ret = uclass_get_device(UCLASS_CACHE, 0, &dev);
+	if (ret) {
+		debug("CCU init failed: %d\n", ret);
+		hang();
+	}
 
 	mbox_init();
 
