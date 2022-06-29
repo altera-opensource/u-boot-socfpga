@@ -33,9 +33,13 @@ int sdram_mmr_init_full(struct udevice *dev)
 	struct bd_info bd = {0};
 
 	/* assigning the SDRAM size */
-	/* hardcoded to 512MB */
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU)
+	/* hardcoded to 512MB on emulation */
 	phys_size_t size = 0x20000000;
-
+#else
+	/* hardcoded to 2GB on Simics */
+	phys_size_t size = 0x80000000;
+#endif
 	if (size <= 0)
 		hw_size = PHYS_SDRAM_1_SIZE;
 	else
