@@ -1,6 +1,6 @@
 // SPDX-License-Identifier:     GPL-2.0
 /*
- * Copyright (C) 2019, Intel Corporation
+ * Copyright (C) 2022, Intel Corporation
  */
 
 /dts-v1/;
@@ -576,12 +576,12 @@
 		};
 
 		/* QSPI address not available yet */
-		qspi: spi@ff8d2000 {
+		qspi: spi@108d2000 {
 			compatible = "cdns,qspi-nor";
 			#address-cells = <1>;
 			#size-cells = <0>;
-			reg = <0xff8d2000 0x100>,
-			      <0xff900000 0x100000>;
+			reg = <0x108d2000 0x100>,
+			      <0x10900000 0x100000>;
 			interrupts = <0 3 4>;
 			cdns,fifo-depth = <128>;
 			cdns,fifo-width = <4>;
