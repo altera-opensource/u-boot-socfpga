@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2016-2021 Intel Corporation <www.intel.com>
+ * Copyright (C) 2016-2022 Intel Corporation <www.intel.com>
  */
 
 #ifndef _SOCFPGA_SOC64_BASE_HARDWARE_H_
@@ -10,7 +10,7 @@
 #define SOCFPGA_CCU_ADDRESS			0x1c000000
 #define SOCFPGA_F2SDRAM_MGR_ADDRESS		0xf8024000 /* TODO */
 #define SOCFPGA_SMMU_ADDRESS			0x16000000
-#define SOCFPGA_MAILBOX_ADDRESS			0xffa30000 /* TODO */
+#define SOCFPGA_MAILBOX_ADDRESS			0x10a30000
 #define SOCFPGA_UART0_ADDRESS			0x10c02000
 #define SOCFPGA_UART1_ADDRESS			0x10c02100
 #define SOCFPGA_SPTIMER0_ADDRESS		0x10c03000
