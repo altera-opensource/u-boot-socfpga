@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0
  *
- * Copyright (C) 2017-2019 Intel Corporation <www.intel.com>
+ * Copyright (C) 2017-2022 Intel Corporation <www.intel.com>
  *
  */
 
@@ -120,10 +120,15 @@
 #define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
 	"nand "
 
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)
+#define BOOT_TARGET_DEVICES(func) \
+	BOOT_TARGET_DEVICES_QSPI(func)
+#else
 #define BOOT_TARGET_DEVICES(func) \
 	BOOT_TARGET_DEVICES_MMC(func) \
 	BOOT_TARGET_DEVICES_QSPI(func) \
 	BOOT_TARGET_DEVICES_NAND(func)
+#endif
 
 #include <config_distro_bootcmd.h>
 #define CFG_EXTRA_ENV_SETTINGS \
