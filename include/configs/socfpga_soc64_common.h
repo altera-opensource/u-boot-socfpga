@@ -145,6 +145,43 @@
 #endif
 
 #include <config_distro_bootcmd.h>
+
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+#define CFG_EXTRA_ENV_SETTINGS \
+	"kernel_addr_r=0x82000000\0" \
+	"fdt_addr_r=0x86000000\0" \
+	"qspiscriptaddr=0x02110000\0" \
+	"scriptsize=0x00010000\0" \
+	"qspibootimageaddr=0x02120000\0" \
+	"bootimagesize=0x03200000\0" \
+	"loadaddr=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
+	"bootfile=" CONFIG_BOOTFILE "\0" \
+	"mmcroot=/dev/mmcblk0p2\0" \
+	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
+	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
+	"linux_qspi_enable=if sf probe; then " \
+		"echo Enabling QSPI at Linux DTB...;" \
+		"fdt addr ${fdt_addr}; fdt resize;" \
+		"fdt set /soc/spi@108d2000 status okay;" \
+		"if fdt set /clocks/qspi-clk clock-frequency" \
+		" ${qspi_clock}; then echo QSPI clock frequency updated;" \
+		" elif fdt set /soc/clkmgr/clocks/qspi_clk clock-frequency" \
+		" ${qspi_clock}; then echo QSPI clock frequency updated;" \
+		" else fdt set /clocks/qspi-clk clock-frequency" \
+		" ${qspi_clock}; echo QSPI clock frequency updated; fi; fi\0" \
+	"scriptaddr=0x81000000\0" \
+	"scriptfile=boot.scr\0" \
+	"nandroot=ubi0:rootfs\0" \
+	"socfpga_legacy_reset_compat=1\0" \
+	"rsu_status=rsu dtb; rsu display_dcmf_version; "\
+		"rsu display_dcmf_status; rsu display_max_retry\0" \
+	"smc_fid_rd=0xC2000007\0" \
+	"smc_fid_wr=0xC2000008\0" \
+	"smc_fid_upd=0xC2000009\0 " \
+	BOOTENV
+
+#else
+
 #define CFG_EXTRA_ENV_SETTINGS \
 	"kernel_addr_r=0x2000000\0" \
 	"fdt_addr_r=0x6000000\0" \
@@ -177,6 +214,7 @@
 	"smc_fid_wr=0xC2000008\0" \
 	"smc_fid_upd=0xC2000009\0 " \
 	BOOTENV
+#endif /*#IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)*/
 
 #else
 
