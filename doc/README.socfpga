@@ -25,7 +25,7 @@ Table of Contents
 	Processor			SOCFPGA Device Family		Intel Quartus Prime Pro Edition								Intel Quartus Prime Standard Edition
 	--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	Dual-core ARM Cortex-A9		Cyclone V			N/A											21.1
-					Arria 10			21.3											N/A
+					Arria 10			21.3, 22.1										N/A
 
 	Quad-core ARM Cortex-A53	Stratix 10			20.1, 20.2, 20.3, 20.4, 21.1, 21.2, 21.3, 21.4, 22.1					N/A
 					Agilex				20.1, 20.2, 20.3, 20.4, 21.1, 21.2, 21.3, 21.4, 22.1					N/A
