@@ -94,7 +94,7 @@ skip_clear_cpu_address:
 
 skip_clear_core_irq:
 	/* Master CPU (CPU0) does not need to wait for atf */
-	branch_if_master x0, x1, master_cpu
+	branch_if_master x0, master_cpu
 
 wait_for_atf:
 	ldr	x4, =CPU_RELEASE_ADDR
