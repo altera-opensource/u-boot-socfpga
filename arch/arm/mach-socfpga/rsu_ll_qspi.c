@@ -119,6 +119,7 @@ static u32 spt1_offset;
 static int cpb0_part = -1;
 static int cpb1_part = -1;
 static bool cpb_corrupted;
+static bool cpb_fixed;
 static bool spt_corrupted;
 
 static int load_cpb(void);
@@ -880,13 +881,13 @@ static int load_cpb(void)
 		return -EINVAL;
 	}
 
-	if (status_info.state == STATE_CPB0_CPB1_CORRUPTED) {
+	if (!cpb_fixed && status_info.state == STATE_CPB0_CPB1_CORRUPTED) {
 		rsu_log(RSU_ERR, "FW detects both CPBs corrupted\n");
 		cpb_corrupted = true;
 		return -EINVAL;
 	}
 
-	if (status_info.state == STATE_CPB0_CORRUPTED) {
+	if (!cpb_fixed && status_info.state == STATE_CPB0_CORRUPTED) {
 		rsu_log(RSU_ERR,
 			"FW detects corrupted CPB0 but CPB1 is fine\n");
 		cpb0_corrupted = 1;
@@ -1131,6 +1132,7 @@ static int empty_cpb(void)
 
 	cpb_slots = (u64 *)&cpb.data[cpb.header.image_ptr_offset];
 	cpb_corrupted = false;
+	cpb_fixed = true;
 
 ops_error:
 	free(c_header);
@@ -1193,6 +1195,7 @@ static int restore_cpb_from_address(u64 address)
 	cpb_slots = (u64 *)&cpb.data[cpb.header.image_ptr_offset];
 
 	cpb_corrupted = false;
+	cpb_fixed = true;
 	return 0;
 }
 
@@ -1785,6 +1788,7 @@ static void ll_exit(void)
 	cpb0_part = -1;
 	cpb1_part = -1;
 	cpb_corrupted = false;
+	cpb_fixed = false;
 	spt_corrupted = false;
 
 	if (flash) {
