@@ -333,8 +333,6 @@ static int fs_loader_probe(struct udevice *dev)
 #ifdef CONFIG_SPI_FLASH
 		ret = spi_flash_probe_bus_cs(plat->sfconfig.bus,
 					    plat->sfconfig.cs,
-					    plat->sfconfig.speed,
-					    plat->sfconfig.mode,
 					    &plat->flash);
 #endif
 		if (ret) {
