@@ -28,6 +28,7 @@
 
 #define PGTABLE_OFF	0x4000
 
+#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
 u32 hmc_readl(struct altera_sdram_plat *plat, u32 reg)
 {
 	return readl(plat->iomhc + reg);
@@ -99,6 +100,7 @@ int emif_reset(struct altera_sdram_plat *plat)
 	debug("DDR: %s triggered successly\n", __func__);
 	return 0;
 }
+#endif
 
 #if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE))
 int poll_hmc_clock_status(void)
@@ -324,7 +326,12 @@ static int altera_sdram_of_to_plat(struct udevice *dev)
 	/* These regs info are part of DDR handoff in bitstream */
 #if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 	return 0;
-#endif
+#elif IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+	addr = dev_read_addr_index(dev, 0);
+	if (addr == FDT_ADDR_T_NONE)
+		return -EINVAL;
+	plat->mpfe_base_addr = addr;
+#else
 
 	addr = dev_read_addr_index(dev, 0);
 	if (addr == FDT_ADDR_T_NONE)
@@ -340,21 +347,22 @@ static int altera_sdram_of_to_plat(struct udevice *dev)
 	if (addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
 	plat->hmc = (void __iomem *)addr;
-
+#endif
 	return 0;
 }
 
 static int altera_sdram_probe(struct udevice *dev)
 {
-	int ret;
 	struct altera_sdram_priv *priv = dev_get_priv(dev);
-
+#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+	int ret;
 	ret = reset_get_bulk(dev, &priv->resets);
 	if (ret) {
 		dev_err(dev, "Can't get reset: %d\n", ret);
 		return -ENODEV;
 	}
 	reset_deassert_bulk(&priv->resets);
+#endif
 
 	if (sdram_mmr_init_full(dev) != 0) {
 		puts("SDRAM init failed.\n");
