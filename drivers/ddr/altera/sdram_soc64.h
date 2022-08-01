@@ -14,11 +14,20 @@ struct altera_sdram_priv {
 	struct reset_ctl_bulk resets;
 };
 
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+struct altera_sdram_plat {
+	fdt_addr_t mpfe_base_addr;
+	bool dualport;
+	bool dualemif;
+};
+#else
+
 struct altera_sdram_plat {
 	void __iomem *hmc;
 	void __iomem *ddr_sch;
 	void __iomem *iomhc;
 };
+#endif
 
 /* ECC HMC registers */
 #define DDRIOCTRL			0x8
