@@ -27,7 +27,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 /* MPFE NOC registers */
 #define FPGA2SDRAM_MGR_MAIN_SIDEBANDMGR_FLAGOUTSET0	0x18001050
-
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)
 /* Reset type */
 enum reset_type {
 	POR_RESET,
@@ -43,7 +43,7 @@ static enum reset_type get_reset_type(u32 reg)
 	return (reg & ALT_SYSMGR_SCRATCH_REG_3_DDR_RESET_TYPE_MASK) >>
 		ALT_SYSMGR_SCRATCH_REG_3_DDR_RESET_TYPE_SHIFT;
 }
-
+#endif
 bool is_ddr_init_hang(void)
 {
 	u32 reg = readl(socfpga_get_sysmgr_addr() +
@@ -158,13 +158,14 @@ int sdram_mmr_init_full(struct udevice *dev)
 	struct altera_sdram_plat *plat = dev_get_plat(dev);
 	struct altera_sdram_priv *priv = dev_get_priv(dev);
 	struct io96b_info *io96b_ctrl = malloc(sizeof(*io96b_ctrl));
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)
 	u32 reg = readl(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_BOOT_SCRATCH_COLD3);
 	enum reset_type reset_t = get_reset_type(reg);
 	bool full_mem_init = false;
 
 	/* DDR initialization progress status tracking */
 	bool is_ddr_hang_be4_rst = is_ddr_init_hang();
-
+#endif
 	debug("DDR: SDRAM init in progress ...\n");
 	ddr_init_inprogress(true);
 
@@ -185,6 +186,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 		return ret;
 	}
 
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)
 	/* Ensure calibration status passing */
 	init_mem_cal(io96b_ctrl);
 
@@ -213,6 +215,11 @@ int sdram_mmr_init_full(struct udevice *dev)
 	}
 
 	hw_size = (phys_size_t)io96b_ctrl->overall_size * 1024 * 1024 * 1024;
+#else
+	/* hardcoded to 512MB on emulation */
+	hw_size = 0x20000000;
+	io96b_ctrl->ddr_type = "DDR";
+#endif
 
 	/* Get bank configuration from devicetree */
 	ret = fdtdec_decode_ram_size(gd->fdt_blob, NULL, 0, NULL,
@@ -237,6 +244,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 
 	printf("%s: %lld MiB\n", io96b_ctrl->ddr_type, gd->ram_size >> 20);
 
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)
 	ret = ecc_enable_status(io96b_ctrl);
 	if (ret) {
 		printf("DDR: Failed to get DDR ECC status\n");
@@ -259,7 +267,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 
 		printf("SDRAM-ECC: Initialized success\n");
 	}
-
+#endif
 	sdram_size_check(&bd);
 	printf("DDR: size check success\n");
 
