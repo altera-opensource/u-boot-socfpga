@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2019 Intel Corporation <www.intel.com>
+ * Copyright (C) 2019-2022 Intel Corporation <www.intel.com>
  */
 
 #include <common.h>
@@ -15,8 +15,16 @@
 #include <linux/bitops.h>
 
 #include <asm/arch/clock_manager.h>
+#include <asm/system.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+#define MPIDR_AFF1_OFFSET	8
+#define MPIDR_AFF1_MASK		0x3
+#define CORE0		1
+#define CORE1		2
+#define CORE2		3
+#define CORE3		4
 
 struct socfpga_clk_plat {
 	void __iomem *regs;
@@ -243,104 +251,154 @@ static void clk_basic_init(struct udevice *dev,
 	if (!cfg)
 		return;
 
+	if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU)) {
+		/* Take both PLL out of reset and power up */
+		CM_REG_SETBITS(plat, CLKMGR_MAINPLL_PLLGLOB,
+			       CLKMGR_PLLGLOB_PD_MASK | CLKMGR_PLLGLOB_RST_MASK);
+		CM_REG_SETBITS(plat, CLKMGR_PERPLL_PLLGLOB,
+			       CLKMGR_PLLGLOB_PD_MASK | CLKMGR_PLLGLOB_RST_MASK);
+
+		cm_wait_for_lock(CLKMGR_STAT_ALLPLL_LOCKED_MASK);
+
+		/* Put both PLLs in bypass */
+		clk_write_bypass_mainpll(plat, CLKMGR_BYPASS_MAINPLL_ALL);
+		clk_write_bypass_perpll(plat, CLKMGR_BYPASS_PERPLL_ALL);
+
+		/* Take all PLLs out of bypass */
+		clk_write_bypass_mainpll(plat, 0);
+		clk_write_bypass_perpll(plat, 0);
+	} else {
 #ifdef CONFIG_SPL_BUILD
-	/* Always force clock manager into boot mode before any configuration */
-	clk_write_ctrl(plat,
-		       CM_REG_READL(plat, CLKMGR_CTRL) | CLKMGR_CTRL_BOOTMODE);
+		/* Always force clock manager into boot mode before any configuration */
+		clk_write_ctrl(plat,
+			       CM_REG_READL(plat, CLKMGR_CTRL) | CLKMGR_CTRL_BOOTMODE);
 #else
-	/* Skip clock configuration in SSBL if it's not in boot mode */
-	if (!(CM_REG_READL(plat, CLKMGR_CTRL) & CLKMGR_CTRL_BOOTMODE))
-		return;
+		/* Skip clock configuration in SSBL if it's not in boot mode */
+		if (!(CM_REG_READL(plat, CLKMGR_CTRL) & CLKMGR_CTRL_BOOTMODE))
+			return;
 #endif
 
-	/* Put both PLLs in bypass */
-	clk_write_bypass_mainpll(plat, CLKMGR_BYPASS_MAINPLL_ALL);
-	clk_write_bypass_perpll(plat, CLKMGR_BYPASS_PERPLL_ALL);
+		/* Put both PLLs in bypass */
+		clk_write_bypass_mainpll(plat, CLKMGR_BYPASS_MAINPLL_ALL);
+		clk_write_bypass_perpll(plat, CLKMGR_BYPASS_PERPLL_ALL);
 
-	/* Put both PLLs in Reset and Power Down */
-	CM_REG_CLRBITS(plat, CLKMGR_MAINPLL_PLLGLOB,
-		       CLKMGR_PLLGLOB_PD_MASK | CLKMGR_PLLGLOB_RST_MASK);
-	CM_REG_CLRBITS(plat, CLKMGR_PERPLL_PLLGLOB,
-		       CLKMGR_PLLGLOB_PD_MASK | CLKMGR_PLLGLOB_RST_MASK);
+		/* Put both PLLs in Reset and Power Down */
+		CM_REG_CLRBITS(plat, CLKMGR_MAINPLL_PLLGLOB,
+			       CLKMGR_PLLGLOB_PD_MASK | CLKMGR_PLLGLOB_RST_MASK);
+		CM_REG_CLRBITS(plat, CLKMGR_PERPLL_PLLGLOB,
+			       CLKMGR_PLLGLOB_PD_MASK | CLKMGR_PLLGLOB_RST_MASK);
 
-	/* setup main PLL dividers where calculate the vcocalib value */
-	vcocalib = calc_vocalib_pll(cfg->main_pll_pllm, cfg->main_pll_pllglob);
-	CM_REG_WRITEL(plat, cfg->main_pll_pllglob & ~CLKMGR_PLLGLOB_RST_MASK,
-		      CLKMGR_MAINPLL_PLLGLOB);
-	CM_REG_WRITEL(plat, cfg->main_pll_fdbck, CLKMGR_MAINPLL_FDBCK);
-	CM_REG_WRITEL(plat, vcocalib, CLKMGR_MAINPLL_VCOCALIB);
-	CM_REG_WRITEL(plat, cfg->main_pll_pllc0, CLKMGR_MAINPLL_PLLC0);
-	CM_REG_WRITEL(plat, cfg->main_pll_pllc1, CLKMGR_MAINPLL_PLLC1);
-	CM_REG_WRITEL(plat, cfg->main_pll_pllc2, CLKMGR_MAINPLL_PLLC2);
-	CM_REG_WRITEL(plat, cfg->main_pll_pllc3, CLKMGR_MAINPLL_PLLC3);
-	CM_REG_WRITEL(plat, cfg->main_pll_pllm, CLKMGR_MAINPLL_PLLM);
-	CM_REG_WRITEL(plat, cfg->main_pll_mpuclk, CLKMGR_MAINPLL_MPUCLK);
-	CM_REG_WRITEL(plat, cfg->main_pll_nocclk, CLKMGR_MAINPLL_NOCCLK);
-	CM_REG_WRITEL(plat, cfg->main_pll_nocdiv, CLKMGR_MAINPLL_NOCDIV);
+		/* setup main PLL dividers where calculate the vcocalib value */
+		vcocalib = calc_vocalib_pll(cfg->main_pll_pllm, cfg->main_pll_pllglob);
+		CM_REG_WRITEL(plat, cfg->main_pll_pllglob & ~CLKMGR_PLLGLOB_RST_MASK,
+			      CLKMGR_MAINPLL_PLLGLOB);
+		CM_REG_WRITEL(plat, cfg->main_pll_fdbck, CLKMGR_MAINPLL_FDBCK);
+		CM_REG_WRITEL(plat, vcocalib, CLKMGR_MAINPLL_VCOCALIB);
+		CM_REG_WRITEL(plat, cfg->main_pll_pllc0, CLKMGR_MAINPLL_PLLC0);
+		CM_REG_WRITEL(plat, cfg->main_pll_pllc1, CLKMGR_MAINPLL_PLLC1);
+		CM_REG_WRITEL(plat, cfg->main_pll_pllc2, CLKMGR_MAINPLL_PLLC2);
+		CM_REG_WRITEL(plat, cfg->main_pll_pllc3, CLKMGR_MAINPLL_PLLC3);
+		CM_REG_WRITEL(plat, cfg->main_pll_pllm, CLKMGR_MAINPLL_PLLM);
+		CM_REG_WRITEL(plat, cfg->main_pll_nocclk, CLKMGR_MAINPLL_NOCCLK);
+		CM_REG_WRITEL(plat, cfg->main_pll_nocdiv, CLKMGR_MAINPLL_NOCDIV);
 
-	/* setup peripheral PLL dividers where calculate the vcocalib value */
-	vcocalib = calc_vocalib_pll(cfg->per_pll_pllm, cfg->per_pll_pllglob);
-	CM_REG_WRITEL(plat, cfg->per_pll_pllglob & ~CLKMGR_PLLGLOB_RST_MASK,
-		      CLKMGR_PERPLL_PLLGLOB);
-	CM_REG_WRITEL(plat, cfg->per_pll_fdbck, CLKMGR_PERPLL_FDBCK);
-	CM_REG_WRITEL(plat, vcocalib, CLKMGR_PERPLL_VCOCALIB);
-	CM_REG_WRITEL(plat, cfg->per_pll_pllc0, CLKMGR_PERPLL_PLLC0);
-	CM_REG_WRITEL(plat, cfg->per_pll_pllc1, CLKMGR_PERPLL_PLLC1);
-	CM_REG_WRITEL(plat, cfg->per_pll_pllc2, CLKMGR_PERPLL_PLLC2);
-	CM_REG_WRITEL(plat, cfg->per_pll_pllc3, CLKMGR_PERPLL_PLLC3);
-	CM_REG_WRITEL(plat, cfg->per_pll_pllm, CLKMGR_PERPLL_PLLM);
-	CM_REG_WRITEL(plat, cfg->per_pll_emacctl, CLKMGR_PERPLL_EMACCTL);
-	CM_REG_WRITEL(plat, cfg->per_pll_gpiodiv, CLKMGR_PERPLL_GPIODIV);
+		/* setup peripheral PLL dividers where calculate the vcocalib value */
+		vcocalib = calc_vocalib_pll(cfg->per_pll_pllm, cfg->per_pll_pllglob);
+		CM_REG_WRITEL(plat, cfg->per_pll_pllglob & ~CLKMGR_PLLGLOB_RST_MASK,
+			      CLKMGR_PERPLL_PLLGLOB);
+		CM_REG_WRITEL(plat, cfg->per_pll_fdbck, CLKMGR_PERPLL_FDBCK);
+		CM_REG_WRITEL(plat, vcocalib, CLKMGR_PERPLL_VCOCALIB);
+		CM_REG_WRITEL(plat, cfg->per_pll_pllc0, CLKMGR_PERPLL_PLLC0);
+		CM_REG_WRITEL(plat, cfg->per_pll_pllc1, CLKMGR_PERPLL_PLLC1);
+		CM_REG_WRITEL(plat, cfg->per_pll_pllc2, CLKMGR_PERPLL_PLLC2);
+		CM_REG_WRITEL(plat, cfg->per_pll_pllc3, CLKMGR_PERPLL_PLLC3);
+		CM_REG_WRITEL(plat, cfg->per_pll_pllm, CLKMGR_PERPLL_PLLM);
+		CM_REG_WRITEL(plat, cfg->per_pll_emacctl, CLKMGR_PERPLL_EMACCTL);
+		CM_REG_WRITEL(plat, cfg->per_pll_gpiodiv, CLKMGR_PERPLL_GPIODIV);
 
-	/* Take both PLL out of reset and power up */
-	CM_REG_SETBITS(plat, CLKMGR_MAINPLL_PLLGLOB,
-		       CLKMGR_PLLGLOB_PD_MASK | CLKMGR_PLLGLOB_RST_MASK);
-	CM_REG_SETBITS(plat, CLKMGR_PERPLL_PLLGLOB,
-		       CLKMGR_PLLGLOB_PD_MASK | CLKMGR_PLLGLOB_RST_MASK);
+		/* Configure ping pong counters in control group */
+		CM_REG_WRITEL(plat, cfg->ctl_emacactr, CLKMGR_CTL_EMACACTR);
+		CM_REG_WRITEL(plat, cfg->ctl_emacbctr, CLKMGR_CTL_EMACBCTR);
+		CM_REG_WRITEL(plat, cfg->ctl_emacptpctr, CLKMGR_CTL_EMACPTPCTR);
+		CM_REG_WRITEL(plat, cfg->ctl_gpiodbctr, CLKMGR_CTL_GPIODBCTR);
+		CM_REG_WRITEL(plat, cfg->ctl_s2fuser0ctr, CLKMGR_CTL_S2FUSER0CTR);
+		CM_REG_WRITEL(plat, cfg->ctl_s2fuser1ctr, CLKMGR_CTL_S2FUSER1CTR);
+		CM_REG_WRITEL(plat, cfg->ctl_psirefctr, CLKMGR_CTL_PSIREFCTR);
+		CM_REG_WRITEL(plat, cfg->ctl_usb31ctr, CLKMGR_CTL_USB31CTR);
+		CM_REG_WRITEL(plat, cfg->ctl_dsuctr, CLKMGR_CTL_DSUCTR);
+		CM_REG_WRITEL(plat, cfg->ctl_core01ctr, CLKMGR_CTL_CORE01CTR);
+		CM_REG_WRITEL(plat, cfg->ctl_core23ctr, CLKMGR_CTL_CORE23CTR);
+		CM_REG_WRITEL(plat, cfg->ctl_core2ctr, CLKMGR_CTL_CORE2CTR);
+		CM_REG_WRITEL(plat, cfg->ctl_core3ctr, CLKMGR_CTL_CORE3CTR);
 
-	/* Membus programming for mainpll */
-	membus_pll_configs(plat, MEMBUS_MAINPLL);
-	/* Membus programming for peripll */
-	membus_pll_configs(plat, MEMBUS_PERPLL);
+		/* Take both PLL out of reset and power up */
+		CM_REG_SETBITS(plat, CLKMGR_MAINPLL_PLLGLOB,
+			       CLKMGR_PLLGLOB_PD_MASK | CLKMGR_PLLGLOB_RST_MASK);
+		CM_REG_SETBITS(plat, CLKMGR_PERPLL_PLLGLOB,
+			       CLKMGR_PLLGLOB_PD_MASK | CLKMGR_PLLGLOB_RST_MASK);
 
-	cm_wait_for_lock(CLKMGR_STAT_ALLPLL_LOCKED_MASK);
+		/* Membus programming for mainpll */
+		membus_pll_configs(plat, MEMBUS_MAINPLL);
+		/* Membus programming for peripll */
+		membus_pll_configs(plat, MEMBUS_PERPLL);
 
-	/* Configure ping pong counters in altera group */
-	CM_REG_WRITEL(plat, cfg->alt_emacactr, CLKMGR_ALTR_EMACACTR);
-	CM_REG_WRITEL(plat, cfg->alt_emacbctr, CLKMGR_ALTR_EMACBCTR);
-	CM_REG_WRITEL(plat, cfg->alt_emacptpctr, CLKMGR_ALTR_EMACPTPCTR);
-	CM_REG_WRITEL(plat, cfg->alt_gpiodbctr, CLKMGR_ALTR_GPIODBCTR);
-	CM_REG_WRITEL(plat, cfg->alt_sdmmcctr, CLKMGR_ALTR_SDMMCCTR);
-	CM_REG_WRITEL(plat, cfg->alt_s2fuser0ctr, CLKMGR_ALTR_S2FUSER0CTR);
-	CM_REG_WRITEL(plat, cfg->alt_s2fuser1ctr, CLKMGR_ALTR_S2FUSER1CTR);
-	CM_REG_WRITEL(plat, cfg->alt_psirefctr, CLKMGR_ALTR_PSIREFCTR);
+		/* Enable Main pll clkslices */
+		CM_REG_WRITEL(plat, CM_REG_READL(plat, CLKMGR_MAINPLL_PLLC0) |
+				CLKMGR_PLLCX_EN_SET_MSK,
+				CLKMGR_MAINPLL_PLLC0);
+		CM_REG_WRITEL(plat, CM_REG_READL(plat, CLKMGR_MAINPLL_PLLC1) |
+				CLKMGR_PLLCX_EN_SET_MSK,
+				CLKMGR_MAINPLL_PLLC1);
+		CM_REG_WRITEL(plat, CM_REG_READL(plat, CLKMGR_MAINPLL_PLLC2) |
+				CLKMGR_PLLCX_EN_SET_MSK,
+				CLKMGR_MAINPLL_PLLC2);
+		CM_REG_WRITEL(plat, CM_REG_READL(plat, CLKMGR_MAINPLL_PLLC3) |
+				CLKMGR_PLLCX_EN_SET_MSK,
+				CLKMGR_MAINPLL_PLLC3);
 
-	CM_REG_WRITEL(plat, CLKMGR_LOSTLOCK_SET_MASK, CLKMGR_MAINPLL_LOSTLOCK);
-	CM_REG_WRITEL(plat, CLKMGR_LOSTLOCK_SET_MASK, CLKMGR_PERPLL_LOSTLOCK);
+		/* Enable Periph pll clkslices */
+		CM_REG_WRITEL(plat, CM_REG_READL(plat, CLKMGR_PERPLL_PLLC0) |
+				CLKMGR_PLLCX_EN_SET_MSK,
+				CLKMGR_PERPLL_PLLC0);
+		CM_REG_WRITEL(plat, CM_REG_READL(plat, CLKMGR_PERPLL_PLLC1) |
+				CLKMGR_PLLCX_EN_SET_MSK,
+				CLKMGR_PERPLL_PLLC1);
+		CM_REG_WRITEL(plat, CM_REG_READL(plat, CLKMGR_PERPLL_PLLC2) |
+				CLKMGR_PLLCX_EN_SET_MSK,
+				CLKMGR_PERPLL_PLLC2);
+		CM_REG_WRITEL(plat, CM_REG_READL(plat, CLKMGR_PERPLL_PLLC3) |
+				CLKMGR_PLLCX_EN_SET_MSK,
+				CLKMGR_PERPLL_PLLC3);
 
-	CM_REG_WRITEL(plat, CM_REG_READL(plat, CLKMGR_MAINPLL_PLLGLOB) |
-			CLKMGR_PLLGLOB_CLR_LOSTLOCK_BYPASS_MASK,
-			CLKMGR_MAINPLL_PLLGLOB);
-	CM_REG_WRITEL(plat, CM_REG_READL(plat, CLKMGR_PERPLL_PLLGLOB) |
-			CLKMGR_PLLGLOB_CLR_LOSTLOCK_BYPASS_MASK,
-			CLKMGR_PERPLL_PLLGLOB);
+		cm_wait_for_lock(CLKMGR_STAT_ALLPLL_LOCKED_MASK);
 
-	/* Take all PLLs out of bypass */
-	clk_write_bypass_mainpll(plat, 0);
-	clk_write_bypass_perpll(plat, 0);
+		CM_REG_WRITEL(plat, CLKMGR_LOSTLOCK_SET_MASK, CLKMGR_MAINPLL_LOSTLOCK);
+		CM_REG_WRITEL(plat, CLKMGR_LOSTLOCK_SET_MASK, CLKMGR_PERPLL_LOSTLOCK);
 
-	/* Clear the loss of lock bits (write 1 to clear) */
-	CM_REG_CLRBITS(plat, CLKMGR_INTRCLR,
-		       CLKMGR_INTER_PERPLLLOST_MASK |
-		       CLKMGR_INTER_MAINPLLLOST_MASK);
+		CM_REG_WRITEL(plat, CM_REG_READL(plat, CLKMGR_MAINPLL_PLLGLOB) |
+				CLKMGR_PLLGLOB_CLR_LOSTLOCK_BYPASS_MASK,
+				CLKMGR_MAINPLL_PLLGLOB);
+		CM_REG_WRITEL(plat, CM_REG_READL(plat, CLKMGR_PERPLL_PLLGLOB) |
+				CLKMGR_PLLGLOB_CLR_LOSTLOCK_BYPASS_MASK,
+				CLKMGR_PERPLL_PLLGLOB);
 
-	/* Take all ping pong counters out of reset */
-	CM_REG_CLRBITS(plat, CLKMGR_ALTR_EXTCNTRST,
-		       CLKMGR_ALT_EXTCNTRST_ALLCNTRST);
+		/* Take all PLLs out of bypass */
+		clk_write_bypass_mainpll(plat, 0);
+		clk_write_bypass_perpll(plat, 0);
 
-	/* Out of boot mode */
-	clk_write_ctrl(plat,
-		       CM_REG_READL(plat, CLKMGR_CTRL) & ~CLKMGR_CTRL_BOOTMODE);
+		/* Clear the loss of lock bits (write 1 to clear) */
+		CM_REG_CLRBITS(plat, CLKMGR_INTRCLR,
+			       CLKMGR_INTER_PERPLLLOST_MASK |
+			       CLKMGR_INTER_MAINPLLLOST_MASK);
+
+		/* Take all ping pong counters out of reset */
+		CM_REG_CLRBITS(plat, CLKMGR_CTL_EXTCNTRST,
+			       CLKMGR_CTL_EXTCNTRST_ALLCNTRST);
+
+		/* Out of boot mode */
+		clk_write_ctrl(plat,
+			       CM_REG_READL(plat, CLKMGR_CTRL) & ~CLKMGR_CTRL_BOOTMODE);
+	}
 }
 
 static u64 clk_get_vco_clk_hz(struct socfpga_clk_plat *plat,
@@ -434,11 +492,32 @@ static u64 clk_get_clksrc_hz(struct socfpga_clk_plat *plat, u32 clksrc_reg,
 
 static u64 clk_get_mpu_clk_hz(struct socfpga_clk_plat *plat)
 {
-	u64 clock = clk_get_clksrc_hz(plat, CLKMGR_MAINPLL_MPUCLK,
-				      CLKMGR_MAINPLL_PLLC0,
-				      CLKMGR_PERPLL_PLLC0);
+	u64 clock;
+	u32 ctr_reg;
+	u32 cpu = ((read_mpidr() >> MPIDR_AFF1_OFFSET) & MPIDR_AFF1_OFFSET);
 
-	clock /= 1 + (CM_REG_READL(plat, CLKMGR_MAINPLL_MPUCLK) &
+	if (cpu > CORE1) {
+		ctr_reg = CLKMGR_CTL_CORE23CTR;
+
+		clock = clk_get_clksrc_hz(plat, ctr_reg,
+					  CLKMGR_MAINPLL_PLLC0,
+					  CLKMGR_PERPLL_PLLC0);
+	} else {
+		ctr_reg = CLKMGR_CTL_CORE01CTR;
+
+		clock = clk_get_clksrc_hz(plat, ctr_reg,
+					  CLKMGR_MAINPLL_PLLC1,
+					  CLKMGR_PERPLL_PLLC0);
+	}
+
+	if (cpu == CORE3)
+		ctr_reg = CLKMGR_CTL_CORE3CTR;
+	else if (cpu == CORE2)
+		ctr_reg = CLKMGR_CTL_CORE2CTR;
+	else
+		ctr_reg = CLKMGR_CTL_CORE01CTR;
+
+	clock /= 1 + (CM_REG_READL(plat, ctr_reg) &
 		 CLKMGR_CLKCNT_MSK);
 
 	return clock;
@@ -447,7 +526,7 @@ static u64 clk_get_mpu_clk_hz(struct socfpga_clk_plat *plat)
 static u32 clk_get_l3_main_clk_hz(struct socfpga_clk_plat *plat)
 {
 	return clk_get_clksrc_hz(plat, CLKMGR_MAINPLL_NOCCLK,
-				      CLKMGR_MAINPLL_PLLC1,
+				      CLKMGR_MAINPLL_PLLC3,
 				      CLKMGR_PERPLL_PLLC1);
 }
 
@@ -455,23 +534,7 @@ static u32 clk_get_l4_main_clk_hz(struct socfpga_clk_plat *plat)
 {
 	u64 clock = clk_get_l3_main_clk_hz(plat);
 
-	clock /= BIT((CM_REG_READL(plat, CLKMGR_MAINPLL_NOCDIV) >>
-	      CLKMGR_NOCDIV_L4MAIN_OFFSET) &
-	      CLKMGR_NOCDIV_DIVIDER_MASK);
-
 	return clock;
-}
-
-static u32 clk_get_sdmmc_clk_hz(struct socfpga_clk_plat *plat)
-{
-	u64 clock = clk_get_clksrc_hz(plat, CLKMGR_ALTR_SDMMCCTR,
-				      CLKMGR_MAINPLL_PLLC3,
-				      CLKMGR_PERPLL_PLLC3);
-
-	clock /= 1 + (CM_REG_READL(plat, CLKMGR_ALTR_SDMMCCTR) &
-		 CLKMGR_CLKCNT_MSK);
-
-	return clock / 4;
 }
 
 static u32 clk_get_l4_sp_clk_hz(struct socfpga_clk_plat *plat)
@@ -496,6 +559,17 @@ static u32 clk_get_l4_mp_clk_hz(struct socfpga_clk_plat *plat)
 	return clock;
 }
 
+static u32 clk_get_sdmmc_clk_hz(struct socfpga_clk_plat *plat)
+{
+	u64 clock = clk_get_l4_mp_clk_hz(plat);
+
+	clock /= BIT((CM_REG_READL(plat, CLKMGR_MAINPLL_NOCDIV) >>
+		      CLKMGR_NOCDIV_SOFTPHY_OFFSET) &
+		      CLKMGR_NOCDIV_DIVIDER_MASK);
+
+	return clock;
+}
+
 static u32 clk_get_l4_sys_free_clk_hz(struct socfpga_clk_plat *plat)
 {
 	if (CM_REG_READL(plat, CLKMGR_STAT) & CLKMGR_STAT_BOOTMODE)
@@ -506,7 +580,6 @@ static u32 clk_get_l4_sys_free_clk_hz(struct socfpga_clk_plat *plat)
 
 static u32 clk_get_emac_clk_hz(struct socfpga_clk_plat *plat, u32 emac_id)
 {
-	bool emacsel_a;
 	u32 ctl;
 	u32 ctr_reg;
 	u32 clock;
@@ -514,56 +587,52 @@ static u32 clk_get_emac_clk_hz(struct socfpga_clk_plat *plat, u32 emac_id)
 	u32 reg;
 
 	/* Get EMAC clock source */
-	ctl = CM_REG_READL(plat, CLKMGR_PERPLL_EMACCTL);
-	if (emac_id == AGILEX_EDGE_EMAC0_CLK)
-		ctl = (ctl >> CLKMGR_PERPLLGRP_EMACCTL_EMAC0SELB_OFFSET) &
-		       CLKMGR_PERPLLGRP_EMACCTL_EMAC0SELB_MASK;
-	else if (emac_id == AGILEX_EDGE_EMAC1_CLK)
-		ctl = (ctl >> CLKMGR_PERPLLGRP_EMACCTL_EMAC1SELB_OFFSET) &
-		       CLKMGR_PERPLLGRP_EMACCTL_EMAC1SELB_MASK;
-	else if (emac_id == AGILEX_EDGE_EMAC2_CLK)
-		ctl = (ctl >> CLKMGR_PERPLLGRP_EMACCTL_EMAC2SELB_OFFSET) &
-		       CLKMGR_PERPLLGRP_EMACCTL_EMAC2SELB_MASK;
-	else
-		return 0;
+	reg = CM_REG_READL(plat, CLKMGR_CTL_EMACACTR);
+	clock = (reg & CLKMGR_CTL_EMACCTR_SRC_MASK)
+		 >> CLKMGR_CTL_EMACCTR_SRC_OFFSET;
 
-	if (ctl) {
-		/* EMAC B source */
-		emacsel_a = false;
-		ctr_reg = CLKMGR_ALTR_EMACBCTR;
+	if (emac_id == AGILEX_EDGE_EMAC_PTP_CLK) {
+		ctr_reg = CLKMGR_CTL_EMACPTPCTR;
 	} else {
-		/* EMAC A source */
-		emacsel_a = true;
-		ctr_reg = CLKMGR_ALTR_EMACACTR;
+		ctl = CM_REG_READL(plat, CLKMGR_PERPLL_EMACCTL);
+		if (emac_id == AGILEX_EDGE_EMAC0_CLK)
+			ctl = (ctl >> CLKMGR_PERPLLGRP_EMACCTL_EMAC0SELB_OFFSET) &
+			       CLKMGR_PERPLLGRP_EMACCTL_EMAC0SELB_MASK;
+		else if (emac_id == AGILEX_EDGE_EMAC1_CLK)
+			ctl = (ctl >> CLKMGR_PERPLLGRP_EMACCTL_EMAC1SELB_OFFSET) &
+			       CLKMGR_PERPLLGRP_EMACCTL_EMAC1SELB_MASK;
+		else if (emac_id == AGILEX_EDGE_EMAC2_CLK)
+			ctl = (ctl >> CLKMGR_PERPLLGRP_EMACCTL_EMAC2SELB_OFFSET) &
+			       CLKMGR_PERPLLGRP_EMACCTL_EMAC2SELB_MASK;
+		else
+			return 0;
+
+		if (ctl) {
+			/* EMAC B source */
+			ctr_reg = CLKMGR_CTL_EMACBCTR;
+		} else {
+			/* EMAC A source */
+			ctr_reg = CLKMGR_CTL_EMACACTR;
+		}
 	}
 
 	reg = CM_REG_READL(plat, ctr_reg);
-	clock = (reg & CLKMGR_ALT_EMACCTR_SRC_MASK)
-		 >> CLKMGR_ALT_EMACCTR_SRC_OFFSET;
-	div = (reg & CLKMGR_ALT_EMACCTR_CNT_MASK)
-		>> CLKMGR_ALT_EMACCTR_CNT_OFFSET;
+	div = (reg & CLKMGR_CTL_EMACCTR_CNT_MASK)
+		>> CLKMGR_CTL_EMACCTR_CNT_OFFSET;
 
 	switch (clock) {
 	case CLKMGR_CLKSRC_MAIN:
 		clock = clk_get_main_vco_clk_hz(plat);
-		if (emacsel_a) {
-			clock /= (CM_REG_READL(plat, CLKMGR_MAINPLL_PLLC2) &
-				  CLKMGR_CLKCNT_MSK);
-		} else {
-			clock /= (CM_REG_READL(plat, CLKMGR_MAINPLL_PLLC3) &
-				  CLKMGR_CLKCNT_MSK);
-		}
+
+		clock /= (CM_REG_READL(plat, CLKMGR_MAINPLL_PLLC1) &
+			  CLKMGR_CLKCNT_MSK);
 		break;
 
 	case CLKMGR_CLKSRC_PER:
 		clock = clk_get_per_vco_clk_hz(plat);
-		if (emacsel_a) {
-			clock /= (CM_REG_READL(plat, CLKMGR_PERPLL_PLLC2) &
-				  CLKMGR_CLKCNT_MSK);
-		} else {
-			clock /= (CM_REG_READL(plat, CLKMGR_PERPLL_PLLC3) &
-				  CLKMGR_CLKCNT_MSK);
-		}
+
+		clock /= (CM_REG_READL(plat, CLKMGR_PERPLL_PLLC3) &
+			  CLKMGR_CLKCNT_MSK);
 		break;
 
 	case CLKMGR_CLKSRC_OSC1:
@@ -600,16 +669,16 @@ static ulong socfpga_clk_get_rate(struct clk *clk)
 	case AGILEX_EDGE_L4_SP_CLK:
 		return clk_get_l4_sp_clk_hz(plat);
 	case AGILEX_EDGE_SDMMC_CLK:
+	case AGILEX_EDGE_NAND_CLK:
 		return clk_get_sdmmc_clk_hz(plat);
 	case AGILEX_EDGE_EMAC0_CLK:
 	case AGILEX_EDGE_EMAC1_CLK:
 	case AGILEX_EDGE_EMAC2_CLK:
+	case AGILEX_EDGE_EMAC_PTP_CLK:
 		return clk_get_emac_clk_hz(plat, clk->id);
 	case AGILEX_EDGE_USB_CLK:
 	case AGILEX_EDGE_NAND_X_CLK:
 		return clk_get_l4_mp_clk_hz(plat);
-	case AGILEX_EDGE_NAND_CLK:
-		return clk_get_l4_mp_clk_hz(plat) / 4;
 	default:
 		return -ENXIO;
 	}
