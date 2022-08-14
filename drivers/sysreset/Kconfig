@@ -137,6 +137,13 @@ config SYSRESET_SOCFPGA_SOC64
 	  This enables the system reset driver support for Intel SOCFPGA
 	  SoC64 SoCs.
 
+config SYSRESET_SOCFPGA_AGILEX_EDGE
+	bool "Enable support for Intel SOCFPGA AGILEX EDGE device"
+	depends on ARCH_SOCFPGA && TARGET_SOCFPGA_AGILEX_EDGE
+	help
+	  This enables the system reset driver support for Intel SOCFPGA
+	  AGILEX EDGE device.
+
 config SYSRESET_TI_SCI
 	bool "TI System Control Interface (TI SCI) system reset driver"
 	depends on TI_SCI_PROTOCOL
