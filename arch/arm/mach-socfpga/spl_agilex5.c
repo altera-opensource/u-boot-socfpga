@@ -56,9 +56,12 @@ void board_init_f(ulong dummy)
 
 	sysmgr_pinmux_init();
 
+	if (!(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS) ||
+	      IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU))) {
 	/* Ensure watchdog is paused when debugging is happening */
 	writel(SYSMGR_WDDBG_PAUSE_ALL_CPU,
 	       socfpga_get_sysmgr_addr() + SYSMGR_SOC64_WDDBG);
+	}
 
 	timer_init();
 
@@ -72,13 +75,16 @@ void board_init_f(ulong dummy)
 		hang();
 	}
 
-	/*
-	 * Enable watchdog as early as possible before initializing other
-	 * component. Watchdog need to be enabled after clock driver because
-	 * it will retrieve the clock frequency from clock driver.
-	 */
-	if (CONFIG_IS_ENABLED(WDT))
-		initr_watchdog();
+	if (!(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS) ||
+	      IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU))) {
+		/*
+		 * Enable watchdog as early as possible before initializing other
+		 * component. Watchdog need to be enabled after clock driver because
+		 * it will retrieve the clock frequency from clock driver.
+		 */
+		if (CONFIG_IS_ENABLED(WDT))
+			initr_watchdog();
+	}
 
 	preloader_console_init();
 	print_reset_info();
