@@ -100,7 +100,7 @@
 		};
 
 		clkmgr: clock-controller@10d10000 {
-			compatible = "intel,agilex-clkmgr";
+			compatible = "intel,agilex-edge-clkmgr";
 			reg = <0x10d10000 0x1000>;
 			#clock-cells = <1>;
 		};
