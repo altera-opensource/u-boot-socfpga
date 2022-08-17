@@ -108,6 +108,7 @@ static const u32 hardcoded_handoff_data[394] = {
 void board_init_f(ulong dummy)
 {
 	int ret;
+	struct udevice *dev;
 
 	ret = spl_early_init();
 	if (ret)
@@ -126,11 +127,12 @@ void board_init_f(ulong dummy)
 
 	sysmgr_pinmux_init();
 
-#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU))
-
-	/* Ensure watchdog is paused when debugging is happening */
-	writel(SYSMGR_WDDBG_PAUSE_ALL_CPU,
-	       socfpga_get_sysmgr_addr() + SYSMGR_SOC64_WDDBG);
+	if (!(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS) ||
+	      IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU))) {
+		/* Ensure watchdog is paused when debugging is happening */
+		writel(SYSMGR_WDDBG_PAUSE_ALL_CPU,
+		       socfpga_get_sysmgr_addr() + SYSMGR_SOC64_WDDBG);
+	}
 
 	timer_init();
 
@@ -140,20 +142,20 @@ void board_init_f(ulong dummy)
 		hang();
 	}
 
-	/*
-	 * Enable watchdog as early as possible before initializing other
-	 * component. Watchdog need to be enabled after clock driver because
-	 * it will retrieve the clock frequency from clock driver.
-	 */
-	if (CONFIG_IS_ENABLED(WDT))
-		initr_watchdog();
-#endif
+	if (!(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS) ||
+	      IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU))) {
+		/*
+		 * Enable watchdog as early as possible before initializing other
+		 * component. Watchdog need to be enabled after clock driver because
+		 * it will retrieve the clock frequency from clock driver.
+		 */
+		if (CONFIG_IS_ENABLED(WDT))
+			initr_watchdog();
+	}
 
 	preloader_console_init();
 	print_reset_info();
 	cm_print_clock_quick_summary();
-
-	struct udevice *dev;
 
 	ret = uclass_get_device_by_name(UCLASS_NOP, "socfpga-secreg", &dev);
 	if (ret) {
