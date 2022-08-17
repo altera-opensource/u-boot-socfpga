@@ -57,6 +57,8 @@
 
 &uart0 {
 	status = "okay";
+	/* This patch should be removed when working on customer reference U-Boot branch */
+	/delete-property/ clocks;
 	clock-frequency = <76800>;
 };
 
