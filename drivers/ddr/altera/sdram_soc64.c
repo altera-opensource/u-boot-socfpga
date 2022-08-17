@@ -254,7 +254,6 @@ phys_size_t sdram_calculate_size(struct altera_sdram_plat *plat)
 	return size;
 }
 
-#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
 void sdram_set_firewall(struct bd_info *bd)
 {
 	u32 i;
@@ -316,7 +315,6 @@ void sdram_set_firewall(struct bd_info *bd)
 				      FW_MPU_DDR_SCR_EN_SET);
 	}
 }
-#endif
 
 static int altera_sdram_of_to_plat(struct udevice *dev)
 {
