@@ -352,7 +352,7 @@ static int altera_sdram_of_to_plat(struct udevice *dev)
 static int altera_sdram_probe(struct udevice *dev)
 {
 	struct altera_sdram_priv *priv = dev_get_priv(dev);
-#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+
 	int ret;
 	ret = reset_get_bulk(dev, &priv->resets);
 	if (ret) {
@@ -360,7 +360,6 @@ static int altera_sdram_probe(struct udevice *dev)
 		return -ENODEV;
 	}
 	reset_deassert_bulk(&priv->resets);
-#endif
 
 	if (sdram_mmr_init_full(dev) != 0) {
 		puts("SDRAM init failed.\n");
