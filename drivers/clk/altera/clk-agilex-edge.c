@@ -267,6 +267,8 @@ static void clk_basic_init(struct udevice *dev,
 		/* Take all PLLs out of bypass */
 		clk_write_bypass_mainpll(plat, 0);
 		clk_write_bypass_perpll(plat, 0);
+	} else if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)) {
+		/* skip clock init */
 	} else {
 #ifdef CONFIG_SPL_BUILD
 		/* Always force clock manager into boot mode before any configuration */
