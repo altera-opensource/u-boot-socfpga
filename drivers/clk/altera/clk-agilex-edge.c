@@ -659,30 +659,60 @@ static ulong socfpga_clk_get_rate(struct clk *clk)
 {
 	struct socfpga_clk_plat *plat = dev_get_plat(clk->dev);
 
-	switch (clk->id) {
-	case AGILEX_EDGE_MPU_CLK:
-		return clk_get_mpu_clk_hz(plat);
-	case AGILEX_EDGE_L4_MAIN_CLK:
-		return clk_get_l4_main_clk_hz(plat);
-	case AGILEX_EDGE_L4_SYS_FREE_CLK:
-		return clk_get_l4_sys_free_clk_hz(plat);
-	case AGILEX_EDGE_L4_MP_CLK:
-		return clk_get_l4_mp_clk_hz(plat);
-	case AGILEX_EDGE_L4_SP_CLK:
-		return clk_get_l4_sp_clk_hz(plat);
-	case AGILEX_EDGE_SDMMC_CLK:
-	case AGILEX_EDGE_NAND_CLK:
-		return clk_get_sdmmc_clk_hz(plat);
-	case AGILEX_EDGE_EMAC0_CLK:
-	case AGILEX_EDGE_EMAC1_CLK:
-	case AGILEX_EDGE_EMAC2_CLK:
-	case AGILEX_EDGE_EMAC_PTP_CLK:
-		return clk_get_emac_clk_hz(plat, clk->id);
-	case AGILEX_EDGE_USB_CLK:
-	case AGILEX_EDGE_NAND_X_CLK:
-		return clk_get_l4_mp_clk_hz(plat);
-	default:
-		return -ENXIO;
+	/* This patch should be removed when working on customer reference U-Boot branch */
+	if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS) ||
+	    IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU)) {
+		switch (clk->id) {
+		case AGILEX_EDGE_MPU_CLK:
+			return 640000000;
+		case AGILEX_EDGE_L4_MAIN_CLK:
+			return 400000000;
+		case AGILEX_EDGE_L4_SYS_FREE_CLK:
+			return 100000000;
+		case AGILEX_EDGE_L4_MP_CLK:
+			return 200000000;
+		case AGILEX_EDGE_L4_SP_CLK:
+			return 100000000;
+		case AGILEX_EDGE_SDMMC_CLK:
+		case AGILEX_EDGE_NAND_CLK:
+			return 50000000;
+		case AGILEX_EDGE_EMAC0_CLK:
+		case AGILEX_EDGE_EMAC1_CLK:
+		case AGILEX_EDGE_EMAC2_CLK:
+		case AGILEX_EDGE_EMAC_PTP_CLK:
+			return 250000000;
+		case AGILEX_EDGE_USB_CLK:
+		case AGILEX_EDGE_NAND_X_CLK:
+			return 200000000;
+		default:
+			return -ENXIO;
+		}
+	} else {
+		switch (clk->id) {
+		case AGILEX_EDGE_MPU_CLK:
+			return clk_get_mpu_clk_hz(plat);
+		case AGILEX_EDGE_L4_MAIN_CLK:
+			return clk_get_l4_main_clk_hz(plat);
+		case AGILEX_EDGE_L4_SYS_FREE_CLK:
+			return clk_get_l4_sys_free_clk_hz(plat);
+		case AGILEX_EDGE_L4_MP_CLK:
+			return clk_get_l4_mp_clk_hz(plat);
+		case AGILEX_EDGE_L4_SP_CLK:
+			return clk_get_l4_sp_clk_hz(plat);
+		case AGILEX_EDGE_SDMMC_CLK:
+		case AGILEX_EDGE_NAND_CLK:
+			return clk_get_sdmmc_clk_hz(plat);
+		case AGILEX_EDGE_EMAC0_CLK:
+		case AGILEX_EDGE_EMAC1_CLK:
+		case AGILEX_EDGE_EMAC2_CLK:
+		case AGILEX_EDGE_EMAC_PTP_CLK:
+			return clk_get_emac_clk_hz(plat, clk->id);
+		case AGILEX_EDGE_USB_CLK:
+		case AGILEX_EDGE_NAND_X_CLK:
+			return clk_get_l4_mp_clk_hz(plat);
+		default:
+			return -ENXIO;
+		}
 	}
 }
 
