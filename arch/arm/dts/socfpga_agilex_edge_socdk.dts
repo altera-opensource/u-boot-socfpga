@@ -49,10 +49,11 @@
 };
 
 &mmc {
-	status = "disabled";
-	cap-sd-highspeed;
-	broken-cd;
-	bus-width = <4>;
+	status = "okay";
+};
+
+&combophy0 {
+	status = "okay";
 };
 
 &uart0 {
