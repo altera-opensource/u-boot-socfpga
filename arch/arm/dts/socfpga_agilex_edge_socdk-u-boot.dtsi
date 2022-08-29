@@ -29,7 +29,7 @@
 
 	chosen {
 		stdout-path = "serial0:115200n8";
-		u-boot,spl-boot-order = &flash0,"/memory";
+		u-boot,spl-boot-order = &mmc,&flash0,"/memory";
 	};
 };
 
@@ -51,8 +51,16 @@
 };
 
 &mmc {
-	drvsel = <3>;
-	smplsel = <0>;
+	status = "okay";
+	bus-width = <4>;
+	cap-sd-highspeed;
+	mmc-ddr-1_8v;
+	cap-mmc-highspeed;
+	u-boot,dm-pre-reloc;
+};
+
+&combophy0 {
+	status = "okay";
 	u-boot,dm-pre-reloc;
 };
 

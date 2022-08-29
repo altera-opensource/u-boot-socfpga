@@ -281,18 +281,28 @@
 			status = "disabled";
 		};
 
-		mmc: dwmmc0@10808000 {
+		combophy0: combophy@0 {
+			#phy-cells = <0>;
+			phy-type = <1>;
+			compatible = "cdns,combophy";
+			reg = <0x10808000 0x1000>;
+			status = "disabled";
+		};
+
+		mmc: mmc0@10808000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
-			compatible = "altr,socfpga-dw-mshc";
-			reg = <0xff808000 0x460>;
+			compatible = "cdns,sd4hc";
+			reg = <0x10808000 0x1000>;
 			interrupts = <0 96 4>;
-			fifo-depth = <0x400>;
-			resets = <&rst SDMMC_RESET>;
-			reset-names = "reset";
+			phys = <&combophy0>;
+			phy-names = "combo-phy";
 			clocks = <&clkmgr AGILEX_EDGE_L4_MP_CLK>,
 				 <&clkmgr AGILEX_EDGE_SDMMC_CLK>;
 			clock-names = "biu", "ciu";
+			fifo-depth = <0x800>;
+			resets = <&rst SDMMC_RESET>;
+			reset-names = "reset";
 			iommus = <&smmu 5>;
 			status = "disabled";
 		};
