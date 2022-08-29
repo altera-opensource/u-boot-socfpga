@@ -51,8 +51,11 @@
 };
 
 &mmc {
-	drvsel = <3>;
-	smplsel = <0>;
+	status = "okay";
+	bus-width = <4>;
+	cap-sd-highspeed;
+	mmc-ddr-1_8v;
+	cap-mmc-highspeed;
 	u-boot,dm-pre-reloc;
 };
 
