@@ -5,7 +5,10 @@
  */
 
 #include <common.h>
+#include <clk.h>
 #include <dm.h>
+#include <generic-phy.h>
+#include <asm/arch/clock_manager.h>
 #include <asm/global_data.h>
 #include <dm/device_compat.h>
 #include <linux/bitfield.h>
@@ -18,8 +21,12 @@
 #include <mmc.h>
 #include <sdhci.h>
 
+/* General define */
+#define SD_MIN_CLK 20000
+
 /* HRS - Host Register Set (specific to Cadence) */
 #define SDHCI_CDNS_HRS04		0x10		/* PHY access port */
+#define SDHCI_CDNS_HRS05		0x14		/* PHY data access port */
 #define   SDHCI_CDNS_HRS04_ACK			BIT(26)
 #define   SDHCI_CDNS_HRS04_RD			BIT(25)
 #define   SDHCI_CDNS_HRS04_WR			BIT(24)
@@ -66,6 +73,14 @@ struct sdhci_cdns_plat {
 	struct mmc_config cfg;
 	struct mmc mmc;
 	void __iomem *hrs_addr;
+	struct udevice *phy_dev;
+	bool phy_enabled;
+};
+
+/* socfpga implementation specific driver private data */
+struct sdhci_socfpga_priv_data {
+	struct sdhci_host host;
+	struct phy phy;
 };
 
 struct sdhci_cdns_phy_cfg {
@@ -94,25 +109,45 @@ static int sdhci_cdns_write_phy_reg(struct sdhci_cdns_plat *plat,
 	u32 tmp;
 	int ret;
 
-	tmp = FIELD_PREP(SDHCI_CDNS_HRS04_WDATA, data) |
-	      FIELD_PREP(SDHCI_CDNS_HRS04_ADDR, addr);
-	writel(tmp, reg);
+	if (plat->phy_enabled) {
+		/* retrieve reg. addr */
+		tmp = FIELD_PREP(SDHCI_CDNS_HRS04_ADDR, addr);
 
-	tmp |= SDHCI_CDNS_HRS04_WR;
-	writel(tmp, reg);
+		ret = writel(tmp, reg);
+		debug("%s: register = 0x%08x\n", __func__, readl(reg));
 
-	ret = readl_poll_timeout(reg, tmp, tmp & SDHCI_CDNS_HRS04_ACK, 10);
-	if (ret)
-		return ret;
+		/* read existing value, mask it */
+		reg = plat->hrs_addr + SDHCI_CDNS_HRS05;
+		tmp = readl(reg);
+		debug("%s: register = 0x%08x\n", __func__, readl(reg));
 
-	tmp &= ~SDHCI_CDNS_HRS04_WR;
-	writel(tmp, reg);
+		tmp &= ~data;
+		tmp |= data;
+
+		/* write operation */
+		ret = writel(tmp, reg);
+		debug("%s: register = 0x%08x\n", __func__, readl(reg));
+	} else {
+		tmp = FIELD_PREP(SDHCI_CDNS_HRS04_WDATA, data) |
+			  FIELD_PREP(SDHCI_CDNS_HRS04_ADDR, addr);
+		writel(tmp, reg);
+
+		tmp |= SDHCI_CDNS_HRS04_WR;
+		writel(tmp, reg);
+
+		ret = readl_poll_timeout(reg, tmp, tmp & SDHCI_CDNS_HRS04_ACK, 10);
+		if (ret)
+			return ret;
+
+		tmp &= ~SDHCI_CDNS_HRS04_WR;
+		writel(tmp, reg);
+	}
 
 	return 0;
 }
 
 static int sdhci_cdns_phy_init(struct sdhci_cdns_plat *plat,
-				const void *fdt, int nodeoffset)
+			       const void *fdt, int nodeoffset)
 {
 	const fdt32_t *prop;
 	int ret, i;
@@ -126,6 +161,7 @@ static int sdhci_cdns_phy_init(struct sdhci_cdns_plat *plat,
 		ret = sdhci_cdns_write_phy_reg(plat,
 					       sdhci_cdns_phy_cfgs[i].addr,
 					       fdt32_to_cpu(*prop));
+
 		if (ret)
 			return ret;
 	}
@@ -162,7 +198,10 @@ static void sdhci_cdns_set_control_reg(struct sdhci_host *host)
 	tmp = readl(plat->hrs_addr + SDHCI_CDNS_HRS06);
 	tmp &= ~SDHCI_CDNS_HRS06_MODE;
 	tmp |= FIELD_PREP(SDHCI_CDNS_HRS06_MODE, mode);
+
 	writel(tmp, plat->hrs_addr + SDHCI_CDNS_HRS06);
+	debug("%s: register = 0x%x\n", __func__,
+	      readl(plat->hrs_addr + SDHCI_CDNS_HRS06));
 }
 
 static const struct sdhci_ops sdhci_cdns_ops = {
@@ -191,6 +230,8 @@ static int sdhci_cdns_set_tune_val(struct sdhci_cdns_plat *plat,
 	for (i = 0; i < 2; i++) {
 		tmp |= SDHCI_CDNS_HRS06_TUNE_UP;
 		writel(tmp, reg);
+
+		debug("%s: register = 0x%08x\n", __func__, readl(reg));
 
 		ret = readl_poll_timeout(reg, tmp,
 					 !(tmp & SDHCI_CDNS_HRS06_TUNE_UP), 1);
@@ -252,14 +293,49 @@ static int sdhci_cdns_bind(struct udevice *dev)
 	return sdhci_bind(dev, &plat->mmc, &plat->cfg);
 }
 
+static int socfpga_sdhci_get_clk_rate(struct udevice *dev)
+{
+	struct sdhci_socfpga_priv_data *priv = dev_get_priv(dev);
+	struct sdhci_host *host = &priv->host;
+
+#if (IS_ENABLED(CONFIG_CLK))
+	struct clk clk;
+	int ret;
+
+	ret = clk_get_by_index(dev, 1, &clk);
+	if (ret)
+		return ret;
+
+	host->max_clk = clk_get_rate(&clk);
+
+	clk_free(&clk);
+#else
+	/* Fixed clock divide by 4 which due to the SDMMC wrapper */
+	host->max_clk = cm_get_mmc_controller_clk_hz();
+#endif
+
+	if (!host->max_clk) {
+		debug("SDHCI: MMC clock is zero!");
+		return -EINVAL;
+	}
+	debug("max_clk: %d\n", host->max_clk);
+
+	return 0;
+}
+
 static int sdhci_cdns_probe(struct udevice *dev)
 {
 	DECLARE_GLOBAL_DATA_PTR;
 	struct mmc_uclass_priv *upriv = dev_get_uclass_priv(dev);
 	struct sdhci_cdns_plat *plat = dev_get_plat(dev);
-	struct sdhci_host *host = dev_get_priv(dev);
+	struct sdhci_socfpga_priv_data *priv = dev_get_priv(dev);
+	struct sdhci_host *host = &priv->host;
+	const char *phy_name = dev_read_string(dev, "phy-names");
+	struct udevice *phy_dev;
 	fdt_addr_t base;
 	int ret;
+
+	plat->phy_enabled = false;
 
 	base = dev_read_addr(dev);
 	if (base == FDT_ADDR_T_NONE)
@@ -269,6 +345,26 @@ static int sdhci_cdns_probe(struct udevice *dev)
 	if (!plat->hrs_addr)
 		return -ENOMEM;
 
+	if (!phy_name)
+		return -EINVAL;
+
+	/* probe ComboPHY */
+	ret = uclass_get_device_by_name(UCLASS_PHY, "combophy@0", &phy_dev);
+	if (ret) {
+		printf("ComboPHY probe failed: %d\n", ret);
+		return ret;
+	}
+	debug("ComboPHY probe success\n");
+
+	ret = generic_phy_init(&priv->phy);
+	if (ret) {
+		printf("ComboPHY init failed: %d\n", ret);
+		return ret;
+	}
+	debug("ComboPHY init success\n");
+
+	plat->phy_enabled = true;
+	plat->phy_dev = phy_dev;
 	host->name = dev->name;
 	host->ioaddr = plat->hrs_addr + SDHCI_CDNS_SRS_BASE;
 	host->ops = &sdhci_cdns_ops;
@@ -282,18 +378,29 @@ static int sdhci_cdns_probe(struct udevice *dev)
 	if (ret)
 		return ret;
 
+	/* get max clk */
+	ret = socfpga_sdhci_get_clk_rate(dev);
+	if (ret)
+		return ret;
+
 	ret = sdhci_cdns_phy_init(plat, gd->fdt_blob, dev_of_offset(dev));
 	if (ret)
 		return ret;
 
 	host->mmc = &plat->mmc;
-	host->mmc->dev = dev;
-	ret = sdhci_setup_cfg(&plat->cfg, host, 0, 0);
-	if (ret)
-		return ret;
-
 	upriv->mmc = &plat->mmc;
 	host->mmc->priv = host;
+	host->mmc->dev = dev;
+
+#if (IS_ENABLED(CONFIG_BLK))
+	ret = sdhci_setup_cfg(&plat->cfg, host, host->max_clk, SD_MIN_CLK);
+	if (ret)
+		return ret;
+#else
+	ret = add_sdhci(host, host->max_clk, SD_MIN_CLK);
+	if (ret)
+		return ret;
+#endif
 
 	return sdhci_probe(dev);
 }
@@ -310,7 +417,7 @@ U_BOOT_DRIVER(sdhci_cdns) = {
 	.of_match = sdhci_cdns_match,
 	.bind = sdhci_cdns_bind,
 	.probe = sdhci_cdns_probe,
-	.priv_auto	= sizeof(struct sdhci_host),
+	.priv_auto	= sizeof(struct sdhci_socfpga_priv_data),
 	.plat_auto	= sizeof(struct sdhci_cdns_plat),
 	.ops = &sdhci_cdns_mmc_ops,
 };
