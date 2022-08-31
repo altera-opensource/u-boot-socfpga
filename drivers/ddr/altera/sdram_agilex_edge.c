@@ -271,7 +271,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 	sdram_size_check(&bd);
 	printf("DDR: size check success\n");
 
-	/* sdram_set_firewall(&bd); */ /* TODO */
+	sdram_set_firewall(&bd);
 
 	priv->info.base = bd.bi_dram[0].start;
 	priv->info.size = gd->ram_size;
