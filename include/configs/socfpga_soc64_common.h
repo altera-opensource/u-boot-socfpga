@@ -49,10 +49,6 @@
 /*
  * U-Boot environment configurations
  */
-#ifndef __ASSEMBLY__
-unsigned int cm_get_qspi_controller_clk_hz(void);
-#define CONFIG_CQSPI_REF_CLK		cm_get_qspi_controller_clk_hz()
-#endif
 
  /*
  * NAND support
