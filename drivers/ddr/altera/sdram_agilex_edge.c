@@ -216,8 +216,8 @@ int sdram_mmr_init_full(struct udevice *dev)
 
 	hw_size = (phys_size_t)io96b_ctrl->overall_size * 1024 * 1024 * 1024;
 #else
-	/* hardcoded to 512MB on emulation */
-	hw_size = 0x20000000;
+	/* hardcoded to 1GB on emulation */
+	hw_size = 0x40000000;
 	io96b_ctrl->ddr_type = "DDR";
 #endif
 
