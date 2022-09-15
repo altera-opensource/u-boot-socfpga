@@ -28,29 +28,9 @@
 	};
 
 	memory {
-		/*
-		 * Recommended Aliasing addresses
-		 *
-		 * 16GB
-		 *     <0 0x00000000 0 0x80000000>,
-		 *     <0x10 0x80000000 3 0x80000000>;
-		 *
-		 * 8GB
-		 *     <0 0x00000000 0 0x80000000>,
-		 *     <0x10 0x80000000 1 0x80000000>;
-		 *
-		 * 4GB
-		 *     <0 0x00000000 0 0x80000000>,
-		 *     <0x10 0x80000000 0 0x80000000>;
-		 *
-		 * 2GB
-		 *     <0 0x00000000 0 0x80000000>;
-		 *
-		 * Note: Need to set CONFIG_NR_DRAM_BANKS=1 for 2GB in defconfig
-		 *       Default CONFIG_NR_DRAM_BANKS=2 is used for other DDR size
-		 */
+		/* 8GB */
 		reg = <0 0x00000000 0 0x80000000>,
-		      <0x10 0x80000000 1 0x80000000>;
+		      <2 0x80000000 1 0x80000000>;
 
 	};
 };
