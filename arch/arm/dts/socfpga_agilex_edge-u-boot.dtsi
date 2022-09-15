@@ -148,25 +148,6 @@
 					<0x00000300 0x00000003>;
 				u-boot,dm-pre-reloc;
 			};
-
-			/* Firewall setting for MPFE CSR */
-			soc_noc_fw_mpfe_csr@18000d00 {
-				reg = <0x18000d00 0x00000100>;
-				intel,offset-settings =
-					/* IO96B0_reg */
-					<0x00000000 0x00000001>,
-					/* IO96B1_reg */
-					<0x00000004 0x00000001>,
-					/* noc_scheduler_csr */
-					<0x00000008 0x00000001>,
-					/* noc_qos */
-					<0x00000010 0x00000001>,
-					/* noc_probes */
-					<0x00000014 0x00000001>,
-					/* fpga2sdram_sidebandmgr */
-					<0x00000018 0x00000001>;
-				u-boot,dm-pre-reloc;
-			};
 		};
 	};
 };
