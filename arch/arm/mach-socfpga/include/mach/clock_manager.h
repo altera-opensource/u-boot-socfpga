@@ -14,6 +14,7 @@ int cm_wait_for_fsm(void);
 void cm_print_clock_quick_summary(void);
 unsigned long cm_get_mpu_clk_hz(void);
 unsigned int cm_get_qspi_controller_clk_hz(void);
+unsigned int cm_get_mmc_controller_clk_hz(void);
 
 #if defined(CONFIG_TARGET_SOCFPGA_SOC64)
 int cm_set_qspi_controller_clk_hz(u32 clk_hz);
