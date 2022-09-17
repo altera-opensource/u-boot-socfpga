@@ -26,10 +26,10 @@ ENTRY(lowlevel_init)
 	cmp	x1, x5
 	/* No L2 reset, skip warm reset */
 	b.ne	skipwarmreset
-	/* L2 reset completed */
-	str	xzr, [x4]
 	/* Put all slaves CPUs into WFI mode */
 	branch_if_slave x0, put_cpu_in_wfi
+	/* L2 reset completed */
+	str	xzr, [x4]
 	/* Clear previous CPU release address */
 	ldr	x4, =CPU_RELEASE_ADDR
 	str	wzr, [x4]
