@@ -689,7 +689,7 @@ static int sd_send_op_cond(struct mmc *mmc, bool uhs_en)
 			break;
 
 		if (timeout-- <= 0)
-			return -EOPNOTSUPP;
+			return -ETIMEDOUT;
 
 		udelay(1000);
 	}
