@@ -87,3 +87,4 @@ CONFIG_USB_DWC2=y
 CONFIG_UBIFS_SILENCE_MSG=y
 # CONFIG_SPL_USE_TINY_PRINTF is not set
 CONFIG_PANIC_HANG=y
+CONFIG_BOOTCOMMAND="printenv bootcmd; setenv bootargs console=ttyS0,4800 initrd=0x90000000 root=/dev/ram0 rw init=/sbin/init ramdisk_size=10000000 earlycon panic=-1 nosmp kvm-arm.mode=nvhe\r; booti 0x86000000 0x90000000 0x8c000000"
