@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
  /*
- * Copyright (C) 2018-2019 Intel Corporation <www.intel.com>
+ * Copyright (C) 2018-2022 Intel Corporation <www.intel.com>
  *
  */
 
@@ -273,7 +273,7 @@ int request_firmware_into_buf(struct udevice *dev,
 static int fs_loader_of_to_plat(struct udevice *dev)
 {
 	u32 phandlepart[2];
-	u32 sfconfig[4];
+	u32 sfconfig[2];
 
 	ofnode fs_loader_node = dev_ofnode(dev);
 
@@ -289,12 +289,10 @@ static int fs_loader_of_to_plat(struct udevice *dev)
 			plat->data_type = DATA_FS;
 			plat->storage_type = BLOCK_DEV;
 		} else if (!ofnode_read_u32_array(fs_loader_node, "sfconfig",
-						  sfconfig, 4)) {
+						  sfconfig, 2)) {
 			plat->data_type = DATA_RAW;
 			plat->sfconfig.bus = sfconfig[0];
 			plat->sfconfig.cs = sfconfig[1];
-			plat->sfconfig.speed = sfconfig[2];
-			plat->sfconfig.mode = sfconfig[3];
 			plat->data_type = DATA_RAW;
 			plat->storage_type = SPI_DEV;
 		} else {
@@ -327,9 +325,8 @@ static int fs_loader_probe(struct udevice *dev)
 	}
 
 	if (!plat->flash && plat->storage_type == SPI_DEV) {
-		debug("bus = %d\ncs = %d\nspeed= %d\nmode = %d\n",
-			 plat->sfconfig.bus, plat->sfconfig.cs,
-			 plat->sfconfig.speed, plat->sfconfig.mode);
+		debug("bus = %d\ncs = %d\n",
+		      plat->sfconfig.bus, plat->sfconfig.cs);
 #ifdef CONFIG_SPI_FLASH
 		ret = spi_flash_probe_bus_cs(plat->sfconfig.bus,
 					    plat->sfconfig.cs,
