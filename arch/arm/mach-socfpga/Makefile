@@ -4,7 +4,7 @@
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
 # Copyright (C) 2012-2017 Altera Corporation <www.altera.com>
-# Copyright (C) 2017-2021 Intel Corporation <www.intel.com>
+# Copyright (C) 2017-2023 Intel Corporation <www.intel.com>
 
 obj-y	+= board.o
 obj-y	+= clock_manager.o
@@ -104,6 +104,28 @@ obj-$(CONFIG_ARMV8_PSCI) += smc_ecc_dbe_s10.o
 obj-$(CONFIG_ARMV8_PSCI) += smc_fpga_reconfig_s10.o
 obj-$(CONFIG_ARMV8_PSCI) += smc_registers_s10.o
 obj-$(CONFIG_ARMV8_PSCI) += smc_rsu_s10.o
+endif
+endif
+
+ifdef CONFIG_TARGET_SOCFPGA_AGILEX7
+obj-y	+= clock_manager_agilex.o
+obj-y	+= lowlevel_init_soc64.o
+obj-y	+= mailbox_s10.o
+obj-y	+= misc_soc64.o
+obj-y	+= mmu-arm64_s10.o
+obj-y	+= reset_manager_s10.o
+obj-$(CONFIG_SOCFPGA_SECURE_VAB_AUTH)	+= secure_vab.o
+obj-y	+= smmu_s10.o
+obj-y	+= system_manager_soc64.o
+obj-y	+= timer_s10.o
+obj-$(CONFIG_SOCFPGA_SECURE_VAB_AUTH)	+= vab.o
+obj-y	+= wrap_handoff_soc64.o
+obj-y	+= wrap_pll_config_soc64.o
+ifndef CONFIG_SPL_BUILD
+obj-y   += rsu.o
+obj-y   += rsu_ll_qspi.o
+obj-y   += rsu_misc.o
+obj-y	+= rsu_s10.o
 endif
 endif
 
