@@ -108,6 +108,28 @@ obj-$(CONFIG_ARMV8_PSCI) += smc_rsu_s10.o
 endif
 endif
 
+ifdef CONFIG_TARGET_SOCFPGA_AGILEX7
+obj-y	+= clock_manager_agilex.o
+obj-y	+= lowlevel_init_soc64.o
+obj-y	+= mailbox_s10.o
+obj-y	+= misc_soc64.o
+obj-y	+= mmu-arm64_s10.o
+obj-y	+= reset_manager_s10.o
+obj-$(CONFIG_SOCFPGA_SECURE_VAB_AUTH)	+= secure_vab.o
+obj-y	+= smmu_s10.o
+obj-y	+= system_manager_soc64.o
+obj-y	+= timer_s10.o
+obj-$(CONFIG_SOCFPGA_SECURE_VAB_AUTH)	+= vab.o
+obj-y	+= wrap_handoff_soc64.o
+obj-y	+= wrap_pll_config_soc64.o
+ifndef CONFIG_SPL_BUILD
+obj-y   += rsu.o
+obj-y   += rsu_ll_qspi.o
+obj-y   += rsu_misc.o
+obj-y	+= rsu_s10.o
+endif
+endif
+
 ifdef CONFIG_TARGET_SOCFPGA_N5X
 obj-y	+= clock_manager_n5x.o
 obj-y	+= lowlevel_init_soc64.o
