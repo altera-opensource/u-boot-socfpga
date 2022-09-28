@@ -484,6 +484,17 @@
 			status = "disabled";
 		};
 
+		usb31: dwc3@11000000 {
+			compatible = "snps,dwc3";
+			reg = <0x11000000 0x100000>;
+			phys = <&usbphy0>, <&usbphy0>;
+			phy-names = "usb2-phy", "usb3-phy";
+			dr_mode = "host";
+			maximum-speed = "super-speed";
+			snps,dis_u2_susphy_quirk;
+			status = "disabled";
+		};
+
 		watchdog0: watchdog@10d00200 {
 			compatible = "snps,dw-wdt";
 			reg = <0x10d00200 0x100>;
