@@ -8,8 +8,6 @@
 
 #include <asm/arch/base_addr_a10.h>
 
-#define CONFIG_SYS_BOOTM_LEN	(32 * 1024 * 1024)
-
 /*
  * U-Boot general configurations
  */
