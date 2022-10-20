@@ -401,32 +401,40 @@
 			compatible = "snps,dw-apb-timer";
 			interrupts = <0 113 4>;
 			reg = <0x10c03000 0x100>;
+			resets = <&rst SPTIMER0_RESET>;
 			clocks = <&clkmgr AGILEX_EDGE_L4_SP_CLK>;
 			clock-names = "timer";
+			status = "disabled";
 		};
 
 		timer1: timer1@10c03100 {
 			compatible = "snps,dw-apb-timer";
 			interrupts = <0 114 4>;
 			reg = <0x10c03100 0x100>;
+			resets = <&rst SPTIMER1_RESET>;
 			clocks = <&clkmgr AGILEX_EDGE_L4_SP_CLK>;
 			clock-names = "timer";
+			status = "disabled";
 		};
 
 		timer2: timer2@10d00000 {
 			compatible = "snps,dw-apb-timer";
 			interrupts = <0 115 4>;
 			reg = <0x10d00000 0x100>;
-			clocks = <&clkmgr AGILEX_EDGE_L4_SP_CLK>;
+			resets = <&rst L4SYSTIMER0_RESET>;
+			clocks = <&clkmgr AGILEX_EDGE_L4_SYS_FREE_CLK>;
 			clock-names = "timer";
+			status = "disabled";
 		};
 
 		timer3: timer3@10d00100 {
 			compatible = "snps,dw-apb-timer";
 			interrupts = <0 116 4>;
 			reg = <0x10d00100 0x100>;
-			clocks = <&clkmgr AGILEX_EDGE_L4_SP_CLK>;
+			resets = <&rst L4SYSTIMER1_RESET>;
+			clocks = <&clkmgr AGILEX_EDGE_L4_SYS_FREE_CLK>;
 			clock-names = "timer";
+			status = "disabled";
 		};
 
 		uart0: serial0@10c02000 {
