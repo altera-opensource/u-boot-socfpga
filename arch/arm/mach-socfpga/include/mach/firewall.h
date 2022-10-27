@@ -142,8 +142,7 @@ struct socfpga_firwall_l4_sys {
 #if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
 #define FW_MPU_DDR_SCR_WRITEL(data, reg)		\
 	writel(data, SOCFPGA_FW_DDR_CCU_DMI0_ADDRESS + (reg)); \
-	writel(data, SOCFPGA_FW_DDR_CCU_DMI1_ADDRESS + (reg)); \
-	writel(data, SOCFPGA_FW_TBU2NOC_ADDRESS + (reg))
+	writel(data, SOCFPGA_FW_DDR_CCU_DMI1_ADDRESS + (reg))
 #else
 #define FW_MPU_DDR_SCR_WRITEL(data, reg)		\
 	writel(data, SOCFPGA_FW_MPU_DDR_SCR_ADDRESS + (reg))
