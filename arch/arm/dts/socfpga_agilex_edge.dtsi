@@ -455,7 +455,8 @@
 		usbphy0: usbphy@0 {
 			#phy-cells = <0>;
 			compatible = "usb-nop-xceiv";
-			status = "okay";
+			clocks = <&clkmgr AGILEX_EDGE_USB_CLK>;
+			status = "disabled";
 		};
 
 		usb0: usb@10b00000 {
@@ -484,7 +485,7 @@
 			status = "disabled";
 		};
 
-		usb31: dwc3@11000000 {
+		usb31: usb31@11000000 {
 			compatible = "snps,dwc3";
 			reg = <0x11000000 0x100000>;
 			phys = <&usbphy0>, <&usbphy0>;
