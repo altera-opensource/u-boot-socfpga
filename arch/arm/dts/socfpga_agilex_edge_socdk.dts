@@ -60,6 +60,10 @@
 	status = "okay";
 };
 
+&usbphy0 {
+	status = "okay";
+};
+
 &usb0 {
 	status = "okay";
 	disable-over-current;
