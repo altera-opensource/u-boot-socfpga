@@ -472,19 +472,6 @@
 			status = "disabled";
 		};
 
-		usb1: usb@ffb40000 {
-			compatible = "snps,dwc2";
-			reg = <0xffb40000 0x40000>;
-			interrupts = <0 94 4>;
-			phys = <&usbphy0>;
-			phy-names = "usb2-phy";
-			resets = <&rst USB1_RESET>, <&rst USB1_OCP_RESET>;
-			reset-names = "dwc2", "dwc2-ecc";
-			iommus = <&smmu 7>;
-			clocks = <&clkmgr AGILEX_EDGE_USB_CLK>;
-			status = "disabled";
-		};
-
 		usb31: usb31@11000000 {
 			compatible = "snps,dwc3";
 			reg = <0x11000000 0x100000>;
