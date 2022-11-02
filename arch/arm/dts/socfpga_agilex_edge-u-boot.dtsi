@@ -303,6 +303,15 @@
 					<0x00000094 0x01010001>;
 				u-boot,dm-pre-reloc;
 			};
+
+			/* Light weight SoC2FPGA */
+			noc_fw_lwsoc2fpga@10d21300 {
+				reg = <0x10d21300 0x0000004>;
+				intel,offset-settings =
+					/* LWSOC2FPGA_CSR */
+					<0x00000000 0x0ffe0301>;
+				u-boot,dm-pre-reloc;
+			};
 		};
 	};
 };
