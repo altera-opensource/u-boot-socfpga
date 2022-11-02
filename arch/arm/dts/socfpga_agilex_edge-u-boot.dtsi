@@ -234,6 +234,75 @@
 					<0x00000088 0x01010301>;
 				u-boot,dm-pre-reloc;
 			};
+
+			/* L4 system firewall */
+			noc_fw_l4_sys@10d21100 {
+				reg = <0x10d21100 0x00000098>;
+				intel,offset-settings =
+					/* DMA_ECC */
+					<0x00000008 0x01010001>,
+					/* EMAC0RX_ECC */
+					<0x0000000c 0x01010001>,
+					/* EMAC0TX_ECC */
+					<0x00000010 0x01010001>,
+					/* EMAC1RX_ECC */
+					<0x00000014 0x01010001>,
+					/* EMAC1TX_ECC */
+					<0x00000018 0x01010001>,
+					/* EMAC2RX_ECC */
+					<0x0000001c 0x01010001>,
+					/* EMAC2TX_ECC */
+					<0x00000020 0x01010001>,
+					/* NAND_ECC */
+					<0x0000002c 0x01010001>,
+					/* NAND_READ_ECC */
+					<0x00000030 0x01010001>,
+					/* NAND_WRITE_ECC */
+					<0x00000034 0x01010001>,
+					/* OCRAM_ECC */
+					<0x00000038 0x01010001>,
+					/* SDMMC_ECC */
+					<0x00000040 0x01010001>,
+					/* USB0_ECC */
+					<0x00000044 0x01010001>,
+					/* USB1_CACHEECC */
+					<0x00000048 0x01010001>,
+					/* CLOCK_MANAGER */
+					<0x0000004c 0x01010001>,
+					/* IO_MANAGER */
+					<0x00000054 0x01010001>,
+					/* RESET_MANAGER */
+					<0x00000058 0x01010001>,
+					/* SYSTEM_MANAGER */
+					<0x0000005c 0x01010001>,
+					/* OSC0_TIMER */
+					<0x00000060 0x01010301>,
+					/* OSC1_TIMER0*/
+					<0x00000064 0x01010301>,
+					/* WATCHDOG0 */
+					<0x00000068 0x01010301>,
+					/* WATCHDOG1 */
+					<0x0000006c 0x01010301>,
+					/* WATCHDOG2 */
+					<0x00000070 0x01010301>,
+					/* WATCHDOG3 */
+					<0x00000074 0x01010301>,
+					/* DAP */
+					<0x00000078 0x03010001>,
+					/* WATCHDOG4 */
+					<0x0000007c 0x01010301>,
+					/* POWER_MANAGER */
+					<0x00000080 0x01010001>,
+					/* USB1_RXECC */
+					<0x00000084 0x01010001>,
+					/* USB1_TXECC */
+					<0x00000088 0x01010001>,
+					/* L4_NOC_PROBES */
+					<0x00000090 0x01010001>,
+					/* L4_NOC_QOS */
+					<0x00000094 0x01010001>;
+				u-boot,dm-pre-reloc;
+			};
 		};
 	};
 };
