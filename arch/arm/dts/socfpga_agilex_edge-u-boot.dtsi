@@ -321,6 +321,15 @@
 					<0x00000000 0x0ffe0301>;
 				u-boot,dm-pre-reloc;
 			};
+
+			/* TCU */
+			noc_fw_tcu@10d21400 {
+				reg = <0x10d21400 0x0000004>;
+				intel,offset-settings =
+					/* TCU_CSR */
+					<0x00000000 0x01010001>;
+				u-boot,dm-pre-reloc;
+			};
 		};
 	};
 };
