@@ -312,6 +312,15 @@
 					<0x00000000 0x0ffe0301>;
 				u-boot,dm-pre-reloc;
 			};
+
+			/* SoC2FPGA */
+			noc_fw_soc2fpga@10d21200 {
+				reg = <0x10d21200 0x0000004>;
+				intel,offset-settings =
+					/* SOC2FPGA_CSR */
+					<0x00000000 0x0ffe0301>;
+				u-boot,dm-pre-reloc;
+			};
 		};
 	};
 };
