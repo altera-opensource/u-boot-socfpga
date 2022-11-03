@@ -316,9 +316,58 @@ static void sdram_set_firewall_non_f2sdram(struct bd_info *bd)
 	}
 }
 
+static void sdram_set_firewall_f2sdram(struct bd_info *bd)
+{
+	u32 i;
+	phys_size_t value;
+	u32 lower, upper;
+
+	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
+		if (!bd->bi_dram[i].size)
+			continue;
+
+		value = bd->bi_dram[i].start;
+
+		/* Keep first 1MB of SDRAM memory region as secure region when
+		 * using ATF flow, where the ATF code is located.
+		 */
+		if (IS_ENABLED(CONFIG_SPL_ATF) && i == 0)
+			value += SZ_1M;
+
+		/* Setting base and base extended */
+		lower = lower_32_bits(value);
+		upper = upper_32_bits(value);
+		FW_F2SDRAM_DDR_SCR_WRITEL(lower,
+					  FW_F2SDRAM_DDR_SCR_REGION0ADDR_BASE +
+					  (i * 4 * sizeof(u32)));
+		FW_F2SDRAM_DDR_SCR_WRITEL(upper & 0xff,
+					  FW_F2SDRAM_DDR_SCR_REGION0ADDR_BASEEXT +
+					  (i * 4 * sizeof(u32)));
+
+		/* Setting limit and limit extended */
+		value = bd->bi_dram[i].start + bd->bi_dram[i].size - 1;
+
+		lower = lower_32_bits(value);
+		upper = upper_32_bits(value);
+
+		FW_F2SDRAM_DDR_SCR_WRITEL(lower,
+					  FW_F2SDRAM_DDR_SCR_REGION0ADDR_LIMIT +
+					  (i * 4 * sizeof(u32)));
+		FW_F2SDRAM_DDR_SCR_WRITEL(upper & 0xff,
+					  FW_F2SDRAM_DDR_SCR_REGION0ADDR_LIMITEXT +
+					  (i * 4 * sizeof(u32)));
+
+		FW_F2SDRAM_DDR_SCR_WRITEL(BIT(i), FW_F2SDRAM_DDR_SCR_EN_SET);
+	}
+}
+
 void sdram_set_firewall(struct bd_info *bd)
 {
 	sdram_set_firewall_non_f2sdram(bd);
+
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+	sdram_set_firewall_f2sdram(bd);
+#endif
 }
 
 static int altera_sdram_of_to_plat(struct udevice *dev)
