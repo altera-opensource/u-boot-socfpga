@@ -72,7 +72,23 @@
 };
 
 &watchdog0 {
-	status = "disabled";
+	status = "okay";
+};
+
+&watchdog1 {
+	status = "okay";
+};
+
+&watchdog2 {
+	status = "okay";
+};
+
+&watchdog3 {
+	status = "okay";
+};
+
+&watchdog4 {
+	status = "okay";
 };
 
 &qspi {
