@@ -278,14 +278,8 @@ int sdram_mmr_init_full(struct udevice *dev)
 	writel(0x1, 0x18000d00);
 	/* IO96B1_reg */
 	writel(0x1, 0x18000d04);
-	/* noc_scheduler_csr */
+	/* noc_csr */
 	writel(0x1, 0x18000d08);
-	/* noc_qos */
-	writel(0x1, 0x18000d10);
-	/* noc_probes */
-	writel(0x1, 0x18000d14);
-	/* fpga2sdram_sidebandmgr */
-	writel(0x1, 0x18000d18);
 
 	printf("DDR: firewall init success\n");
 
