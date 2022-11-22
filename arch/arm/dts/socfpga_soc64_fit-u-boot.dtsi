@@ -122,8 +122,8 @@
 			};
 
 			configurations {
-				default = "conf";
-				conf {
+				default = "board-0";
+				board-0 {
 					description = "Intel SoC64 FPGA";
 					kernel = "kernel";
 					fdt = "fdt";

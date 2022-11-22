@@ -410,6 +410,7 @@ dtb-$(CONFIG_ARCH_SOCFPGA) +=				\
 	socfpga_agilex_socdk.dtb			\
 	socfpga_agilex_socdk_nand.dtb                   \
 	socfpga_agilex_socdk_qspi.dtb			\
+	socfpga_agilex_agilex_som.dtb			\
 	socfpga_arria5_secu1.dtb			\
 	socfpga_arria5_socdk.dtb			\
 	socfpga_arria10_socdk_nand.dtb			\
