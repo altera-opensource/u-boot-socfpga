@@ -317,7 +317,7 @@ void __secure socfpga_bridges_reset_psci(int enable, unsigned int mask)
 int cpu_has_been_warmreset(void)
 {
 	return readl(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_STATUS) &
-			RSTMGR_L4WD_MPU_WARMRESET_MASK;
+			(RSTMGR_L4WD_MPU_WARMRESET_MASK);
 }
 
 void print_reset_info(void)
