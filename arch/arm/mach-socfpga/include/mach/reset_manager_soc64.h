@@ -6,6 +6,7 @@
 #ifndef _RESET_MANAGER_SOC64_H_
 #define _RESET_MANAGER_SOC64_H_
 
+#ifndef __ASSEMBLY__
 void reset_deassert_peripherals_handoff(void);
 int cpu_has_been_warmreset(void);
 void print_reset_info(void);
@@ -13,6 +14,7 @@ void socfpga_bridges_reset(int enable, unsigned int mask);
 void socfpga_bridges_reset_psci(int enable, unsigned int mask);
 void l2_reset_cpu(void);
 void l2_reset_cpu_psci(void);
+#endif
 
 #define RSTMGR_SOC64_STATUS	0x00
 #define RSTMGR_SOC64_HDSKEN	0x10
