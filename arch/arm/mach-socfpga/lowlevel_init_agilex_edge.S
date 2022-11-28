@@ -8,6 +8,7 @@
 #include <config.h>
 #include <linux/linkage.h>
 #include <asm/macro.h>
+#include <asm/arch/reset_manager_soc64.h>
 
 #if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_ARMV8_PSCI)
 .align 3
@@ -38,8 +39,8 @@ ENTRY(lowlevel_init)
 	/* Check rstmgr.stat for warm reset status */
 	ldr	x1, =SOCFPGA_RSTMGR_ADDRESS
 	ldr	x0, [x1]
-	/* Check whether any L4 watchdogs or MPUs had triggered warm reset */
-	ldr	x2, =0x000F0F00
+	/* Check whether any L4 watchdogs or SDM had triggered warm reset */
+	ldr	x2, =RSTMGR_L4WD_MPU_WARMRESET_MASK
 	ands	x0, x0, x2
 	/*
 	 * If current Reset Manager's status is warm reset just reload the
