@@ -39,6 +39,7 @@ struct altera_sdram_plat {
 #define RSTHANDSHAKESTAT		0x218
 
 #define DDR_HMC_DDRIOCTRL_IOSIZE_MSK		0x00000003
+#define DDR_HMC_DDRIOCTRL_MPFE_HMCA_DATA_RATE_MSK BIT(2)
 #define DDR_HMC_DDRCALSTAT_CAL_MSK		BIT(0)
 #define DDR_HMC_ECCCTL_AWB_CNT_RST_SET_MSK	BIT(16)
 #define DDR_HMC_ECCCTL_CNT_RST_SET_MSK		BIT(8)
@@ -66,6 +67,7 @@ struct altera_sdram_plat {
 #define CTRLCFG0			0x28
 #define CTRLCFG1			0x2c
 #define CTRLCFG3                        0x34
+#define CTRLCFG5                        0x3c
 #define DRAMTIMING0			0x50
 #define CALTIMING0			0x7c
 #define CALTIMING1			0x80
@@ -78,6 +80,9 @@ struct altera_sdram_plat {
 #define NIOSRESERVED0			0x110
 #define NIOSRESERVED1			0x114
 #define NIOSRESERVED2			0x118
+
+#define CTRLCFG3_CFG_CTRL_CMD_RATE_QUARTER	BIT(2)
+#define CTRLCFG5_CFG_CTRL_RC_EN_MASK		BIT(8)
 
 #define DRAMADDRW_CFG_COL_ADDR_WIDTH(x)			\
 	(((x) >> 0) & 0x1F)
