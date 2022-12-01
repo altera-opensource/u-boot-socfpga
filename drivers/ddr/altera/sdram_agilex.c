@@ -77,8 +77,24 @@ int sdram_mmr_init_full(struct udevice *dev)
 	update_value = hmc_readl(plat, NIOSRESERVED0);
 	update_value = (update_value & 0xFF) >> 5;
 
-	/* Configure DDR data rate 0-HAlf-rate 1-Quarter-rate */
-	update_value |= (hmc_readl(plat, CTRLCFG3) & 0x4);
+	/*
+	 * Check both HMC rate and RC state
+	 * bit-8 of CTRLCFG5: 1 for rate conversion enabled
+	 * bits[2:0] of CTRLCFG3: 3’b010 – HALF rate. 3’b100 – Quarter rate
+	 * bit-2 of DDRIOCTRL: Configure DDR data rate 0-Half-rate 1-Quarter-rate
+	 */
+	u32 ctrlcfg5 = hmc_readl(plat, CTRLCFG5);
+	u32 ctrlcfg3 = hmc_readl(plat, CTRLCFG3);
+
+	if ((ctrlcfg5 & CTRLCFG5_CFG_CTRL_RC_EN_MASK) ||
+	    (ctrlcfg3 & CTRLCFG3_CFG_CTRL_CMD_RATE_QUARTER)) {
+		/* Quarter-rate */
+		update_value |= DDR_HMC_DDRIOCTRL_MPFE_HMCA_DATA_RATE_MSK;
+	} else {
+		/* Half-rate */
+		update_value &= ~DDR_HMC_DDRIOCTRL_MPFE_HMCA_DATA_RATE_MSK;
+	}
+
 	hmc_ecc_writel(plat, update_value, DDRIOCTRL);
 
 	/* Copy values MMR IOHMC dramaddrw to HMC adp DRAMADDRWIDTH */
