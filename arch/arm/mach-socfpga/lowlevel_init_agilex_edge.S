@@ -20,19 +20,6 @@ ENTRY(lowlevel_init)
 	mov	x29, lr			/* Save LR */
 
 #if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU)
-#if defined(CONFIG_GICV2) || defined(CONFIG_GICV3)
-	ldr	x0, =GICD_BASE
-	bl	gic_init_secure
-#if defined(CONFIG_GICV3)
-	ldr	x0, =GICR_BASE
-	bl	gic_init_secure_percpu
-#elif defined(CONFIG_GICV2)
-	ldr	x0, =GICD_BASE
-	ldr	x1, =GICC_BASE
-	bl	gic_init_secure_percpu
-#endif
-#endif
-
 #ifdef CONFIG_SPL_BUILD
 	branch_if_slave x0, 3f
 
