@@ -19,7 +19,6 @@ _el3_exception_vectors:
 ENTRY(lowlevel_init)
 	mov	x29, lr			/* Save LR */
 
-#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU)
 #ifdef CONFIG_SPL_BUILD
 	branch_if_slave x0, 3f
 
@@ -56,7 +55,6 @@ copy_loop:
 	b.ne	copy_loop
 3:
 #endif
-#endif	/* CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU */
 
 	mov	lr, x29			/* Restore LR */
 	ret
