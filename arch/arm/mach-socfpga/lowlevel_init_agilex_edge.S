@@ -23,8 +23,8 @@ ENTRY(lowlevel_init)
 	branch_if_slave x0, 3f
 
 	/* Check rstmgr.stat for warm reset status */
-	ldr	x1, =SOCFPGA_RSTMGR_ADDRESS
-	ldr	x0, [x1]
+	ldr	w1, =SOCFPGA_RSTMGR_ADDRESS
+	ldr	w0, [x1]
 	/* Check whether any L4 watchdogs or SDM had triggered warm reset */
 	ldr	x2, =RSTMGR_L4WD_MPU_WARMRESET_MASK
 	ands	x0, x0, x2
