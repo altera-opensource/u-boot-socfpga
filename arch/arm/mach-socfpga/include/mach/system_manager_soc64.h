@@ -11,7 +11,7 @@ void sysmgr_pinmux_init(void);
 void populate_sysmgr_fpgaintf_module(void);
 void populate_sysmgr_pinmux(void);
 
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
 #define SYSMGR_SOC64_SILICONID_1		0x00
 #define SYSMGR_SOC64_SILICONID_2		0x04
 #define SYSMGR_SOC64_WDDBG			0x08
@@ -164,7 +164,7 @@ void populate_sysmgr_pinmux(void);
  */
 #define ALT_SYSMGR_SCRATCH_REG_8_DDR_DBE_MASK	BIT(31)
 #define ALT_SYSMGR_SCRATCH_REG_8_DDR_PROGRESS_MASK	BIT(30)
-#endif /*CONFIG_TARGET_SOCFPGA_AGILEX_EDGE*/
+#endif /*CONFIG_TARGET_SOCFPGA_AGILEX5*/
 
 #define SYSMGR_SOC64_PINSEL0			0x1000
 #define SYSMGR_SOC64_IOCTRL0			0x1130
