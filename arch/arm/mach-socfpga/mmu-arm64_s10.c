@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2016-2018 Intel Corporation <www.intel.com>
+ * Copyright (C) 2016-2022 Intel Corporation <www.intel.com>
  *
  */
 
@@ -10,8 +10,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
-static struct mm_region socfpga_agilex_edge_mem_map[] = {
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
+static struct mm_region socfpga_agilex5_mem_map[] = {
 	{
 		/* OCRAM 1MB but available 256KB */
 		.virt	= 0x00000000UL,
@@ -39,7 +39,7 @@ static struct mm_region socfpga_agilex_edge_mem_map[] = {
 	},
 };
 
-struct mm_region *mem_map = socfpga_agilex_edge_mem_map;
+struct mm_region *mem_map = socfpga_agilex5_mem_map;
 
 #else
 static struct mm_region socfpga_stratix10_mem_map[] = {

@@ -3,8 +3,8 @@
  * Copyright (C) 2019-2022 Intel Corporation <www.intel.com>
  */
 
-#ifndef	_CLK_AGILEX_EDGE_
-#define	_CLK_AGILEX_EDGE_
+#ifndef	_CLK_AGILEX5_
+#define	_CLK_AGILEX5_
 
 #ifndef __ASSEMBLY__
 #include <linux/bitops.h>
@@ -258,4 +258,4 @@ struct cm_config {
 	 CLKMGR_CTL_EXTCNTRST_CORE01CNTRST |	\
 	 CLKMGR_CTL_EXTCNTRST_CORE2CNTRST |	\
 	 CLKMGR_CTL_EXTCNTRST_CORE3CNTRST)
-#endif /* _CLK_AGILEX_EDGE_ */
+#endif /* _CLK_AGILEX5_ */

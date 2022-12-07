@@ -27,7 +27,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 /* MPFE NOC registers */
 #define FPGA2SDRAM_MGR_MAIN_SIDEBANDMGR_FLAGOUTSET0	0x18001050
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS)
 /* Reset type */
 enum reset_type {
 	POR_RESET,
@@ -158,7 +158,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 	struct altera_sdram_plat *plat = dev_get_plat(dev);
 	struct altera_sdram_priv *priv = dev_get_priv(dev);
 	struct io96b_info *io96b_ctrl = malloc(sizeof(*io96b_ctrl));
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS)
 	u32 reg = readl(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_BOOT_SCRATCH_COLD3);
 	enum reset_type reset_t = get_reset_type(reg);
 	bool full_mem_init = false;
@@ -186,7 +186,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 		return ret;
 	}
 
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS)
 	/* Ensure calibration status passing */
 	init_mem_cal(io96b_ctrl);
 
@@ -244,7 +244,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 
 	printf("%s: %lld MiB\n", io96b_ctrl->ddr_type, gd->ram_size >> 20);
 
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS)
 	ret = ecc_enable_status(io96b_ctrl);
 	if (ret) {
 		printf("DDR: Failed to get DDR ECC status\n");
