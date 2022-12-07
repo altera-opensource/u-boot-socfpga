@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2019 Intel Corporation <www.intel.com>
+ * Copyright (C) 2019-2022 Intel Corporation <www.intel.com>
  *
  */
 
@@ -13,7 +13,7 @@
 #include <asm/arch/system_manager.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
-#include <dt-bindings/clock/agilex-edge-clock.h>
+#include <dt-bindings/clock/agilex5-clock.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -25,7 +25,7 @@ static ulong cm_get_rate_dm(u32 id)
 	int ret;
 
 	ret = uclass_get_device_by_driver(UCLASS_CLK,
-					  DM_DRIVER_GET(socfpga_agilex_edge_clk),
+					  DM_DRIVER_GET(socfpga_agilex5_clk),
 					  &dev);
 	if (ret)
 		return 0;
@@ -57,26 +57,26 @@ static u32 cm_get_rate_dm_khz(u32 id)
 
 unsigned long cm_get_mpu_clk_hz(void)
 {
-	return cm_get_rate_dm(AGILEX_EDGE_MPU_CLK);
+	return cm_get_rate_dm(AGILEX5_MPU_CLK);
 }
 
 unsigned int cm_get_l4_sys_free_clk_hz(void)
 {
-	return cm_get_rate_dm(AGILEX_EDGE_L4_SYS_FREE_CLK);
+	return cm_get_rate_dm(AGILEX5_L4_SYS_FREE_CLK);
 }
 
 void cm_print_clock_quick_summary(void)
 {
 	printf("MPU       %10d kHz\n",
-	       cm_get_rate_dm_khz(AGILEX_EDGE_MPU_CLK));
+	       cm_get_rate_dm_khz(AGILEX5_MPU_CLK));
 	printf("L4 Main	    %8d kHz\n",
-	       cm_get_rate_dm_khz(AGILEX_EDGE_L4_MAIN_CLK));
+	       cm_get_rate_dm_khz(AGILEX5_L4_MAIN_CLK));
 	printf("L4 sys free %8d kHz\n",
-	       cm_get_rate_dm_khz(AGILEX_EDGE_L4_SYS_FREE_CLK));
+	       cm_get_rate_dm_khz(AGILEX5_L4_SYS_FREE_CLK));
 	printf("L4 MP       %8d kHz\n",
-	       cm_get_rate_dm_khz(AGILEX_EDGE_L4_MP_CLK));
+	       cm_get_rate_dm_khz(AGILEX5_L4_MP_CLK));
 	printf("L4 SP       %8d kHz\n",
-	       cm_get_rate_dm_khz(AGILEX_EDGE_L4_SP_CLK));
+	       cm_get_rate_dm_khz(AGILEX5_L4_SP_CLK));
 	printf("SDMMC       %8d kHz\n",
-	       cm_get_rate_dm_khz(AGILEX_EDGE_SDMMC_CLK));
+	       cm_get_rate_dm_khz(AGILEX5_SDMMC_CLK));
 }

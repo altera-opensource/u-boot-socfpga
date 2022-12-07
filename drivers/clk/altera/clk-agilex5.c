@@ -11,7 +11,7 @@
 #include <dm.h>
 #include <dm/lists.h>
 #include <dm/util.h>
-#include <dt-bindings/clock/agilex-edge-clock.h>
+#include <dt-bindings/clock/agilex5-clock.h>
 #include <linux/bitops.h>
 
 #include <asm/arch/clock_manager.h>
@@ -251,7 +251,7 @@ static void clk_basic_init(struct udevice *dev,
 	if (!cfg)
 		return;
 
-	if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU)) {
+	if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU)) {
 		/* Take both PLL out of reset and power up */
 		CM_REG_SETBITS(plat, CLKMGR_MAINPLL_PLLGLOB,
 			       CLKMGR_PLLGLOB_PD_MASK | CLKMGR_PLLGLOB_RST_MASK);
@@ -271,7 +271,7 @@ static void clk_basic_init(struct udevice *dev,
 		/* Out of boot mode */
 		clk_write_ctrl(plat,
 			       CM_REG_READL(plat, CLKMGR_CTRL) & ~CLKMGR_CTRL_BOOTMODE);
-	} else if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)) {
+	} else if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS)) {
 		/* skip clock init */
 	} else {
 #ifdef CONFIG_SPL_BUILD
@@ -597,17 +597,17 @@ static u32 clk_get_emac_clk_hz(struct socfpga_clk_plat *plat, u32 emac_id)
 	clock = (reg & CLKMGR_CTL_EMACCTR_SRC_MASK)
 		 >> CLKMGR_CTL_EMACCTR_SRC_OFFSET;
 
-	if (emac_id == AGILEX_EDGE_EMAC_PTP_CLK) {
+	if (emac_id == AGILEX5_EMAC_PTP_CLK) {
 		ctr_reg = CLKMGR_CTL_EMACPTPCTR;
 	} else {
 		ctl = CM_REG_READL(plat, CLKMGR_PERPLL_EMACCTL);
-		if (emac_id == AGILEX_EDGE_EMAC0_CLK)
+		if (emac_id == AGILEX5_EMAC0_CLK)
 			ctl = (ctl >> CLKMGR_PERPLLGRP_EMACCTL_EMAC0SELB_OFFSET) &
 			       CLKMGR_PERPLLGRP_EMACCTL_EMAC0SELB_MASK;
-		else if (emac_id == AGILEX_EDGE_EMAC1_CLK)
+		else if (emac_id == AGILEX5_EMAC1_CLK)
 			ctl = (ctl >> CLKMGR_PERPLLGRP_EMACCTL_EMAC1SELB_OFFSET) &
 			       CLKMGR_PERPLLGRP_EMACCTL_EMAC1SELB_MASK;
-		else if (emac_id == AGILEX_EDGE_EMAC2_CLK)
+		else if (emac_id == AGILEX5_EMAC2_CLK)
 			ctl = (ctl >> CLKMGR_PERPLLGRP_EMACCTL_EMAC2SELB_OFFSET) &
 			       CLKMGR_PERPLLGRP_EMACCTL_EMAC2SELB_MASK;
 		else
@@ -664,55 +664,55 @@ static ulong socfpga_clk_get_rate(struct clk *clk)
 	struct socfpga_clk_plat *plat = dev_get_plat(clk->dev);
 
 	/* This patch should be removed when working on customer reference U-Boot branch */
-	if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS) ||
-	    IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU)) {
+	if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS) ||
+	    IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU)) {
 		switch (clk->id) {
-		case AGILEX_EDGE_MPU_CLK:
+		case AGILEX5_MPU_CLK:
 			return 640000000;
-		case AGILEX_EDGE_L4_MAIN_CLK:
+		case AGILEX5_L4_MAIN_CLK:
 			return 400000000;
-		case AGILEX_EDGE_L4_SYS_FREE_CLK:
+		case AGILEX5_L4_SYS_FREE_CLK:
 			return 100000000;
-		case AGILEX_EDGE_L4_MP_CLK:
+		case AGILEX5_L4_MP_CLK:
 			return 200000000;
-		case AGILEX_EDGE_L4_SP_CLK:
+		case AGILEX5_L4_SP_CLK:
 			return 100000000;
-		case AGILEX_EDGE_SDMMC_CLK:
-		case AGILEX_EDGE_NAND_CLK:
+		case AGILEX5_SDMMC_CLK:
+		case AGILEX5_NAND_CLK:
 			return 50000000;
-		case AGILEX_EDGE_EMAC0_CLK:
-		case AGILEX_EDGE_EMAC1_CLK:
-		case AGILEX_EDGE_EMAC2_CLK:
-		case AGILEX_EDGE_EMAC_PTP_CLK:
+		case AGILEX5_EMAC0_CLK:
+		case AGILEX5_EMAC1_CLK:
+		case AGILEX5_EMAC2_CLK:
+		case AGILEX5_EMAC_PTP_CLK:
 			return 250000000;
-		case AGILEX_EDGE_USB_CLK:
-		case AGILEX_EDGE_NAND_X_CLK:
+		case AGILEX5_USB_CLK:
+		case AGILEX5_NAND_X_CLK:
 			return 200000000;
 		default:
 			return -ENXIO;
 		}
 	} else {
 		switch (clk->id) {
-		case AGILEX_EDGE_MPU_CLK:
+		case AGILEX5_MPU_CLK:
 			return clk_get_mpu_clk_hz(plat);
-		case AGILEX_EDGE_L4_MAIN_CLK:
+		case AGILEX5_L4_MAIN_CLK:
 			return clk_get_l4_main_clk_hz(plat);
-		case AGILEX_EDGE_L4_SYS_FREE_CLK:
+		case AGILEX5_L4_SYS_FREE_CLK:
 			return clk_get_l4_sys_free_clk_hz(plat);
-		case AGILEX_EDGE_L4_MP_CLK:
+		case AGILEX5_L4_MP_CLK:
 			return clk_get_l4_mp_clk_hz(plat);
-		case AGILEX_EDGE_L4_SP_CLK:
+		case AGILEX5_L4_SP_CLK:
 			return clk_get_l4_sp_clk_hz(plat);
-		case AGILEX_EDGE_SDMMC_CLK:
-		case AGILEX_EDGE_NAND_CLK:
+		case AGILEX5_SDMMC_CLK:
+		case AGILEX5_NAND_CLK:
 			return clk_get_sdmmc_clk_hz(plat);
-		case AGILEX_EDGE_EMAC0_CLK:
-		case AGILEX_EDGE_EMAC1_CLK:
-		case AGILEX_EDGE_EMAC2_CLK:
-		case AGILEX_EDGE_EMAC_PTP_CLK:
+		case AGILEX5_EMAC0_CLK:
+		case AGILEX5_EMAC1_CLK:
+		case AGILEX5_EMAC2_CLK:
+		case AGILEX5_EMAC_PTP_CLK:
 			return clk_get_emac_clk_hz(plat, clk->id);
-		case AGILEX_EDGE_USB_CLK:
-		case AGILEX_EDGE_NAND_X_CLK:
+		case AGILEX5_USB_CLK:
+		case AGILEX5_NAND_X_CLK:
 			return clk_get_l4_mp_clk_hz(plat);
 		default:
 			return -ENXIO;
@@ -753,12 +753,12 @@ static struct clk_ops socfpga_clk_ops = {
 };
 
 static const struct udevice_id socfpga_clk_match[] = {
-	{ .compatible = "intel,agilex-edge-clkmgr" },
+	{ .compatible = "intel,agilex5-clkmgr" },
 	{}
 };
 
-U_BOOT_DRIVER(socfpga_agilex_edge_clk) = {
-	.name		= "clk-agilex-edge",
+U_BOOT_DRIVER(socfpga_agilex5_clk) = {
+	.name		= "clk-agilex5",
 	.id		= UCLASS_CLK,
 	.of_match	= socfpga_clk_match,
 	.ops		= &socfpga_clk_ops,

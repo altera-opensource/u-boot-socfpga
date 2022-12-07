@@ -28,7 +28,7 @@
 
 #define PGTABLE_OFF	0x4000
 
-#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
 u32 hmc_readl(struct altera_sdram_plat *plat, u32 reg)
 {
 	return readl(plat->iomhc + reg);
@@ -102,7 +102,7 @@ int emif_reset(struct altera_sdram_plat *plat)
 }
 #endif
 
-#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE))
+#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5))
 int poll_hmc_clock_status(void)
 {
 	return wait_for_bit_le32((const void *)(socfpga_get_sysmgr_addr() +
@@ -365,7 +365,7 @@ void sdram_set_firewall(struct bd_info *bd)
 {
 	sdram_set_firewall_non_f2sdram(bd);
 
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
 	sdram_set_firewall_f2sdram(bd);
 #endif
 }
@@ -378,7 +378,7 @@ static int altera_sdram_of_to_plat(struct udevice *dev)
 	/* These regs info are part of DDR handoff in bitstream */
 #if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 	return 0;
-#elif IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+#elif IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
 	addr = dev_read_addr_index(dev, 0);
 	if (addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
@@ -446,7 +446,7 @@ static const struct udevice_id altera_sdram_ids[] = {
 	{ .compatible = "altr,sdr-ctl-s10" },
 	{ .compatible = "intel,sdr-ctl-agilex" },
 	{ .compatible = "intel,sdr-ctl-n5x" },
-	{ .compatible = "intel,sdr-ctl-agilex_edge" },
+	{ .compatible = "intel,sdr-ctl-agilex5" },
 	{ /* sentinel */ }
 };
 
