@@ -164,7 +164,7 @@ int arch_cpu_init(void)
 	 * timeout value is still active which might too short for Linux
 	 * booting.
 	 */
-#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU))
+#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU))
 	hw_watchdog_init();
 #endif
 #else
@@ -260,8 +260,8 @@ void socfpga_get_managers_addr(void)
 	else if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 		ret = socfpga_get_base_addr("intel,n5x-clkmgr",
 					    &socfpga_clkmgr_base);
-	else if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
-		ret = socfpga_get_base_addr("intel,agilex-edge-clkmgr",
+	else if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
+		ret = socfpga_get_base_addr("intel,agilex5-clkmgr",
 					    &socfpga_clkmgr_base);
 	else
 		ret = socfpga_get_base_addr("altr,clk-mgr", &socfpga_clkmgr_base);

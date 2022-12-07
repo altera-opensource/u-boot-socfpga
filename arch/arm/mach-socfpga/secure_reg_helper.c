@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2020 Intel Corporation <www.intel.com>
+ * Copyright (C) 2020-2022 Intel Corporation <www.intel.com>
  *
  */
 
@@ -18,7 +18,7 @@
 int socfpga_secure_convert_reg_id_to_addr(u32 id, phys_addr_t *reg_addr)
 {
 	switch (id) {
-#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+#if !IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
 	case SOCFPGA_SECURE_REG_SYSMGR_SOC64_SDMMC:
 		*reg_addr = socfpga_get_sysmgr_addr() + SYSMGR_SOC64_SDMMC;
 		break;

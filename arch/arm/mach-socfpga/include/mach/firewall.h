@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0
  *
- * Copyright (C) 2017-2019 Intel Corporation <www.intel.com>
+ * Copyright (C) 2017-2022 Intel Corporation <www.intel.com>
  *
  */
 
@@ -151,7 +151,7 @@ struct socfpga_firwall_l4_sys {
 #define MPUREGION0_ENABLE				BIT(0)
 #define NONMPUREGION0_ENABLE				BIT(8)
 
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE)
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
 #define FW_MPU_DDR_SCR_WRITEL(data, reg)		\
 	writel(data, SOCFPGA_FW_DDR_CCU_DMI0_ADDRESS + (reg)); \
 	writel(data, SOCFPGA_FW_DDR_CCU_DMI1_ADDRESS + (reg))

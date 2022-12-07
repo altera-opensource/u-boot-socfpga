@@ -599,8 +599,8 @@ static int sd_send_op_cond(struct mmc *mmc, bool uhs_en)
 	struct mmc_cmd cmd;
 
 	/* lower timeout, to speed up mmc init since both uses same flow */
-	if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU) ||
-	    IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS))
+	if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU) ||
+	    IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS))
 		timeout = TIMEOUT_TEN_MS;
 
 	while (1) {
