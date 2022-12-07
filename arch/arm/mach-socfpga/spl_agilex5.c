@@ -69,7 +69,7 @@ static const u32 hardcoded_handoff_data[394] = {
         0x10000000, 0x00000000, 0x14000000, 0x00000000, 0x18000000, 0x00000000,
         0x1c000000, 0x00000000, 0x20000000, 0x00000000, 0x28000000, 0x00000000,
         0x2c000000, 0x00000000, 0x30000000, 0x00000000, 0x34000000, 0x00000000,
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU)
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU)
         0x38000000, 0x01000000, 0x3c000000, 0x00000000, 0x40000000, 0x00000000,
 #else
         0x38000000, 0x00000000, 0x3c000000, 0x00000000, 0x40000000, 0x00000000,
@@ -127,8 +127,8 @@ void board_init_f(ulong dummy)
 
 	sysmgr_pinmux_init();
 
-	if (!(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS) ||
-	      IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU))) {
+	if (!(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS) ||
+	      IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU))) {
 		/* Ensure watchdog is paused when debugging is happening */
 		writel(SYSMGR_WDDBG_PAUSE_ALL_CPU,
 		       socfpga_get_sysmgr_addr() + SYSMGR_SOC64_WDDBG);
@@ -142,8 +142,8 @@ void board_init_f(ulong dummy)
 		hang();
 	}
 
-	if (!(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS) ||
-	      IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU))) {
+	if (!(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS) ||
+	      IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU))) {
 		/*
 		 * Enable watchdog as early as possible before initializing other
 		 * component. Watchdog need to be enabled after clock driver because
@@ -171,7 +171,7 @@ void board_init_f(ulong dummy)
 	}
 #endif
 
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS)
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS)
 	mbox_init();
 
 #ifdef CONFIG_CADENCE_QSPI
@@ -179,7 +179,7 @@ void board_init_f(ulong dummy)
 #endif
 #endif
 
-#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_EMU))
+#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU))
 
 	ret = uclass_get_device(UCLASS_CACHE, 0, &dev);
 	if (ret) {
@@ -187,5 +187,5 @@ void board_init_f(ulong dummy)
 		hang();
 	}
 
-#endif /* CONFIG_TARGET_SOCFPGA_AGILEX_EDGE_SIMICS */
+#endif /* CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS */
 }

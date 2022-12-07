@@ -88,11 +88,11 @@ config TARGET_SOCFPGA_AGILEX5
 	select SPL_CLK if SPL
 	select TARGET_SOCFPGA_SOC64
 
-config TARGET_SOCFPGA_AGILEX_EDGE_EMU
-	bool "Enable build that bootable only on Agilex Edge Emulator"
+config TARGET_SOCFPGA_AGILEX5_EMU
+	bool "Enable build that bootable only on Agilex5 Emulator"
 
-config TARGET_SOCFPGA_AGILEX_EDGE_SIMICS
-	bool "Enable build that bootable only on Agilex Edge Simics platform"
+config TARGET_SOCFPGA_AGILEX5_SIMICS
+	bool "Enable build that bootable only on Agilex5 Simics platform"
 
 config TARGET_SOCFPGA_ARRIA5
 	bool
