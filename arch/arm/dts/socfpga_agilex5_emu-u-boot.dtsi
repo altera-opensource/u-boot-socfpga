@@ -10,7 +10,6 @@
 /{
 	aliases {
 		spi0 = &qspi;
-		i2c0 = &i2c1;
 		freeze_br0 = &freeze_controller;
 	};
 
@@ -38,10 +37,6 @@
 	spi-tx-bus-width = <4>;
 	spi-rx-bus-width = <4>;
 	u-boot,dm-pre-reloc;
-};
-
-&i2c1 {
-	status = "okay";
 };
 
 &nand {
