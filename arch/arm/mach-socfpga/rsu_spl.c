@@ -141,7 +141,8 @@ static int get_ssbl_slot(struct socfpga_rsu_s10_spt_slot *rsu_ssbl_slot)
 			/* compare SPL's spt name after the prefix */
 			if (!strncmp(result, rsu_spt.spt_slot[crt_spt_index].name,
 				     MAX_PART_NAME_LENGTH - strlen(SSBL_PART_PREFIX)) ||
-				!strncmp(result, FACTORY_IMG_NAME, strlen(FACTORY_IMG_NAME))) {
+			    !strncmp(result, rsu_spt.spt_slot[crt_spt_index].name,
+				     strlen(FACTORY_IMG_NAME))) {
 				printf("RSU: found SSBL partition %s at address 0x%08x.\n",
 				       result, (int)rsu_spt.spt_slot[i].offset[0]);
 				memcpy(rsu_ssbl_slot, &rsu_spt.spt_slot[i],
