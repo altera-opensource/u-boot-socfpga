@@ -60,6 +60,7 @@ __weak char *env_fat_get_dev_part(void)
 #endif
 }
 
+#if IS_ENABLED(CONFIG_SOCFPGA_RSU_MULTIBOOT)
 static int get_env_filename(char *env_file, bool redund)
 {
 	int ret;
@@ -72,6 +73,7 @@ static int get_env_filename(char *env_file, bool redund)
 
 	return 0;
 }
+#endif
 
 static int env_fat_save(void)
 {
