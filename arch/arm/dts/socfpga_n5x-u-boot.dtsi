@@ -139,10 +139,10 @@
 		reg = <0xf7100200 0x00000014>;
 		intel,offset-settings =
 			/* Disable ocram security at CCU for non secure access */
-			<0x0000004 0x8000ffff>,
-			<0x0000008 0x8000ffff>,
-			<0x000000c 0x8000ffff>,
-			<0x0000010 0x8000ffff>;
+			<0x0000004 0x8000ffff 0xe007ffff>,
+			<0x0000008 0x8000ffff 0xe007ffff>,
+			<0x000000c 0x8000ffff 0xe007ffff>,
+			<0x0000010 0x8000ffff 0xe007ffff>;
 		u-boot,dm-pre-reloc;
 	};
 
@@ -150,9 +150,9 @@
 		reg = <0xf8020000 0x0000001c>;
 		intel,offset-settings =
 			/* Disable MPFE firewall for SMMU */
-			<0x00000000 0x00010101>,
+			<0x00000000 0x00010101 0x00010101>,
 			/* Disable MPFE firewall for HMC adapter */
-			<0x00000004 0x00000001>;
+			<0x00000004 0x00000001 0x00010101>;
 		u-boot,dm-pre-reloc;
 	};
 };

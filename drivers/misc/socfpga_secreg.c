@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2021 Intel Corporation <www.intel.com>
- *
+ * Copyright (C) 2021-2023 Intel Corporation <www.intel.com>
  */
 
 #include <asm/io.h>
@@ -10,11 +9,13 @@
 #include <errno.h>
 #include <linux/sizes.h>
 
+#define NUMBER_OF_ELEMENTS 3
+
 static int socfpga_secreg_probe(struct udevice *dev)
 {
 	const fdt32_t *list;
 	fdt_addr_t offset, base;
-	fdt_val_t val, read_val;
+	fdt_val_t val, read_val, mask, set_mask;
 	int size, i;
 	u32 blk_sz, reg;
 	ofnode node;
@@ -47,12 +48,26 @@ static int socfpga_secreg_probe(struct udevice *dev)
 
 		debug("%s(intel,offset-settings property size=%x)\n", __func__,
 		      size);
-		size /= sizeof(*list) * 2;
+		size /= sizeof(*list) * NUMBER_OF_ELEMENTS;
+
+		/*
+		 * First element: offset
+		 * Second element: val
+		 * Third element: mask
+		 */
 		for (i = 0; i < size; i++) {
 			offset = fdt32_to_cpu(*list++);
 			val = fdt32_to_cpu(*list++);
-			debug("%s(intel,offset-settings 0x%llx : 0x%llx)\n",
-			      __func__, offset, val);
+
+			/* Reads the masking bit value from the list */
+			mask = fdt32_to_cpu(*list++);
+
+			/*
+			 * Reads out the offsets, value and masking bits
+			 * Ex: <0x00000000 0x00000230 0xffffffff>
+			 */
+			debug("%s(intel,offset-settings 0x%llx : 0x%llx : 0x%llx)\n",
+			      __func__, offset, val, mask);
 
 			if (blk_sz < offset + SZ_4) {
 				printf("%s: Overflow as offset 0x%llx or reg",
@@ -62,12 +77,27 @@ static int socfpga_secreg_probe(struct udevice *dev)
 				return -EINVAL;
 			}
 
-			reg = base + offset;
-			writel(val, (uintptr_t)reg);
+			if (mask != 0) {
+				if (mask == 0xffffffff) {
+					reg = base + offset;
+					writel(val, (uintptr_t)reg);
+				} else {
+					/* Mask the value with the masking bits */
+					set_mask = val & mask;
+
+					reg = base + offset;
+
+					/* Clears and sets specific bits in the register */
+					clrsetbits_le32(reg, mask, set_mask);
+				}
+			}
 
 			read_val = readl((uintptr_t)reg);
+
+			/* Reads out the register, masked value and the read value */
 			debug("%s(reg 0x%x = wr : 0x%llx  rd : 0x%llx)\n",
-			      __func__, reg, val, read_val);
+			      __func__, reg, set_mask, read_val);
+
 		}
 	}
 
