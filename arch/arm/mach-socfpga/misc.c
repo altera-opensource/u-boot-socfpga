@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- *  Copyright (C) 2012-2017 Altera Corporation <www.altera.com>
+ *  Copyright (C) 2012-2022 Altera Corporation <www.altera.com>
  */
 
 #include <common.h>

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2016-2020 Intel Corporation <www.intel.com>
+ * Copyright (C) 2016-2022 Intel Corporation <www.intel.com>
  *
  */
 
@@ -112,7 +112,7 @@ void arch_preboot_os(void)
 }
 
 /* Only applicable to DM */
-#ifdef CONFIG_TARGET_SOCFPGA_DM
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 static bool is_ddr_retention_enabled(u32 boot_scratch_cold0_reg)
 {
 	return boot_scratch_cold0_reg &
