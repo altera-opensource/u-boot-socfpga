@@ -62,6 +62,7 @@ static void clk_basic_init(struct udevice *dev,
 		return;
 #endif
 
+
 	/* Put both PLLs in bypass */
 	clk_write_bypass_mainpll(plat, CLKMGR_BYPASS_MAINPLL_ALL);
 	clk_write_bypass_perpll(plat, CLKMGR_BYPASS_PERPLL_ALL);
