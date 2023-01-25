@@ -48,7 +48,7 @@ int qspi_flash_software_reset(void);
 int is_fpga_config_ready(void);
 #endif
 
-#if defined(CONFIG_TARGET_SOCFPGA_DM)
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 bool is_ddr_init_skipped(void);
 #endif
 
