@@ -924,7 +924,7 @@ cadence_qspi_apb_indirect_write_execute(struct cadence_spi_priv *priv,
 		free(bounce_buf);
 
 	/* Wait til QSPI is idle */
-	if (!cadence_qspi_wait_idle(plat->regbase))
+	if (!cadence_qspi_wait_idle(priv->regbase))
 		return -EIO;
 
 	return 0;
