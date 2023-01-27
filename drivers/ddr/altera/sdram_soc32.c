@@ -53,7 +53,7 @@ void sdram_init_ecc_bits(void)
 		memset((void *)start_addr, 0, size_init);
 		size -= size_init;
 		start_addr += size_init;
-		WATCHDOG_RESET();
+		schedule();
 	}
 
 	dcache_disable();
