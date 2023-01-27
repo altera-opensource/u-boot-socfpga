@@ -1394,7 +1394,7 @@ static int cal_data_ocram(phys_addr_t phy_base, u32 addr,
 		phybak_p++;
 		phybak_num--;
 		data++;
-		WATCHDOG_RESET();
+		schedule();
 	};
 
 	if (proc == STORE) {
