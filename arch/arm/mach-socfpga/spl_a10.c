@@ -286,10 +286,10 @@ void spl_board_prepare_for_boot(void)
 
 #if defined(CONFIG_SPL_LOAD_FIT) && (defined(CONFIG_SPL_SPI_LOAD) || \
 	defined(CONFIG_SPL_NAND_SUPPORT))
-struct image_header *spl_get_load_buffer(int offset, size_t size)
+struct legacy_img_hdr  *spl_get_load_buffer(int offset, size_t size)
 {
 	if (gd->ram_size)
-		return (struct image_header *)(gd->ram_size / 2);
+		return (struct legacy_img_hdr *)(gd->ram_size / 2);
 	else
 		return NULL;
 }
