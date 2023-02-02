@@ -746,7 +746,7 @@ static int dwc_otg_submit_rh_msg_out(struct dwc2_priv *priv,
 	case (USB_REQ_CLEAR_FEATURE << 8) | USB_RECIP_OTHER | USB_TYPE_CLASS:
 		switch (wValue) {
 		case USB_PORT_FEAT_C_CONNECTION:
-			setbits_le32(&regs->hprt0, DWC2_HPRT0_PRTCONNDET);
+			clrsetbits_le32(&regs->hprt0, DWC2_HPRT0_W1C_MASK, DWC2_HPRT0_PRTCONNDET);
 			break;
 		}
 		break;
@@ -759,7 +759,7 @@ static int dwc_otg_submit_rh_msg_out(struct dwc2_priv *priv,
 		case USB_PORT_FEAT_RESET:
 			clrsetbits_le32(&regs->hprt0, DWC2_HPRT0_W1C_MASK, DWC2_HPRT0_PRTRST);
 			mdelay(50);
-			clrbits_le32(&regs->hprt0, DWC2_HPRT0_PRTRST);
+			clrbits_le32(&regs->hprt0, DWC2_HPRT0_W1C_MASK | DWC2_HPRT0_PRTRST);
 			break;
 
 		case USB_PORT_FEAT_POWER:
