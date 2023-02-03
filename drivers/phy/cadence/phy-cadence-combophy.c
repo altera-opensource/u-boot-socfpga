@@ -512,8 +512,7 @@ static int sdhci_cdns_combophy_phy_prog(void __iomem *hrs_addr)
 static int cdns_combophy_phy_init(struct phy *gphy)
 {
 	u32 tmp;
-	struct udevice *dev = dev_get_priv(gphy->dev);
-	struct cdns_combophy_plat *plat = dev_get_plat(dev);
+	struct cdns_combophy_plat *plat = dev_get_plat(gphy->dev);
 
 	if (plat->phy_type == PHY_TYPE_SDMMC) {
 		/* SDMMC warm reset */
