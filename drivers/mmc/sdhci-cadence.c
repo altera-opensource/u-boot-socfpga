@@ -73,7 +73,8 @@ struct sdhci_cdns_plat {
 	struct mmc_config cfg;
 	struct mmc mmc;
 	void __iomem *hrs_addr;
-	struct udevice *phy_dev;
+	struct udevice *udev;
+	struct phy phy_dev;
 	bool phy_enabled;
 };
 
@@ -331,7 +332,6 @@ static int sdhci_cdns_probe(struct udevice *dev)
 	struct sdhci_socfpga_priv_data *priv = dev_get_priv(dev);
 	struct sdhci_host *host = &priv->host;
 	const char *phy_name = dev_read_string(dev, "phy-names");
-	struct udevice *phy_dev;
 	fdt_addr_t base;
 	int ret;
 
@@ -349,14 +349,14 @@ static int sdhci_cdns_probe(struct udevice *dev)
 		return -EINVAL;
 
 	/* probe ComboPHY */
-	ret = uclass_get_device_by_name(UCLASS_PHY, "combophy@0", &phy_dev);
+	ret = generic_phy_get_by_name(dev, "combo-phy", &plat->phy_dev);
 	if (ret) {
 		printf("ComboPHY probe failed: %d\n", ret);
 		return ret;
 	}
 	debug("ComboPHY probe success\n");
 
-	ret = generic_phy_init(&priv->phy);
+	ret = generic_phy_init(&plat->phy_dev);
 	if (ret) {
 		printf("ComboPHY init failed: %d\n", ret);
 		return ret;
@@ -364,7 +364,6 @@ static int sdhci_cdns_probe(struct udevice *dev)
 	debug("ComboPHY init success\n");
 
 	plat->phy_enabled = true;
-	plat->phy_dev = phy_dev;
 	host->name = dev->name;
 	host->ioaddr = plat->hrs_addr + SDHCI_CDNS_SRS_BASE;
 	host->ops = &sdhci_cdns_ops;
