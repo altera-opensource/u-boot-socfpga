@@ -22,7 +22,7 @@
 #include "sdhci-cadence.h"
 
 /* General define */
-#define SD_MIN_CLK 20000
+#define SD_MIN_CLK 400000
 
 /* socfpga implementation specific driver private data */
 struct sdhci_socfpga_priv_data {
