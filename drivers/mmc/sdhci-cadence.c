@@ -22,7 +22,7 @@
 #include <sdhci.h>
 
 /* General define */
-#define SD_MIN_CLK 20000
+#define SD_MIN_CLK 400000
 
 /* HRS - Host Register Set (specific to Cadence) */
 #define SDHCI_CDNS_HRS04		0x10		/* PHY access port */
