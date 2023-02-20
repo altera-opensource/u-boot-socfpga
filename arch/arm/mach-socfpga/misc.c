@@ -254,17 +254,18 @@ void socfpga_get_managers_addr(void)
 	if (ret)
 		hang();
 
-	if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX)
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX)
 		ret = socfpga_get_base_addr("intel,agilex-clkmgr",
 					    &socfpga_clkmgr_base);
-	else if IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
+#elif IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X)
 		ret = socfpga_get_base_addr("intel,n5x-clkmgr",
 					    &socfpga_clkmgr_base);
-	else if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
+#elif IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
 		ret = socfpga_get_base_addr("intel,agilex5-clkmgr",
 					    &socfpga_clkmgr_base);
-	else
+#else
 		ret = socfpga_get_base_addr("altr,clk-mgr", &socfpga_clkmgr_base);
+#endif
 
 	if (ret)
 		hang();
