@@ -74,6 +74,10 @@
 	clock-frequency = <76800>;
 };
 
+&usbphy0 {
+	status = "okay";
+};
+
 &usb0 {
 	status = "okay";
 	disable-over-current;
