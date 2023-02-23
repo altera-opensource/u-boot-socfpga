@@ -271,8 +271,6 @@ static void clk_basic_init(struct udevice *dev,
 		/* Out of boot mode */
 		clk_write_ctrl(plat,
 			       CM_REG_READL(plat, CLKMGR_CTRL) & ~CLKMGR_CTRL_BOOTMODE);
-	} else if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS)) {
-		/* skip clock init */
 	} else {
 #ifdef CONFIG_SPL_BUILD
 		/* Always force clock manager into boot mode before any configuration */
@@ -665,8 +663,7 @@ static ulong socfpga_clk_get_rate(struct clk *clk)
 	struct socfpga_clk_plat *plat = dev_get_plat(clk->dev);
 
 	/* This patch should be removed when working on customer reference U-Boot branch */
-	if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS) ||
-	    IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU)) {
+	if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU)) {
 		switch (clk->id) {
 		case AGILEX5_MPU_CLK:
 			return 640000000;
