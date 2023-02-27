@@ -154,8 +154,8 @@ static __always_inline void socfpga_f2s_bridges_reset(int enable,
 		POLL_FOR_ZERO((readl(SOCFPGA_F2SDRAM_MGR_ADDRESS +
 			      F2SDRAM_SIDEBAND_FLAGINSTATUS0) &
 			      flaginstatus_idleack), timeout_ms);
-		clrbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
-			     F2SDRAM_SIDEBAND_FLAGOUTSET0,
+		setbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
+			     F2SDRAM_SIDEBAND_FLAGOUTCLR0,
 			     flagoutset_fdrain);
 		setbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
 			     F2SDRAM_SIDEBAND_FLAGOUTSET0, flagoutset_en);
