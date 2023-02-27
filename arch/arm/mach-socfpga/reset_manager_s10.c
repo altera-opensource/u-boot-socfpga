@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2016-2018 Intel Corporation <www.intel.com>
+ * Copyright (C) 2016-2023 Intel Corporation <www.intel.com>
  *
  */
 
@@ -168,8 +168,8 @@ static __always_inline void socfpga_f2s_bridges_reset(int enable,
 			     RSTMGR_HDSKREQ_FPGAHSREQ);
 		POLL_FOR_SET(readl(socfpga_get_rstmgr_addr() +
 			     RSTMGR_SOC64_HDSKACK), timeout_ms);
-		clrbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
-			     F2SDRAM_SIDEBAND_FLAGOUTSET0, flagoutset_en);
+		setbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
+			     F2SDRAM_SIDEBAND_FLAGOUTCLR0, flagoutset_en);
 		__socfpga_udelay(1);
 		setbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
 			     F2SDRAM_SIDEBAND_FLAGOUTSET0,
