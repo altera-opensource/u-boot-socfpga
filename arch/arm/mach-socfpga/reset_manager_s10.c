@@ -147,8 +147,8 @@ static __always_inline void socfpga_f2s_bridges_reset(int enable,
 	if (enable) {
 		clrbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_BRGMODRST,
 			     brg_mask);
-		clrbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
-			     F2SDRAM_SIDEBAND_FLAGOUTSET0,
+		setbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
+			     F2SDRAM_SIDEBAND_FLAGOUTCLR0,
 			     flagout_idlereq);
 
 		POLL_FOR_ZERO((readl(SOCFPGA_F2SDRAM_MGR_ADDRESS +
