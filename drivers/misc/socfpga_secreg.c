@@ -88,7 +88,7 @@ static int socfpga_secreg_probe(struct udevice *dev)
 					reg = base + offset;
 
 					/* Clears and sets specific bits in the register */
-					clrsetbits_le32(reg, mask, set_mask);
+					clrsetbits_le32((uintptr_t)reg, mask, set_mask);
 				}
 			}
 
