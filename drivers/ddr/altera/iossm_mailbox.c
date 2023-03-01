@@ -86,7 +86,7 @@ int io96b_mb_req(phys_addr_t io96b_csr_addr, u32 ip_type, u32 instance_id
 				writel(cmd_param_6, io96b_csr_addr + IOSSM_CMD_PARAM_6_OFFSET);
 			break;
 		default:
-			printf("%s: Invalid command parameter", __func__);
+			printf("%s: Invalid command parameter\n", __func__);
 		}
 	}
 
@@ -94,6 +94,8 @@ int io96b_mb_req(phys_addr_t io96b_csr_addr, u32 ip_type, u32 instance_id
 	cmd_req = (usr_cmd_opcode << 0) | (usr_cmd_type << 16) | (instance_id << 24) |
 				(ip_type << 29);
 	writel(cmd_req, io96b_csr_addr + IOSSM_CMD_REQ_OFFSET);
+	debug("%s: Write 0x%x to IOSSM_CMD_REQ_OFFSET 0x%llx\n", __func__, cmd_req
+		, io96b_csr_addr + IOSSM_CMD_REQ_OFFSET);
 
 	/* Read CMD_RESPONSE_READY in CMD_RESPONSE_STATUS*/
 	ret = wait_for_bit_le32((const void *)(io96b_csr_addr +
@@ -103,12 +105,14 @@ int io96b_mb_req(phys_addr_t io96b_csr_addr, u32 ip_type, u32 instance_id
 	if (ret) {
 		printf("%s: CMD_RESPONSE ERROR:\n", __func__);
 		cmd_resp = readl(io96b_csr_addr + IOSSM_CMD_RESPONSE_STATUS_OFFSET);
-		printf("%s: STATUS_GENERAL_ERROR: 0x%x", __func__, (cmd_resp >> 1) & 0xF);
-		printf("%s: STATUS_CMD_RESPONSE_ERROR: 0x%x", __func__, (cmd_resp >> 5) & 0x7);
+		printf("%s: STATUS_GENERAL_ERROR: 0x%x\n", __func__, (cmd_resp >> 1) & 0xF);
+		printf("%s: STATUS_CMD_RESPONSE_ERROR: 0x%x\n", __func__, (cmd_resp >> 5) & 0x7);
 	}
 
 	/* read CMD_RESPONSE_STATUS*/
 	resp->cmd_resp_status = readl(io96b_csr_addr + IOSSM_CMD_RESPONSE_STATUS_OFFSET);
+	debug("%s: CMD_RESPONSE_STATUS 0x%llx: 0x%x\n", __func__, io96b_csr_addr +
+		IOSSM_CMD_RESPONSE_STATUS_OFFSET, resp->cmd_resp_status);
 
 	/* read CMD_RESPONSE_DATA_* */
 	for (i = 0; i < resp_data_len; i++) {
@@ -116,23 +120,40 @@ int io96b_mb_req(phys_addr_t io96b_csr_addr, u32 ip_type, u32 instance_id
 		case 0:
 			resp->cmd_resp_data_0 =
 					readl(io96b_csr_addr + IOSSM_CMD_RESPONSE_DATA_0_OFFSET);
+			debug("%s: IOSSM_CMD_RESPONSE_DATA_0_OFFSET 0x%llx: 0x%x\n", __func__
+				, io96b_csr_addr + IOSSM_CMD_RESPONSE_DATA_0_OFFSET,
+				resp->cmd_resp_data_0);
 			break;
 		case 1:
 			resp->cmd_resp_data_1 =
 					readl(io96b_csr_addr + IOSSM_CMD_RESPONSE_DATA_1_OFFSET);
+			debug("%s: IOSSM_CMD_RESPONSE_DATA_1_OFFSET 0x%llx: 0x%x\n", __func__
+				, io96b_csr_addr + IOSSM_CMD_RESPONSE_DATA_1_OFFSET,
+				resp->cmd_resp_data_1);
 			break;
 		case 2:
 			resp->cmd_resp_data_2 =
 					readl(io96b_csr_addr + IOSSM_CMD_RESPONSE_DATA_2_OFFSET);
+			debug("%s: IOSSM_CMD_RESPONSE_DATA_2_OFFSET 0x%llx: 0x%x\n", __func__
+				, io96b_csr_addr + IOSSM_CMD_RESPONSE_DATA_2_OFFSET,
+				resp->cmd_resp_data_2);
 			break;
 		default:
-			printf("%s: Invalid response data", __func__);
+			printf("%s: Invalid response data\n", __func__);
 		}
 	}
+
+	resp->cmd_resp_status = readl(io96b_csr_addr + IOSSM_CMD_RESPONSE_STATUS_OFFSET);
+	debug("%s: CMD_RESPONSE_STATUS 0x%llx: 0x%x\n", __func__, io96b_csr_addr +
+		IOSSM_CMD_RESPONSE_STATUS_OFFSET, resp->cmd_resp_status);
 
 	/* write CMD_RESPONSE_READY = 0 */
 	clrbits_le32((u32 *)(uintptr_t)(io96b_csr_addr + IOSSM_CMD_RESPONSE_STATUS_OFFSET)
 					, IOSSM_STATUS_COMMAND_RESPONSE_READY);
+
+	resp->cmd_resp_status = readl(io96b_csr_addr + IOSSM_CMD_RESPONSE_STATUS_OFFSET);
+	debug("%s: CMD_RESPONSE_READY 0x%llx: 0x%x\n", __func__, io96b_csr_addr +
+		IOSSM_CMD_RESPONSE_STATUS_OFFSET, resp->cmd_resp_status);
 
 	return 0;
 }
@@ -147,14 +168,16 @@ void io96b_mb_init(struct io96b_info *io96b_ctrl)
 	u8 ip_type_ret, instance_id_ret;
 	int i, j, k;
 
+	debug("%s: num_instance %d\n", __func__, io96b_ctrl->num_instance);
 	for (i = 0; i < io96b_ctrl->num_instance; i++) {
+		debug("%s: get memory interface IO96B %d\n", __func__, i);
 		switch (i) {
 		case 0:
 			/* Get memory interface IP type & instance ID (IP identifier) */
 			io96b_mb_req(io96b_ctrl->io96b_0.io96b_csr_addr, 0, 0
 					, CMD_GET_SYS_INFO, GET_MEM_INTF_INFO
 					, 0, 0, 0, 0, 0, 0, 0, 2, &usr_resp);
-
+			debug("%s: get response from memory interface IO96B %d\n", __func__, i);
 			/* Retrieve number of memory interface(s) */
 			io96b_ctrl->io96b_0.mb_ctrl.num_mem_interface =
 				IOSSM_CMD_RESPONSE_DATA_SHORT(usr_resp.cmd_resp_status) & 0x3;
@@ -185,10 +208,12 @@ void io96b_mb_init(struct io96b_info *io96b_ctrl)
 			/* Get memory interface IP type and instance ID (IP identifier) */
 			io96b_mb_req(io96b_ctrl->io96b_1.io96b_csr_addr, 0, 0, CMD_GET_SYS_INFO
 					, GET_MEM_INTF_INFO, 0, 0, 0, 0, 0, 0, 0, 2, &usr_resp);
-
+			debug("%s: get response from memory interface IO96B %d\n", __func__, i);
 			/* Retrieve number of memory interface(s) */
 			io96b_ctrl->io96b_1.mb_ctrl.num_mem_interface =
 				IOSSM_CMD_RESPONSE_DATA_SHORT(usr_resp.cmd_resp_status) & 0x3;
+			debug("%s: IO96B %d: num_mem_interface: 0x%x\n", __func__, i
+				, io96b_ctrl->io96b_1.mb_ctrl.num_mem_interface);
 
 			/* Retrieve memory interface IP type and instance ID (IP identifier) */
 			j = 0;
@@ -213,6 +238,8 @@ void io96b_mb_init(struct io96b_info *io96b_ctrl)
 			}
 			break;
 		}
+		debug("%s: IO96B %d: ip_type_ret: 0x%x\n", __func__, i, ip_type_ret);
+		debug("%s: IO96B %d: instance_id_ret: 0x%x\n", __func__, i, instance_id_ret);
 	}
 }
 
@@ -260,7 +287,7 @@ void init_mem_cal(struct io96b_info *io96b_ctrl)
 				break;
 			}
 			io96b_ctrl->io96b_0.cal_status = true;
-			debug("%s: Initial DDR calibration IO96B_0 succeed\n", __func__);
+			printf("%s: Initial DDR calibration IO96B_0 succeed\n", __func__);
 			count++;
 			break;
 		case 1:
@@ -272,7 +299,7 @@ void init_mem_cal(struct io96b_info *io96b_ctrl)
 				break;
 			}
 			io96b_ctrl->io96b_1.cal_status = true;
-			debug("%s: Initial DDR calibration IO96B_1 succeed\n", __func__);
+			printf("%s: Initial DDR calibration IO96B_1 succeed\n", __func__);
 			count++;
 			break;
 		}
@@ -585,6 +612,7 @@ int ecc_enable_status(struct io96b_info *io96b_ctrl)
 		switch (i) {
 		case 0:
 			for (j = 0; j < io96b_ctrl->io96b_0.mb_ctrl.num_mem_interface; j++) {
+				debug("%s: ECC_ENABLE_STATUS\n", __func__);
 				io96b_mb_req(io96b_ctrl->io96b_0.io96b_csr_addr
 						, io96b_ctrl->io96b_0.mb_ctrl.ip_type[j]
 						, io96b_ctrl->io96b_0.mb_ctrl.ip_instance_id[j]
@@ -608,6 +636,7 @@ int ecc_enable_status(struct io96b_info *io96b_ctrl)
 			break;
 		case 1:
 			for (j = 0; j < io96b_ctrl->io96b_1.mb_ctrl.num_mem_interface; j++) {
+				debug("%s: ECC_ENABLE_STATUS\n", __func__);
 				io96b_mb_req(io96b_ctrl->io96b_1.io96b_csr_addr
 						, io96b_ctrl->io96b_1.mb_ctrl.ip_type[j]
 						, io96b_ctrl->io96b_1.mb_ctrl.ip_instance_id[j]
