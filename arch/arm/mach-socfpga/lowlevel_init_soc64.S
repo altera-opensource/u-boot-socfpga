@@ -104,6 +104,14 @@ wait_for_atf:
 slave_wait_atf:
 	branch_if_slave x0, wait_for_atf
 
+wait_for_atf_master:
+	ldr	x4, =CPU_RELEASE_ADDR
+	ldr	x5, [x4]
+	cbz	x5, master_wait_atf
+	br	x5
+master_wait_atf:
+	branch_if_master x0, wait_for_atf_master
+
 master_cpu:
 #else
 	branch_if_slave x0, 1f

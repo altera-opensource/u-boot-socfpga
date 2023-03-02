@@ -16,6 +16,10 @@
  */
 /* sysmgr.boot_scratch_cold4 & 5 (64bit) will be used for PSCI_CPU_ON call */
 #define CPU_RELEASE_ADDR		0xFFD12210
+/* sysmgr.boot_scratch_cold8 bit 17 (1bit) will be used to check whether CPU0
+ * is being powered off/on from kernel
+ */
+#define BOOT_SCRATCH_COLD8		0xFFD12220
 
 /*
  * sysmgr.boot_scratch_cold6 & 7 (64bit) will be used by master CPU to
