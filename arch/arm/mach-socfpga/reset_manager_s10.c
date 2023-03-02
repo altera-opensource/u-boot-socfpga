@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <errno.h>
 #include <hang.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
@@ -19,32 +20,37 @@
 #include <linux/intel-smc.h>
 DECLARE_GLOBAL_DATA_PTR;
 
+#define TIMEOUT_300MS     300
+
 /* F2S manager registers */
 #define F2SDRAM_SIDEBAND_FLAGINSTATUS0	0x14
 #define F2SDRAM_SIDEBAND_FLAGOUTSET0	0x50
 #define F2SDRAM_SIDEBAND_FLAGOUTCLR0	0x54
 
-#define POLL_FOR_ZERO(expr, timeout_ms)		\
-	{					\
-		int timeout = (timeout_ms);	\
-		while ((expr)) {		\
-			if (!timeout)		\
-				break;		\
-			timeout--;		\
-			__socfpga_udelay(1000);	\
-		}				\
+static __always_inline int wait_for_bit(u32 *reg, const u32 mask, bool set,
+					unsigned int timeout_ms)
+{
+	u32 val;
+	int timeout = timeout_ms;
+
+	while (1) {
+		val = readl(reg);
+
+		if (!set)
+			val = ~val;
+
+		if ((val & mask) == mask)
+			return 0;
+
+		if (!timeout)
+			break;
+
+		timeout--;
+		__socfpga_udelay(1000);
 	}
 
-#define POLL_FOR_SET(expr, timeout_ms)		\
-	{					\
-		int timeout = (timeout_ms);	\
-		while (!(expr)) {		\
-			if (!timeout)		\
-				break;		\
-			timeout--;		\
-			__socfpga_udelay(1000);	\
-		}				\
-	}
+	return -ETIMEDOUT;
+}
 
 /* Assert or de-assert SoCFPGA reset manager reset. */
 void socfpga_per_reset(u32 reset, int set)
@@ -89,7 +95,7 @@ void socfpga_per_reset_all(void)
 static __always_inline void socfpga_f2s_bridges_reset(int enable,
 						      unsigned int mask)
 {
-	int timeout_ms = 300;
+	int timeout_ms = TIMEOUT_300MS;
 	u32 empty;
 	u32 brg_mask;
 	u32 flagout_idlereq = 0;
@@ -151,9 +157,11 @@ static __always_inline void socfpga_f2s_bridges_reset(int enable,
 			     F2SDRAM_SIDEBAND_FLAGOUTCLR0,
 			     flagout_idlereq);
 
-		POLL_FOR_ZERO((readl(SOCFPGA_F2SDRAM_MGR_ADDRESS +
-			      F2SDRAM_SIDEBAND_FLAGINSTATUS0) &
-			      flaginstatus_idleack), timeout_ms);
+		/* Wait for mpfe noc idleack to 0 */
+		wait_for_bit((u32 *)(SOCFPGA_F2SDRAM_MGR_ADDRESS +
+			     F2SDRAM_SIDEBAND_FLAGINSTATUS0),
+			     flaginstatus_idleack, false, TIMEOUT_300MS);
+
 		setbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
 			     F2SDRAM_SIDEBAND_FLAGOUTCLR0,
 			     flagoutset_fdrain);
@@ -166,8 +174,12 @@ static __always_inline void socfpga_f2s_bridges_reset(int enable,
 			     RSTMGR_HDSKEN_FPGAHSEN);
 		setbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_HDSKREQ,
 			     RSTMGR_HDSKREQ_FPGAHSREQ);
-		POLL_FOR_SET(readl(socfpga_get_rstmgr_addr() +
-			     RSTMGR_SOC64_HDSKACK), timeout_ms);
+
+		/* Wait for FPGA ack the handshake request to 1 */
+		wait_for_bit((u32 *)(socfpga_get_rstmgr_addr() +
+			     RSTMGR_SOC64_HDSKACK), RSTMGR_HDSKREQ_FPGAHSREQ,
+			     true, TIMEOUT_300MS);
+
 		setbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
 			     F2SDRAM_SIDEBAND_FLAGOUTCLR0, flagoutset_en);
 		__socfpga_udelay(1);
@@ -235,9 +247,10 @@ static __always_inline void socfpga_s2f_bridges_reset(int enable,
 		clrbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_BRGMODRST,
 			     brg_mask);
 
-		/* Poll until all idleack to 0 */
-		POLL_FOR_ZERO(readl(socfpga_get_sysmgr_addr() +
-			      SYSMGR_SOC64_NOC_IDLEACK), 300);
+		/* Wait for all NOC master ack to 0 */
+		wait_for_bit((u32 *)(socfpga_get_sysmgr_addr() +
+			     SYSMGR_SOC64_NOC_IDLEACK), noc_mask, false,
+			     TIMEOUT_300MS);
 	} else {
 		/* set idle request to all bridges */
 		setbits_le32(socfpga_get_sysmgr_addr() +
@@ -246,14 +259,15 @@ static __always_inline void socfpga_s2f_bridges_reset(int enable,
 		/* Enable the NOC timeout */
 		writel(1, socfpga_get_sysmgr_addr() + SYSMGR_SOC64_NOC_TIMEOUT);
 
-		/* Poll until all idleack to 1 */
-		POLL_FOR_ZERO(readl(socfpga_get_sysmgr_addr() +
-				    SYSMGR_SOC64_NOC_IDLEACK) ^ noc_mask, 300);
+		/* Wait for all NOC master ack to 1 */
+		wait_for_bit((u32 *)(socfpga_get_sysmgr_addr() +
+			     SYSMGR_SOC64_NOC_IDLEACK), noc_mask, true,
+			     TIMEOUT_300MS);
 
-		/* Poll until all idlestatus to 1 */
-		POLL_FOR_ZERO(readl(socfpga_get_sysmgr_addr() +
-				    SYSMGR_SOC64_NOC_IDLESTATUS) ^ noc_mask, 
-				    300);
+		/* Wait for all NOC master idlestatus to 1 */
+		wait_for_bit((u32 *)(socfpga_get_sysmgr_addr() +
+			     SYSMGR_SOC64_NOC_IDLESTATUS), noc_mask, true,
+			     TIMEOUT_300MS);
 
 		/* Reset all SOC2FPGA bridges */
 		setbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_BRGMODRST,
