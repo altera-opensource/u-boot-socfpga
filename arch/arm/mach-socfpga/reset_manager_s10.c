@@ -95,8 +95,7 @@ void socfpga_per_reset_all(void)
 static __always_inline void socfpga_f2s_bridges_reset(int enable,
 						      unsigned int mask)
 {
-	int timeout_ms = TIMEOUT_300MS;
-	u32 empty;
+	int ret;
 	u32 brg_mask;
 	u32 flagout_idlereq = 0;
 	u32 flagoutset_fdrain = 0;
@@ -170,6 +169,12 @@ static __always_inline void socfpga_f2s_bridges_reset(int enable,
 
 		__socfpga_udelay(1); /* wait 1us */
 	} else {
+		if (readl((socfpga_get_rstmgr_addr() +
+		    RSTMGR_SOC64_BRGMODRST) & brg_mask)) {
+			/* Bridge cannot be reset twice */
+			return;
+		}
+
 		setbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_HDSKEN,
 			     RSTMGR_HDSKEN_FPGAHSEN);
 		setbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_HDSKREQ,
@@ -182,31 +187,32 @@ static __always_inline void socfpga_f2s_bridges_reset(int enable,
 
 		setbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
 			     F2SDRAM_SIDEBAND_FLAGOUTCLR0, flagoutset_en);
+
 		__socfpga_udelay(1);
+
+		/* Requests MPFE NoC to idle */
 		setbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
-			     F2SDRAM_SIDEBAND_FLAGOUTSET0,
-			     flagoutset_fdrain);
-		__socfpga_udelay(1);
+			     F2SDRAM_SIDEBAND_FLAGOUTSET0, flagout_idlereq);
 
-		do {
-			/*
-			 * Read response queue status twice to ensure it is
-			 * empty.
-			 */
-			empty = readl(SOCFPGA_F2SDRAM_MGR_ADDRESS +
-				      F2SDRAM_SIDEBAND_FLAGINSTATUS0) &
-				      flaginstatus_respempty;
-			if (empty) {
-				empty = readl(SOCFPGA_F2SDRAM_MGR_ADDRESS +
-					      F2SDRAM_SIDEBAND_FLAGINSTATUS0) &
-					      flaginstatus_respempty;
-				if (empty)
-					break;
-			}
 
-			timeout_ms--;
-			__socfpga_udelay(1000);
-		} while (timeout_ms);
+		/*  Force F2S bridge to drain */
+		setbits_le32(SOCFPGA_F2SDRAM_MGR_ADDRESS +
+			     F2SDRAM_SIDEBAND_FLAGOUTSET0, flagoutset_fdrain);
+
+
+		/* Wait for respond queue empty status to 1 (resp idle) */
+		ret = wait_for_bit((u32 *)(SOCFPGA_F2SDRAM_MGR_ADDRESS +
+					   F2SDRAM_SIDEBAND_FLAGINSTATUS0),
+					   flaginstatus_respempty, true,
+					   TIMEOUT_300MS);
+
+		/* Confirm again */
+		if (!ret)
+			ret = wait_for_bit((u32 *)
+					   (SOCFPGA_F2SDRAM_MGR_ADDRESS +
+					   F2SDRAM_SIDEBAND_FLAGINSTATUS0),
+					   flaginstatus_respempty, true,
+					   TIMEOUT_300MS);
 
 		setbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_BRGMODRST,
 			     brg_mask & ~RSTMGR_BRGMODRST_FPGA2SOC_MASK);
