@@ -60,7 +60,9 @@ int sdram_mmr_init_full(struct udevice *dev)
 	/*
 	 * Configure the DDR IO size
 	 * niosreserve0: Used to indicate DDR width &
-	 *	bit[7:0] = Number of data bits (bit[6:5] 0x01=32bit, 0x10=64bit)
+	 *	bit[7:0] = Number of data bits (bit[6:5] 0x01=32bit, 0x10=64bit;
+	 *					bit[7] DDR data rate: 0-Half-rate,
+	 *					1-Quarter-rate)
 	 *	bit[8]   = 1 if user-mode OCT is present
 	 *	bit[9]   = 1 if warm reset compiled into EMIF Cal Code
 	 *	bit[10]  = 1 if warm reset is on during generation in EMIF Cal
@@ -71,30 +73,11 @@ int sdram_mmr_init_full(struct udevice *dev)
 	 *	bit[9:6] = Minor Release #
 	 *	bit[14:10] = Major Release #
 	 */
-	/* Configure DDR IO size x16, x32 and x64 mode */
+	/* Configure DDR IO size x16, x32 and x64 mode together with DDR data rate */
 	u32 update_value;
 
 	update_value = hmc_readl(plat, NIOSRESERVED0);
 	update_value = (update_value & 0xFF) >> 5;
-
-	/*
-	 * Check both HMC rate and RC state
-	 * bit-8 of CTRLCFG5: 1 for rate conversion enabled
-	 * bits[2:0] of CTRLCFG3: 3’b010 – HALF rate. 3’b100 – Quarter rate
-	 * bit-2 of DDRIOCTRL: Configure DDR data rate 0-Half-rate 1-Quarter-rate
-	 */
-	u32 ctrlcfg5 = hmc_readl(plat, CTRLCFG5);
-	u32 ctrlcfg3 = hmc_readl(plat, CTRLCFG3);
-
-	if ((ctrlcfg5 & CTRLCFG5_CFG_CTRL_RC_EN_MASK) ||
-	    (ctrlcfg3 & CTRLCFG3_CFG_CTRL_CMD_RATE_QUARTER)) {
-		/* Quarter-rate */
-		update_value |= DDR_HMC_DDRIOCTRL_MPFE_HMCA_DATA_RATE_MSK;
-	} else {
-		/* Half-rate */
-		update_value &= ~DDR_HMC_DDRIOCTRL_MPFE_HMCA_DATA_RATE_MSK;
-	}
-
 	hmc_ecc_writel(plat, update_value, DDRIOCTRL);
 
 	/* Copy values MMR IOHMC dramaddrw to HMC adp DRAMADDRWIDTH */
