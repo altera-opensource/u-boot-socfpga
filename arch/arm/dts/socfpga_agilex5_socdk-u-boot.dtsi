@@ -63,6 +63,22 @@
 	status = "okay";
 };
 
+&timer0 {
+	u-boot,dm-pre-reloc;
+};
+
+&timer1 {
+	u-boot,dm-pre-reloc;
+};
+
+&timer2 {
+	u-boot,dm-pre-reloc;
+};
+
+&timer3 {
+	u-boot,dm-pre-reloc;
+};
+
 &watchdog0 {
 	u-boot,dm-pre-reloc;
 };
