@@ -192,6 +192,14 @@ int sdram_mmr_init_full(struct udevice *dev)
 	/* Initiate IOSSM mailbox */
 	io96b_mb_init(io96b_ctrl);
 
+	/* Need to trigger re-calibration for DDR DBE */
+	if (ddr_ecc_dbe_status()) {
+		io96b_ctrl->io96b_0.cal_status = false;
+		io96b_ctrl->io96b_1.cal_status = false;
+		io96b_ctrl->overall_cal_status = io96b_ctrl->io96b_0.cal_status ||
+						 io96b_ctrl->io96b_1.cal_status;
+	}
+
 	/* Trigger re-calibration if calibration failed */
 	if (!(io96b_ctrl->overall_cal_status)) {
 		printf("DDR: Re-calibration in progress...\n");
