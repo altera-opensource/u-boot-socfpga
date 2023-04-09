@@ -179,14 +179,4 @@ void board_init_f(ulong dummy)
 	mbox_qspi_open();
 #endif
 #endif
-
-#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU))
-
-	ret = uclass_get_device(UCLASS_CACHE, 0, &dev);
-	if (ret) {
-		debug("CCU init failed: %d\n", ret);
-		hang();
-	}
-
-#endif /* CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS */
 }
