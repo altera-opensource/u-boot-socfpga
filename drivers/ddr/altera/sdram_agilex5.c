@@ -26,7 +26,12 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 /* MPFE NOC registers */
-#define FPGA2SDRAM_MGR_MAIN_SIDEBANDMGR_FLAGOUTSET0	0x18001050
+#define F2SDRAM_SIDEBAND_FLAGOUTSET0	0x50
+#define F2SDRAM_SIDEBAND_FLAGOUTSTATUS0	0x58
+#define SIDEBANDMGR_FLAGOUTSET0_REG	SOCFPGA_F2SDRAM_MGR_ADDRESS +\
+					F2SDRAM_SIDEBAND_FLAGOUTSET0
+#define SIDEBANDMGR_FLAGOUTSTATUS0_REG	SOCFPGA_F2SDRAM_MGR_ADDRESS +\
+					F2SDRAM_SIDEBAND_FLAGOUTSTATUS0
 
 /* Reset type */
 enum reset_type {
@@ -130,13 +135,16 @@ int config_mpfe_sideband_mgr(struct udevice *dev)
 
 	/* Dual port setting */
 	if (plat->dualport)
-		setbits_le32(FPGA2SDRAM_MGR_MAIN_SIDEBANDMGR_FLAGOUTSET0, BIT(4));
+		setbits_le32(SIDEBANDMGR_FLAGOUTSET0_REG, BIT(4));
 
 	/* Dual EMIF setting */
 	if (plat->dualemif) {
 		set_mpfe_config();
-		setbits_le32(FPGA2SDRAM_MGR_MAIN_SIDEBANDMGR_FLAGOUTSET0, BIT(5));
+		setbits_le32(SIDEBANDMGR_FLAGOUTSET0_REG, BIT(5));
 	}
+
+	debug("%s: SIDEBANDMGR_FLAGOUTSTATUS0: 0x%x\n", __func__,
+	      readl(SIDEBANDMGR_FLAGOUTSTATUS0_REG));
 
 	return 0;
 }
