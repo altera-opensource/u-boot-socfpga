@@ -213,7 +213,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 		return ret;
 	}
 
-	hw_size = (phys_size_t)io96b_ctrl->overall_size * 1024 * 1024 * 1024;
+	hw_size = (phys_size_t)io96b_ctrl->overall_size * SZ_1G / SZ_8;
 
 	/* Get bank configuration from devicetree */
 	ret = fdtdec_decode_ram_size(gd->fdt_blob, NULL, 0, NULL,
