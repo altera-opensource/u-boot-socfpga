@@ -3,7 +3,8 @@
  * Copyright (C) 2022 Intel Corporation <www.intel.com>
  */
 
-#define TIMEOUT_200MS			200
+#define TIMEOUT_10000MS			10000
+#define TIMEOUT				TIMEOUT_10000MS
 #define IOSSM_STATUS_CAL_SUCCESS	BIT(0)
 #define IOSSM_STATUS_CAL_FAIL		BIT(1)
 #define IOSSM_STATUS_CAL_BUSY		BIT(2)

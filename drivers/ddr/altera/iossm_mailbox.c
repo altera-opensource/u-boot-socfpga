@@ -47,7 +47,7 @@ int io96b_mb_req(phys_addr_t io96b_csr_addr, u32 ip_type, u32 instance_id
 
 	/* Ensure CMD_REQ is cleared before write any command request */
 	ret = wait_for_bit_le32((const void *)(io96b_csr_addr + IOSSM_CMD_REQ_OFFSET)
-							, GENMASK(31, 0), 0, TIMEOUT_200MS, false);
+				, GENMASK(31, 0), 0, TIMEOUT, false);
 
 	if (ret) {
 		printf("%s: CMD_REQ not ready\n", __func__);
@@ -98,7 +98,7 @@ int io96b_mb_req(phys_addr_t io96b_csr_addr, u32 ip_type, u32 instance_id
 	/* Read CMD_RESPONSE_READY in CMD_RESPONSE_STATUS*/
 	ret = wait_for_bit_le32((const void *)(io96b_csr_addr +
 			IOSSM_CMD_RESPONSE_STATUS_OFFSET), IOSSM_STATUS_COMMAND_RESPONSE_READY, 1,
-			TIMEOUT_200MS, false);
+			TIMEOUT, false);
 
 	if (ret) {
 		printf("%s: CMD_RESPONSE ERROR:\n", __func__);
@@ -223,7 +223,7 @@ int io96b_cal_status(phys_addr_t addr)
 	phys_addr_t status_addr = addr + IOSSM_STATUS_OFFSET;
 	/* Ensure calibration completed */
 	ret = wait_for_bit_le32((const void *)status_addr, IOSSM_STATUS_CAL_BUSY, false
-							, TIMEOUT_200MS, false);
+							, TIMEOUT, false);
 	if (ret) {
 		printf("%s: SDRAM calibration IO96b instance 0x%llx timeout\n", __func__
 			, status_addr);
@@ -681,7 +681,7 @@ int bist_mem_init_start(struct io96b_info *io96b_ctrl)
 					bist_success = (IOSSM_CMD_RESPONSE_DATA_SHORT
 							(usr_resp.cmd_resp_status) & BIT(0));
 
-					if (!bist_success && (get_timer(start) > TIMEOUT_200MS)) {
+					if (!bist_success && (get_timer(start) > TIMEOUT)) {
 						printf("%s: Timeout initialize memory on IO96B_0\n"
 							, __func__);
 						printf("%s: BIST_MEM_INIT_STATUS Error code 0x%x\n"
@@ -734,7 +734,7 @@ int bist_mem_init_start(struct io96b_info *io96b_ctrl)
 					bist_success = (IOSSM_CMD_RESPONSE_DATA_SHORT
 							(usr_resp.cmd_resp_status) & BIT(0));
 
-					if (!bist_success && (get_timer(start) > TIMEOUT_200MS)) {
+					if (!bist_success && (get_timer(start) > TIMEOUT)) {
 						printf("%s: Timeout initialize memory on IO96B_1\n"
 							, __func__);
 						printf("%s: BIST_MEM_INIT_STATUS Error code 0x%x\n"
