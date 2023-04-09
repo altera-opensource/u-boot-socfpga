@@ -44,6 +44,17 @@ static enum reset_type get_reset_type(u32 reg)
 		ALT_SYSMGR_SCRATCH_REG_3_DDR_RESET_TYPE_SHIFT;
 }
 
+int set_mpfe_config(void)
+{
+	/* Set mpfe_lite_active */
+	setbits_le32(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_MPFE_CONFIG, BIT(8));
+
+	debug("%s: mpfe_config: 0x%x\n", __func__,
+	      readl(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_MPFE_CONFIG));
+
+	return 0;
+}
+
 bool is_ddr_init_hang(void)
 {
 	u32 reg = readl(socfpga_get_sysmgr_addr() +
@@ -122,8 +133,10 @@ int config_mpfe_sideband_mgr(struct udevice *dev)
 		setbits_le32(FPGA2SDRAM_MGR_MAIN_SIDEBANDMGR_FLAGOUTSET0, BIT(4));
 
 	/* Dual EMIF setting */
-	if (plat->dualemif)
+	if (plat->dualemif) {
+		set_mpfe_config();
 		setbits_le32(FPGA2SDRAM_MGR_MAIN_SIDEBANDMGR_FLAGOUTSET0, BIT(5));
+	}
 
 	return 0;
 }
