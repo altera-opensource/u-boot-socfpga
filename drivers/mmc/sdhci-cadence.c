@@ -203,6 +203,10 @@ static void sdhci_cdns_set_control_reg(struct sdhci_host *host)
 	writel(tmp, plat->hrs_addr + SDHCI_CDNS_HRS06);
 	debug("%s: register = 0x%x\n", __func__,
 	      readl(plat->hrs_addr + SDHCI_CDNS_HRS06));
+
+	/* program phy based on generated settings, input through device tree */
+	if (plat->phy_enabled)
+		generic_phy_configure(&plat->phy_dev, NULL);
 }
 
 static const struct sdhci_ops sdhci_cdns_ops = {
