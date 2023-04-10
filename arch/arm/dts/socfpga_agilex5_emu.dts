@@ -62,9 +62,6 @@
 
 &mmc {
 	status = "disabled";
-	cap-sd-highspeed;
-	broken-cd;
-	bus-width = <4>;
 };
 
 &uart0 {
