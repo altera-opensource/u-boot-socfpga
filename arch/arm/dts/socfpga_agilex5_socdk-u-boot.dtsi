@@ -48,8 +48,7 @@
 &mmc {
 	status = "okay";
 	bus-width = <4>;
-	cap-sd-highspeed;
-	mmc-ddr-1_8v;
+	sd-uhs-sdr50;
 	cap-mmc-highspeed;
 	u-boot,dm-pre-reloc;
 };
