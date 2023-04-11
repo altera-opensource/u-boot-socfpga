@@ -90,10 +90,10 @@ u32 spl_boot_mode(const u32 boot_device)
 /* board specific function prior loading SSBL / U-Boot */
 void spl_perform_fixups(struct spl_image_info *spl_image)
 {
-#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU))
 	/* Setup and Initialize SMMU */
 	socfpga_init_smmu();
 
+#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU))
 	mbox_hps_stage_notify(HPS_EXECUTION_STATE_SSBL);
 #endif
 }
