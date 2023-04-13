@@ -96,9 +96,12 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl)
 
 	/* Read handoff - dual port */
 	plat->dualport = handoff_table[0] & BIT(0);
+	debug("%s: dualport from handoff: 0x%x\n", __func__, plat->dualport);
 
 	/* Read handoff - dual EMIF */
 	plat->dualemif = handoff_table[0] & BIT(1);
+	debug("%s: dualemif from handoff: 0x%x\n", __func__, plat->dualemif);
+
 	if (plat->dualemif)
 		io96b_ctrl->num_instance = 2;
 	else
