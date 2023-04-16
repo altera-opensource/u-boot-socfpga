@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2019-2023 Intel Corporation <www.intel.com>
+ * Copyright (C) 2019-2022 Intel Corporation <www.intel.com>
  */
 
 #ifndef	_CLK_AGILEX5_
@@ -53,7 +53,6 @@ struct cm_config {
 	u32 ctl_s2fuser0ctr;
 	u32 ctl_s2fuser1ctr;
 	u32 ctl_psirefctr;
-	u32 ctl_extcntrst;
 	u32 ctl_usb31ctr;
 	u32 ctl_dsuctr;
 	u32 ctl_core01ctr;
@@ -65,7 +64,7 @@ struct cm_config {
 	/* incoming clock */
 	u32 hps_osc_clk_hz;
 	u32 fpga_clk_hz;
-	u32 spare[2];
+	u32 spare[3];
 };
 
 /* Clock Manager registers */
