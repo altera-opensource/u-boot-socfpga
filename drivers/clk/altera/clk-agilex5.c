@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2019-2023 Intel Corporation <www.intel.com>
+ * Copyright (C) 2019-2022 Intel Corporation <www.intel.com>
  */
 
 #include <common.h>
@@ -328,7 +328,6 @@ static void clk_basic_init(struct udevice *dev,
 		CM_REG_WRITEL(plat, cfg->ctl_s2fuser0ctr, CLKMGR_CTL_S2FUSER0CTR);
 		CM_REG_WRITEL(plat, cfg->ctl_s2fuser1ctr, CLKMGR_CTL_S2FUSER1CTR);
 		CM_REG_WRITEL(plat, cfg->ctl_psirefctr, CLKMGR_CTL_PSIREFCTR);
-		CM_REG_WRITEL(plat, cfg->ctl_extcntrst, CLKMGR_CTL_EXTCNTRST);
 		CM_REG_WRITEL(plat, cfg->ctl_usb31ctr, CLKMGR_CTL_USB31CTR);
 		CM_REG_WRITEL(plat, cfg->ctl_dsuctr, CLKMGR_CTL_DSUCTR);
 		CM_REG_WRITEL(plat, cfg->ctl_core01ctr, CLKMGR_CTL_CORE01CTR);
