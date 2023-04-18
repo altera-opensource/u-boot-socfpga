@@ -160,11 +160,15 @@ void populate_sysmgr_pinmux(void);
  * Bit[30] reserved for FSBL to update the DDR init progress
  * 1 - means in progress, 0 - haven't started / DDR is up running.
  *
+ * Bit[29] reserved for FSBL to check OCRAM DBE is triggered (set by SDM to "1")
+ *
  * Bit[17:1] - Setting by Linux EDAC.
  * Bit[1](ECC_OCRAM), Bit[16](ECC_DDR0), Bit[17](ECC_DDR1)
  */
 #define ALT_SYSMGR_SCRATCH_REG_8_DDR_DBE_MASK	BIT(31)
 #define ALT_SYSMGR_SCRATCH_REG_8_DDR_PROGRESS_MASK	BIT(30)
+#define ALT_SYSMGR_SCRATCH_REG_8_OCRAM_DBE_MASK		BIT(29)
+#define ALT_SYSMGR_SCRATCH_REG_8_IO96B_HPS_MASK		GENMASK(28, 27)
 #endif /*CONFIG_TARGET_SOCFPGA_AGILEX5*/
 
 #define SYSMGR_SOC64_PINSEL0			0x1000
