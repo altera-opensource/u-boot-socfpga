@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2016-2018 Intel Corporation. All rights reserved
+ * Copyright (C) 2016-2023 Intel Corporation. All rights reserved
  * Copyright (C) 2016 Altera Corporation. All rights reserved
  * derived from Steffen Trumtrar's "altr,rst-mgr-a10.h"
  */
@@ -15,7 +15,7 @@
 #define USB0_RESET		3
 #define USB1_RESET		4
 #define NAND_RESET		5
-/* 6 is empty */
+#define COMBOPHY_RESET		6
 #define SDMMC_RESET		7
 #define EMAC0_OCP_RESET		8
 #define EMAC1_OCP_RESET		9
