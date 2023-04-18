@@ -28,7 +28,7 @@
 
 	chosen {
 		stdout-path = "serial0:4800n8";
-		u-boot,spl-boot-order = "/memory";
+		u-boot,spl-boot-order = &mmc,&flash0,"/memory";
 	};
 };
 
@@ -50,6 +50,11 @@
 	bus-width = <4>;
 	sd-uhs-sdr50;
 	cap-mmc-highspeed;
+	u-boot,dm-pre-reloc;
+};
+
+&combophy0 {
+	status = "okay";
 	u-boot,dm-pre-reloc;
 };
 
