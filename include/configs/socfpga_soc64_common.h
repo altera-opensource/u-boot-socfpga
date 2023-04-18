@@ -31,7 +31,7 @@
 /* Magic word to indicate L2 reset is completed */
 #define L2_RESET_DONE_STATUS		0x1228E5E7
 #define CONFIG_SYS_CACHELINE_SIZE	64
-#define CONFIG_SYS_MEM_RESERVE_SECURE	0	/* using OCRAM, not DDR */
+#define CFG_SYS_MEM_RESERVE_SECURE	0	/* using OCRAM, not DDR */
 
 /*
  * U-Boot console configurations
