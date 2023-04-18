@@ -13,6 +13,7 @@
 #include <common.h>
 #include <generic-phy.h>
 #include <reset.h>
+#include <reset-uclass.h>
 #include <wait_bit.h>
 #include <asm/arch/clock_manager.h>
 #include <asm/arch/firewall.h>
@@ -217,6 +218,7 @@ struct cdns_combophy_plat {
 	void __iomem *hrs_addr;
 	u32 nr_phy_params;
 	struct sdhci_cdns_phy_param *phy_params;
+	struct reset_ctl softreset_ctl;
 };
 
 struct cdns_combophy_phy {
@@ -623,6 +625,21 @@ static int cdns_combophy_phy_init(struct phy *gphy)
 	int ret;
 	struct cdns_combophy_plat *plat = dev_get_plat(gphy->dev);
 
+#if (IS_ENABLED(CONFIG_SPL_BUILD))
+		/* assert & deassert softreset */
+		ret = reset_assert(&plat->softreset_ctl);
+		if (ret < 0) {
+			pr_err("COMBOPHY soft reset deassert failed: %d", ret);
+			return ret;
+		}
+
+		ret = reset_deassert(&plat->softreset_ctl);
+		if (ret < 0) {
+			pr_err("COMBOPHY soft reset deassert failed: %d", ret);
+			return ret;
+		}
+#endif
+
 	if (plat->phy_type == PHY_TYPE_SDMMC) {
 		tmp = SYSMGR_SOC64_COMBOPHY_DFISEL_SDMMC;
 
@@ -632,18 +649,6 @@ static int cdns_combophy_phy_init(struct phy *gphy)
 #endif
 
 #if (IS_ENABLED(CONFIG_SPL_BUILD))
-		/* SDMMC warm reset */
-		setbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_PER0MODRST,
-			     SDMMC_RST);
-		clrbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_PER0MODRST,
-			     SDMMC_RST);
-
-		/* SDMMC comboPHY warm reset */
-		setbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_PER0MODRST,
-			     COMBOPHY_RST);
-		clrbits_le32(socfpga_get_rstmgr_addr() + RSTMGR_SOC64_PER0MODRST,
-			     COMBOPHY_RST);
-
 		/* configure DFI_SEL for SDMMC */
 		writel(tmp, socfpga_get_sysmgr_addr() + SYSMGR_SOC64_COMBOPHY_DFISEL);
 		debug("DFISEL: %08x\nSDMMC_USEFPGA: %08x\n",
@@ -796,6 +801,11 @@ static int cdns_combophy_phy_probe(struct udevice *dev)
 
 	plat->phy_type = dev_read_u32_default(dev, "phy-type", 0);
 	plat->hrs_addr = dev_remap_addr_index(dev, 0);
+
+	/* get softreset reset */
+	ret = reset_get_by_name(dev, "reset", &plat->softreset_ctl);
+	if (ret)
+		pr_err("can't get soft reset for %s (%d)", dev->name, ret);
 
 	nr_phy_params = sdhci_cdns_phy_param_count(plat, gd->fdt_blob,
 						   dev_of_offset(dev));
