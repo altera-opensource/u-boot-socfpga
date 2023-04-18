@@ -286,6 +286,8 @@
 			phy-type = <1>;
 			compatible = "cdns,combophy";
 			reg = <0x10808000 0x1000>;
+			resets = <&rst COMBOPHY_RESET>;
+			reset-names = "reset";
 			status = "disabled";
 		};
 
