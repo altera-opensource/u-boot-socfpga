@@ -303,6 +303,24 @@ static int sdhci_cdns_probe(struct udevice *dev)
 	if (!phy_name)
 		return -EINVAL;
 
+	/* get SDMMC softreset */
+	ret = reset_get_by_name(dev, "reset", &plat->softreset_ctl);
+	if (ret)
+		pr_err("can't get soft reset for %s (%d)", dev->name, ret);
+
+	/* assert & deassert softreset */
+	ret = reset_assert(&plat->softreset_ctl);
+	if (ret < 0) {
+		pr_err("SDMMC soft reset deassert failed: %d", ret);
+		return ret;
+	}
+
+	ret = reset_deassert(&plat->softreset_ctl);
+	if (ret < 0) {
+		pr_err("SDMMC soft reset deassert failed: %d", ret);
+		return ret;
+	}
+
 	/* probe ComboPHY */
 	ret = generic_phy_get_by_name(dev, "combo-phy", &plat->phy_dev);
 	if (ret) {
