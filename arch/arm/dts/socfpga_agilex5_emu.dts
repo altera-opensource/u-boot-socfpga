@@ -61,7 +61,11 @@
 };
 
 &mmc {
-	status = "disabled";
+	status = "okay";
+};
+
+&combophy0 {
+	status = "okay";
 };
 
 &uart0 {
