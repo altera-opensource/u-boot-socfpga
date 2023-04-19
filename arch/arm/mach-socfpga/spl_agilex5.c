@@ -172,11 +172,9 @@ void board_init_f(ulong dummy)
 	}
 #endif
 
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS)
 	mbox_init();
 
 #ifdef CONFIG_CADENCE_QSPI
 	mbox_qspi_open();
-#endif
 #endif
 }
