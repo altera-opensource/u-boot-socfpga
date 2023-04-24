@@ -450,9 +450,9 @@ static int sdhci_cdns_detect_card(void __iomem *hrs_addr)
 	reg = hrs_addr + SDHCI_CDNS_SRS10;
 	writel(tmp, reg);
 
-	/* sdhci_set_clk - 50000 */
+	/* sdhci_set_clk - 100000 */
 	debug("SD clock\n");
-	sdhci_set_clk(50000, hrs_addr);
+	sdhci_set_clk(100000, hrs_addr);
 
 	/* set SRS13 */
 	tmp = SDHCI_CDNS_SRS13_DATA;
@@ -660,6 +660,15 @@ static int cdns_combophy_phy_init(struct phy *gphy)
 		debug("clkmgr.perpllgrp.en: 0x%08x\nclkmgr.perpllgrp.ens: 0x%08x\n",
 		      readl(socfpga_get_clkmgr_addr() + CLKMGR_PERPLL_EN),
 		      readl(socfpga_get_clkmgr_addr() + CLKMGR_PERPLL_ENS));
+
+		/* configure default base clkmgr clock - 200MHz */
+		writel((readl(socfpga_get_clkmgr_addr() + CLKMGR_MAINPLL_NOCDIV)
+			& 0xfffcffff) |
+			(CLKMGR_NOCDIV_SOFTPHY_DIV_ONE << CLKMGR_NOCDIV_SOFTPHY_OFFSET),
+			socfpga_get_clkmgr_addr() + CLKMGR_MAINPLL_NOCDIV);
+
+		debug("clkmgr.nocdiv: 0x%08x\n",
+			readl(socfpga_get_clkmgr_addr() + CLKMGR_MAINPLL_NOCDIV));
 
 		/* enable DDR secure zone access for SDMMC */
 		writel(SECURE_TRANS_SET, SECURE_TRANS_REG);
