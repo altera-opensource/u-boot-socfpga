@@ -643,12 +643,11 @@ static int cdns_combophy_phy_init(struct phy *gphy)
 	if (plat->phy_type == PHY_TYPE_SDMMC) {
 		tmp = SYSMGR_SOC64_COMBOPHY_DFISEL_SDMMC;
 
+#if (IS_ENABLED(CONFIG_SPL_BUILD))
 #if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU))
 		/* OCRAM FW - allow non secure sdmmc */
 		writel(NON_SECURE_ACCESS, OCRAM_SECURE_REGION1_REG);
 #endif
-
-#if (IS_ENABLED(CONFIG_SPL_BUILD))
 		/* configure DFI_SEL for SDMMC */
 		writel(tmp, socfpga_get_sysmgr_addr() + SYSMGR_SOC64_COMBOPHY_DFISEL);
 		debug("DFISEL: %08x\nSDMMC_USEFPGA: %08x\n",
