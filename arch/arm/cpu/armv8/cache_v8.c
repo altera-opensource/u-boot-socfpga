@@ -534,9 +534,17 @@ inline void flush_dcache_all(void)
 #endif
 }
 
-#ifndef CONFIG_SYS_DISABLE_DCACHE_OPS
-#if !CONFIG_IS_ENABLED(SPL_SYS_DISABLE_DCACHE_OPS) &&\
-	!defined(SPL_BUILD)
+#if CONFIG_IS_ENABLED(SYS_DISABLE_DCACHE_OPS) || \
+	CONFIG_IS_ENABLED(SPL_SYS_DISABLE_DCACHE_OPS) && \
+	CONFIG_IS_ENABLED(SPL_BUILD)
+void invalidate_dcache_range(unsigned long start, unsigned long stop)
+{
+}
+
+void flush_dcache_range(unsigned long start, unsigned long stop)
+{
+}
+#else
 /*
  * Invalidates range in all levels of D-cache/unified cache
  */
@@ -551,15 +559,6 @@ void invalidate_dcache_range(unsigned long start, unsigned long stop)
 void flush_dcache_range(unsigned long start, unsigned long stop)
 {
 	__asm_flush_dcache_range(start, stop);
-}
-#endif
-#else
-void invalidate_dcache_range(unsigned long start, unsigned long stop)
-{
-}
-
-void flush_dcache_range(unsigned long start, unsigned long stop)
-{
 }
 #endif /* CONFIG_SYS_DISABLE_DCACHE_OPS */
 
