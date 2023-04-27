@@ -165,6 +165,7 @@
 	"scriptaddr=0x81000000\0" \
 	"scriptfile=boot.scr\0" \
 	"nandroot=ubi0:rootfs\0" \
+	"socfpga_legacy_reset_compat=1\0" \
 	"rsu_status=rsu dtb; rsu display_dcmf_version; "\
 		"rsu display_dcmf_status; rsu display_max_retry\0" \
 	"smc_fid_rd=0xC2000007\0" \
