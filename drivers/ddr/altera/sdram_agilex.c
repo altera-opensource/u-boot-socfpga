@@ -60,7 +60,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 	/*
 	 * Configure the DDR IO size
 	 * niosreserve0: Used to indicate DDR width &
-	 *	bit[7:0] = Number of data bits (bit[6:5] 0x01=32bit, 0x10=64bit)
+	 * bit[7:0] = Number of data bits (bit[6:5] 0x01=32bit, 0x10=64bit)
 	 *	bit[8]   = 1 if user-mode OCT is present
 	 *	bit[9]   = 1 if warm reset compiled into EMIF Cal Code
 	 *	bit[10]  = 1 if warm reset is on during generation in EMIF Cal
