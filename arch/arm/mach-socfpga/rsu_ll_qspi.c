@@ -627,6 +627,7 @@ static int load_spt(void)
 {
 	int spt0_good = 0;
 	int spt1_good = 0;
+	int spt_size = spt1_offset - spt0_offset;
 
 	rsu_log(RSU_DEBUG, "reading SPT1\n");
 	if (read_dev(spt1_offset, &spt, sizeof(spt)) == 0 &&
@@ -664,7 +665,7 @@ static int load_spt(void)
 
 	if (spt0_good) {
 		rsu_log(RSU_WARNING, "warning: Restoring SPT1\n");
-		if (erase_dev(spt1_offset, 32 * 1024)) {
+		if (erase_dev(spt1_offset, spt_size)) {
 			rsu_log(RSU_ERR, "Erase SPT1 region failed\n");
 			return -1;
 		}
@@ -694,7 +695,7 @@ static int load_spt(void)
 
 		rsu_log(RSU_WARNING, "Restoring SPT0");
 
-		if (erase_dev(spt0_offset, 32 * 1024)) {
+		if (erase_dev(spt0_offset, spt_size)) {
 			rsu_log(RSU_ERR, "Erase SPT0 region failed\n");
 			return -1;
 		}
