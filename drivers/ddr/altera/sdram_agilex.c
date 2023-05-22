@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2019-2022 Intel Corporation <www.intel.com>
+ * Copyright (C) 2019-2023 Intel Corporation <www.intel.com>
  *
  */
 
@@ -73,27 +73,21 @@ int sdram_mmr_init_full(struct udevice *dev)
 	 */
 	/* Configure DDR IO size x16, x32 and x64 mode */
 	u32 update_value;
+	u32 reg;
 
 	update_value = hmc_readl(plat, NIOSRESERVED0);
 	update_value = (update_value & 0xFF) >> 5;
 
-	/*
-	 * Check both HMC rate and RC state
-	 * bit-8 of CTRLCFG5: 1 for rate conversion enabled
-	 * bits[2:0] of CTRLCFG3: 3’b010 – HALF rate. 3’b100 – Quarter rate
-	 * bit-2 of DDRIOCTRL: Configure DDR data rate 0-Half-rate 1-Quarter-rate
-	 */
-	u32 ctrlcfg5 = hmc_readl(plat, CTRLCFG5);
-	u32 ctrlcfg3 = hmc_readl(plat, CTRLCFG3);
+	/* Read ACF from boot_scratch_cold_8 register bit[18]*/
+	reg = readl(socfpga_get_sysmgr_addr() +
+		    SYSMGR_SOC64_BOOT_SCRATCH_COLD8);
+	reg = (reg & SYSMGR_SCRATCH_REG_8_ACF_DDR_RATE_MASK)
+	       >> SYSMGR_SCRATCH_REG_8_ACF_DDR_RATE_MASK;
 
-	if ((ctrlcfg5 & CTRLCFG5_CFG_CTRL_RC_EN_MASK) ||
-	    (ctrlcfg3 & CTRLCFG3_CFG_CTRL_CMD_RATE_QUARTER)) {
-		/* Quarter-rate */
-		update_value |= DDR_HMC_DDRIOCTRL_MPFE_HMCA_DATA_RATE_MSK;
-	} else {
-		/* Half-rate */
-		update_value &= ~DDR_HMC_DDRIOCTRL_MPFE_HMCA_DATA_RATE_MSK;
-	}
+	/* bit-2 of DDRIOCTRL: Configure DDR data rate 0-Half-rate 1-Quarter-rate */
+	clrsetbits_le32(&update_value,
+			DDR_HMC_DDRIOCTRL_MPFE_HMCA_DATA_RATE_MSK,
+			reg << DDR_HMC_DDRIOCTRL_MPFE_HMCA_DATA_RATE_MSK);
 
 	hmc_ecc_writel(plat, update_value, DDRIOCTRL);
 
