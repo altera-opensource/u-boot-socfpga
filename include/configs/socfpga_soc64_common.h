@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0
  *
- * Copyright (C) 2017-2019 Intel Corporation <www.intel.com>
+ * Copyright (C) 2017-2023 Intel Corporation <www.intel.com>
  *
  */
 
@@ -32,6 +32,13 @@
  * Indicate L2 reset is done. HPS should trigger warm reset via RMR_EL3.
  */
 #define L2_RESET_DONE_REG		0xFFD12218
+
+/*
+ * sysmgr.boot_scratch_cold8 bit 19 (1bit) will be used to check whether CPU0
+ * is being powered off/on from kernel
+ */
+#define BOOT_SCRATCH_COLD8		0xFFD12220
+
 /* Magic word to indicate L2 reset is completed */
 #define L2_RESET_DONE_STATUS		0x1228E5E7
 #define CONFIG_SYS_CACHELINE_SIZE	64
