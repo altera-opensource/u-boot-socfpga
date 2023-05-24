@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation. All rights reserved
+ * Copyright (C) 2020-2023 Intel Corporation. All rights reserved
  *
  * SPDX-License-Identifier:    GPL-2.0
  */
@@ -63,6 +63,14 @@ skipwarmreset:
 	 * the core*_irq by set it to 1. So that it can reflect the correct
 	 * and latest status in next reset.
 	 */
+
+	/* Check if it is a master core off/on from kernel using boot scratch
+	 * cold register 8 bit 19. This bit is set by ATF.
+	 */
+	ldr	x4, =BOOT_SCRATCH_COLD8
+	ldr	x5, [x4]
+	and	x6, x5, #0x80000
+	cbnz	x6, wait_for_atf_master
 
 	/* Retrieve mpurststat register in reset manager */
 	ldr	x4, =SOCFPGA_RSTMGR_ADDRESS
