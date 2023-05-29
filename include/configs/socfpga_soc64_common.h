@@ -82,7 +82,7 @@
 
 #define BOOTENV_DEV_QSPI(devtypeu, devtypel, instance) \
 	"bootcmd_qspi=sf probe && " \
-	"ubi part qspi_rootfs && ubi readvol ${scriptaddr} script && " \
+	"ubi part root && ubi readvol ${scriptaddr} script && " \
 	"echo QSPI: Trying to boot script at ${scriptaddr} && " \
 	"source ${scriptaddr}; " \
 	"echo QSPI: SCRIPT FAILED: continuing...;\0"
