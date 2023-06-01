@@ -184,9 +184,10 @@ int rsu_update(int argc, char * const argv[])
 int rsu_dtb(int argc, char * const argv[])
 {
 	char flash0_string[100];
-	const char *fdt_flash0;
-	int nodeoffset, len, end;
+	int nodeoffset, parentoffset, fdt_flash0_offset, len, end;
 	const fdt32_t *val;
+	const __be32 *rsu_handle = NULL;
+	u32 alt_phandle = 0;
 	u32 reg[2];
 	int err;
 
@@ -205,19 +206,46 @@ int rsu_dtb(int argc, char * const argv[])
 		puts("Corrupted SPT or CPB, Linux will recovery them\n");
 	}
 
-	/* Extract the flash0's reg from Linux DTB */
-	nodeoffset = fdt_path_offset(working_fdt, "/__symbols__");
-	if (nodeoffset < 0) {
-		puts("DTB: __symbols__ node not found. Ensure you load kernel"
-		     "dtb and fdt addr\n");
+	/* Retrieve the soc partition node from Linux DTB as start offset */
+	parentoffset = fdt_path_offset(working_fdt, "/soc");
+	if (parentoffset < 0) {
+		printf("DTB: /soc node not found. Check the dtb and fdt addr.\n");
 		return -ENODEV;
 	}
-	fdt_flash0 = fdt_getprop(working_fdt, nodeoffset, "qspi_boot", &len);
-	if (fdt_flash0 == NULL) {
+
+	/* Retrieve the QSPI partition node from Linux DTB */
+	nodeoffset = fdt_node_offset_by_compatible(working_fdt, parentoffset,
+						   "fixed-partitions");
+	if (nodeoffset < 0) {
+		printf("DTB: QSPI fixed-partitions node not found.\n");
+		return -ENODEV;
+	}
+
+	/* Retrieve rsu_handle from Linux DTB */
+	rsu_handle = fdt_getprop(working_fdt, nodeoffset, "rsu-handle", NULL);
+	if (rsu_handle)
+		alt_phandle = be32_to_cpup(rsu_handle);
+
+	/* check the rsu phandle exists */
+	if (!alt_phandle) {
+		printf("DTB: phandle node not found.\n");
+		return -ENODEV;
+	}
+
+	/* Get the offset of the phandle */
+	nodeoffset = fdt_node_offset_by_phandle(working_fdt, alt_phandle);
+	if (nodeoffset < 0) {
+		printf("DTB: phandle node not found.\n");
+		return -ENODEV;
+	}
+
+	/* Extract the flash0's reg from Linux DTB */
+	fdt_flash0_offset = fdt_get_path(working_fdt, nodeoffset, flash0_string,
+					 sizeof(flash0_string));
+	if (fdt_flash0_offset < 0) {
 		puts("DTB: qspi_boot alias node not found. Check your dts\n");
 		return -ENODEV;
 	}
-	strncpy(flash0_string, fdt_flash0, sizeof(flash0_string));
 	printf("DTB: qspi_boot node at %s\n", flash0_string);
 
 	/* locate the boot partition */
