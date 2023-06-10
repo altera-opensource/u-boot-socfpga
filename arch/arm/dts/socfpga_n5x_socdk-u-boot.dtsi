@@ -83,7 +83,3 @@
 &watchdog0 {
 	u-boot,dm-pre-reloc;
 };
-
-&binman {
-	/delete-node/ kernel;
-};
