@@ -7,7 +7,7 @@
  *
  * Very loosely based on the Linux driver:
  * drivers/spi/spi-dw.c, which is:
- * Copyright (c) 2009, Intel Corporation.
+ * Copyright (c) 2009-2023, Intel Corporation.
  */
 
 #define LOG_CATEGORY UCLASS_SPI
@@ -745,8 +745,6 @@ static int dw_spi_remove(struct udevice *bus)
 		return ret;
 
 	clk_free(&priv->clk);
-	if (ret)
-		return ret;
 #endif
 	return 0;
 }
