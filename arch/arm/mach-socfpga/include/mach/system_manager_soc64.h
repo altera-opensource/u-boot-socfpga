@@ -98,17 +98,6 @@ void populate_sysmgr_pinmux(void);
 #define SYSMGR_SOC64_IODELAY0			0x1400
 
 /*
- * Bits for SYSMGR_SOC64_BOOT_SCRATCH_COLD0
- * Bits[31:28] reserved for DM DDR retention, bits[27:0] reserved for SOC 64-bit
- * storing qspi ref clock (kHz)
- */
-#define SYSMGR_SCRATCH_REG_0_QSPI_REFCLK_MASK		GENMASK(27, 0)
-#define ALT_SYSMGR_SCRATCH_REG_0_DDR_RETENTION_MASK	BIT(31)
-#define ALT_SYSMGR_SCRATCH_REG_0_DDR_SHA_MASK		BIT(30)
-#define ALT_SYSMGR_SCRATCH_REG_0_DDR_RESET_TYPE_MASK GENMASK(30, 28)
-#define ALT_SYSMGR_SCRATCH_REG_0_DDR_RESET_TYPE_SHIFT	28
-
-/*
  * Bits for SYSMGR_SOC64_BOOT_SCRATCH_COLD8
  * Bit[31] reserved for FSBL to check DBE is triggered (set by SDM to "1") ?
  *
