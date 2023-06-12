@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2019-2022 Intel Corporation <www.intel.com>
+ * Copyright (C) 2019-2023 Intel Corporation <www.intel.com>
  *
  */
 
@@ -200,6 +200,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 	ret = populate_ddr_handoff(dev, io96b_ctrl);
 	if (ret) {
 		printf("DDR: Failed to populate DDR handoff\n");
+		free(io96b_ctrl);
 		return ret;
 	}
 
@@ -207,6 +208,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 	ret = config_mpfe_sideband_mgr(dev);
 	if (ret) {
 		printf("DDR: Failed to configure dual port dual emif\n");
+		free(io96b_ctrl);
 		return ret;
 	}
 
@@ -236,12 +238,14 @@ int sdram_mmr_init_full(struct udevice *dev)
 	ret = get_mem_technology(io96b_ctrl);
 	if (ret) {
 		printf("DDR: Failed to get DDR type\n");
+		free(io96b_ctrl);
 		return ret;
 	}
 
 	ret = get_mem_width_info(io96b_ctrl);
 	if (ret) {
 		printf("DDR: Failed to get DDR size\n");
+		free(io96b_ctrl);
 		return ret;
 	}
 
@@ -252,6 +256,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 				     (phys_size_t *)&gd->ram_size, &bd);
 	if (ret) {
 		puts("DDR: Failed to decode memory node\n");
+		free(io96b_ctrl);
 		return -ENXIO;
 	}
 
@@ -273,6 +278,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 	ret = ecc_enable_status(io96b_ctrl);
 	if (ret) {
 		printf("DDR: Failed to get DDR ECC status\n");
+		free(io96b_ctrl);
 		return ret;
 	}
 
@@ -286,6 +292,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 			ret = bist_mem_init_start(io96b_ctrl);
 			if (ret) {
 				printf("DDR: Failed to fully initialize DDR memory\n");
+				free(io96b_ctrl);
 				return ret;
 			}
 		}
@@ -315,6 +322,8 @@ int sdram_mmr_init_full(struct udevice *dev)
 	ddr_init_inprogress(false);
 
 	printf("DDR: init success\n");
+
+	free(io96b_ctrl);
 
 	return 0;
 }
