@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
  /*
- * Copyright (C) 2018-2022 Intel Corporation <www.intel.com>
+ * Copyright (C) 2018-2023 Intel Corporation <www.intel.com>
  *
  */
 
@@ -166,7 +166,7 @@ static int _request_firmware_prepare(struct udevice *dev,
  */
 static int fw_get_filesystem_firmware(struct udevice *dev)
 {
-	loff_t actread;
+	loff_t actread = 0;
 	char *storage_interface, *dev_part, *ubi_mtdpart, *ubi_volume;
 	int ret = 0;
 	struct device_plat *plat = dev_get_plat(dev);
