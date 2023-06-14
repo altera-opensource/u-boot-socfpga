@@ -105,11 +105,11 @@
 #endif
 
 #define BOOTENV_DEV_NAND(devtypeu, devtypel, instance) \
-	"bootcmd_nand=ubi part root && " \
+	"bootcmd_nand=ubi detach; ubi part root && " \
 	"ubi readvol ${scriptaddr} script && " \
 	"echo NAND: Trying to boot script at ${scriptaddr} && " \
 	"source ${scriptaddr}; " \
-	"echo NAND: SCRIPT FAILED: continuing...;\0"
+	"echo NAND: SCRIPT FAILED: continuing...; ubi detach;\0"
 
 #define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
 	"nand "
