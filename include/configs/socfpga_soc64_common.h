@@ -81,11 +81,11 @@
 #endif
 
 #define BOOTENV_DEV_QSPI(devtypeu, devtypel, instance) \
-	"bootcmd_qspi=sf probe && " \
+	"bootcmd_qspi=ubi detach; sf probe && " \
 	"ubi part root && ubi readvol ${scriptaddr} script && " \
 	"echo QSPI: Trying to boot script at ${scriptaddr} && " \
 	"source ${scriptaddr}; " \
-	"echo QSPI: SCRIPT FAILED: continuing...;\0"
+	"echo QSPI: SCRIPT FAILED: continuing...; ubi detach;\0"
 
 #define BOOTENV_DEV_NAME_QSPI(devtypeu, devtypel, instance) \
 	"qspi "
@@ -97,11 +97,11 @@
 #endif
 
 #define BOOTENV_DEV_NAND(devtypeu, devtypel, instance) \
-	"bootcmd_nand=ubi part root && " \
+	"bootcmd_nand=ubi detach; ubi part root && " \
 	"ubi readvol ${scriptaddr} script && " \
 	"echo NAND: Trying to boot script at ${scriptaddr} && " \
 	"source ${scriptaddr}; " \
-	"echo NAND: SCRIPT FAILED: continuing...;\0"
+	"echo NAND: SCRIPT FAILED: continuing...; ubi detach;\0"
 
 #define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
 	"nand "
