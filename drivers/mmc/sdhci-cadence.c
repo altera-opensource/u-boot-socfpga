@@ -356,8 +356,10 @@ static int sdhci_cdns_probe(struct udevice *dev)
 
 	/* get SDMMC softreset */
 	ret = reset_get_by_name(dev, "reset", &plat->softreset_ctl);
-	if (ret)
+	if (ret) {
 		pr_err("can't get soft reset for %s (%d)", dev->name, ret);
+		return ret;
+	}
 
 	/* assert & deassert softreset */
 	ret = reset_assert(&plat->softreset_ctl);
