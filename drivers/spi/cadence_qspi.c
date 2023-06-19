@@ -215,12 +215,6 @@ static int cadence_spi_probe(struct udevice *bus)
 	priv->tchsh_ns		= plat->tchsh_ns;
 	priv->tslch_ns		= plat->tslch_ns;
 
-	if (!CONFIG_CQSPI_REF_CLK)
-		return -ENODEV;
-
-	priv->regbase = plat->regbase;
-	priv->ahbbase = plat->ahbbase;
-
 	if (CONFIG_IS_ENABLED(ZYNQMP_FIRMWARE))
 		xilinx_pm_request(PM_REQUEST_NODE, PM_DEV_OSPI,
 				  ZYNQMP_PM_CAPABILITY_ACCESS, ZYNQMP_PM_MAX_QOS,
