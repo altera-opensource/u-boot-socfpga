@@ -307,13 +307,8 @@ static int cadence_spi_mem_exec_op(struct spi_slave *spi,
 				    priv->is_decoded_cs);
 
 	if (op->data.dir == SPI_MEM_DATA_IN && op->data.buf.in) {
-		/*
-		 * Performing reads in DAC mode forces to read minimum 4 bytes
-		 * which is unsupported on some flash devices during register
-		 * reads, prefer STIG mode for such small reads.
-		 */
-		if (!op->addr.nbytes ||
-		    op->data.nbytes <= CQSPI_STIG_DATA_LEN_MAX)
+		if (!op->addr.nbytes)
+
 			mode = CQSPI_STIG_READ;
 		else
 			mode = CQSPI_READ;
