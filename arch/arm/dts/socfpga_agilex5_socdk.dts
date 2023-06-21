@@ -9,6 +9,7 @@
 
 	aliases {
 		serial0 = &uart0;
+		ethernet0 = &gmac0;
 	};
 
 	leds {
@@ -160,6 +161,23 @@
 				label = "root";
 				reg = <0x04200000 0x0BE00000>;
 			};
+		};
+	};
+};
+
+&gmac0 {
+	status = "okay";
+	phy-mode = "rgmii";
+	phy-handle = <&phy0>;
+
+	max-frame-size = <9000>;
+
+	mdio0 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "snps,dwxgmac-mdio";
+		phy0: ethernet-phy@0 {
+			reg = <0>;
 		};
 	};
 };
