@@ -1,0 +1,69 @@
+* Synopsys DWC Ethernet 10G Ethernet MAC IP version 2.10 driver (XGMAC)
+
+This binding supports the Synopsys Designware Ethernet 10G Ethernet MAC
+IP block. The IP supports multiple options for bus type, clocking and reset
+structure, and feature list. Consequently, a number of properties and list
+entries in properties are marked as optional, or only required in specific HW
+configurations.
+
+Required properties:
+- compatible: One of:
+  - "intel,socfpga-dwxgmac", "snps,dwxgmac-2.10"
+    Represents the IP core when integrated into the Agilex5 Intel (R) SoC FPGA.
+- reg: Address and length of the register set for the device
+- clocks: Phandle and clock specifiers for each entry in clock-names, in the
+  same order. See ../clock/clock-bindings.txt.
+- clock-names:
+  - stmmaceth
+
+- interrupt-parent: Should be the phandle for the interrupt controller
+  that services interrupts for this device
+- interrupts: Should contain the core's combined interrupt signal
+- phy-mode: See ethernet.txt file in the same directory
+- resets: Phandle and reset specifiers for each entry in reset-names, in the
+  same order. See ../reset/reset.txt.
+- reset-names: May contain any/all of the following depending on the IP
+  configuration, in any order:
+
+Optional properties:
+- dma-coherent: Present if dma operations are coherent
+- mac-address: See ethernet.txt in the same directory
+- local-mac-address: See ethernet.txt in the same directory
+- phy-reset-gpios: Phandle and specifier for any GPIO used to reset the PHY.
+  See ../gpio/gpio.txt.
+- phy-handle: See ethernet.txt file in the same directory
+- mdio device tree subnode: When the XGMAC has a phy connected to its local
+    mdio, there must be device tree subnode with the following
+    required properties:
+    - compatible: Must be "snps,dwxgmac-mdio".
+    - #address-cells: Must be <1>.
+    - #size-cells: Must be <0>.
+
+    For each phy on the mdio bus, there must be a node with the following
+    fields:
+
+    - reg: phy id used to communicate to phy.
+    - device_type: Must be "ethernet-phy".
+    - fixed-mode device tree subnode: see fixed-link.txt in the same directory
+- altr,sysmgr-syscon: This propertise is a platform specific propertise to
+  control the system manager whether to set or reset the XGMAC. This is specific
+  to Intel SoC FPGA Family device.
+
+Examples:
+gmac0: ethernet@10810000 {
+	compatible = "intel,socfpga-dwxgmac", "snps,dwxgmac-2.10", "snps,dwxgmac";
+	reg = <0x10810000 0x3500>;
+	interrupts = <0 190 4>;
+	interrupt-names = "macirq";
+	mac-address = [00 00 00 00 00 00];
+	resets = <&rst EMAC0_RESET>, <&rst EMAC0_OCP_RESET>;
+	reset-names = "stmmaceth", "stmmaceth-ocp";
+	tx-fifo-depth = <32768>;
+	rx-fifo-depth = <16384>;
+	snps,multicast-filter-bins = <256>;
+	iommus = <&smmu 0>;
+	altr,sysmgr-syscon = <&sysmgr 0x44 0>;
+	clocks = <&clkmgr AGILEX5_EMAC0_CLK>;
+	clock-names = "stmmaceth";
+	status = "disabled";
+};
