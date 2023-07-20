@@ -89,6 +89,7 @@ obj-y	+= mmu-arm64_s10.o
 obj-y	+= reset_manager_s10.o
 obj-$(CONFIG_SOCFPGA_SECURE_VAB_AUTH)	+= secure_vab.o
 obj-y	+= smmu_agilex5.o
+obj-y	+= socfpga_smmuv3.o
 obj-y	+= system_manager_soc64.o
 obj-y	+= timer_s10.o
 obj-$(CONFIG_SOCFPGA_SECURE_VAB_AUTH)	+= vab.o
