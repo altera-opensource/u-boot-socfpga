@@ -18,6 +18,16 @@ import collections
 import io
 from io import StringIO
 
+class CompatStringIO(io.StringIO):
+    def write(self, s):
+        if hasattr(s, 'decode'):
+            # Use unicode for python2 to keep compatible
+            return int(super(CompatStringIO, self).write(s.decode('utf-8')))
+        else:
+            return super(CompatStringIO, self).write(s)
+    def getvalue(self):
+        return str(super(CompatStringIO, self).getvalue())
+
 class HPSGrokker(object):
 
     SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -411,7 +421,7 @@ class HPSGrokker(object):
                     configNode = xmlgrok.nextElementSibling(configNode)
                     if configNode == None:
                         newLine += newLine
-                    self.pinmuxConfigBuffer.write("#define " + unicode(config_define_name) + ' ' + '(' + str(config_define_value) + ')' + newLine)
+                    self.pinmuxConfigBuffer.write("#define " + str(config_define_name) + ' ' + '(' + str(config_define_value) + ')' + newLine)
 
                 entry = self.pinmux_configs[name]
                 define_name = entry['name']
@@ -436,7 +446,7 @@ class HPSGrokker(object):
     def handleHPSPinmuxesNode(self, pinmuxesNode):
         """ PinmuxesNode is a list of pinmuxNodes
         """
-        self.pinmuxHeaderBuffer.write( unicode("const u8 sys_mgr_init_table[] = {\n"))
+        self.pinmuxHeaderBuffer.write(str("const u8 sys_mgr_init_table[] = {\n"))
 
         pinmuxNode = xmlgrok.firstElementChild(pinmuxesNode)
         while pinmuxNode != None:
@@ -452,12 +462,12 @@ class HPSGrokker(object):
         for reg, value in self.pinmux_regs.items():
             reg_count += 1
             if reg_count < pinmux_regs_count:
-                self.pinmuxHeaderBuffer.write( unicode("\t" + str(value) + ', /* ' + reg + ' */\n' ))
+                self.pinmuxHeaderBuffer.write(str("\t" + str(value) + ', /* ' + reg + ' */\n' ))
             else:
-                self.pinmuxHeaderBuffer.write( unicode("\t" + str(value) + ' /* ' + reg + ' */\n' ))
+                self.pinmuxHeaderBuffer.write(str("\t" + str(value) + ' /* ' + reg + ' */\n' ))
 
         # Write the close of the pin MUX array in the header
-        self.pinmuxHeaderBuffer.write( unicode("};" ))
+        self.pinmuxHeaderBuffer.write(str("};" ))
 
     def handleHPSClockNode(self, clockNode):
         """ A clockNode may emit a #define for the name, frequency pair
@@ -506,8 +516,8 @@ class HPSGrokker(object):
         # Unfortunately we can't determine the file name before
         # parsing the XML, so let's build up the source file
         # content in string buffer
-        self.pinmuxHeaderBuffer = io.StringIO()
-        self.pinmuxConfigBuffer = io.StringIO()
+        self.pinmuxHeaderBuffer = CompatStringIO()
+        self.pinmuxConfigBuffer = CompatStringIO()
 
         # Get a list of all nodes with the hps element name
         hpsNodeList = self.dom.getElementsByTagName('hps')
@@ -534,7 +544,7 @@ class HPSGrokker(object):
                 elif childNode.nodeName == 'peripherals':
                     self.handleHPSPeripheralNode(childNode)
                 else:
-                    print '***Error:Found unexpected HPS child node:%s' % childNode.nodeName
+                    print ("***Error:Found unexpected HPS child node:%s" % childNode.nodeName)
                 childNode = xmlgrok.nextElementSibling(childNode)
 
         self.updateTemplate("DERIVED_DEVICE_FAMILY", self.derivedDeviceFamily)
