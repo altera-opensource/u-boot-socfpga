@@ -5,6 +5,8 @@
  */
 
 void socfpga_init_smmu(void);
+int smmu_sdm_init(void);
+
 #define SOCFPGA_NEXT_TBU_PERIPHERAL	4
 /* DMA0 STREAMID */
 #define SYSMGR_DMA0_SID_ADDR	SOCFPGA_SYSMGR_ADDRESS + 0x17C
