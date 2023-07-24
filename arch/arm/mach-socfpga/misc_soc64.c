@@ -9,6 +9,7 @@
 #include <asm/arch/mailbox_s10.h>
 #include <asm/arch/misc.h>
 #include <asm/arch/reset_manager.h>
+#include <asm/arch/smmu_agilex5.h>
 #include <asm/arch/system_manager.h>
 #include <asm/io.h>
 #include <asm/global_data.h>
@@ -113,4 +114,9 @@ void do_bridge_reset(int enable, unsigned int mask)
 void arch_preboot_os(void)
 {
 	mbox_hps_stage_notify(HPS_EXECUTION_STATE_OS);
+}
+
+int misc_init_r(void)
+{
+	return smmu_sdm_init();
 }
