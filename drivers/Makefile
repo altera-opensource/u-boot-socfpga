@@ -15,6 +15,7 @@ obj-$(CONFIG_$(SPL_TPL_)DRIVERS_MISC) += misc/
 obj-$(CONFIG_$(SPL_TPL_)SYSRESET) += sysreset/
 obj-$(CONFIG_$(SPL_TPL_)FIRMWARE) +=firmware/
 obj-$(CONFIG_$(SPL_TPL_)I2C) += i2c/
+obj-$(CONFIG_$(SPL_TPL_)I3C) += i3c/
 obj-$(CONFIG_$(SPL_TPL_)INPUT) += input/
 obj-$(CONFIG_$(SPL_TPL_)LED) += led/
 obj-$(CONFIG_$(SPL_TPL_)MMC) += mmc/
