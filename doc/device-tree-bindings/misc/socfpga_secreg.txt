@@ -464,3 +464,35 @@ Path: arch/arm/dts/socfpga_agilex5-u-boot.dtsi
 				<0x0000000 0x00000202 0x0000ffff>;
 			u-boot,dm-pre-reloc;
 		 }
+
+		/*
+		 * U-Boot firewall configuration devicetree of settings to
+		 * allow FPGA non-secure access to HPS SDRAM via F2S bridge
+		 *
+		 * Note: DDR driver always set 1MB from beginning address of DDR
+		 * to secure region for ATF and the remaining region to non-secure
+		 * based on the size defined in memory node of device tree in region0
+		 * register.
+		 *
+		 * In other words, user should not use region0 registers.
+		 *
+		 *			memory {
+		 *				/* 2GB on Simics*/
+		 *				reg = <0 0x80000000 0 0x80000000>;
+		 *			};
+		 */
+		 soc_mpfe_fw_tbu2noc_inst_0@18000c00 {
+			reg = <0x18000c00 0x00000090>;
+			intel,offset-settings =
+				/* region1addr_base */
+				<0x0000020 0x00000000 0xffff0000>,
+				/* region1addr_baseext */
+				<0x0000024 0x00000001 0x000000ff>,
+				/* region1addr_limit */
+				<0x0000028 0x00010000 0xffff0000>,
+				/* region1addr_limitext */
+				<0x000002c 0x00000000 0x000000ff>,,
+				/* Enable */
+				<0x0000000 0x00000002 0x000000ff>;
+			u-boot,dm-pre-reloc;
+		 }
