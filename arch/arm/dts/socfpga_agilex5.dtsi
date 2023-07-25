@@ -266,7 +266,7 @@
 			clocks = <&clkmgr AGILEX5_L4_SP_CLK>;
 			status = "disabled";
 		};
-
+ 
 		i2c4: i2c@10c02c00 {
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -275,6 +275,30 @@
 			interrupts = <0 107 4>;
 			resets = <&rst I2C4_RESET>;
 			clocks = <&clkmgr AGILEX5_L4_SP_CLK>;
+			status = "disabled";
+		};
+ 
+		i3c0: i3c@10da0000 {
+			compatible = "snps,dw-i3c-master-1.00a";
+			reg = <0x10da0000 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			interrupts = <0 164 4>;
+			resets = <&rst I3C0_RESET>;
+			max_devices = <11>;
+			clocks = <&clkmgr AGILEX5_L4_MP_CLK>;
+			status = "disabled";
+		};
+ 
+		i3c1: i3c@10da1000 {
+			compatible = "snps,dw-i3c-master-1.00a";
+			reg = <0x10da1000 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			interrupts = <0 165 4>;
+			resets = <&rst I3C1_RESET>;
+			clocks = <&clkmgr AGILEX5_L4_MP_CLK>;
+			max_devices = <11>;
 			status = "disabled";
 		};
 
