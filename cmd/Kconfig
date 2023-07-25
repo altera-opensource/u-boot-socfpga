@@ -1192,6 +1192,11 @@ config CMD_I2C
 	help
 	  I2C support.
 
+config CMD_I3C
+	bool "i3c"
+	help
+	  Access I3c.
+
 config CMD_W1
 	depends on W1
 	default y if W1
