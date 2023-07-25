@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2016-2022 Intel Corporation <www.intel.com>
+ * Copyright (C) 2016-2023 Intel Corporation <www.intel.com>
  *
  */
 
@@ -316,6 +316,7 @@ static void sdram_set_firewall_non_f2sdram(struct bd_info *bd)
 	}
 }
 
+#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
 static void sdram_set_firewall_f2sdram(struct bd_info *bd)
 {
 	u32 i;
@@ -360,6 +361,7 @@ static void sdram_set_firewall_f2sdram(struct bd_info *bd)
 		FW_F2SDRAM_DDR_SCR_WRITEL(BIT(i), FW_F2SDRAM_DDR_SCR_EN_SET);
 	}
 }
+#endif
 
 void sdram_set_firewall(struct bd_info *bd)
 {
