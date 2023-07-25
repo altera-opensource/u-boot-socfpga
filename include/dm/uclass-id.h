@@ -4,6 +4,7 @@
  *
  * (C) Copyright 2012
  * Pavel Herrmann <morpheus.ibis@gmail.com>
+ *
  */
 
 #ifndef _DM_UCLASS_ID_H
@@ -68,6 +69,7 @@ enum uclass_id {
 	UCLASS_I2C_EEPROM,	/* I2C EEPROM device */
 	UCLASS_I2C_GENERIC,	/* Generic I2C device */
 	UCLASS_I2C_MUX,		/* I2C multiplexer */
+	UCLASS_I3C,		/* I3C bus */
 	UCLASS_I2S,		/* I2S bus */
 	UCLASS_IDE,		/* IDE device */
 	UCLASS_IOMMU,		/* IOMMU */
