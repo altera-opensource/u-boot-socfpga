@@ -40,6 +40,14 @@
 	/delete-property/ cdns,read-delay;
 };
 
+&i3c0 {
+    u-boot,dm-pre-reloc;
+};
+
+&i3c1 {
+    u-boot,dm-pre-reloc;
+};
+
 &nand {
 	status = "okay";
 	nand-bus-width = <16>;
