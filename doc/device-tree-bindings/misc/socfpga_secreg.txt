@@ -395,3 +395,72 @@ Path: arch/arm/dts/socfpga_stratix10-u-boot.dtsi
 			u-boot,dm-pre-reloc;
 		};
 	};
+
+configuration for Intel Agilex5 device:
+Path: arch/arm/dts/socfpga_agilex5-u-boot.dtsi
+
+		/*
+		 * U-Boot firewall configuration devicetree of settings to
+		 * allow userspace accesses to HPS SDRAM
+		 *
+		 * Note: DDR driver always set 1MB from beginning address of DDR
+		 * to secure region for ATF and the remaining region to non-secure
+		 * based on the size defined in memory node of device tree in both
+		 * mpuregion0 and nonmpuregion0 registers.
+		 *
+		 * In other words, user should not use both mpuregion0 and
+		 * nonmpuregion0 registers.
+		 *
+		 *			memory {
+		 *				/* 2GB on Simics*/
+		 *				reg = <0 0x80000000 0 0x80000000>;
+		 *			};
+		 */
+		 soc_noc_fw_ddr_ccu_dmi0_inst_0@18000800 {
+			reg = <0x18000800 0x00000200>;
+			intel,offset-settings =
+				/* mpuregion1addr_base */
+				<0x0000020 0x00000000 0xffff0000>,
+				/* mpuregion1addr_baseext */
+				<0x0000024 0x00000001 0x000000ff>,
+				/* mpuregion1addr_limit */
+				<0x0000028 0x00010000 0xffff0000>,
+				/* mpuregion1addr_limitext */
+				<0x000002c 0x00000000 0x000000ff>,
+				/* nonmpuregion1addr_base */
+				<0x00000a0 0x00000000 0xffff0000>,
+				/* nonpuregion1addr_baseext */
+				<0x00000a4 0x00000001 0x000000ff>,
+				/* nonmpuregion1addr_limit */
+				<0x00000a8 0x00010000 0xffff0000>,
+				/* nonmpuregion1addr_limitext */
+				<0x00000ac 0x00000000 0x000000ff>,
+				/* Enable */
+				<0x0000000 0x00000202 0x0000ffff>;
+			u-boot,dm-pre-reloc;
+		 }
+
+		/* This is required to be set when DDR interleaving mode is set */
+		 soc_noc_fw_ddr_ccu_dmi1_inst_0@18000a00 {
+			reg = <0x18000a00 0x00000200>;
+			intel,offset-settings =
+				/* mpuregion1addr_base */
+				<0x0000020 0x00000000 0xffff0000>,
+				/* mpuregion1addr_baseext */
+				<0x0000024 0x00000001 0x000000ff>,
+				/* mpuregion1addr_limit */
+				<0x0000028 0x00010000 0xffff0000>,
+				/* mpuregion1addr_limitext */
+				<0x000002c 0x00000000 0x000000ff>,
+				/* nonmpuregion1addr_base */
+				<0x00000a0 0x00000000 0xffff0000>,
+				/* nonpuregion1addr_baseext */
+				<0x00000a4 0x00000001 0x000000ff>,
+				/* nonmpuregion1addr_limit */
+				<0x00000a8 0x00001000 0xffff0000>,
+				/* nonmpuregion1addr_limitext */
+				<0x00000ac 0x00000000 0x000000ff>,
+				/* Enable */
+				<0x0000000 0x00000202 0x0000ffff>;
+			u-boot,dm-pre-reloc;
+		 }
