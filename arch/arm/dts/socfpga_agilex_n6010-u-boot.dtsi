@@ -24,6 +24,19 @@
 	};
 };
 
+&socfpga_secreg {
+	i_sys_mgr_core@ffd12000 {
+		/delete-property/ intel,offset-settings;
+		intel,offset-settings =
+			/* Enable non-secure interface to DMA */
+			<0x00000020 0xff010000 0xff010011>,
+			/* Enable non-secure interface to DMA periph */
+			<0x00000024 0xffffffff 0xffffffff>,
+			/* Set DDR data rate to 1-Quarter-rate in BOOT_SCRATCH_COLD8 reg */
+			<0x00000220 0x00040000 0xffffffff>;
+	};
+};
+
 &binman {
 	/delete-node/ u-boot-script;
 	u-boot {
@@ -70,7 +83,7 @@
 					compression = "none";
 
 					kernel_ramdisk_blob: blob-ext {
-						filename = "rootfs.cpio";
+						filename = "rootfs.cpio.gz";
 					};
 					hash {
 						algo = "md5";

@@ -49,7 +49,7 @@ void spl_board_init(void)
 	do {
 		writel(HPS2HOST_RSP_HPS_RDY, COPY_ENGINE_BASE + HPS2HOST_RSP);
 
-		WATCHDOG_RESET();
+		schedule();
 
 		img_xfr = readl(COPY_ENGINE_BASE + HOST2HPS_IMG_XFR_SHDW);
 	} while (!(img_xfr & HOST2HPS_IMG_XFR_COMPLETE));
@@ -205,9 +205,8 @@ static int zl_pll_init(void)
 	const char *bd;
 	int ret;
 
-	ret = spi_get_bus_and_cs(PLL_SPI_BUS, PLL_SPI_CS, PLL_SPI_HZ,
-				 PLL_SPI_MODE, "spi_generic_drv", "board_pll",
-				 &dev, &slave);
+	ret = _spi_get_bus_and_cs(PLL_SPI_BUS, PLL_SPI_CS, PLL_SPI_HZ, PLL_SPI_MODE,
+				  "spi_generic_drv", "board_pll", &dev, &slave);
 	if (ret != 0)
 		return ret;
 
@@ -254,9 +253,8 @@ static int do_zl_read(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (argc < 2)
 		return CMD_RET_USAGE;
 
-	ret = spi_get_bus_and_cs(PLL_SPI_BUS, PLL_SPI_CS, PLL_SPI_HZ,
-				 PLL_SPI_MODE, "spi_generic_drv", "board_pll",
-				 &dev, &slave);
+	ret = _spi_get_bus_and_cs(PLL_SPI_BUS, PLL_SPI_CS,  PLL_SPI_HZ, PLL_SPI_MODE,
+				  "spi_generic_drv", "board_pll", &dev, &slave);
 	if (ret != 0)
 		return CMD_RET_FAILURE;
 
@@ -293,9 +291,8 @@ static int do_zl_write(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (argc < 3)
 		return CMD_RET_USAGE;
 
-	ret = spi_get_bus_and_cs(PLL_SPI_BUS, PLL_SPI_CS, PLL_SPI_HZ,
-				 PLL_SPI_MODE, "spi_generic_drv", "board_pll",
-				 &dev, &slave);
+	ret = _spi_get_bus_and_cs(PLL_SPI_BUS, PLL_SPI_CS,  PLL_SPI_HZ, PLL_SPI_MODE,
+				  "spi_generic_drv", "board_pll", &dev, &slave);
 	if (ret != 0)
 		return CMD_RET_FAILURE;
 
