@@ -8,7 +8,8 @@
 	model = "SoCFPGA Agilex n6000";
 
 	aliases {
-		serial0 = &uart0;
+		serial1 = &uart0;
+		serial0 = &uart1;
 		ethernet0 = &gmac0;
 		ethernet1 = &gmac1;
 		ethernet2 = &gmac2;
@@ -35,6 +36,10 @@
 };
 
 &uart0 {
+	status = "okay";
+};
+
+&uart1 {
 	status = "okay";
 };
 
