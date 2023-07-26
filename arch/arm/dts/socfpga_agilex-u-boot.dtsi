@@ -167,6 +167,10 @@
 	bootph-all;
 };
 
+&uart1 {
+	bootph-all;
+};
+
 &watchdog0 {
 	bootph-all;
 };

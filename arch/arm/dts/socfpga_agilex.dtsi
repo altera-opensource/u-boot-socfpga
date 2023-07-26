@@ -463,6 +463,7 @@
 			resets = <&rst UART1_RESET>;
 			clocks = <&clkmgr AGILEX_L4_SP_CLK>;
 			status = "disabled";
+			clock-frequency = <100000000>;
 		};
 
 		usbphy0: usbphy@0 {
