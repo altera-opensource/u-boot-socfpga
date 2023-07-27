@@ -20,8 +20,8 @@
 #define UBOOT_ENV_EXT ".env"
 #define UBOOT_IMG_EXT ".img"
 #define UBOOT_ITB_EXT ".itb"
-#define UBOOT_ENV_PREFIX "uboot_"
-#define UBOOT_ENV_REDUND_PREFIX "uboot-redund_"
+#define UBOOT_ENV_PREFIX "u-boot_"
+#define UBOOT_ENV_REDUND_PREFIX "u-boot-redund_"
 #define UBOOT_PREFIX "u-boot_"
 #define FACTORY_IMG_NAME "FACTORY_IM"
 
