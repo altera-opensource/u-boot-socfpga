@@ -17,7 +17,7 @@ config SOCFPGA_RSU_MULTIBOOT
 
 config SOCFPGA_SECURE_VAB_AUTH
 	bool "Enable boot image authentication with Secure Device Manager"
-	depends on TARGET_SOCFPGA_AGILEX || TARGET_SOCFPGA_N5X
+	depends on TARGET_SOCFPGA_AGILEX || TARGET_SOCFPGA_N5X || TARGET_SOCFPGA_AGILEX5
 	select FIT_IMAGE_POST_PROCESS
 	select SHA384
 	select SHA512
