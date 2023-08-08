@@ -1,20 +1,48 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2022 Intel Corporation <www.intel.com>
+ * Copyright (C) 2022-2023 Intel Corporation <www.intel.com>
  *
  */
 
 #define DEBUG
 #include <common.h>
 #include <hang.h>
+#include <wait_bit.h>
 #include <asm/io.h>
 #include "iossm_mailbox.h"
-#include <wait_bit.h>
+
+#define ECC_INTSTATUS_SERR SOCFPGA_SYSMGR_ADDRESS + 0x9C
+#define ECC_INISTATUS_DERR SOCFPGA_SYSMGR_ADDRESS + 0xA0
+#define DDR_CSR_CLKGEN_LOCKED_IO96B0_MASK BIT(16)
+#define DDR_CSR_CLKGEN_LOCKED_IO96B1_MASK BIT(17)
 
 /* supported DDR type list */
 static const char *ddr_type_list[7] = {
 		"DDR4", "DDR5", "DDR5_RDIMM", "LPDDR4", "LPDDR5", "QDRIV", "UNKNOWN"
 };
+
+static int is_ddr_csr_clkgen_locked(u32 clkgen_mask)
+{
+	int ret;
+
+	ret = wait_for_bit_le32((const void *)(ECC_INTSTATUS_SERR)
+				, clkgen_mask, true, TIMEOUT, false);
+
+	if (ret) {
+		debug("%s: ddr csr clkgena locked is timeout\n", __func__);
+		return ret;
+	}
+
+	ret = wait_for_bit_le32((const void *)(ECC_INISTATUS_DERR)
+				, clkgen_mask, true, TIMEOUT, false);
+
+	if (ret) {
+		debug("%s: ddr csr clkgenb locked is timeout\n", __func__);
+		return ret;
+	}
+
+	return 0;
+}
 
 /* Mailbox request function
  * This function will send the request to IOSSM mailbox and wait for response return
@@ -280,6 +308,11 @@ void init_mem_cal(struct io96b_info *io96b_ctrl)
 	for (i = 0; i < io96b_ctrl->num_instance; i++) {
 		switch (i) {
 		case 0:
+			ret = is_ddr_csr_clkgen_locked(DDR_CSR_CLKGEN_LOCKED_IO96B0_MASK);
+			if (ret) {
+				printf("%s: ckgena_lock iossm IO96B_0 is not locked\n", __func__);
+				hang();
+			}
 			ret = io96b_cal_status(io96b_ctrl->io96b_0.io96b_csr_addr);
 			if (ret) {
 				io96b_ctrl->io96b_0.cal_status = false;
@@ -292,6 +325,11 @@ void init_mem_cal(struct io96b_info *io96b_ctrl)
 			count++;
 			break;
 		case 1:
+			ret = is_ddr_csr_clkgen_locked(DDR_CSR_CLKGEN_LOCKED_IO96B1_MASK);
+			if (ret) {
+				printf("%s: ckgena_lock iossm IO96B_1 is not locked\n", __func__);
+				hang();
+			}
 			ret = io96b_cal_status(io96b_ctrl->io96b_1.io96b_csr_addr);
 			if (ret) {
 				io96b_ctrl->io96b_1.cal_status = false;
