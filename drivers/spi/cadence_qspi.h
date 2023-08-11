@@ -220,6 +220,7 @@ struct cadence_spi_plat {
 	u32		tsd2d_ns;
 	u32		tchsh_ns;
 	u32		tslch_ns;
+	u32		quirks;
 
 	bool            is_dma;
 };
@@ -251,6 +252,7 @@ struct cadence_spi_priv {
 	u32		tsd2d_ns;
 	u32		tchsh_ns;
 	u32		tslch_ns;
+	u32		quirks;
 	u8              edge_mode;
 	u8              dll_mode;
 	bool		extra_dummy;
@@ -264,6 +266,11 @@ struct cadence_spi_priv {
 	u8		addr_width;
 	u8		data_width;
 	bool		dtr;
+};
+
+struct cqspi_driver_platdata {
+	u32 hwcaps_mask;
+	u8 quirks;
 };
 
 /* Functions call declaration */
