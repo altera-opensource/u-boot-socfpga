@@ -29,6 +29,9 @@
 #define CQSPI_READ			2
 #define CQSPI_WRITE			3
 
+/* Quirks */
+#define CQSPI_DISABLE_STIG_MODE		BIT(0)
+
 __weak int cadence_qspi_apb_dma_read(struct cadence_spi_priv *priv,
 				     const struct spi_mem_op *op)
 {
@@ -214,6 +217,7 @@ static int cadence_spi_probe(struct udevice *bus)
 	priv->tsd2d_ns		= plat->tsd2d_ns;
 	priv->tchsh_ns		= plat->tchsh_ns;
 	priv->tslch_ns		= plat->tslch_ns;
+	priv->quirks		= plat->quirks;
 
 	if (IS_ENABLED(CONFIG_ZYNQMP_FIRMWARE))
 		xilinx_pm_request(PM_REQUEST_NODE, PM_DEV_OSPI,
@@ -307,13 +311,14 @@ static int cadence_spi_mem_exec_op(struct spi_slave *spi,
 				    priv->is_decoded_cs);
 
 	if (op->data.dir == SPI_MEM_DATA_IN && op->data.buf.in) {
-		if (!op->addr.nbytes)
-
+		if (op->data.nbytes <= CQSPI_STIG_DATA_LEN_MAX &&
+		    !(priv->quirks & CQSPI_DISABLE_STIG_MODE))
 			mode = CQSPI_STIG_READ;
 		else
 			mode = CQSPI_READ;
 	} else {
-		if (op->data.nbytes <= CQSPI_STIG_DATA_LEN_MAX)
+		if (op->data.nbytes <= CQSPI_STIG_DATA_LEN_MAX &&
+		    !(priv->quirks & CQSPI_DISABLE_STIG_MODE))
 			mode = CQSPI_STIG_WRITE;
 		else
 			mode = CQSPI_WRITE;
@@ -428,6 +433,8 @@ static int cadence_spi_of_to_plat(struct udevice *bus)
 	plat->read_delay = ofnode_read_s32_default(subnode, "cdns,read-delay",
 						   -1);
 
+	plat->quirks = dev_get_driver_data(bus);
+
 	debug("%s: regbase=%p ahbbase=%p max-frequency=%d page-size=%d\n",
 	      __func__, plat->regbase, plat->ahbbase, plat->max_hz,
 	      plat->page_size);
@@ -450,9 +457,18 @@ static const struct dm_spi_ops cadence_spi_ops = {
 	 */
 };
 
+static const struct cqspi_driver_platdata cdns_qspi = {
+	.quirks = CQSPI_DISABLE_STIG_MODE,
+};
+
 static const struct udevice_id cadence_spi_ids[] = {
-	{ .compatible = "cdns,qspi-nor" },
-	{ .compatible = "ti,am654-ospi" },
+	{
+		.compatible = "cdns,qspi-nor",
+		.data = (ulong)&cdns_qspi,
+	},
+	{
+		.compatible = "ti,am654-ospi"
+	},
 	{ }
 };
 
