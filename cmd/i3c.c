@@ -20,6 +20,7 @@
 #include <u-boot/crc.h>
 
 static struct udevice *currdev;
+static struct udevice *prevdev;
 static struct dw_i3c_priv *priv;
 
 /**
@@ -41,11 +42,12 @@ static int do_i3c(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
     u8* data;
     u8* rdata;
     u8 device_num;
-    
+
     if (argc > 1) {
-        if(!currdev){
-            ret = uclass_get_device_by_name(UCLASS_I3C, argv[1], &currdev);
-            if (ret) {
+        ret = uclass_get_device_by_name(UCLASS_I3C, argv[1], &currdev);
+        if (ret) {
+            currdev = prevdev;
+            if(!currdev){
                 ret = uclass_get(UCLASS_I3C, &uc);
                 if (ret)
                     return CMD_RET_FAILURE;
@@ -54,10 +56,11 @@ static int do_i3c(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
                     printf("%s (%s)\n", dev_list->name, dev_list->driver->name);
                 printf("i3m master controller is not initialized: %s\n", argv[1]);
                 return CMD_RET_FAILURE;
-            } else {
-                priv = dev_get_priv(currdev);
-                printf("current dev: %s\n", currdev->name);
             }
+        } else {
+            priv = dev_get_priv(currdev);
+            printf("current dev: %s\n", currdev->name);
+            prevdev = currdev;
         }
     } else {
         if (!currdev) {
