@@ -2,7 +2,7 @@
 /*
  * U-Boot additions
  *
- * Copyright (C) 2022 Intel Corporation <www.intel.com>
+ * Copyright (C) 2022-2023 Intel Corporation <www.intel.com> 
  */
 
 #include "socfpga_agilex5-u-boot.dtsi"
@@ -39,18 +39,16 @@
 	u-boot,dm-pre-reloc;
 };
 
+&flash1 {
+	u-boot,dm-pre-reloc;
+};
+
 &i3c0 {
     u-boot,dm-pre-reloc;
 };
 
 &i3c1 {
     u-boot,dm-pre-reloc;
-};
-
-&nand {
-	status = "okay";
-	nand-bus-width = <16>;
-	u-boot,dm-pre-reloc;
 };
 
 &mmc {
@@ -104,6 +102,10 @@
 
 &qspi {
 	status = "okay";
+};
+
+&nand {
+    u-boot,dm-pre-reloc;
 };
 
 &timer0 {
