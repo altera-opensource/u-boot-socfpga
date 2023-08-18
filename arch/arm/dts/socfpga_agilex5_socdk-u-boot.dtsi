@@ -41,6 +41,10 @@
 	/delete-property/ cdns,read-delay;
 };
 
+&flash1 {
+	u-boot,dm-pre-reloc;
+};
+
 &i3c0 {
 	bootph-all;
 };
@@ -100,6 +104,10 @@
 
 &qspi {
 	status = "okay";
+};
+
+&nand {
+    u-boot,dm-pre-reloc;
 };
 
 &timer0 {
