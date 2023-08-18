@@ -1,6 +1,6 @@
 // SPDX-License-Identifier:     GPL-2.0
 /*
- * Copyright (C) 2022, Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation <www.intel.com> 
  */
 
 /dts-v1/;
@@ -331,17 +331,16 @@
 		};
 
 		nand: nand@10b80000 {
+			compatible = "cdns,nand";
+			reg = <0x10b80000 0x10000>,
+				<0x10840000 0x1000>;
+			reg-names = "reg", "sdma";
 			#address-cells = <1>;
 			#size-cells = <0>;
-			compatible = "altr,socfpga-denali-nand";
-			reg = <0x10b80000 0x1038>,
-			      <0xffb80000 0x1000>;
-			reg-names = "nand_data", "denali_reg";
 			interrupts = <0 97 4>;
-			clocks = <&clkmgr AGILEX5_NAND_CLK>,
-				 <&clkmgr AGILEX5_NAND_X_CLK>;
-			clock-names = "nand", "nand_x";
-			resets = <&rst NAND_RESET>, <&rst NAND_OCP_RESET>;
+			clocks = <&clkmgr AGILEX5_NAND_CLK>;
+			resets = <&rst NAND_RESET>, <&rst COMBOPHY_RESET>;
+			cdns,board-delay-ps = <4830>;
 			status = "disabled";
 		};
 
