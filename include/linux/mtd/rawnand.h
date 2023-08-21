@@ -4,6 +4,8 @@
  *                        Steven J. Hill <sjhill@realitydiluted.com>
  *		          Thomas Gleixner <tglx@linutronix.de>
  *
+ *  Copyright (C) 2023 Intel Corporation <www.intel.com>
+ *
  * Info:
  *	Contains standard defines and IDs for NAND flash devices
  *
@@ -130,6 +132,17 @@ void nand_wait_ready(struct mtd_info *mtd);
 #define NAND_STATUS_WP		0x80
 
 #define NAND_DATA_IFACE_CHECK_ONLY	-1
+
+/*
+ * There are different places where the manufacturer stores the factory bad
+ * block markers.
+ *
+ * Position within the block: Each of these pages needs to be checked for a
+ * bad block marking pattern.
+ */
+#define NAND_BBM_FIRSTPAGE	BIT(24)
+#define NAND_BBM_SECONDPAGE	BIT(25)
+#define NAND_BBM_LASTPAGE	BIT(26)
 
 /*
  * Constants for ECC_MODES
