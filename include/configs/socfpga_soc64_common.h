@@ -116,7 +116,7 @@
 #endif
 
 #define BOOTENV_DEV_NAND(devtypeu, devtypel, instance) \
-	"bootcmd_nand=ubi detach; ubi part root && " \
+	"bootcmd_nand=ubi detach; ubi part rootubi && " \
 	"ubi readvol ${scriptaddr} script && " \
 	"echo NAND: Trying to boot script at ${scriptaddr} && " \
 	"source ${scriptaddr}; " \
@@ -125,16 +125,10 @@
 #define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
 	"nand "
 
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS)
-#define BOOT_TARGET_DEVICES(func) \
-	BOOT_TARGET_DEVICES_MMC(func) \
-	BOOT_TARGET_DEVICES_QSPI(func)
-#else
 #define BOOT_TARGET_DEVICES(func) \
 	BOOT_TARGET_DEVICES_MMC(func) \
 	BOOT_TARGET_DEVICES_QSPI(func) \
 	BOOT_TARGET_DEVICES_NAND(func)
-#endif
 
 #include <config_distro_bootcmd.h>
 
@@ -165,6 +159,10 @@
 	"scriptaddr=0x81000000\0" \
 	"scriptfile=boot.scr\0" \
 	"nandroot=ubi0:rootfs\0" \
+	"nandfitboot=setenv bootargs " CONFIG_BOOTARGS \
+			" root=${nandroot} rw rootwait rootfstype=ubifs ubi.mtd=1; " \
+			"bootm ${loadaddr}\0" \
+	"nandfitload=ubi part rootubi; ubi readvol ${loadaddr} kernel\0" \
 	"socfpga_legacy_reset_compat=1\0" \
 	"rsu_status=rsu dtb; rsu display_dcmf_version; "\
 		"rsu display_dcmf_status; rsu display_max_retry\0" \
