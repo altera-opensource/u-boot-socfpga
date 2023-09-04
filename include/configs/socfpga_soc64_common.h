@@ -292,6 +292,12 @@
 #define CFG_SYS_NS16550_CLK		100000000
 
 /*
+=======
+ * Timer & watchdog configurations
+ */
+#define COUNTER_FREQUENCY		400000000
+
+/*
  * SDMMC configurations
  */
 /*
