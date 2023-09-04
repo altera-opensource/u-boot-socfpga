@@ -296,11 +296,7 @@
 =======
  * Timer & watchdog configurations
  */
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS)
-#define COUNTER_FREQUENCY		80000000
-#else
 #define COUNTER_FREQUENCY		400000000
-#endif
 
 /*
  * SDMMC configurations
