@@ -93,7 +93,10 @@
 
 #define BOOTENV_DEV_QSPI(devtypeu, devtypel, instance) \
 	"bootcmd_qspi=ubi detach; sf probe && " \
-	"ubi part root && ubi readvol ${scriptaddr} script && " \
+	"if ubi part root && ubi readvol ${scriptaddr} script; " \
+	"then echo QSPI: Running script from UBIFS; " \
+	"elif sf read ${scriptaddr} ${qspiscriptaddr} ${scriptsize}; " \
+	"then echo QSPI: Running script from JFFS2; fi; " \
 	"echo QSPI: Trying to boot script at ${scriptaddr} && " \
 	"source ${scriptaddr}; " \
 	"echo QSPI: SCRIPT FAILED: continuing...; ubi detach;\0"
