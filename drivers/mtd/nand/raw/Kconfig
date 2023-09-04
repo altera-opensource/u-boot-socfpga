@@ -775,6 +775,13 @@ config SPL_NAND_AM33XX_BCH
 	  so those platforms should use CONFIG_SPL_NAND_SIMPLE for enabling
           SPL-NAND driver with software ECC correction support.
 
+config SPL_NAND_CADENCE
+	bool "Support Cadence NAND controller for SPL"
+	depends on SPL_NAND_SUPPORT
+	help
+	  This is a small implementation of the Cadence NAND controller
+	  for use on SPL.
+
 config SPL_NAND_DENALI
 	bool "Support Denali NAND controller for SPL"
 	depends on SPL_NAND_SUPPORT
