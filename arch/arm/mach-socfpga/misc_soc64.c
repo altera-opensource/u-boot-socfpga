@@ -63,7 +63,7 @@ int print_cpuinfo(void)
 #ifdef CONFIG_ARCH_MISC_INIT
 int arch_misc_init(void)
 {
-#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU))
+#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU))
 	char qspi_string[13];
 	char level[4];
 	char id[3];
