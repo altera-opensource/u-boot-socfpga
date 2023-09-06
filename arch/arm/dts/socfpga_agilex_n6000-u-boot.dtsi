@@ -108,3 +108,16 @@
 
 	/delete-node/ kernel;
 };
+#if defined(CONFIG_SOCFPGA_SECURE_VAB_AUTH)
+&kernel_uboot_blob {
+	filename = "signed-Image";
+};
+
+&kernel_uboot_fdt_blob {
+	filename = "signed-linux.dtb";
+};
+
+&kernel_ramdisk_blob {
+	filename = "signed-rootfs.cpio.gz";
+};
+#endif
