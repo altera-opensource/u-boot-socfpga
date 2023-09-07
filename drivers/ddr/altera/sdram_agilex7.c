@@ -27,6 +27,9 @@
 #define SIDEBANDMGR_FLAGOUTSTATUS0_REG	SOCFPGA_F2SDRAM_MGR_ADDRESS +\
 					F2SDRAM_SIDEBAND_FLAGOUTSTATUS0
 
+#define SIDEBANDMGR_FLAGOUTSET0_REG_MULTICHANNEL	BIT(4)
+#define SIDEBANDMGR_FLAGOUTSET0_REG_INTERLEAVING	BIT(5)
+
 /* Reset type */
 enum reset_type {
 	POR_RESET,
@@ -134,22 +137,30 @@ int config_mpfe_sideband_mgr(struct udevice *dev)
 {
 	struct altera_sdram_plat *plat = dev_get_plat(dev);
 	u32 reg;
+	u32 mask;
 
 	if (plat->multichannel_interleaving) {
 		debug("%s: Set interleaving bit\n", __func__);
-		setbits_le32(SIDEBANDMGR_FLAGOUTSET0_REG, BIT(5));
+		mask = SIDEBANDMGR_FLAGOUTSET0_REG_INTERLEAVING;
+		setbits_le32(SIDEBANDMGR_FLAGOUTSET0_REG, mask);
 	} else {
 		debug("%s: Set multichannel bit\n", __func__);
-		setbits_le32(SIDEBANDMGR_FLAGOUTSET0_REG, BIT(4));
+		mask = SIDEBANDMGR_FLAGOUTSET0_REG_MULTICHANNEL;
+		setbits_le32(SIDEBANDMGR_FLAGOUTSET0_REG, mask);
 	}
 
 	reg = readl(SIDEBANDMGR_FLAGOUTSTATUS0_REG);
 	debug("%s: F2SDRAM_SIDEBAND_FLAGOUTSTATUS0: 0x%x\n", __func__, reg);
 
-	if ((reg & BIT(1)) == plat->multichannel_interleaving)
+	if ((reg & mask) == SIDEBANDMGR_FLAGOUTSET0_REG_INTERLEAVING) {
+		debug("%s: Interleaving bit is set\n", __func__);
 		return 0;
-
-	return -1;
+	} else if ((reg & mask) == SIDEBANDMGR_FLAGOUTSET0_REG_MULTICHANNEL) {
+		debug("%s: Multichannel bit is set\n", __func__);
+		return 0;
+	} else {
+		return -1;
+	}
 }
 
 bool hps_ocram_dbe_status(void)
