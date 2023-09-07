@@ -30,9 +30,6 @@ void board_init_f(ulong dummy)
 	int ret;
 	struct udevice *dev;
 
-	/* Write hardcoded DDR handoff for PO*/
-	writel(0x01000000, (u32 *)SOC64_HANDOFF_BASE + 393);
-
 	ret = spl_early_init();
 	if (ret)
 		hang();
