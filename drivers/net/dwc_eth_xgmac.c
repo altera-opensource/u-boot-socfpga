@@ -158,9 +158,7 @@ static int xgmac_mdio_read(struct mii_dev *bus, int mdio_addr, int mdio_devad,
 	}
 
 	/* Set clause 22 format */
-	val = readl(&xgmac->mac_regs->mdio_clause_22_port);
-	val &= ~XGMAC_MII_XGMAC_C22P_MASK;
-	val |= BIT(mdio_addr);
+	val = BIT(mdio_addr);
 	writel(val, &xgmac->mac_regs->mdio_clause_22_port);
 
 	hw_addr = (mdio_addr << XGMAC_MAC_MDIO_ADDRESS_PA_SHIFT) |
@@ -214,9 +212,7 @@ static int xgmac_mdio_write(struct mii_dev *bus, int mdio_addr, int mdio_devad,
 	}
 
 	/* Set clause 22 format */
-	val = readl(&xgmac->mac_regs->mdio_clause_22_port);
-	val &= ~XGMAC_MII_XGMAC_C22P_MASK;
-	val |= BIT(mdio_addr);
+	val = BIT(mdio_addr);
 	writel(val, &xgmac->mac_regs->mdio_clause_22_port);
 
 	hw_addr = (mdio_addr << XGMAC_MAC_MDIO_ADDRESS_PA_SHIFT) |
