@@ -94,7 +94,7 @@
 			<0x0000008 0x8000ffff 0xe003ffff>,
 			<0x000000c 0x8000ffff 0xe003ffff>,
 			<0x0000010 0x8000ffff 0xe003ffff>;
-		bootph-all;
+		u-boot,dm-pre-reloc;
 	};
 
 	soc_noc_fw_mpfe_csr_inst_0_mpfe_scr@f8020000 {
@@ -102,7 +102,7 @@
 		intel,offset-settings =
 			/* Disable MPFE firewall for SMMU */
 			<0x00000000 0x00010101 0x00010101>;
-		bootph-all;
+		u-boot,dm-pre-reloc;
 	};
 
 	/*
@@ -134,7 +134,7 @@
 			<0x0000044 0x00000000 0x000000ff>,
 			<0x0000048 0x00000000 0xffff0000>,
 			<0x000004c 0x00000000 0x000000ff>;
-		bootph-all;
+		u-boot,dm-pre-reloc;
 	};
 
 	/*
@@ -152,7 +152,7 @@
 			<0x0000010 0x00000BFE 0x00007fff>,
 			<0x0000014 0x00000008 0x000003ff>,
 			<0x0000018 0x00000000 0x0000000f>;
-		bootph-all;
+		u-boot,dm-pre-reloc;
 	};
 };
 
