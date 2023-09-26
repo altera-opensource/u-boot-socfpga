@@ -53,8 +53,8 @@
 #define CMDQ_PROD           0x0098
 #define CMDQ_CONS           0x009C
 #define EVENTQ_BASE         0x00A0
-#define EVENTQ_PROD         0x00A8
-#define EVENTQ_CONS         0x00AC
+#define S_EVENTQ_PROD       0x00A8
+#define S_EVENTQ_CONS       0x00AC
 #define EVENTQ_IRQ_CFG0     0x00B0
 #define EVENTQ_IRQ_CFG1     0x00B8
 #define EVENTQ_IRQ_CFG2     0x00BC
@@ -68,6 +68,8 @@
 #define GATOS_SID           0x0108
 #define GATOS_ADDR          0x0110
 #define GATOS_PAR           0x0118
+#define EVENTQ_PROD			0x100A8
+#define EVENTQ_CONS			0x100AC
 
 /* Masking */
 #define SMMU_STRTAB_BASE_RA_MASK				BIT(62)
@@ -155,8 +157,13 @@ int smmu_init_event_queue(struct smmuv3 *smmu, u8 wa, u8 queue_size)
 	debug("%s: 0x%llx = 0x%llx\n",  __func__, smmu->curr +
 	      EVENTQ_BASE, readq(smmu->curr + EVENTQ_BASE));
 
-	writel(0x0, smmu->curr + EVENTQ_CONS);
-	writel(0x0, smmu->curr + EVENTQ_PROD);
+	if (smmu->curr == smmu->ns_base) {
+		writel(0x0, smmu->curr + EVENTQ_CONS);
+		writel(0x0, smmu->curr + EVENTQ_PROD);
+	} else {
+		writel(0x0, smmu->curr + S_EVENTQ_CONS);
+		writel(0x0, smmu->curr + S_EVENTQ_PROD);
+	}
 
 	return 0;
 }
@@ -345,6 +352,9 @@ static int smmu_add_cmd(struct smmuv3 *smmu, const void *cmd)
 
 	debug("%s: Command is:\n 0x%llx\n 0x%llx\n", __func__, entry[0],
 	      entry[1]);
+
+	flush_dcache_range((unsigned long)entry,
+					   (unsigned long)(entry + CMD_SIZE_BYTE));
 
 	/* Increment queue pointer */
 	writel(smmu_qidx_inc(smmu), smmu->curr + CMDQ_PROD);

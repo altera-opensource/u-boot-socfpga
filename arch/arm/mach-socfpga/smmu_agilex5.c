@@ -371,7 +371,7 @@ int smmu_init_ste(struct smmuv3 *smmu, const u32 streamid)
 	if (!smmu)
 		return -ENODEV;
 
-	ste_p = (struct ste *)(smmu->cd_base + (SZ_512 * streamid));
+	ste_p = (struct ste *)(smmu->ste_base + (SZ_512 * streamid));
 
 	ste_p->d0.valid = 0;
 	ste_p->d0.config = SMMU_ST_STAGE1_ONLY;
