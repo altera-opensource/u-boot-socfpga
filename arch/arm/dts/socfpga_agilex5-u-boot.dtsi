@@ -140,6 +140,29 @@
 				bootph-all;
 			};
 
+			/* SMMU */
+			i_ccu_ncaiu2@1c003000 {
+				reg = <0x1c003000 0x00001000>;
+				intel,offset-settings =
+					/* NCAIU2AMIGR */
+					<0x000003c0 0x00000003 0x0000001f>,
+					/* NCAIU2MIFSR */
+					<0x000003c4 0x00000000 0x07070777>,
+					/* DMI_SDRAM_2G */
+					<0x00000464 0x00080000 0xffffffff>,
+					<0x00000468 0x00000000 0x000000ff>,
+					<0x00000460 0x81300006 0xc1f03e1f>,
+					/* DMI_SDRAM_30G */
+					<0x00000484 0x00800000 0xffffffff>,
+					<0x00000488 0x00000000 0x000000ff>,
+					<0x00000480 0x81700006 0xc1f03e1f>,
+					/* DMI_SDRAM_480G */
+					<0x000004a4 0x08000000 0xffffffff>,
+					<0x000004a8 0x00000000 0x000000ff>,
+					<0x000004a0 0x81b00006 0xc1f03e1f>;
+				bootph-all;
+			};
+
 			/* PSS NOC */
 			i_ccu_ncaiu3@1c004000 {
 				reg = <0x1c004000 0x00001000>;
