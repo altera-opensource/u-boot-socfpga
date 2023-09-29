@@ -291,7 +291,7 @@ static void sdram_set_firewall_non_f2sdram(struct bd_info *bd)
 				      (i * 4 * sizeof(u32)));
 
 		/* Setting non-secure MPU limit and limit extended */
-		value = bd->bi_dram[i].start + bd->bi_dram[i].size - 1;
+		value = bd->bi_dram[i].start + 0x80000000 - 1;
 
 		lower = lower_32_bits(value);
 		upper = upper_32_bits(value);
