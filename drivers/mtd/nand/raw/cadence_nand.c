@@ -2134,10 +2134,16 @@ static int cadence_nand_init(struct cadence_nand_info *cadence)
 {
 	int ret;
 
+	cadence->cdma_desc = dma_alloc_coherent(sizeof(struct cadence_nand_cdma_desc),
+						(unsigned long *)&cadence->dma_cdma_desc);
+	if (!cadence->cdma_desc)
+		return -ENOMEM;
+
 	cadence->buf_size = SZ_16K;
 	cadence->buf = kmalloc(cadence->buf_size, GFP_KERNEL);
 	if (!cadence->buf) {
-		return -ENOMEM;
+		ret = -ENOMEM;
+		goto free_buf_desc;
 	}
 
 	//Hardware initialization
@@ -2156,13 +2162,18 @@ static int cadence_nand_init(struct cadence_nand_info *cadence)
 
 	kfree(cadence->buf);
 	cadence->buf = kzalloc(cadence->buf_size, GFP_KERNEL);
-	if (!cadence->buf)
-		return -ENOMEM;
+	if (!cadence->buf) {
+		ret = -ENOMEM;
+		goto free_buf_desc;
+	}
 
 	return 0;
 
 free_buf:
 	kfree(cadence->buf);
+
+free_buf_desc:
+	dma_free_coherent(cadence->cdma_desc);
 
 	return ret;
 }
