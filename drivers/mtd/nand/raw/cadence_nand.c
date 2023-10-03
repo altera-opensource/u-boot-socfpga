@@ -2056,8 +2056,7 @@ static int cadence_nand_chip_init(struct cadence_nand_info *cadence, ofnode node
 
 	cadence->selected_chip = cdns_chip->chip;
 	chip = &cadence->selected_chip;
-	mtd = &chip->mtd;
-	mtd->dev->parent = cadence->dev;
+	mtd = nand_to_mtd(chip);
 	nand_set_flash_node(chip, node);
 
 	chip->select_chip = cadence_nand_select_chip;
