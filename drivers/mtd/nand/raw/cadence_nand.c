@@ -1514,8 +1514,9 @@ static int cadence_setup_data_interface(struct mtd_info *mtd, int chipnr,
 					const struct nand_data_interface *conf)
 {
 	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(mtd_to_nand(mtd));
 	const struct nand_sdr_timings *sdr;
-	struct cadence_nand_timings *t = NULL;
+	struct cadence_nand_timings *t = &cdns_chip->timings;
 	u32 reg;
 	u32 board_delay = cadence->board_delay;
 	u32 clk_period = DIV_ROUND_DOWN_ULL(1000000000000ULL,
