@@ -26,9 +26,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define USE_HARDCODED_HANDOFF
-
-#ifdef USE_HARDCODED_HANDOFF
+#if !IS_ENABLED(CONFIG_QPDS_HPS_HANDOFF)
 static const u32 hardcoded_handoff_data[402] = {
         0x544f4f42, 0x01000500, 0x00000000, 0x00000000, 0x58554d50, 0x90010000,
 #if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_OOBE2)
@@ -227,7 +225,7 @@ void board_init_f(ulong dummy)
 
 	socfpga_get_managers_addr();
 
-#ifdef USE_HARDCODED_HANDOFF
+#if !IS_ENABLED(CONFIG_QPDS_HPS_HANDOFF)
 	/* Write hardcoded handoff value into OCRAM handoff area */
 	u32 i;
 

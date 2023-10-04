@@ -84,6 +84,9 @@ config TARGET_SOCFPGA_AGILEX5
 	select SPL_CLK if SPL
 	select TARGET_SOCFPGA_SOC64
 
+config QPDS_HPS_HANDOFF
+	bool "Enable build for SM to use HPS handoff generated from QPDS"
+
 config TARGET_SOCFPGA_AGILEX5_EMU
 	bool "Enable build that bootable only on Agilex5 Emulator"
 
