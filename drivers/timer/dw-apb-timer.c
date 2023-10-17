@@ -12,6 +12,7 @@
 #include <malloc.h>
 #include <reset.h>
 #include <timer.h>
+#include <asm/global_data.h>
 #include <dm/device_compat.h>
 #include <linux/kconfig.h>
 
@@ -21,6 +22,8 @@
 #define DW_APB_LOAD_VAL		0x0
 #define DW_APB_CURR_VAL		0x4
 #define DW_APB_CTRL		0x8
+
+DECLARE_GLOBAL_DATA_PTR;
 
 struct dw_apb_timer_priv {
 	uintptr_t regs;
@@ -84,6 +87,7 @@ static int dw_apb_timer_probe(struct udevice *dev)
 	writel(0xffffffff, priv->regs + DW_APB_CURR_VAL);
 	setbits_le32(priv->regs + DW_APB_CTRL, 0x3);
 
+	gd->timer = dev;
 	return 0;
 }
 
