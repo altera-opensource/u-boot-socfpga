@@ -113,6 +113,8 @@ struct io96b_instance {
  * @overall_size:	Total DDR memory size
  * @io96b_0:		IO96B 0 instance specific information
  * @io96b_1:		IO96B 1 instance specific information
+ * @ckgen_lock:		IO96B GEN PLL lock (false = not locked, true = locked)
+ * @num_port:		Number of IO96B port. Example bit 0 represent port 0, bit 1 represent port 1, and so on
  */
 struct io96b_info {
 	u8 num_instance;
@@ -122,6 +124,8 @@ struct io96b_info {
 	u16 overall_size;
 	struct io96b_instance io96b_0;
 	struct io96b_instance io96b_1;
+	bool ckgen_lock;
+	u8 num_port;
 };
 
 int io96b_mb_req(phys_addr_t io96b_csr_addr, u32 ip_type, u32 instance_id
