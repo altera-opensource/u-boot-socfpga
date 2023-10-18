@@ -98,6 +98,11 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl)
 	plat->dualport = handoff_table[0] & BIT(0);
 	debug("%s: dualport from handoff: 0x%x\n", __func__, plat->dualport);
 
+	if (plat->dualport)
+		io96b_ctrl->num_port = 3;
+	else
+		io96b_ctrl->num_port = 1;
+
 	/* Read handoff - dual EMIF */
 	plat->dualemif = handoff_table[0] & BIT(1);
 	debug("%s: dualemif from handoff: 0x%x\n", __func__, plat->dualemif);
@@ -211,6 +216,9 @@ int sdram_mmr_init_full(struct udevice *dev)
 		free(io96b_ctrl);
 		return ret;
 	}
+
+	/* Configure if polling is needed for IO96B GEN PLL locked */
+	io96b_ctrl->ckgen_lock = true;
 
 	/* Ensure calibration status passing */
 	init_mem_cal(io96b_ctrl);
