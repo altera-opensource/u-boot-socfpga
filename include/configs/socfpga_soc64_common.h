@@ -116,7 +116,7 @@
 #endif
 
 #define BOOTENV_DEV_NAND(devtypeu, devtypel, instance) \
-	"bootcmd_nand=ubi detach; ubi part rootubi && " \
+	"bootcmd_nand=ubi detach; ubi part root && " \
 	"ubi readvol ${scriptaddr} script && " \
 	"echo NAND: Trying to boot script at ${scriptaddr} && " \
 	"source ${scriptaddr}; " \
@@ -162,7 +162,7 @@
 	"nandfitboot=setenv bootargs " CONFIG_BOOTARGS \
 			" root=${nandroot} rw rootwait rootfstype=ubifs ubi.mtd=1; " \
 			"bootm ${loadaddr}\0" \
-	"nandfitload=ubi part rootubi; ubi readvol ${loadaddr} kernel\0" \
+	"nandfitload=ubi part root; ubi readvol ${loadaddr} kernel\0" \
 	"socfpga_legacy_reset_compat=1\0" \
 	"rsu_status=rsu dtb; rsu display_dcmf_version; "\
 		"rsu display_dcmf_status; rsu display_max_retry\0" \
