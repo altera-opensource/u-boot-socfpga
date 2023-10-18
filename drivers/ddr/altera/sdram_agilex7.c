@@ -235,6 +235,9 @@ int sdram_mmr_init_full(struct udevice *dev)
 
 	printf("DDR: Checking calibration...\n");
 
+	/* Configure if polling is needed for IO96B GEN PLL locked */
+	io96b_ctrl->ckgen_lock = false;
+
 	/* Ensure calibration status passing */
 	init_mem_cal(io96b_ctrl);
 
