@@ -1803,6 +1803,7 @@ static int cadence_nand_attach_chip(struct mtd_info *mtd, struct nand_chip *chip
 {
 	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
 	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(chip);
+	static struct nand_ecclayout nand_oob;
 	u32 ecc_size;
 	int ret;
 
@@ -1884,6 +1885,9 @@ static int cadence_nand_attach_chip(struct mtd_info *mtd, struct nand_chip *chip
 		cadence->buf_size = mtd->writesize + mtd->oobsize;
 
 	mtd_set_ooblayout(mtd, &cadence_nand_ooblayout_ops);
+
+	nand_oob.eccbytes = cadence->selected_chip.ecc.bytes;
+	cadence->selected_chip.ecc.layout = &nand_oob;
 
 	return 0;
 }
