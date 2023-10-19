@@ -1806,16 +1806,17 @@ static int cadence_nand_attach_chip(struct mtd_info *mtd, struct nand_chip *chip
 	u32 ecc_size;
 	int ret;
 
-	ret = cadence_nand_set_access_width16(cadence, true);
-	if (ret)
-		return ret;
+	if (chip->options & NAND_BUSWIDTH_16) {
+		ret = cadence_nand_set_access_width16(cadence, true);
+		if (ret)
+			return ret;
+	}
 
 	chip->bbt_options |= NAND_BBT_USE_FLASH;
 	chip->bbt_options |= NAND_BBT_NO_OOB;
 	chip->ecc.mode = NAND_ECC_HW_SYNDROME;
 
 	chip->options |= NAND_NO_SUBPAGE_WRITE;
-	chip->options |= NAND_BUSWIDTH_16;
 
 	cdns_chip->bbm_offs = chip->badblockpos;
 	cdns_chip->bbm_offs &= ~0x01;
