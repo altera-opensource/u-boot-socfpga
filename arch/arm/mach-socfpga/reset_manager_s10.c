@@ -297,7 +297,8 @@ void socfpga_bridges_reset(int enable, unsigned int mask)
 		ret = invoke_smc(INTEL_SIP_SMC_HPS_SET_BRIDGES, arg,
 				 ARRAY_SIZE(arg), NULL, 0);
 		if (ret)
-			printf("Failed to %s the HPS bridges, error %d\n",
+			printf("Failed to %s the HPS bridges,\
+check bridges availability. Status %d. \n",
 			       enable ? "enable" : "disable", ret);
 	} else {
 		socfpga_s2f_bridges_reset(enable, mask);
