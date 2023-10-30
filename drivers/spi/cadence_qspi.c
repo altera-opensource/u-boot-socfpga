@@ -433,7 +433,9 @@ static int cadence_spi_of_to_plat(struct udevice *bus)
 	plat->read_delay = ofnode_read_s32_default(subnode, "cdns,read-delay",
 						   -1);
 
-	plat->quirks = dev_get_driver_data(bus);
+	const struct cqspi_driver_platdata *drvdata =
+		(struct cqspi_driver_platdata *)dev_get_driver_data(bus);
+	plat->quirks = drvdata->quirks;
 
 	debug("%s: regbase=%p ahbbase=%p max-frequency=%d page-size=%d\n",
 	      __func__, plat->regbase, plat->ahbbase, plat->max_hz,
