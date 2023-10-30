@@ -270,7 +270,7 @@ struct cadence_spi_priv {
 
 struct cqspi_driver_platdata {
 	u32 hwcaps_mask;
-	u8 quirks;
+	u32 quirks;
 };
 
 /* Functions call declaration */
