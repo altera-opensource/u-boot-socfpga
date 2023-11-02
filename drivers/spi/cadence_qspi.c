@@ -311,14 +311,16 @@ static int cadence_spi_mem_exec_op(struct spi_slave *spi,
 				    priv->is_decoded_cs);
 
 	if (op->data.dir == SPI_MEM_DATA_IN && op->data.buf.in) {
-		if (op->data.nbytes <= CQSPI_STIG_DATA_LEN_MAX &&
-		    !(priv->quirks & CQSPI_DISABLE_STIG_MODE))
+		if (!op->addr.nbytes ||
+		    (op->data.nbytes <= CQSPI_STIG_DATA_LEN_MAX &&
+		    !(priv->quirks & CQSPI_DISABLE_STIG_MODE)))
 			mode = CQSPI_STIG_READ;
 		else
 			mode = CQSPI_READ;
 	} else {
-		if (op->data.nbytes <= CQSPI_STIG_DATA_LEN_MAX &&
-		    !(priv->quirks & CQSPI_DISABLE_STIG_MODE))
+		if (!op->addr.nbytes || !op->data.buf.out ||
+		    (op->data.nbytes <= CQSPI_STIG_DATA_LEN_MAX &&
+		    !(priv->quirks & CQSPI_DISABLE_STIG_MODE)))
 			mode = CQSPI_STIG_WRITE;
 		else
 			mode = CQSPI_WRITE;
