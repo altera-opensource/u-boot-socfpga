@@ -9,7 +9,7 @@
 
 /* user define Uboot ID */
 #include <linux/bitops.h>
-#define MBOX_CLIENT_ID_UBOOT	0xB
+#define MBOX_CLIENT_ID_UBOOT	0x1
 #define MBOX_ID_UBOOT		0x1
 
 #define MBOX_CMD_DIRECT	0
