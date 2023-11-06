@@ -22,8 +22,8 @@
 	};
 
 	memory {
-		/* 2GB on Simics*/
-		reg = <0 0x80000000 0 0x80000000>;
+		/* 1GB on Simics*/
+		reg = <0 0x80000000 0 0x40000000>;
 	};
 
 	chosen {
@@ -52,7 +52,7 @@
 };
 
 &mmc {
-	status = "okay";
+	status = "disabled";
 	bus-width = <4>;
 	sd-uhs-sdr50;
 	cap-mmc-highspeed;
@@ -101,7 +101,7 @@
 };
 
 &qspi {
-	status = "okay";
+	status = "disabled";
 };
 
 &nand {

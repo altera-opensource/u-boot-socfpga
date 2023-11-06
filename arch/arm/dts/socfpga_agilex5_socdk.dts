@@ -55,27 +55,27 @@
 };
 
 &i2c0 {
-	status = "okay";
+	status = "disabled";
 };
 
 &i2c1 {
-	status = "okay";
+	status = "disabled";
 };
 
 &i3c0 {
-    status = "okay";
+    status = "disabled";
 };
 
 &i3c1 {
-    status = "okay";
+    status = "disabled";
 };
 
 &mmc {
-	status = "okay";
+	status = "disabled";
 };
 
 &combophy0 {
-	status = "okay";
+	status = "disabled";
 };
 
 &uart0 {
@@ -83,64 +83,64 @@
 };
 
 &usbphy0 {
-	status = "okay";
+	status = "disabled";
 };
 
 &usb0 {
-	status = "okay";
+	status = "disabled";
 	disable-over-current;
 };
 
 &usb31 {
-	status = "okay";
+	status = "disabled";
 };
 
 &watchdog0 {
-	status = "okay";
+	status = "disabled";
 };
 
 &watchdog1 {
-	status = "okay";
+	status = "disabled";
 };
 
 &watchdog2 {
-	status = "okay";
+	status = "disabled";
 };
 
 &watchdog3 {
-	status = "okay";
+	status = "disabled";
 };
 
 &watchdog4 {
-	status = "okay";
+	status = "disabled";
 };
 
 &timer0 {
-	status = "okay";
+	status = "disabled";
 };
 
 &timer1 {
-	status = "okay";
+	status = "disabled";
 };
 
 &timer2 {
-	status = "okay";
+	status = "disabled";
 };
 
 &timer3 {
-	status = "okay";
+	status = "disabled";
 };
 
 &spi0 {
-	status = "okay";
+	status = "disabled";
 };
 
 &spi1 {
-	status = "okay";
+	status = "disabled";
 };
 
 &nand {
-	status = "okay";
+	status = "disabled";
 
 	flash1: flash@0 {
 		reg = <0>;
@@ -194,7 +194,7 @@
 };
 
 &gmac0 {
-	status = "okay";
+	status = "disabled";
 	phy-mode = "rgmii";
 	phy-handle = <&emac0_phy0>;
 
@@ -211,7 +211,7 @@
 };
 
 &gmac2 {
-	status = "okay";
+	status = "disabled";
 	phy-mode = "rgmii";
 	phy-handle = <&emac2_phy0>;
 
