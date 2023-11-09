@@ -10,7 +10,7 @@
 /{
 	chosen {
 		stdout-path = "serial0:115200n8";
-		u-boot,spl-boot-order = &mmc,&flash0,&nand;
+		u-boot,spl-boot-order = &mmc,&nand;
 	};
 
 	aliases {
@@ -55,10 +55,6 @@
 	drvsel = <3>;
 	smplsel = <0>;
 	u-boot,dm-pre-reloc;
-};
-
-&qspi {
-	status = "okay";
 };
 
 &watchdog0 {
