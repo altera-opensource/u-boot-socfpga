@@ -1,10 +1,11 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2022 Intel Corporation <www.intel.com>
+ * Copyright (C) 2022-2023 Intel Corporation <www.intel.com>
  */
 
 #define TIMEOUT_10000MS			10000
-#define TIMEOUT				TIMEOUT_10000MS
+#define TIMEOUT_120000MS		120000
+#define TIMEOUT				TIMEOUT_120000MS
 #define IOSSM_STATUS_CAL_SUCCESS	BIT(0)
 #define IOSSM_STATUS_CAL_FAIL		BIT(1)
 #define IOSSM_STATUS_CAL_BUSY		BIT(2)
