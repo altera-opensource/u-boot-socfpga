@@ -3,8 +3,8 @@
  * Copyright (C) 2023 Intel Corporation
  */
 
-#include "socfpga_agilex7_socdk.dts"
-#include "socfpga_agilex7_socdk-u-boot.dtsi"
+#include "socfpga_agilex7m_socdk.dts"
+#include "socfpga_agilex7m_socdk-u-boot.dtsi"
 
 &gmac0 {
 	status = "disabled";
