@@ -2,10 +2,10 @@
 /*
  * Copyright (C) 2023, Intel Corporation
  */
-#include "socfpga_agilex7.dtsi"
+#include "socfpga_agilex.dtsi"
 
 / {
-	model = "SoCFPGA AGILEX7 SoCDK";
+	model = "SoCFPGA Agilex7-M SoCDK";
 
 	aliases {
 		serial0 = &uart0;

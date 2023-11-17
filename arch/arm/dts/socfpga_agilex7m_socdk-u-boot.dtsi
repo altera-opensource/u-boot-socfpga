@@ -5,7 +5,7 @@
  * Copyright (C) 2023 Intel Corporation <www.intel.com>
  */
 
-#include "socfpga_agilex7-u-boot.dtsi"
+#include "socfpga_agilex-u-boot.dtsi"
 
 /{
 	chosen {
@@ -37,7 +37,7 @@
 	compatible = "jedec,spi-nor";
 	spi-tx-bus-width = <4>;
 	spi-rx-bus-width = <4>;
-	u-boot,dm-pre-reloc;
+	bootph-all;
 	/delete-property/ cdns,read-delay;
 };
 
@@ -48,22 +48,39 @@
 &nand {
 	status = "okay";
 	nand-bus-width = <16>;
-	u-boot,dm-pre-reloc;
+	bootph-all;
 };
 
 &mmc {
 	drvsel = <3>;
 	smplsel = <0>;
-	u-boot,dm-pre-reloc;
+	bootph-all;
+};
+
+&sdr {
+	compatible = "intel,sdr-ctl-agilex7";
+	/delete-property/ reg;
+	reg = <0xf8020000 0x100>,
+	      <0xf8400000 0x1000>,
+	      <0xf8800000 0x1000>;
+};
+
+&socfpga_secreg {
+	soc_noc_fw_mpfe_csr_inst_0_mpfe_scr@f8020000 {
+	/delete-property/ intel,offset-settings;
+	intel,offset-settings =
+		/* Disable MPFE firewall for SMMU */
+		<0x00000000 0x00010101 0x00010101>;
+	};
 };
 
 &watchdog0 {
-	u-boot,dm-pre-reloc;
+	bootph-all;
 };
 
 #if !defined(CONFIG_SOCFPGA_SECURE_VAB_AUTH)
 &fdt_0_blob {
-	filename = "arch/arm/dts/socfpga_agilex7_socdk.dtb";
+	filename = "arch/arm/dts/socfpga_agilex7m_socdk.dtb";
 };
 
 &images {
@@ -72,7 +89,7 @@
 		type = "flat_dt";
 		compression = "none";
 		fdt_1_blob: blob-ext {
-			filename = "arch/arm/dts/socfpga_agilex7_socdk_nand.dtb";
+			filename = "arch/arm/dts/socfpga_agilex7m_socdk_nand.dtb";
 		};
 		hash {
 			algo = "crc32";
