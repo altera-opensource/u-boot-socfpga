@@ -52,7 +52,7 @@
 };
 
 &mmc {
-	status = "disabled";
+	status = "okay";
 	bus-width = <4>;
 	sd-uhs-sdr50;
 	cap-mmc-highspeed;
