@@ -306,6 +306,7 @@ static int socfpga_sdhci_get_clk_rate(struct udevice *dev)
 	struct sdhci_host *host = &priv->host;
 
 #if (IS_ENABLED(CONFIG_CLK))
+	/*
 	struct clk clk;
 	int ret;
 
@@ -316,10 +317,13 @@ static int socfpga_sdhci_get_clk_rate(struct udevice *dev)
 	host->max_clk = clk_get_rate(&clk);
 
 	clk_free(&clk);
+	*/
 #else
 	/* Fixed clock divide by 4 which due to the SDMMC wrapper */
 	host->max_clk = cm_get_mmc_controller_clk_hz();
 #endif
+	/* TODO: fix this once able to read from clkmgr */
+	host->max_clk = 200000000;
 
 	if (!host->max_clk) {
 		debug("SDHCI: MMC clock is zero!");
