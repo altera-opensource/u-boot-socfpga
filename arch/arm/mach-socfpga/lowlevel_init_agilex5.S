@@ -19,6 +19,9 @@ _el3_exception_vectors:
 ENTRY(lowlevel_init)
 	mov	x29, lr			/* Save LR */
 
+	/* Enable Async */
+	msr daifclr, #4
+
 #ifdef CONFIG_SPL_BUILD
 	branch_if_slave x0, 3f
 
