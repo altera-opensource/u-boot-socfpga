@@ -547,7 +547,6 @@ static u32 clk_get_l4_main_clk_hz(struct socfpga_clk_plat *plat)
 static u32 clk_get_l4_sp_clk_hz(struct socfpga_clk_plat *plat)
 {
 	u64 clock = clk_get_l3_main_clk_hz(plat);
-
 	clock /= BIT((CM_REG_READL(plat, CLKMGR_MAINPLL_NOCDIV) >>
 		      CLKMGR_NOCDIV_L4SPCLK_OFFSET) &
 		      CLKMGR_NOCDIV_DIVIDER_MASK);
