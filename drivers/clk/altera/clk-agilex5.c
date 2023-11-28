@@ -26,6 +26,9 @@ DECLARE_GLOBAL_DATA_PTR;
 #define CORE2		3
 #define CORE3		4
 
+/* Derived from l4_main_clk (PSS clock) */
+#define COUNTER_FREQUENCY_REAL	400000000
+
 struct socfpga_clk_plat {
 	void __iomem *regs;
 };
@@ -399,6 +402,18 @@ static void clk_basic_init(struct udevice *dev,
 		CM_REG_CLRBITS(plat, CLKMGR_CTL_EXTCNTRST,
 			       CLKMGR_CTL_EXTCNTRST_ALLCNTRST);
 
+#ifdef COUNTER_FREQUENCY_REAL
+	u32 cntfrq = COUNTER_FREQUENCY_REAL;
+	u32 counter_freq = 0;
+
+	/* Update with accurate clock frequency */
+	if (current_el() == 3) {
+		asm volatile("msr cntfrq_el0, %0" : : "r" (cntfrq) : "memory");
+		asm volatile("mrs %0, cntfrq_el0" : "=r" (counter_freq));
+		debug("Counter freq = 0x%x\n", counter_freq);
+	}
+#endif
+
 		/* Out of boot mode */
 		clk_write_ctrl(plat,
 			       CM_REG_READL(plat, CLKMGR_CTRL) & ~CLKMGR_CTRL_BOOTMODE);
@@ -544,7 +559,6 @@ static u32 clk_get_l4_main_clk_hz(struct socfpga_clk_plat *plat)
 static u32 clk_get_l4_sp_clk_hz(struct socfpga_clk_plat *plat)
 {
 	u64 clock = clk_get_l3_main_clk_hz(plat);
-
 	clock /= BIT((CM_REG_READL(plat, CLKMGR_MAINPLL_NOCDIV) >>
 		      CLKMGR_NOCDIV_L4SPCLK_OFFSET) &
 		      CLKMGR_NOCDIV_DIVIDER_MASK);
