@@ -24,8 +24,8 @@ CONFIG_SPL_LOAD_FIT_ADDRESS=0x82000000
 CONFIG_QSPI_BOOT=y
 CONFIG_BOOTDELAY=5
 CONFIG_USE_BOOTARGS=y
-CONFIG_BOOTARGS="console=ttyS0,115200 initrd=0x90000000 root=/dev/ram0 rw init=/sbin/init ramdisk_size=10000000 earlycon panic=-1 nosmp kvm-arm.mode=nvhe"
-CONFIG_BOOTCOMMAND="booti ${kernel_addr_r} - ${fdt_addr_r};"
+CONFIG_BOOTARGS="console=ttyS0,115200 root=${mmcroot} rw rootwait;"
+CONFIG_BOOTCOMMAND="printenv bootcmd; fatls mmc 0:1; setenv bootargs console=ttyS0,115200 root=${mmcroot} rw rootwait loglevel=8; mmc info; fatload mmc 0:1 0x82000000 Image; fatload mmc 0:1 0x86000000 socfpga_agilex5_socdk.dtb; booti 0x82000000 - 0x86000000"
 CONFIG_LEGACY_IMAGE_FORMAT=y
 # CONFIG_SPL_RAW_IMAGE_SUPPORT is not set
 CONFIG_SPL_CRC32=y
