@@ -644,7 +644,7 @@ static int cdns_combophy_phy_init(struct phy *gphy)
 		tmp = SYSMGR_SOC64_COMBOPHY_DFISEL_SDMMC;
 
 #if (IS_ENABLED(CONFIG_SPL_BUILD))
-#if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU))
+#if (!IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS))
 		/* OCRAM FW - allow non secure sdmmc */
 		writel(NON_SECURE_ACCESS, OCRAM_SECURE_REGION1_REG);
 #endif
