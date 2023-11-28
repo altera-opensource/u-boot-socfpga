@@ -199,6 +199,12 @@ int sdram_mmr_init_full(struct udevice *dev)
 		return ret;
 	}
 
+	/* Configure if polling is needed for IO96B GEN PLL locked */
+	io96b_ctrl->ckgen_lock = true;
+
+	/* Ensure calibration status passing */
+	init_mem_cal(io96b_ctrl);
+
 	/* Configuring MPFE sideband manager registers - dual port & dual emif*/
 	ret = config_mpfe_sideband_mgr(dev);
 	if (ret) {
@@ -206,12 +212,6 @@ int sdram_mmr_init_full(struct udevice *dev)
 		free(io96b_ctrl);
 		return ret;
 	}
-
-	/* Configure if polling is needed for IO96B GEN PLL locked */
-	io96b_ctrl->ckgen_lock = true;
-
-	/* Ensure calibration status passing */
-	init_mem_cal(io96b_ctrl);
 
 	/* Initiate IOSSM mailbox */
 	io96b_mb_init(io96b_ctrl);
