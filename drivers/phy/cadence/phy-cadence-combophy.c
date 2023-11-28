@@ -807,7 +807,7 @@ static int cdns_combophy_phy_probe(struct udevice *dev)
 	u32 nr_phy_params;
 	int ret = 0;
 
-	plat->phy_type = dev_read_u32_default(dev, "phy-type", 0);
+	plat->phy_type = dev_read_u32_default(dev, "phy-type", 1);
 	plat->hrs_addr = dev_remap_addr_index(dev, 0);
 
 	/* get softreset reset */
