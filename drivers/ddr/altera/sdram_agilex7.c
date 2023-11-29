@@ -108,22 +108,11 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl)
 		if (addr == FDT_ADDR_T_NONE)
 			return -EINVAL;
 
-		switch (i) {
-		case 0:
-			if (handoff_table[1] & BIT(i)) {
-				io96b_ctrl->io96b_0.io96b_csr_addr = addr;
-				debug("%s: IO96B 0x%llx CSR enabled\n", __func__
-						, io96b_ctrl->io96b_0.io96b_csr_addr);
-				count++;
-			}
-			break;
-		case 1:
-			if (handoff_table[1] & BIT(i)) {
-				io96b_ctrl->io96b_1.io96b_csr_addr = addr;
-				debug("%s: IO96B 0x%llx CSR enabled\n", __func__
-						, io96b_ctrl->io96b_1.io96b_csr_addr);
-				count++;
-			}
+		if (handoff_table[1] & BIT(i)) {
+			io96b_ctrl->io96b[i].io96b_csr_addr = addr;
+			debug("%s: IO96B 0x%llx CSR enabled\n", __func__
+				, io96b_ctrl->io96b[i].io96b_csr_addr);
+			count++;
 		}
 	}
 
@@ -194,6 +183,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 	bool full_mem_init = false;
 	phys_size_t hw_size;
 	int ret;
+	int i;
 	u32 reg = readl(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_BOOT_SCRATCH_COLD0);
 	enum reset_type reset_t = get_reset_type(reg);
 
@@ -246,10 +236,10 @@ int sdram_mmr_init_full(struct udevice *dev)
 
 	/* Need to trigger re-calibration for DDR DBE */
 	if (ddr_ecc_dbe_status()) {
-		io96b_ctrl->io96b_0.cal_status = false;
-		io96b_ctrl->io96b_1.cal_status = false;
-		io96b_ctrl->overall_cal_status = io96b_ctrl->io96b_0.cal_status ||
-						 io96b_ctrl->io96b_1.cal_status;
+		for (i = 0; i < io96b_ctrl->num_instance; i++)
+			io96b_ctrl->io96b[i].cal_status = false;
+
+		io96b_ctrl->overall_cal_status = false;
 	}
 
 	/* Trigger re-calibration if calibration failed */

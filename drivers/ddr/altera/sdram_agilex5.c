@@ -118,20 +118,9 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl)
 		if (addr == FDT_ADDR_T_NONE)
 			return -EINVAL;
 
-		switch (i) {
-		case 0:
-			io96b_ctrl->io96b_0.io96b_csr_addr = addr;
-			debug("%s: IO96B 0x%llx CSR enabled\n", __func__
-					, io96b_ctrl->io96b_0.io96b_csr_addr);
-			break;
-		case 1:
-			io96b_ctrl->io96b_1.io96b_csr_addr = addr;
-			debug("%s: IO96B 0x%llx CSR enabled\n", __func__
-					, io96b_ctrl->io96b_1.io96b_csr_addr);
-			break;
-		default:
-			printf("%s: Invalid IO96B CSR\n", __func__);
-		}
+		io96b_ctrl->io96b[i].io96b_csr_addr = addr;
+		debug("%s: IO96B 0x%llx CSR enabled\n", __func__
+			, io96b_ctrl->io96b[i].io96b_csr_addr);
 	}
 
 	return 0;
@@ -182,6 +171,7 @@ bool ddr_ecc_dbe_status(void)
 int sdram_mmr_init_full(struct udevice *dev)
 {
 	int ret;
+	int i;
 	phys_size_t hw_size;
 	struct bd_info bd = {0};
 	struct altera_sdram_plat *plat = dev_get_plat(dev);
