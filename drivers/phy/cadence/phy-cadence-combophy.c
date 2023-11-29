@@ -625,20 +625,18 @@ static int cdns_combophy_phy_init(struct phy *gphy)
 	int ret;
 	struct cdns_combophy_plat *plat = dev_get_plat(gphy->dev);
 
-#if (IS_ENABLED(CONFIG_SPL_BUILD))
-		/* assert & deassert softreset */
-		ret = reset_assert(&plat->softreset_ctl);
-		if (ret < 0) {
-			pr_err("COMBOPHY soft reset deassert failed: %d", ret);
-			return ret;
-		}
+	/* assert & deassert softreset */
+	ret = reset_assert(&plat->softreset_ctl);
+	if (ret < 0) {
+		pr_err("COMBOPHY soft reset deassert failed: %d", ret);
+		return ret;
+	}
 
-		ret = reset_deassert(&plat->softreset_ctl);
-		if (ret < 0) {
-			pr_err("COMBOPHY soft reset deassert failed: %d", ret);
-			return ret;
-		}
-#endif
+	ret = reset_deassert(&plat->softreset_ctl);
+	if (ret < 0) {
+		pr_err("COMBOPHY soft reset deassert failed: %d", ret);
+		return ret;
+	}
 
 	if (plat->phy_type == PHY_TYPE_SDMMC) {
 		tmp = SYSMGR_SOC64_COMBOPHY_DFISEL_SDMMC;
