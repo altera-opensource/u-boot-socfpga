@@ -225,7 +225,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 	printf("DDR: Waiting for NOCPLL locked ...\n");
 	/* Ensure NOCPLL locked */
 	ret = wait_for_bit_le32((const void *)socfpga_get_sysmgr_addr() + SYSMGR_HMC_CLK
-				, SYSMGR_HMC_CLK_NOCPLL, true, TIMEOUT_10000MS, false);
+				, SYSMGR_HMC_CLK_NOCPLL, true, TIMEOUT, false);
 	if (ret) {
 		printf("DDR: NOCPLL is not locked\n");
 		return ret;
