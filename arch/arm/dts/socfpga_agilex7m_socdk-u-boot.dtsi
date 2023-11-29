@@ -28,6 +28,10 @@
 	};
 
 	memory {
+		/*  if run HBM on FIB device, set to 1GB
+		 *  reg = <0 0x00000000 0 0x40000000>;
+		 */
+
 		/* 2GB */
 		reg = <0 0x00000000 0 0x80000000>;
 	};
@@ -60,6 +64,12 @@
 &sdr {
 	compatible = "intel,sdr-ctl-agilex7";
 	/delete-property/ reg;
+	/*  if use HBM
+	 *  reg = <0xf8020000 0x100>,
+	 *        <0xf8400000 0x1000>,
+	 *        <0xf8410000 0x1000>;
+	 */
+
 	reg = <0xf8020000 0x100>,
 	      <0xf8400000 0x1000>,
 	      <0xf8800000 0x1000>;
