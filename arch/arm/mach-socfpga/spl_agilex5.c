@@ -280,6 +280,23 @@ void board_init_f(ulong dummy)
 	}
 #endif
 
+#if CONFIG_IS_ENABLED(PHY_CADENCE_COMBOPHY)
+	u32 tmp = SYSMGR_SOC64_COMBOPHY_DFISEL_SDMMC;
+
+	/* manually deassert for COMBOPHY & SDMMC for only RAM boot */
+	clrbits_le32(SOCFPGA_RSTMGR_ADDRESS + RSTMGR_SOC64_PER0MODRST, BIT(6));
+	clrbits_le32(SOCFPGA_RSTMGR_ADDRESS + RSTMGR_SOC64_PER0MODRST, BIT(7));
+
+	/* configure DFI_SEL for SDMMC */
+	writel(tmp, socfpga_get_sysmgr_addr() + SYSMGR_SOC64_COMBOPHY_DFISEL);
+
+	/* configure default base clkmgr clock - 200MHz */
+	writel((readl(socfpga_get_clkmgr_addr() + CLKMGR_MAINPLL_NOCDIV)
+		& 0xfffcffff) |
+		(CLKMGR_NOCDIV_SOFTPHY_DIV_ONE << CLKMGR_NOCDIV_SOFTPHY_OFFSET),
+		socfpga_get_clkmgr_addr() + CLKMGR_MAINPLL_NOCDIV);
+#endif
+
 	mbox_init();
 
 #ifdef CONFIG_CADENCE_QSPI
