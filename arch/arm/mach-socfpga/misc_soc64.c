@@ -143,10 +143,13 @@ void arch_preboot_os(void)
 
 int misc_init_r(void)
 {
+/* TODO: Fix SMMU w/ DCACHE Enabled */
+/*
 #if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
 	if (is_agilex5_reva_workaround_required())
 		return smmu_sdm_init();
 #endif
+*/
 
 	return 0;
 }
