@@ -138,17 +138,12 @@ void board_boot_order(u32 *spl_boot_list)
 {
 	int idx = 0;
 	const void *blob = gd->fdt_blob;
-	int chosen_node = 0;
+	int chosen_node = fdt_path_offset(blob, "/chosen");
 	const char *conf;
 	int elem;
 	int boot_device;
 	int node;
 	int length;
-
-	setbits_le32(0x10D12224, BIT(1));
-	while (readl(0x10D12224) != 0);
-
-	chosen_node = fdt_path_offset(blob, "/chosen");
 
 	/* expect valid initialized spl_boot_list */
 	if (!spl_boot_list)
