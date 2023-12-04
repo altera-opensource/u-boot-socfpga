@@ -14,6 +14,7 @@
 #include <hang.h>
 #include <image.h>
 #include <spl.h>
+#include <asm/arch/base_addr_soc64.h>
 #include <asm/arch/clock_manager.h>
 #include <asm/arch/firewall.h>
 #include <asm/arch/mailbox_s10.h>
@@ -302,4 +303,7 @@ void board_init_f(ulong dummy)
 #ifdef CONFIG_CADENCE_QSPI
 	mbox_qspi_open();
 #endif
+
+	/* Enable non secure access to ocram */
+	clrbits_le32(SOCFPGA_OCRAM_FIREWALL_ADDRESS + 0x18, BIT(0));
 }
