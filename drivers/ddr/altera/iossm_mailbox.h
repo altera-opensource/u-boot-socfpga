@@ -26,11 +26,6 @@
 #define MAX_IO96B_SUPPORTED		2
 #define MAX_MEM_INTERFACES_SUPPORTED	2
 
-/* UIB Initialization control and status registers */
-#define UIB_R_INITSTS_OFFSET		0x14
-#define UIB_R_INITSTS_INITSTS_PASS	BIT(1)
-#define MAX_UIB_SUPPORTED		8
-
 /* supported mailbox command type */
 enum iossm_mailbox_cmd_type  {
 	CMD_NOP,
@@ -136,34 +131,6 @@ int io96b_mb_req(phys_addr_t io96b_csr_addr, u32 ip_type, u32 instance_id
 			, u32 cmd_param_5, u32 cmd_param_6, u32 resp_data_len
 			, struct io96b_mb_resp *resp);
 
-/*
- * UIB instance specific information
- *
- * @uib_csr_addr:	UIB instance CSR address
- * @cal_status:		UIB instance calibration status
- */
-struct uib_instance {
-	phys_addr_t uib_csr_addr;
-	bool cal_status;
-};
-
-/*
- * Overall UIB instance(s) information
- *
- * @num_instance:	Number of instance(s) assigned to HPS
- * @overall_cal_status: Overall calibration status for all UIB instance(s)
- * @ecc_status:		ECC enable status (false = disabled, true = enabled)
- * @overall_size:	Total HBM memory size
- * @uib:		UIB instance specific information
- */
-struct uib_info {
-	u8 num_instance;
-	bool overall_cal_status;
-	bool ecc_status;
-	u16 overall_size;
-	struct uib_instance uib[MAX_UIB_SUPPORTED];
-};
-
 /* Supported IOSSM mailbox function */
 void io96b_mb_init(struct io96b_info *io96b_ctrl);
 int io96b_cal_status(phys_addr_t addr);
@@ -173,7 +140,3 @@ int get_mem_technology(struct io96b_info *io96b_ctrl);
 int get_mem_width_info(struct io96b_info *io96b_ctrl);
 int ecc_enable_status(struct io96b_info *io96b_ctrl);
 int bist_mem_init_start(struct io96b_info *io96b_ctrl);
-
-/* Supported UIB function */
-int uib_cal_status(phys_addr_t addr);
-void uib_init_mem_cal(struct uib_info *uib_ctrl);

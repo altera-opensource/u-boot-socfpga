@@ -13,6 +13,7 @@
 #include <asm/arch/system_manager.h>
 #include <linux/bitfield.h>
 #include "iossm_mailbox.h"
+#include "uibssm_mailbox.h"
 #include "sdram_soc64.h"
 
 /* TODO: remove when handoff is ready*/
@@ -466,9 +467,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 					is_ddr_hang_be4_rst;
 			if (full_mem_init || !(reset_t == WARM_RESET || reset_t == COLD_RESET)) {
 				debug("HBM: Needed to fully initialize HBM memory\n");
-				/* temporarily set ret to 0 */
-				//TODO: add BIST MEM INIT when UIB mailbox is ready
-				ret = 0;
+				ret = uib_bist_mem_init_start(uib_ctrl);
 				if (ret) {
 					printf("HBM: Failed to fully initialize HBM memory\n");
 					free(io96b_ctrl);
