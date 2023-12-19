@@ -102,7 +102,7 @@
 };
 
 &qspi {
-	status = "disabled";
+	status = "okay";
 };
 
 &nand {
