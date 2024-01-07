@@ -317,6 +317,7 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 	bool recal_success;
 	int i;
 	u8 cal_stat;
+	int count = 0;
 
 	for (i = 0; i < io96b_ctrl->num_instance; i++) {
 		if (!(io96b_ctrl->io96b[i].cal_status)) {
@@ -386,6 +387,8 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 
 			io96b_ctrl->io96b[i].cal_status = true;
 			io96b_ctrl->overall_cal_status = io96b_ctrl->io96b[i].cal_status;
+			printf("%s: Initial DDR calibration IO96B_1 succeed\n", __func__);
+			count++;
 		}
 	}
 
