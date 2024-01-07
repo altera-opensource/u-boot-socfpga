@@ -363,6 +363,7 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 	bool recal_success;
 	int i;
 	u8 cal_stat;
+	int count = 0;
 
 	for (i = 0; i < io96b_ctrl->num_instance; i++) {
 		switch (i) {
@@ -433,6 +434,8 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 				}
 
 				io96b_ctrl->io96b_0.cal_status = true;
+				printf("%s: Initial DDR calibration IO96B_0 succeed\n", __func__);
+				count++;
 			}
 			break;
 		case 1:
@@ -502,12 +505,14 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 				}
 
 				io96b_ctrl->io96b_1.cal_status = true;
+				printf("%s: Initial DDR calibration IO96B_1 succeed\n", __func__);
+				count++;
 			}
 			break;
 		}
 	}
 
-	if (io96b_ctrl->io96b_0.cal_status && io96b_ctrl->io96b_1.cal_status) {
+	if (count == io96b_ctrl->num_instance) {
 		debug("%s: Overall SDRAM calibration success\n", __func__);
 		io96b_ctrl->overall_cal_status = true;
 	}
