@@ -83,7 +83,7 @@
 };
 
 &usbphy0 {
-	status = "disabled";
+	status = "okay";
 };
 
 &usb0 {
@@ -92,7 +92,7 @@
 };
 
 &usb31 {
-	status = "disabled";
+	status = "okay";
 };
 
 &watchdog0 {
