@@ -19,6 +19,7 @@
 
 #define DDR_CSR_CLKGEN_LOCKED_IO96B_MASK(x)	(i == 0 ? DDR_CSR_CLKGEN_LOCKED_IO96B0_MASK : \
 							DDR_CSR_CLKGEN_LOCKED_IO96B1_MASK)
+#define MAX_RETRY_COUNT 3
 
 #define INTF_IP_TYPE_MASK	GENMASK(31, 29)
 #define INTF_INSTANCE_ID_MASK	GENMASK(28, 24)
@@ -329,9 +330,9 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 			recal_success = false;
 
 			/* Re-calibration first memory interface with failed calibration */
-			for (i = 0; i < 3; i++) {
+			for (i = 0; i < MAX_RETRY_COUNT; i++) {
 				cal_stat = usr_resp.cmd_resp_data_0 & GENMASK(2, 0);
-				if (cal_stat < 0x2) {
+				if (cal_stat == INTF_MEM_CAL_STATUS_SUCCESS) {
 					recal_success = true;
 					break;
 				}
@@ -361,9 +362,9 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 			recal_success = false;
 
 			/* Re-calibration second memory interface with failed calibration */
-			for (i = 0; i < 3; i++) {
+			for (i = 0; i < MAX_RETRY_COUNT; i++) {
 				cal_stat = usr_resp.cmd_resp_data_1 & GENMASK(2, 0);
-				if (cal_stat < 0x2) {
+				if (cal_stat == INTF_MEM_CAL_STATUS_SUCCESS) {
 					recal_success = true;
 					break;
 				}
