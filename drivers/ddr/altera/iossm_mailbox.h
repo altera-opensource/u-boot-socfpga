@@ -61,6 +61,12 @@ enum iossm_mailbox_cmd_opcode  {
 	GET_MEM_CAL_STATUS
 };
 
+/* response data of cmd opcode GET_MEM_CAL_STATUS */
+#define INTF_UNUSED			0x0
+#define INTF_MEM_CAL_STATUS_SUCCESS	0x1
+#define INTF_MEM_CAL_STATUS_FAIL	0x2
+#define INTF_MEM_CAL_STATUS_ONGOING	0x4
+
 /*
  * IOSSM mailbox required information
  *

@@ -323,7 +323,7 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 			/* Re-calibration first memory interface with failed calibration */
 			for (i = 0; i < 3; i++) {
 				cal_stat = usr_resp.cmd_resp_data_0 & GENMASK(2, 0);
-				if (cal_stat < 0x2) {
+				if (cal_stat == INTF_MEM_CAL_STATUS_SUCCESS) {
 					recal_success = true;
 					break;
 				}
@@ -355,7 +355,7 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 			/* Re-calibration second memory interface with failed calibration */
 			for (i = 0; i < 3; i++) {
 				cal_stat = usr_resp.cmd_resp_data_1 & GENMASK(2, 0);
-				if (cal_stat < 0x2) {
+				if (cal_stat == INTF_MEM_CAL_STATUS_SUCCESS) {
 					recal_success = true;
 					break;
 				}
