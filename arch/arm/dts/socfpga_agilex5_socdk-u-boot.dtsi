@@ -42,7 +42,7 @@
 };
 
 &flash1 {
-	u-boot,dm-pre-reloc;
+	bootph-all;
 };
 
 &i3c0 {
@@ -107,7 +107,7 @@
 };
 
 &nand {
-    u-boot,dm-pre-reloc;
+	bootph-all;
 };
 
 &timer0 {

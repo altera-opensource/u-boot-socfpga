@@ -143,7 +143,7 @@
 			<0x0000008 0x8000ffff 0xe007ffff>,
 			<0x000000c 0x8000ffff 0xe007ffff>,
 			<0x0000010 0x8000ffff 0xe007ffff>;
-		u-boot,dm-pre-reloc;
+		bootph-all;
 	};
 
 	soc_noc_fw_mpfe_csr_inst_0_mpfe_scr@f8020000 {
@@ -153,7 +153,7 @@
 			<0x00000000 0x00010101 0x00010101>,
 			/* Disable MPFE firewall for HMC adapter */
 			<0x00000004 0x00000001 0x00010101>;
-		u-boot,dm-pre-reloc;
+		bootph-all;
 	};
 };
 

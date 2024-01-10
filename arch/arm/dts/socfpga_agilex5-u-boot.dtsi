@@ -15,13 +15,13 @@
 	};
 
 	soc {
-		u-boot,dm-pre-reloc;
+		bootph-all;
 
 		socfpga_secreg: socfpga-secreg {
 			compatible = "intel,socfpga-secreg";
 			#address-cells = <1>;
 			#size-cells = <1>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 
 			/* DSU */
 			i_ccu_caiu0@1c000000 {
@@ -67,7 +67,7 @@
 					<0x000004a4 0x08000000 0xffffffff>,
 					<0x000004a8 0x00000000 0x000000ff>,
 					<0x000004a0 0x81b00006 0xc1f03e1f>;
-				u-boot,dm-pre-reloc;
+				bootph-all;
 			};
 
 			/* FPGA2SOC */
@@ -114,7 +114,7 @@
 					<0x000004a4 0x08000000 0xffffffff>,
 					<0x000004a8 0x00000000 0x000000ff>,
 					<0x000004a0 0x81b00006 0xc1f03e1f>;
-				u-boot,dm-pre-reloc;
+				bootph-all;
 			};
 
 			/* GIC_M */
@@ -137,7 +137,7 @@
 					<0x000004a4 0x08000000 0xffffffff>,
 					<0x000004a8 0x00000000 0x000000ff>,
 					<0x000004a0 0x81b00006 0xc1f03e1f>;
-				u-boot,dm-pre-reloc;
+				bootph-all;
 			};
 
 			/* PSS NOC */
@@ -164,7 +164,7 @@
 					<0x000004a4 0x08000000 0xffffffff>,
 					<0x000004a8 0x00000000 0x000000ff>,
 					<0x000004a0 0x81b00006 0xc1f03e1f>;
-				u-boot,dm-pre-reloc;
+				bootph-all;
 			};
 
 			/* DCE0 */
@@ -187,7 +187,7 @@
 					<0x000004a4 0x08000000 0xffffffff>,
 					<0x000004a8 0x00000000 0x000000ff>,
 					<0x000004a0 0x81b00006 0xc1f03e1f>;
-				u-boot,dm-pre-reloc;
+				bootph-all;
 			};
 
 			/* DCE1 */
@@ -210,7 +210,7 @@
 					<0x000004a4 0x08000000 0xffffffff>,
 					<0x000004a8 0x00000000 0x000000ff>,
 					<0x000004a0 0x81b00006 0xc1f03e1f>;
-				u-boot,dm-pre-reloc;
+				bootph-all;
 			};
 
 			/* DMI0 */
@@ -219,7 +219,7 @@
 				intel,offset-settings =
 					/* DMIUSMCTCR */
 					<0x00000300 0x00000003 0x00000003>;
-				u-boot,dm-pre-reloc;
+				bootph-all;
 			};
 
 			/* DMI1 */
@@ -228,7 +228,7 @@
 				intel,offset-settings =
 					/* DMIUSMCTCR */
 					<0x00000300 0x00000003 0x00000003>;
-				u-boot,dm-pre-reloc;
+				bootph-all;
 			};
 
 			/* L4 peripherals firewall */
@@ -291,7 +291,7 @@
 					<0x00000084 0x01010001 0x01010001>,
 					/* NAND_SDMA */
 					<0x00000088 0x01010301 0x01010301>;
-				u-boot,dm-pre-reloc;
+				bootph-all;
 			};
 
 			/* L4 system firewall */
@@ -360,7 +360,7 @@
 					<0x00000090 0x01010001 0x01010001>,
 					/* L4_NOC_QOS */
 					<0x00000094 0x01010001 0x01010001>;
-				u-boot,dm-pre-reloc;
+				bootph-all;
 			};
 
 			/* Light weight SoC2FPGA */
@@ -369,7 +369,7 @@
 				intel,offset-settings =
 					/* LWSOC2FPGA_CSR */
 					<0x00000000 0x0ffe0301>;
-				u-boot,dm-pre-reloc;
+				bootph-all;
 			};
 
 			/* SoC2FPGA */
@@ -378,7 +378,7 @@
 				intel,offset-settings =
 					/* SOC2FPGA_CSR */
 					<0x00000000 0x0ffe0301 0x0ffe0301>;
-				u-boot,dm-pre-reloc;
+				bootph-all;
 			};
 
 			/* TCU */
@@ -387,7 +387,7 @@
 				intel,offset-settings =
 					/* TCU_CSR */
 					<0x00000000 0x01010001 0x01010001>;
-				u-boot,dm-pre-reloc;
+				bootph-all;
 			};
 		};
 	};

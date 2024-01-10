@@ -50,7 +50,7 @@
 			<0x00010600 0x00000000 0xffffffdf>,
 			<0x00010620 0x00000000 0xffffffdf>,
 			<0x00010640 0x00000000 0xffffffdf>;
-		u-boot,dm-pre-reloc;
+		bootph-all;
 	};
 
 	/*
@@ -84,7 +84,7 @@
 			<0x0000044 0x00000000 0x0000001f>,
 			<0x0000048 0x00000000 0xffff0000>,
 			<0x000004c 0x00000000 0x0000001f>;
-		u-boot,dm-pre-reloc;
+		bootph-all;
 	};
 
 	soc_noc_fw_ddr_fpga2sdram_inst_1_ddr_scr@f8020300 {
@@ -109,7 +109,7 @@
 			<0x0000044 0x00000000 0x0000001f>,
 			<0x0000048 0x00000000 0xffff0000>,
 			<0x000004c 0x00000000 0x0000001f>;
-		u-boot,dm-pre-reloc;
+		bootph-all;
 	};
 
 	soc_noc_fw_ddr_fpga2sdram_inst_2_ddr_scr@f8020400 {
@@ -134,7 +134,7 @@
 			<0x0000044 0x00000000 0x0000001f>,
 			<0x0000048 0x00000000 0xffff0000>,
 			<0x000004c 0x00000000 0x0000001f>;
-		u-boot,dm-pre-reloc;
+		bootph-all;
 	};
 
 	/*
@@ -152,6 +152,6 @@
 			<0x0000010 0x00000BFE 0x00001fff>,
 			<0x0000014 0x00000008 0x000003ff>,
 			<0x0000018 0x00000000 0x00000007>;
-		u-boot,dm-pre-reloc;
+		bootph-all;
 	};
 };

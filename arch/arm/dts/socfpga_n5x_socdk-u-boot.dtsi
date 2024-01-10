@@ -14,7 +14,7 @@
 	};
 
 	fs_loader0: fs-loader {
-		u-boot,dm-pre-reloc;
+		bootph-all;
 		compatible = "u-boot,fs-loader";
 		sfconfig = <0 0>;
 	};
@@ -52,7 +52,7 @@
 	intel,ddrcal-qspi-offset = "0x7000000";
 	intel,ddrcal-ddr-offset = "0x100000";
 	firmware-loader = <&fs_loader0>;
-	u-boot,dm-pre-reloc;
+	bootph-all;
 };
 
 &flash0 {
@@ -68,7 +68,7 @@
 };
 
 &nand {
-	u-boot,dm-pre-reloc;
+	bootph-all;
 };
 
 &mmc {

@@ -37,7 +37,7 @@ Path: arch/arm/dts/socfpga_soc64_u-boot.dtsi
 		compatible = "intel,socfpga-secreg";
 		#address-cells = <1>;
 		#size-cells = <1>;
-		u-boot,dm-pre-reloc;
+		bootph-all;
 
 		i_sys_mgr_core@ffd12000 {
 			reg = <0xffd12000 0x00000230>;
@@ -46,7 +46,7 @@ Path: arch/arm/dts/socfpga_soc64_u-boot.dtsi
 				<0x00000020 0xff010000 0xff010011>,
 				/* Enable non-secure interface to DMA periph */
 				<0x00000024 0xffffffff 0xffffffff>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		noc_fw_l4_per_l4_per_scr@ffd21000 {
@@ -76,7 +76,7 @@ Path: arch/arm/dts/socfpga_soc64_u-boot.dtsi
 				<0x00000068 0x01010001 0x01010101>,
 				<0x0000006c 0x01010001 0x01010101>,
 				<0x00000070 0x01010001 0x01010101>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		noc_fw_l4_sys_l4_sys_scr@ffd21100 {
@@ -110,28 +110,28 @@ Path: arch/arm/dts/socfpga_soc64_u-boot.dtsi
 				<0x00000078 0x01010001 0x03010001>,
 				<0x00000090 0x01010001 0x01010001>,
 				<0x00000094 0x01010001 0x01010001>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		noc_fw_soc2fpga_soc2fpga_scr@ffd21200 {
 			reg = <0xffd21200 0x00000004>;
 			/* Disable soc2fpga security access */
 			intel,offset-settings = <0x00000000 0x0ffe0101 0x0ffe0101>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		noc_fw_lwsoc2fpga_lwsoc2fpga_scr@ffd21300 {
 			reg = <0xffd21300 0x00000004>;
 			/* Disable lightweight soc2fpga security access */
 			intel,offset-settings = <0x00000000 0x0ffe0101 0x0ffe0101>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		noc_fw_tcu_tcu_scr@ffd21400 {
 			reg = <0xffd21400 0x00000004>;
 			/* Disable DMA ECC security access, for SMMU use */
 			intel,offset-settings = <0x00000000 0x01010001 0x01010001>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		noc_fw_priv_MemoryMap_priv@ffd24800 {
@@ -139,7 +139,7 @@ Path: arch/arm/dts/socfpga_soc64_u-boot.dtsi
 			intel,offset-settings =
 				/* Enable non-prviledged access to various periphs */
 				<0x00000000 0xfff73ffb 0xfff73ffb>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 	};
 
@@ -155,7 +155,7 @@ Path: arch/arm/dts/socfpga_n5x-u-boot.dtsi
 				<0x0000008 0x8000ffff 0xe007ffff>,
 				<0x000000c 0x8000ffff 0xe007ffff>,
 				<0x0000010 0x8000ffff 0xe007ffff>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		soc_noc_fw_mpfe_csr_inst_0_mpfe_scr@f8020000 {
@@ -165,7 +165,7 @@ Path: arch/arm/dts/socfpga_n5x-u-boot.dtsi
 				<0x00000000 0x00010101 0x00010101>,
 				/* Disable MPFE firewall for HMC adapter */
 				<0x00000004 0x00000001 0x00010101>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 	};
 
@@ -181,7 +181,7 @@ Path: arch/arm/dts/socfpga_agilex-u-boot.dtsi
 				<0x0000008 0x8000ffff 0xe003ffff>,
 				<0x000000c 0x8000ffff 0xe003ffff>,
 				<0x0000010 0x8000ffff 0xe003ffff>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		soc_noc_fw_mpfe_csr_inst_0_mpfe_scr@f8020000 {
@@ -191,7 +191,7 @@ Path: arch/arm/dts/socfpga_agilex-u-boot.dtsi
 				<0x00000000 0x00010101 0x00010101>,
 				/* Disable MPFE firewall for HMC adapter */
 				<0x00000004 0x00000001 0x00010101>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		/*
@@ -223,7 +223,7 @@ Path: arch/arm/dts/socfpga_agilex-u-boot.dtsi
 				<0x0000044 0x00000000 0x000000ff>,
 				<0x0000048 0x00000000 0xffff0000>,
 				<0x000004c 0x00000000 0x000000ff>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		/*
@@ -241,7 +241,7 @@ Path: arch/arm/dts/socfpga_agilex-u-boot.dtsi
 				<0x0000010 0x00000BFE 0x00007fff>,
 				<0x0000014 0x00000008 0x000003ff>,
 				<0x0000018 0x00000000 0x0000000f>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 	};
 
@@ -290,7 +290,7 @@ Path: arch/arm/dts/socfpga_stratix10-u-boot.dtsi
 				<0x00010600 0x00000000 0xffffffdf>,
 				<0x00010620 0x00000000 0xffffffdf>,
 				<0x00010640 0x00000000 0xffffffdf>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		/*
@@ -324,7 +324,7 @@ Path: arch/arm/dts/socfpga_stratix10-u-boot.dtsi
 				<0x0000044 0x00000000 0x0000001f>,
 				<0x0000048 0x00000000 0xffff0000>,
 				<0x000004c 0x00000000 0x0000001f>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		soc_noc_fw_ddr_fpga2sdram_inst_1_ddr_scr@f8020300 {
@@ -349,7 +349,7 @@ Path: arch/arm/dts/socfpga_stratix10-u-boot.dtsi
 				<0x0000044 0x00000000 0x0000001f>,
 				<0x0000048 0x00000000 0xffff0000>,
 				<0x000004c 0x00000000 0x0000001f>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		soc_noc_fw_ddr_fpga2sdram_inst_2_ddr_scr@f8020400 {
@@ -374,7 +374,7 @@ Path: arch/arm/dts/socfpga_stratix10-u-boot.dtsi
 				<0x0000044 0x00000000 0x0000001f>,
 				<0x0000048 0x00000000 0xffff0000>,
 				<0x000004c 0x00000000 0x0000001f>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		/*
@@ -392,7 +392,7 @@ Path: arch/arm/dts/socfpga_stratix10-u-boot.dtsi
 				<0x0000010 0x00000BFE 0x00001fff>,
 				<0x0000014 0x00000008 0x000003ff>,
 				<0x0000018 0x00000000 0x00000007>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 	};
 
@@ -437,7 +437,7 @@ Path: arch/arm/dts/socfpga_agilex5-u-boot.dtsi
 				<0x00000ac 0x00000000 0x000000ff>,
 				/* Enable */
 				<0x0000000 0x00000202 0x0000ffff>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		 }
 
 		/* This is required to be set when DDR interleaving mode is set */
@@ -462,7 +462,7 @@ Path: arch/arm/dts/socfpga_agilex5-u-boot.dtsi
 				<0x00000ac 0x00000000 0x000000ff>,
 				/* Enable */
 				<0x0000000 0x00000202 0x0000ffff>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		 }
 
 		/*
@@ -494,5 +494,5 @@ Path: arch/arm/dts/socfpga_agilex5-u-boot.dtsi
 				<0x000002c 0x00000000 0x000000ff>,,
 				/* Enable */
 				<0x0000000 0x00000002 0x000000ff>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		 }

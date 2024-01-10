@@ -10,35 +10,35 @@
 
 / {
 	fs_loader0: fs-loader {
-		u-boot,dm-pre-reloc;
+		bootph-all;
 		compatible = "u-boot,fs-loader";
 	};
 };
 
 &fpga_mgr {
-	u-boot,dm-pre-reloc;
+	bootph-all;
 	firmware-loader = <&fs_loader0>;
 	altr,bitstream = "300000";
 };
 
 &l4_mp_clk {
-	u-boot,dm-pre-reloc;
+	bootph-all;
 };
 
 &nand_x_clk {
-	u-boot,dm-pre-reloc;
+	bootph-all;
 };
 
 &nand_ecc_clk {
-	u-boot,dm-pre-reloc;
+	bootph-all;
 };
 
 &nand_clk {
-	u-boot,dm-pre-reloc;
+	bootph-all;
 };
 
 &nand {
-	u-boot,dm-pre-reloc;
+	bootph-all;
 	status = "okay";
 
 	partition@nand-boot {
