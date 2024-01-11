@@ -157,13 +157,13 @@ class IOCSRGrokker(object):
         if 8 != programmerTag:
             print ("I didn't find the end of the .hiof file when I expected to!")
 
-        self.iocsrHeaderStream.write('#define CONFIG_HPS_IOCSR_SCANCHAIN0_LENGTH\t' +\
+        self.iocsrHeaderStream.write('#define CFG_HPS_IOCSR_SCANCHAIN0_LENGTH\t' +\
                        str(self.HPSIOCSRDataLength1) + '\n')
-        self.iocsrHeaderStream.write('#define CONFIG_HPS_IOCSR_SCANCHAIN1_LENGTH\t' +\
+        self.iocsrHeaderStream.write('#define CFG_HPS_IOCSR_SCANCHAIN1_LENGTH\t' +\
                        str(self.HPSIOCSRDataLength2) + '\n')
-        self.iocsrHeaderStream.write('#define CONFIG_HPS_IOCSR_SCANCHAIN2_LENGTH\t' +\
+        self.iocsrHeaderStream.write('#define CFG_HPS_IOCSR_SCANCHAIN2_LENGTH\t' +\
                        str(self.HPSIOCSRDataLength3) + '\n')
-        self.iocsrHeaderStream.write('#define CONFIG_HPS_IOCSR_SCANCHAIN3_LENGTH\t' +\
+        self.iocsrHeaderStream.write('#define CFG_HPS_IOCSR_SCANCHAIN3_LENGTH\t' +\
                        str(self.HPSIOCSRDataLength4) + '\n')
 
         self.iocsrHeaderStream.write("\n")
