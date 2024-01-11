@@ -28,7 +28,7 @@ class pll_config_h:
         written to pll_config.h file
         """
         doc.c_source.line(self.doc)
-        id = "CONFIG_HPS_DBCTRL_STAYOSC1"
+        id = "CFG_HPS_DBCTRL_STAYOSC1"
         valueString = self.hpsModel.getSystemConfig("dbctrl_stayosc1")
         # Unfortunately hps.xml never tells us the data type of values
         # attributes. Here we workaround this type of problem, often
@@ -59,14 +59,14 @@ class pll_config_h:
         paramMap["VCO_NUMER"] = "main_pll_m"
 
         for key in paramMap.keys():
-            id = "CONFIG_HPS_MAINPLLGRP_" + key
+            id = "CFG_HPS_MAINPLLGRP_" + key
             value = self.hpsModel.getSystemConfig(paramMap[key])
             doc.c_source.define(self.doc, id,  value )
 
         # main_pll_c0, main_pll_c1, main_pll_c2 are fixed counters,
-        doc.c_source.define(self.doc, "CONFIG_HPS_MAINPLLGRP_MPUCLK_CNT", "0")
-        doc.c_source.define(self.doc, "CONFIG_HPS_MAINPLLGRP_MAINCLK_CNT", "0")
-        doc.c_source.define(self.doc, "CONFIG_HPS_MAINPLLGRP_DBGATCLK_CNT", "0")
+        doc.c_source.define(self.doc, "CFG_HPS_MAINPLLGRP_MPUCLK_CNT", "0")
+        doc.c_source.define(self.doc, "CFG_HPS_MAINPLLGRP_MAINCLK_CNT", "0")
+        doc.c_source.define(self.doc, "CFG_HPS_MAINPLLGRP_DBGATCLK_CNT", "0")
 
         paramMap = collections.OrderedDict()
 
@@ -84,7 +84,7 @@ class pll_config_h:
         paramMap["L4SRC_L4SP"] = "l4_sp_clk_source"
 
         for key in paramMap.keys():
-            id = "CONFIG_HPS_MAINPLLGRP_" + key
+            id = "CFG_HPS_MAINPLLGRP_" + key
             value = self.hpsModel.getSystemConfig(paramMap[key])
             doc.c_source.define(self.doc, id, value )
 
@@ -110,32 +110,32 @@ class pll_config_h:
         paramMap["SRC_QSPI"] = "qspi_clk_source"
 
         for key in paramMap.keys():
-            id = "CONFIG_HPS_PERPLLGRP_" + key
+            id = "CFG_HPS_PERPLLGRP_" + key
             value = self.hpsModel.getSystemConfig(paramMap[key])
             doc.c_source.define(self.doc, id, value )
 
     def addSdramPllSettings(self):
         """ add sdram pll settings to the file """
         value = self.emifModel.getPllDefine("PLL_MEM_CLK_DIV")
-        doc.c_source.define(self.doc, "CONFIG_HPS_SDRPLLGRP_VCO_DENOM", value )
+        doc.c_source.define(self.doc, "CFG_HPS_SDRPLLGRP_VCO_DENOM", value )
         value = self.emifModel.getPllDefine("PLL_MEM_CLK_MULT")
-        doc.c_source.define(self.doc, "CONFIG_HPS_SDRPLLGRP_VCO_NUMER", value )
-        doc.c_source.define(self.doc, "CONFIG_HPS_SDRPLLGRP_VCO_SSRC", "0")
-        doc.c_source.define(self.doc, "CONFIG_HPS_SDRPLLGRP_DDRDQSCLK_CNT", "1")
+        doc.c_source.define(self.doc, "CFG_HPS_SDRPLLGRP_VCO_NUMER", value )
+        doc.c_source.define(self.doc, "CFG_HPS_SDRPLLGRP_VCO_SSRC", "0")
+        doc.c_source.define(self.doc, "CFG_HPS_SDRPLLGRP_DDRDQSCLK_CNT", "1")
         value = self.emifModel.getPllDefine("PLL_MEM_CLK_PHASE_DEG")
-        doc.c_source.define(self.doc, "CONFIG_HPS_SDRPLLGRP_DDRDQSCLK_PHASE", value )
-        doc.c_source.define(self.doc, "CONFIG_HPS_SDRPLLGRP_DDR2XDQSCLK_CNT", "0")
-        doc.c_source.define(self.doc, "CONFIG_HPS_SDRPLLGRP_DDR2XDQSCLK_PHASE", "0")
-        doc.c_source.define(self.doc, "CONFIG_HPS_SDRPLLGRP_DDRDQCLK_CNT", "1")
+        doc.c_source.define(self.doc, "CFG_HPS_SDRPLLGRP_DDRDQSCLK_PHASE", value )
+        doc.c_source.define(self.doc, "CFG_HPS_SDRPLLGRP_DDR2XDQSCLK_CNT", "0")
+        doc.c_source.define(self.doc, "CFG_HPS_SDRPLLGRP_DDR2XDQSCLK_PHASE", "0")
+        doc.c_source.define(self.doc, "CFG_HPS_SDRPLLGRP_DDRDQCLK_CNT", "1")
         value = self.emifModel.getPllDefine("PLL_WRITE_CLK_PHASE_DEG")
-        doc.c_source.define(self.doc, "CONFIG_HPS_SDRPLLGRP_DDRDQCLK_PHASE", value )
+        doc.c_source.define(self.doc, "CFG_HPS_SDRPLLGRP_DDRDQCLK_PHASE", value )
 
         try:
             value = self.hpsModel.getSystemConfig("sdram_pll_c5")
         except ValueError:
             value = "5"
-        doc.c_source.define(self.doc, "CONFIG_HPS_SDRPLLGRP_S2FUSER2CLK_CNT", value )
-        doc.c_source.define(self.doc, "CONFIG_HPS_SDRPLLGRP_S2FUSER2CLK_PHASE", "0")
+        doc.c_source.define(self.doc, "CFG_HPS_SDRPLLGRP_S2FUSER2CLK_CNT", value )
+        doc.c_source.define(self.doc, "CFG_HPS_SDRPLLGRP_S2FUSER2CLK_PHASE", "0")
 
     def addClockFreq(self):
         """ add clock frequency settings to the file """
@@ -148,7 +148,7 @@ class pll_config_h:
         paramMap["PERVCO"] = "periph_pll_vco_hz"
 
         for key in paramMap.keys():
-            id = "CONFIG_HPS_CLK_" + key + "_HZ"
+            id = "CFG_HPS_CLK_" + key + "_HZ"
             value = self.hpsModel.getSystemConfig(paramMap[key])
             doc.c_source.define(self.doc, id, value )
 
@@ -157,7 +157,7 @@ class pll_config_h:
         m = int(self.emifModel.getPllDefine("PLL_MEM_CLK_MULT"))
         n = int(self.emifModel.getPllDefine("PLL_MEM_CLK_DIV"))
         vco = int(round(eosc1 * (m + 1) / (n + 1)))
-        doc.c_source.define(self.doc, "CONFIG_HPS_CLK_SDRVCO_HZ", str(vco) )
+        doc.c_source.define(self.doc, "CFG_HPS_CLK_SDRVCO_HZ", str(vco) )
 
         paramMap = collections.OrderedDict()
         paramMap["EMAC0"] = "emac0_clk_hz"
@@ -174,7 +174,7 @@ class pll_config_h:
         paramMap["L4_SP"] = "l4_sp_clk_hz"
 
         for key in paramMap.keys():
-            id = "CONFIG_HPS_CLK_" + key + "_HZ"
+            id = "CFG_HPS_CLK_" + key + "_HZ"
             value = self.hpsModel.getSystemConfig(paramMap[key])
             doc.c_source.define(self.doc, id, value )
 
@@ -186,7 +186,7 @@ class pll_config_h:
         paramMap["DBGATCLK"] = "main_pll_c2_internal"
 
         for key in paramMap.keys():
-            id = "CONFIG_HPS_ALTERAGRP_" + key
+            id = "CFG_HPS_ALTERAGRP_" + key
             value = self.hpsModel.getSystemConfig(paramMap[key])
             doc.c_source.define(self.doc, id, value )
 
