@@ -1,0 +1,6 @@
+SOCFPGA BOARD
+M:	Tien Fong Chee <tien.fong.chee@intel.com>
+S:	Maintained
+F:	board/arrow/agilex5-axe5-eagle/
+F:	include/configs/socfpga_agilex5_axe5_eagle.h
+F:	configs/socfpga_agilex5_axe5_eagle_defconfig

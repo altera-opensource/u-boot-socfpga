@@ -221,6 +221,13 @@ config TARGET_SOCFPGA_AGILEX5_SOCDK
 	bool "Intel SOCFPGA SoCDK (Agilex5)"
 	select TARGET_SOCFPGA_AGILEX5
 
+<<<<<<< Updated upstream
+=======
+config TARGET_SOCFPGA_AGILEX5_AXE5_EAGLE
+	bool "Arrow SOCFPGA AXE5 EAGLE (Agilex5)"
+	select TARGET_SOCFPGA_AGILEX5
+
+>>>>>>> Stashed changes
 config TARGET_SOCFPGA_ARIES_MCVEVK
 	bool "Aries MCVEVK (Cyclone V)"
 	select TARGET_SOCFPGA_CYCLONE5
@@ -316,6 +323,7 @@ config SYS_BOARD
 	default "sr1500" if TARGET_SOCFPGA_SR1500
 	default "stratix10-socdk" if TARGET_SOCFPGA_STRATIX10_SOCDK
 	default "vining_fpga" if TARGET_SOCFPGA_SOFTING_VINING_FPGA
+  default "agilex5-axe5-eagle" if TARGET_SOCFPGA_AGILEX5_AXE5_EAGLE
 
 config SYS_VENDOR
 	default "intel" if TARGET_SOCFPGA_AGILEX5_SOCDK
@@ -337,6 +345,7 @@ config SYS_VENDOR
 	default "terasic" if TARGET_SOCFPGA_TERASIC_DE10_NANO
 	default "terasic" if TARGET_SOCFPGA_TERASIC_DE10_STANDARD
 	default "terasic" if TARGET_SOCFPGA_TERASIC_SOCKIT
+  default "arrow" if TARGET_SOCFPGA_AGILEX5_AXE5_EAGLE
 
 config SYS_SOC
 	default "socfpga"
@@ -364,5 +373,6 @@ config SYS_CONFIG_NAME
 	default "socfpga_sr1500" if TARGET_SOCFPGA_SR1500
 	default "socfpga_stratix10_socdk" if TARGET_SOCFPGA_STRATIX10_SOCDK
 	default "socfpga_vining_fpga" if TARGET_SOCFPGA_SOFTING_VINING_FPGA
+	default "socfpga_agilex5_axe5_eagle" if TARGET_SOCFPGA_AGILEX5_AXE5_EAGLE
 
 endif
