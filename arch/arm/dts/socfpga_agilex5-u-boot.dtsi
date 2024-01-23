@@ -391,7 +391,7 @@
 				reg = <0x10d21300 0x0000004>;
 				intel,offset-settings =
 					/* LWSOC2FPGA_CSR */
-					<0x00000000 0x0ffe0301>;
+					<0x00000000 0x0ffe0301 0x0ffe0301>;
 				bootph-all;
 			};
 
