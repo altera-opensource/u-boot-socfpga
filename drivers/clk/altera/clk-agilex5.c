@@ -604,14 +604,12 @@ static u32 clk_get_emac_clk_hz(struct socfpga_clk_plat *plat, u32 emac_id)
 	u32 div;
 	u32 reg;
 
-	/* Get EMAC clock source */
-	reg = CM_REG_READL(plat, CLKMGR_CTL_EMACACTR);
-	clock = (reg & CLKMGR_CTL_EMACCTR_SRC_MASK)
-		 >> CLKMGR_CTL_EMACCTR_SRC_OFFSET;
 
 	if (emac_id == AGILEX5_EMAC_PTP_CLK) {
+		reg = CM_REG_READL(plat, CLKMGR_CTL_EMACPTPCTR);
 		ctr_reg = CLKMGR_CTL_EMACPTPCTR;
 	} else {
+		reg = CM_REG_READL(plat, CLKMGR_CTL_EMACACTR);
 		ctl = CM_REG_READL(plat, CLKMGR_PERPLL_EMACCTL);
 		if (emac_id == AGILEX5_EMAC0_CLK)
 			ctl = (ctl & CLKMGR_PERPLLGRP_EMACCTL_EMAC0SELB_MASK) >>
@@ -633,6 +631,9 @@ static u32 clk_get_emac_clk_hz(struct socfpga_clk_plat *plat, u32 emac_id)
 			ctr_reg = CLKMGR_CTL_EMACACTR;
 		}
 	}
+	/* Get EMAC clock source */
+	clock = (reg & CLKMGR_CTL_EMACCTR_SRC_MASK)
+		 >> CLKMGR_CTL_EMACCTR_SRC_OFFSET;
 
 	reg = CM_REG_READL(plat, ctr_reg);
 	div = (reg & CLKMGR_CTL_EMACCTR_CNT_MASK)
@@ -642,8 +643,13 @@ static u32 clk_get_emac_clk_hz(struct socfpga_clk_plat *plat, u32 emac_id)
 	case CLKMGR_CLKSRC_MAIN:
 		clock = clk_get_main_vco_clk_hz(plat);
 
-		clock /= (CM_REG_READL(plat, CLKMGR_MAINPLL_PLLC1) &
-			  CLKMGR_CLKCNT_MSK);
+		if (emac_id == AGILEX5_EMAC_PTP_CLK) {
+			clock /= (CM_REG_READL(plat, CLKMGR_MAINPLL_PLLC3) &
+				  CLKMGR_CLKCNT_MSK);
+		} else {
+			clock /= (CM_REG_READL(plat, CLKMGR_MAINPLL_PLLC1) &
+				  CLKMGR_CLKCNT_MSK);
+		}
 		break;
 
 	case CLKMGR_CLKSRC_PER:
