@@ -1879,7 +1879,7 @@ static void ll_exit(void)
 
 	/* free the flash list */
 	for (int i = 0; i < QSPI_MAX_DEVICE; i++) {
-		if (flashlist[i]) {
+		if (flashlist && flashlist[i]) {
 			spi_flash_free(flashlist[i]);
 			flashlist[i] = NULL;
 		}
@@ -1980,6 +1980,7 @@ int rsu_ll_qspi_init(struct rsu_ll_intf **intf)
 	int found;
 
 	found = 0;
+
 	if (CONFIG_IS_ENABLED(SOCFPGA_RSU_MULTIFLASH)) {
 		/* retrieve qspi info from mailbox */
 		num_flash = get_num_flash(flash_enabled);
@@ -1990,7 +1991,7 @@ int rsu_ll_qspi_init(struct rsu_ll_intf **intf)
 	}
 
 	flashlist = (struct spi_flash **) malloc(sizeof(struct spi_flash *) *
-						 num_flash);
+						 QSPI_MAX_DEVICE);
 
 	if (!flashlist) {
 		rsu_log(RSU_ERR,
@@ -2009,6 +2010,7 @@ int rsu_ll_qspi_init(struct rsu_ll_intf **intf)
 							CONFIG_SF_DEFAULT_MODE);
 				if (!flash) {
 					rsu_log(RSU_ERR, "SPI probe failed.\n");
+					ll_exit();
 					/* return only if no flash found */
 					if (i == num_flash + 1 && found == 0)
 						return -ENODEV;
@@ -2026,6 +2028,7 @@ int rsu_ll_qspi_init(struct rsu_ll_intf **intf)
 					CONFIG_SF_DEFAULT_SPEED,
 					CONFIG_SF_DEFAULT_MODE);
 		if (!flash) {
+			ll_exit();
 			rsu_log(RSU_ERR, "SPI probe failed.\n");
 			return -ENODEV;
 		}
@@ -2037,6 +2040,7 @@ int rsu_ll_qspi_init(struct rsu_ll_intf **intf)
 	if (mbox_rsu_get_spt_offset(spt_offset, 4)) {
 		rsu_log(RSU_ERR,
 			"RSU: Firmware or flash content not supporting RSU\n");
+		ll_exit();
 		return -ECOMM;
 	}
 
@@ -2046,6 +2050,7 @@ int rsu_ll_qspi_init(struct rsu_ll_intf **intf)
 	rsu_log(RSU_DEBUG, "SPT1 offset 0x%08x\n", spt1_offset);
 
 	if (load_spt() && !spt_corrupted) {
+		ll_exit();
 		rsu_log(RSU_ERR, "Bad SPT\n");
 		return -1;
 	}
@@ -2053,6 +2058,7 @@ int rsu_ll_qspi_init(struct rsu_ll_intf **intf)
 	if (spt_corrupted) {
 		cpb_corrupted = true;
 	} else if (load_cpb() && !cpb_corrupted) {
+		ll_exit();
 		rsu_log(RSU_ERR, "Bad CPB\n");
 		return -1;
 	}
