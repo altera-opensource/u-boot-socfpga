@@ -1981,6 +1981,14 @@ int rsu_ll_qspi_init(struct rsu_ll_intf **intf)
 
 	found = 0;
 
+	/* get the offset from firmware */
+	if (mbox_rsu_get_spt_offset(spt_offset, 4)) {
+		rsu_log(RSU_ERR,
+			"RSU: Firmware or flash content not supporting RSU\n");
+		ll_exit();
+		return -ECOMM;
+	}
+
 	if (CONFIG_IS_ENABLED(SOCFPGA_RSU_MULTIFLASH)) {
 		/* retrieve qspi info from mailbox */
 		num_flash = get_num_flash(flash_enabled);
@@ -2034,14 +2042,6 @@ int rsu_ll_qspi_init(struct rsu_ll_intf **intf)
 		}
 
 		flashlist[0] = flash;
-	}
-
-	/* get the offset from firmware */
-	if (mbox_rsu_get_spt_offset(spt_offset, 4)) {
-		rsu_log(RSU_ERR,
-			"RSU: Firmware or flash content not supporting RSU\n");
-		ll_exit();
-		return -ECOMM;
 	}
 
 	spt0_offset = spt_offset[1];
