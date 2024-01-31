@@ -2,12 +2,21 @@
 /*
  * Copyright (C) 2024 Intel Corporation <www.intel.com>
  */
+#include <linux/bitfield.h>
 
 #define TIMEOUT				120000
 
 #define UIBSSM_CMD_RESPONSE_DATA_SHORT_MASK	GENMASK(31, 16)
 #define UIBSSM_CMD_RESPONSE_DATA_SHORT(data)	(((data) & \
 						UIBSSM_CMD_RESPONSE_DATA_SHORT_MASK) >> 16)
+
+/* UIB Responder Initialization Control Register */
+#define UIB_R_INITCTL_OFFSET			0x10
+#define UIB_R_INITCTL_INITREQ_MASK		BIT(0)
+#define UIB_R_INITCTL_INITTYPE_MASK		GENMASK(11, 8)
+#define UIB_R_INITCTL_INITREQ(x)		FIELD_PREP(UIB_R_INITCTL_INITREQ_MASK, (x))
+#define UIB_R_INITCTL_INITTYPE(x)		FIELD_PREP(UIB_R_INITCTL_INITTYPE_MASK, (x))
+#define UIB_RST_REQUEST_WITH_CAL		5
 
 /* UIB Initialization control and status registers */
 #define UIB_R_INITSTS_OFFSET		0x14
@@ -92,4 +101,5 @@ int uib_mb_req(phys_addr_t uib_csr_addr, u32 usr_cmd_type, u32 usr_cmd_opcode,
 /* Supported UIB function */
 int uib_cal_status(phys_addr_t addr);
 void uib_init_mem_cal(struct uib_info *uib_ctrl);
+void uib_trig_mem_cal(struct uib_info *uib_ctrl);
 int uib_bist_mem_init_start(struct uib_info *uib_ctrl);

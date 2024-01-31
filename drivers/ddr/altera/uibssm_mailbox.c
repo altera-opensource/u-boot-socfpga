@@ -10,6 +10,8 @@
 #include <asm/io.h>
 #include "uibssm_mailbox.h"
 
+#define MAX_RETRIES 3
+
 int uib_bist_mem_init_start(struct uib_info *uib_ctrl)
 {
 	struct uib_mb_resp usr_resp;
@@ -100,6 +102,49 @@ void uib_init_mem_cal(struct uib_info *uib_ctrl)
 
 			uib_ctrl->uib[i].cal_status = true;
 			debug("%s: Initial HBM calibration UIB_%d succeed\n", __func__, i);
+		}
+	}
+}
+
+/*
+ * Trying 3 times re-calibration if initial calibration failed
+ */
+void uib_trig_mem_cal(struct uib_info *uib_ctrl)
+{
+	int i, j;
+	int cal_stat;
+
+	if (!uib_ctrl->num_instance) {
+		uib_ctrl->overall_cal_status = false;
+	} else {
+		uib_ctrl->overall_cal_status = true;
+
+		for (i = 0; i < uib_ctrl->num_instance; i++) {
+			uib_ctrl->uib[i].cal_status = false;
+
+			/* Initiate Re-calibration */
+			for (j = 0; j < MAX_RETRIES; j++) {
+				clrsetbits_le32(uib_ctrl->uib[i].uib_csr_addr +
+						UIB_R_INITCTL_OFFSET,
+						UIB_R_INITCTL_INITTYPE_MASK |
+						UIB_R_INITCTL_INITREQ_MASK,
+						UIB_R_INITCTL_INITTYPE(UIB_RST_REQUEST_WITH_CAL) |
+						UIB_R_INITCTL_INITREQ(1));
+
+				cal_stat = uib_cal_status(uib_ctrl->uib[i].uib_csr_addr);
+				if (cal_stat)
+					continue;
+
+				debug("%s: HBM re-calibration UIB_%d succeed\n", __func__, i);
+				uib_ctrl->uib[i].cal_status = true;
+				break;
+			}
+
+			if (!uib_ctrl->uib[i].cal_status) {
+				uib_ctrl->overall_cal_status = false;
+				printf("%s: HBM re-calibration UIB_%d failed\n", __func__, i);
+				break;
+			}
 		}
 	}
 }

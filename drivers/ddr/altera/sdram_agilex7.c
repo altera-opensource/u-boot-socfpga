@@ -378,7 +378,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 		/* Trigger re-calibration if calibration failed */
 		if (!(uib_ctrl->overall_cal_status)) {
 			printf("HBM: Re-calibration in progress...\n");
-			uib_init_mem_cal(uib_ctrl);
+			uib_trig_mem_cal(uib_ctrl);
 		}
 
 		if (!(uib_ctrl->overall_cal_status)) {
