@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2022-2023 Intel Corporation <www.intel.com>
+ * Copyright (C) 2022-2024 Intel Corporation <www.intel.com>
  *
  */
 
@@ -307,7 +307,7 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 {
 	struct io96b_mb_resp usr_resp;
 	bool recal_success;
-	int i;
+	int i, j;
 	u8 cal_stat;
 	int count = 0;
 
@@ -321,7 +321,7 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 			recal_success = false;
 
 			/* Re-calibration first memory interface with failed calibration */
-			for (i = 0; i < 3; i++) {
+			for (j = 0; j < 3; j++) {
 				cal_stat = usr_resp.cmd_resp_data_0 & GENMASK(2, 0);
 				if (cal_stat == INTF_MEM_CAL_STATUS_SUCCESS) {
 					recal_success = true;
@@ -353,7 +353,7 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 			recal_success = false;
 
 			/* Re-calibration second memory interface with failed calibration */
-			for (i = 0; i < 3; i++) {
+			for (j = 0; j < 3; j++) {
 				cal_stat = usr_resp.cmd_resp_data_1 & GENMASK(2, 0);
 				if (cal_stat == INTF_MEM_CAL_STATUS_SUCCESS) {
 					recal_success = true;
