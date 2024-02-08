@@ -19,13 +19,6 @@ config SPL
 menu "SPL configuration options"
 	depends on SPL
 
-config SPL_SYS_DISABLE_DCACHE_OPS
-	bool "Do not enable dcache operation in SPL"
-	depends on SPL
-	help
-	  Do not enable data cache operation in SPL. This will turn off the
-	  Dcache support and have the empty dcache declaration.
-
 config SPL_FRAMEWORK
 	bool "Support SPL based upon the common SPL framework"
 	default y
