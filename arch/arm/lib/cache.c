@@ -62,6 +62,12 @@ __weak void flush_dcache_range(unsigned long start, unsigned long stop)
 	/* An empty stub, real implementation should be in platform code */
 }
 
+__weak int mmu_status(void)
+{
+	puts("WARNING: MMU not enabled\n");
+	return 0;
+}
+
 int check_cache_range(unsigned long start, unsigned long stop)
 {
 	int ok = 1;
