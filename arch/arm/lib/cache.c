@@ -47,6 +47,12 @@ __weak void dcache_disable(void)
 	puts("WARNING: Data cache not enabled\n");
 }
 
+__weak int dcache_status(void)
+{
+	puts("WARNING: Data cache not enabled\n");
+	return 0;
+}
+
 __weak void invalidate_dcache_range(unsigned long start, unsigned long stop)
 {
 	/* An empty stub, real implementation should be in platform code */
