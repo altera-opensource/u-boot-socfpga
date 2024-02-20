@@ -341,7 +341,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 		/* Trigger re-calibration if calibration failed */
 		if (!(io96b_ctrl->overall_cal_status)) {
 			printf("DDR: Re-calibration in progress...\n");
-			init_mem_cal(io96b_ctrl);
+			trig_mem_cal(io96b_ctrl);
 		}
 
 		printf("DDR: Calibration success\n");
