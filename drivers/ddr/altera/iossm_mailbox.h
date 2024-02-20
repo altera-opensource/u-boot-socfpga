@@ -88,9 +88,7 @@ struct io96b_mb_ctrl {
  */
 struct io96b_mb_resp {
 	u32 cmd_resp_status;
-	u32 cmd_resp_data_0;
-	u32 cmd_resp_data_1;
-	u32 cmd_resp_data_2;
+	u32 cmd_resp_data[3];
 };
 
 /*
