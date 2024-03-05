@@ -55,19 +55,19 @@
 };
 
 &i2c0 {
-	status = "disabled";
+	status = "okay";
 };
 
 &i2c1 {
-	status = "disabled";
+	status = "okay";
 };
 
 &i3c0 {
-    status = "disabled";
+	status = "okay";
 };
 
 &i3c1 {
-    status = "disabled";
+	status = "okay";
 };
 
 &mmc {
@@ -87,7 +87,7 @@
 };
 
 &usb0 {
-	status = "disabled";
+	status = "okay";
 	disable-over-current;
 };
 
@@ -96,47 +96,47 @@
 };
 
 &watchdog0 {
-	status = "disabled";
+	status = "okay";
 };
 
 &watchdog1 {
-	status = "disabled";
+	status = "okay";
 };
 
 &watchdog2 {
-	status = "disabled";
+	status = "okay";
 };
 
 &watchdog3 {
-	status = "disabled";
+	status = "okay";
 };
 
 &watchdog4 {
-	status = "disabled";
+	status = "okay";
 };
 
 &timer0 {
-	status = "disabled";
+	status = "okay";
 };
 
 &timer1 {
-	status = "disabled";
+	status = "okay";
 };
 
 &timer2 {
-	status = "disabled";
+	status = "okay";
 };
 
 &timer3 {
-	status = "disabled";
+	status = "okay";
 };
 
 &spi0 {
-	status = "disabled";
+	status = "okay";
 };
 
 &spi1 {
-	status = "disabled";
+	status = "okay";
 };
 
 &nand {
