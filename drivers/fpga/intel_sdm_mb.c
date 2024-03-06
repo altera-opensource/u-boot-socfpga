@@ -17,7 +17,6 @@
 
 #define RECONFIG_STATUS_POLL_RESP_TIMEOUT_MS		60000
 #define RECONFIG_STATUS_INTERVAL_DELAY_US		1000000
-#define NOT_OS_FLAG								4
 
 #if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_ATF)
 
@@ -58,7 +57,7 @@ static int send_bitstream(const void *rbf_data, size_t rbf_size)
 {
 	int i;
 	u64 res_buf[3];
-	u64 args[3];
+	u64 args[2];
 	u32 xfer_count = 0;
 	int ret, wr_ret = 0, retry = 0;
 	size_t buf_size = (rbf_size > BITSTREAM_CHUNK_SIZE) ?
@@ -68,10 +67,8 @@ static int send_bitstream(const void *rbf_data, size_t rbf_size)
 		if (!wr_ret && rbf_size) {
 			args[0] = (u64)rbf_data;
 			args[1] = buf_size;
-			/* BIT 2 Param to indicate caller is not from OS*/
-			args[2] = NOT_OS_FLAG;
 			wr_ret = invoke_smc(INTEL_SIP_SMC_FPGA_CONFIG_WRITE,
-					    args, 3, NULL, 0);
+					    args, 2, NULL, 0);
 
 			debug("wr_ret = %d, rbf_data = %p, buf_size = %08lx\n",
 			      wr_ret, rbf_data, buf_size);
@@ -124,8 +121,7 @@ static int send_bitstream(const void *rbf_data, size_t rbf_size)
 int intel_sdm_mb_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size)
 {
 	int ret;
-	/* BIT 2 in arg is to indicate caller is not from OS*/
-	u64 arg = 1 | NOT_OS_FLAG;
+	u64 arg = 1;
 
 	debug("Invoking FPGA_CONFIG_START...\n");
 
