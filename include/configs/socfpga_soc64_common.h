@@ -41,7 +41,6 @@
 
 /* Magic word to indicate L2 reset is completed */
 #define L2_RESET_DONE_STATUS		0x1228E5E7
-#define CONFIG_SYS_CACHELINE_SIZE	64
 #define CFG_SYS_MEM_RESERVE_SECURE	0	/* using OCRAM, not DDR */
 
 /*
@@ -67,21 +66,9 @@
  * NAND support
  */
 #ifdef CONFIG_NAND_DENALI
-#define CONFIG_SYS_NAND_ONFI_DETECTION
-#define CONFIG_SYS_MAX_NAND_DEVICE	1
-
 #define CFG_SYS_NAND_U_BOOT_SIZE	(1 * 1024 * 1024)
 #define CFG_SYS_NAND_U_BOOT_DST	CONFIG_TEXT_BASE
 #endif /* CONFIG_NAND_DENALI */
-
-/*
- * Environment variable
- */
-#if IS_ENABLED(CONFIG_SPL_ATF)
-#define CONFIG_BOOTFILE "kernel.itb"
-#else
-#define CONFIG_BOOTFILE "Image"
-#endif
 
 #if IS_ENABLED(CONFIG_DISTRO_DEFAULTS)
 #if IS_ENABLED(CONFIG_CMD_MMC)
