@@ -35,6 +35,22 @@ static struct mm_region socfpga_agilex5_mem_map[] = {
 		.attrs	= PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
 				PTE_BLOCK_NON_SHARE |
 				PTE_BLOCK_PXN | PTE_BLOCK_UXN,
+	}, {
+		/* FPGA 15GB */
+		.virt	= 0x440000000UL,
+		.phys	= 0x440000000UL,
+		.size	= 0x3C0000000UL,
+		.attrs	= PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
+				PTE_BLOCK_NON_SHARE |
+				PTE_BLOCK_PXN | PTE_BLOCK_UXN,
+	}, {
+		/* FPGA 240GB */
+		.virt	= 0x4400000000UL,
+		.phys	= 0x4400000000UL,
+		.size	= 0x3C00000000UL,
+		.attrs	= PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
+				PTE_BLOCK_NON_SHARE |
+				PTE_BLOCK_PXN | PTE_BLOCK_UXN,
 	},{
 		/* MEM 2GB */
 		.virt	= 0x80000000UL,
