@@ -37,6 +37,14 @@
 #define UIB_R_MBRDCTL_MBRDDATA_VALID	BIT(4)
 #define UIB_R_MBRDCTL_MBRDDATA_END	BIT(7)
 
+/* Responder Error Mask Register */
+#define UIB_R_ERRMSK_PSEUDO_CH0_OFFSET	0x520
+#define UIB_R_ERRMSK_PSEUDO_CH1_OFFSET	0X820
+#define UIB_DRAM_SBE_MSK		BIT(25)
+#define UIB_INTERNAL_CORR_ERR_MSK	BIT(30)
+#define UIB_DRAM_SBE(x)			FIELD_PREP(UIB_DRAM_SBE_MSK, (x))
+#define UIB_INTERNAL_CORR_ERR(x)	FIELD_PREP(UIB_INTERNAL_CORR_ERR_MSK, (x))
+
 /* supported mailbox command type */
 enum uibssm_mailbox_cmd_type  {
 	UIB_CMD_TRIG_CONTROLLER_OP = 0x04

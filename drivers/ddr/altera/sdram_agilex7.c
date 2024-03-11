@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2023 Intel Corporation <www.intel.com>
+ * Copyright (C) 2023-2024 Intel Corporation <www.intel.com>
  *
  */
 
@@ -386,6 +386,32 @@ int sdram_mmr_init_full(struct udevice *dev)
 			free(io96b_ctrl);
 			free(uib_ctrl);
 			return -1;
+		}
+
+		/* Responder Error Mask Register */
+		debug("HBM: Setting Error Mask Register\n");
+		for (i = 0; i < uib_ctrl->num_instance; i++) {
+			clrsetbits_le32(uib_ctrl->uib[i].uib_csr_addr +
+					UIB_R_ERRMSK_PSEUDO_CH0_OFFSET,
+					UIB_DRAM_SBE_MSK | UIB_INTERNAL_CORR_ERR_MSK,
+					UIB_DRAM_SBE(0x1) | UIB_INTERNAL_CORR_ERR(0x1));
+			debug("HBM: Error Mask Pseudo CH0 addr: 0x%llx\n",
+			      uib_ctrl->uib[i].uib_csr_addr +
+			      UIB_R_ERRMSK_PSEUDO_CH0_OFFSET);
+			debug("HBM: Error Mask Pseudo CH0 value: 0x%x\n",
+			      readl(uib_ctrl->uib[i].uib_csr_addr +
+				    UIB_R_ERRMSK_PSEUDO_CH0_OFFSET));
+
+			clrsetbits_le32(uib_ctrl->uib[i].uib_csr_addr +
+					UIB_R_ERRMSK_PSEUDO_CH1_OFFSET,
+					UIB_DRAM_SBE_MSK | UIB_INTERNAL_CORR_ERR_MSK,
+					UIB_DRAM_SBE(0x1) | UIB_INTERNAL_CORR_ERR(0x1));
+			debug("HBM: Error Mask Pseudo CH1 addr: 0x%llx\n",
+			      uib_ctrl->uib[i].uib_csr_addr +
+			      UIB_R_ERRMSK_PSEUDO_CH1_OFFSET);
+			debug("HBM: Error Mask Pseudo CH1 value: 0x%x\n\n",
+			      readl(uib_ctrl->uib[i].uib_csr_addr +
+				    UIB_R_ERRMSK_PSEUDO_CH1_OFFSET));
 		}
 
 		printf("HBM: Calibration success\n");
