@@ -307,6 +307,7 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 	struct io96b_mb_resp usr_resp;
 	bool recal_success;
 	int i, j, k;
+	u32 cal_stat_offset;
 	u8 cal_stat;
 	int count = 0;
 
@@ -322,7 +323,9 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 
 				/* Re-calibration first memory interface with failed calibration */
 				for (k = 0; k < 3; k++) {
-					cal_stat = usr_resp.cmd_resp_data[j] & GENMASK(2, 0);
+					cal_stat_offset = usr_resp.cmd_resp_data[j];
+					cal_stat = readl(io96b_ctrl->io96b[i].io96b_csr_addr +
+							cal_stat_offset);
 					if (cal_stat == INTF_MEM_CAL_STATUS_SUCCESS) {
 						recal_success = true;
 						break;
