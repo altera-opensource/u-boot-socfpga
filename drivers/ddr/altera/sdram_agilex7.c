@@ -3,7 +3,7 @@
  * Copyright (C) 2023-2024 Intel Corporation <www.intel.com>
  *
  */
-
+#define DEBUG
 #include <dm.h>
 #include <hang.h>
 #include <log.h>

@@ -3,7 +3,7 @@
  * Copyright (C) 2024 Intel Corporation <www.intel.com>
  *
  */
-
+#define DEBUG
 #include <common.h>
 #include <hang.h>
 #include <wait_bit.h>
