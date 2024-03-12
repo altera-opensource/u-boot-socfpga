@@ -93,13 +93,13 @@ void board_init_f(ulong dummy)
 
 	/* configure DFI_SEL for SDMMC */
 	writel(tmp, socfpga_get_sysmgr_addr() + SYSMGR_SOC64_COMBOPHY_DFISEL);
-
+#endif
 	/* configure default base clkmgr clock - 200MHz */
 	writel((readl(socfpga_get_clkmgr_addr() + CLKMGR_MAINPLL_NOCDIV)
 		& 0xfffcffff) |
 		(CLKMGR_NOCDIV_SOFTPHY_DIV_ONE << CLKMGR_NOCDIV_SOFTPHY_OFFSET),
 		socfpga_get_clkmgr_addr() + CLKMGR_MAINPLL_NOCDIV);
-#endif
+
 
 	mbox_init();
 
