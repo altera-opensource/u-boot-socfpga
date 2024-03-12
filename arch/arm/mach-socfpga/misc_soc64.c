@@ -93,7 +93,7 @@ int arch_early_init_r(void)
 }
 
 #if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
-static bool is_agilex5_reva_workaround_required(void)
+bool is_agilex5_reva_workaround_required(void)
 {
 	u32 reg;
 	bool status;
