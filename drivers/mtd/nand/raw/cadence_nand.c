@@ -1292,7 +1292,6 @@ static void cadence_nand_read_buf(struct mtd_info *mtd, u8 *buf, int len)
 	u8 thread_nr = 0;
 	u32 sdma_size;
 	int status;
-	u32 index;
 	int len_in_words = len >> 2;
 
 	/* Wait until slave DMA interface is ready to data transfer. */
@@ -1303,9 +1302,7 @@ static void cadence_nand_read_buf(struct mtd_info *mtd, u8 *buf, int len)
 	}
 
 	if (!cadence->caps1->has_dma) {
-		for (index = 0; index < len; index++) {
-			*(buf + index) = ioread8(cadence->io.virt + index);
-		}
+		readsq(cadence->io.virt, buf, len_in_words);
 
 		if (sdma_size > len) {
 			memcpy(cadence->buf, buf + (len_in_words << 2),
@@ -1322,7 +1319,6 @@ static void cadence_nand_write_buf(struct mtd_info *mtd, const u8 *buf, int len)
 	u8 thread_nr = 0;
 	u32 sdma_size;
 	int status;
-	u32 index;
 	int len_in_words = len >> 2;
 
 	/* Wait until slave DMA interface is ready to data transfer. */
@@ -1333,9 +1329,7 @@ static void cadence_nand_write_buf(struct mtd_info *mtd, const u8 *buf, int len)
 	}
 
 	if (!cadence->caps1->has_dma) {
-		for (index = 0; index < len; index++) {
-			iowrite8(*(buf + index), cadence->io.virt + index);
-		}
+		writesq(cadence->io.virt, buf, len_in_words);
 
 		if (sdma_size > len) {
 			memcpy(cadence->buf, buf + (len_in_words << 2),
