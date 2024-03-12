@@ -24,7 +24,6 @@
 #define IOSSM_CMD_RESPONSE_DATA_SHORT_MASK	GENMASK(31, 16)
 #define IOSSM_CMD_RESPONSE_DATA_SHORT(data) (((data) & IOSSM_CMD_RESPONSE_DATA_SHORT_MASK) >> 16)
 #define MAX_IO96B_SUPPORTED		2
-#define MAX_MEM_INTERFACES_SUPPORTED	2
 
 /* supported mailbox command type */
 enum iossm_mailbox_cmd_type  {

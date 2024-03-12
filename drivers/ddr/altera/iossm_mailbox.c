@@ -216,7 +216,7 @@ void io96b_mb_init(struct io96b_info *io96b_ctrl)
 
 		/* Retrieve memory interface IP type and instance ID (IP identifier) */
 		j = 0;
-		for (k = 0; k < MAX_MEM_INTERFACES_SUPPORTED; k++) {
+		for (k = 0; k < io96b_ctrl->io96b[i].mb_ctrl.num_mem_interface; k++) {
 			switch (k) {
 			case 0:
 				ip_type_ret = (usr_resp.cmd_resp_data[i] >> 29) & 0x7;
