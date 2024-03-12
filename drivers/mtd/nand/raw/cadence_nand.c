@@ -967,7 +967,7 @@ static int cadence_nand_write_page(struct mtd_info *mtd, struct nand_chip *chip,
 	cadence_nand_prepare_data_size(mtd, TT_MAIN_OOB_AREA_EXT);
 
 	if (cadence_nand_dma_buf_ok(cadence, buf, mtd->writesize) &&
-	    cadence->caps2.data_control_supp) {
+	    cadence->caps2.data_control_supp && !(chip->options & NAND_USE_BOUNCE_BUFFER)) {
 		u8 *oob;
 
 		if (oob_required)
@@ -1134,7 +1134,7 @@ static int cadence_nand_read_page(struct mtd_info *mtd, struct nand_chip *chip,
 	 * is supported then transfer data and oob directly.
 	 */
 	if (cadence_nand_dma_buf_ok(cadence, buf, mtd->writesize) &&
-	    cadence->caps2.data_control_supp) {
+	    cadence->caps2.data_control_supp && !(chip->options & NAND_USE_BOUNCE_BUFFER)) {
 		u8 *oob;
 
 		if (oob_required)
@@ -1826,6 +1826,7 @@ static int cadence_nand_attach_chip(struct mtd_info *mtd, struct nand_chip *chip
 			return ret;
 	}
 
+	chip->options |= NAND_USE_BOUNCE_BUFFER;
 	chip->bbt_options |= NAND_BBT_USE_FLASH;
 	chip->bbt_options |= NAND_BBT_NO_OOB;
 	chip->ecc.mode = NAND_ECC_HW_SYNDROME;
