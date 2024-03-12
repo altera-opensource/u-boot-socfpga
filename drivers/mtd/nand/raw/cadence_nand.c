@@ -1943,6 +1943,7 @@ static int cadence_nand_readid(struct mtd_info *mtd, int offset_in_page, unsigne
 static int cadence_nand_param(struct mtd_info *mtd, u8 offset_in_page, unsigned int command)
 {
 	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct nand_chip *chip = mtd_to_nand(mtd);
 	int ret = 0;
 
 	ret = cadence_nand_cmd_opcode(cadence, command);
@@ -1950,6 +1951,10 @@ static int cadence_nand_param(struct mtd_info *mtd, u8 offset_in_page, unsigned 
 		return ret;
 
 	ret = cadence_nand_cmd_address(cadence, 1, &offset_in_page);
+	if (ret)
+		return ret;
+
+	ret = cadence_nand_waitfunc(mtd, chip);
 	if (ret)
 		return ret;
 
