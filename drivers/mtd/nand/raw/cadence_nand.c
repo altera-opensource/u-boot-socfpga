@@ -1987,6 +1987,7 @@ static void cadence_nand_cmdfunc(struct mtd_info *mtd, unsigned int command,
 				 int offset_in_page, int page)
 {
 	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct nand_chip *chip = mtd_to_nand(mtd);
 	int ret = 0;
 
 	cadence->cmd = command;
@@ -2011,6 +2012,13 @@ static void cadence_nand_cmdfunc(struct mtd_info *mtd, unsigned int command,
 	 */
 	default:
 		break;
+	}
+
+	if (cadence->cmd == NAND_CMD_RESET) {
+		ret = cadence_nand_select_target(cadence, chip);
+		if (ret) {
+			dev_err(cadence->dev, "Chip select failure after reset\n");
+		}
 	}
 
 	if (ret != 0)
@@ -2124,12 +2132,6 @@ static int cadence_nand_chip_init(struct cadence_nand_info *cadence, ofnode node
 	chip->read_buf = cadence_nand_read_buf;
 	chip->write_buf = cadence_nand_write_buf;
 	chip->setup_data_interface = cadence_setup_data_interface;
-
-	ret = cadence_nand_select_target(cadence, chip);
-	if (ret) {
-		dev_err(cadence->dev, "Chip select failure\n");
-		goto free_buf;
-	}
 
 	ret = nand_scan_ident(mtd, 1, NULL);
 	if (ret) {
