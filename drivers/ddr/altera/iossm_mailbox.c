@@ -309,6 +309,7 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 	int i, j, k;
 	u32 cal_stat_offset;
 	u8 cal_stat;
+	u8 trig_cal_stat;
 	int count = 0;
 
 	for (i = 0; i < io96b_ctrl->num_instance; i++) {
@@ -335,6 +336,12 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 						, io96b_ctrl->io96b[i].mb_ctrl.ip_instance_id[j]
 						, CMD_TRIG_MEM_CAL_OP, TRIG_MEM_CAL, 0, 0, 0, 0, 0
 						, 0, 0, 2, &usr_resp);
+
+					trig_cal_stat =
+					IOSSM_CMD_RESPONSE_DATA_SHORT(usr_resp.cmd_resp_status) &
+					BIT(0);
+					debug("%s: Memory calibration triggered status = %d\n",
+					      __func__, trig_cal_stat);
 
 					udelay(1);
 
