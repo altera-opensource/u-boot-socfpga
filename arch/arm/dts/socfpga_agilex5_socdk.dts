@@ -152,7 +152,7 @@
 			reg = <0 0x200000>;
 		};
 		partition@200000 {
-			label = "rootubi";
+			label = "root";
 			reg = <0x200000 0x3fe00000>;
 		};
 	};
