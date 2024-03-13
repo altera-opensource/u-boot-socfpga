@@ -140,7 +140,7 @@
 };
 
 &nand {
-	status = "disabled";
+	status = "okay";
 
 	flash1: flash@0 {
 		reg = <0>;
