@@ -149,27 +149,27 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl,
 		/* Assign UIB CSR base address if it is valid */
 #ifdef USE_HBM_MEM /* TODO: remove when handoff is ready*/
 		for (i = 0; i < 2; i++) {
-#else
-		for (i = 0; i < MAX_UIB_SUPPORTED; i++) {
-#endif
 			addr = dev_read_addr_index(dev, i + 1);
-
 			if (addr == FDT_ADDR_T_NONE)
 				return -EINVAL;
-#ifdef USE_HBM_MEM /* TODO: remove when handoff is ready*/
-				uib_ctrl->uib[i].uib_csr_addr = addr;
-				debug("%s: UIB 0x%llx CSR enabled\n", __func__
-					, uib_ctrl->uib[i].uib_csr_addr);
-				count++;
+			uib_ctrl->uib[i].uib_csr_addr = addr;
+			debug("%s: UIB 0x%llx CSR enabled\n", __func__
+				, uib_ctrl->uib[i].uib_csr_addr);
+			count++;
+		}
 #else
+		for (i = 0; i < MAX_UIB_SUPPORTED; i++) {
 			if (handoff_table[3] & BIT(i)) {
+				addr = dev_read_addr_index(dev, i + 1);
+				if (addr == FDT_ADDR_T_NONE)
+					return -EINVAL;
 				uib_ctrl->uib[i].uib_csr_addr = addr;
 				debug("%s: UIB 0x%llx CSR enabled\n", __func__
 					, uib_ctrl->uib[i].uib_csr_addr);
 				count++;
 			}
-#endif
 		}
+#endif
 
 		uib_ctrl->num_instance = count;
 		update_uib_assigned_to_hps(count);
