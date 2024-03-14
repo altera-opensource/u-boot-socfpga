@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0
  *
- * Copyright (C) 2017-2023 Intel Corporation <www.intel.com>
+ * Copyright (C) 2017-2024 Intel Corporation <www.intel.com>
  *
  */
 
@@ -99,7 +99,7 @@
 #define BOOTENV_DEV_QSPI(devtypeu, devtypel, instance) \
 	"bootcmd_qspi=ubi detach; sf probe && " \
 	"setenv mtdids 'nor0=nor0,nand0=nand.0' && " \
-	"setenv mtdparts 'mtdparts=nor0:66m(u-boot),190m(root);nand.0:2m(u-boot),500m(nand_root)' && " \
+	"setenv mtdparts 'mtdparts=nor0:66m(u-boot),190m(root);nand.0:2m(nand_uboot),500m(nand_root)' && " \
 	"env select UBI; saveenv && " \
 	"ubi part root && " \
 	"if ubi part root && ubi readvol ${scriptaddr} script; " \
@@ -122,7 +122,7 @@
 #define BOOTENV_DEV_NAND(devtypeu, devtypel, instance) \
 	"bootcmd_nand=ubi detach && " \
 	"setenv mtdids 'nor0=nor0,nand0=nand.0' && " \
-	"setenv mtdparts 'mtdparts=nor0:66m(u-boot),190m(qspi_root);nand.0:2m(u-boot),500m(root)' && " \
+	"setenv mtdparts 'mtdparts=nor0:66m(qspi_uboot),190m(qspi_root);nand.0:2m(u-boot),500m(root)' && " \
 	"env select UBI; saveenv && " \
 	"ubi part root && " \
 	"ubi readvol ${scriptaddr} script && " \
