@@ -359,6 +359,8 @@
 #define BCH_MAX_NUM_CORR_CAPS       8
 #define BCH_MAX_NUM_SECTOR_SIZES    2
 
+#define ONE_CYCLE                   1
+
 #define TIMEOUT_US                  1000000
 
 struct cadence_nand_timings {

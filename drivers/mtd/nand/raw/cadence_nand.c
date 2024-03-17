@@ -1952,7 +1952,7 @@ static int cadence_nand_readid(struct mtd_info *mtd, int offset_in_page, unsigne
 	if (ret)
 		return ret;
 
-	ret = cadence_nand_cmd_address(cadence, 1, &addrs);
+	ret = cadence_nand_cmd_address(cadence, ONE_CYCLE, &addrs);
 	if (ret)
 		return ret;
 
@@ -1973,7 +1973,7 @@ static int cadence_nand_param(struct mtd_info *mtd, u8 offset_in_page, unsigned 
 	if (ret)
 		return ret;
 
-	ret = cadence_nand_cmd_address(cadence, 1, &offset_in_page);
+	ret = cadence_nand_cmd_address(cadence, ONE_CYCLE, &offset_in_page);
 	if (ret)
 		return ret;
 
@@ -2005,7 +2005,30 @@ static int cadence_nand_reset(struct mtd_info *mtd, unsigned int command)
 	return 0;
 }
 
-static void cadence_nand_cmdfunc(struct mtd_info *mtd, unsigned int command,
+static int cadence_nand_features(struct mtd_info *mtd, u8 offset_in_page, u32 command)
+{
+	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	int ret = 0;
+
+	ret = cadence_nand_cmd_opcode(cadence, command);
+	if (ret)
+		return ret;
+
+	ret = cadence_nand_cmd_address(cadence, ONE_CYCLE, &offset_in_page);
+	if (ret)
+		return ret;
+
+	if (command == NAND_CMD_GET_FEATURES)
+		ret = cadence_nand_cmd_data(cadence, ONFI_SUBFEATURE_PARAM_LEN,
+					    GCMD_DIR_READ);
+	else
+		ret = cadence_nand_cmd_data(cadence, ONFI_SUBFEATURE_PARAM_LEN,
+					    GCMD_DIR_WRITE);
+
+	return ret;
+}
+
+static void cadence_nand_cmdfunc(struct mtd_info *mtd, u32 command,
 				 int offset_in_page, int page)
 {
 	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
@@ -2029,8 +2052,13 @@ static void cadence_nand_cmdfunc(struct mtd_info *mtd, unsigned int command,
 	case NAND_CMD_RESET:
 		ret = cadence_nand_reset(mtd, command);
 		break;
+
+	case NAND_CMD_SET_FEATURES:
+	case NAND_CMD_GET_FEATURES:
+		ret = cadence_nand_features(mtd, offset_in_page, command);
+		break;
 	/*
-	 * ecc will override other command for erase, write and erase
+	 * ecc will override other command for read, write and erase
 	 */
 	default:
 		break;
@@ -2070,6 +2098,8 @@ static u8 cadence_nand_read_byte(struct mtd_info *mtd)
 			size = 8;
 		} else if (cadence->cmd == NAND_CMD_PARAM) {
 			size = sizeof(struct nand_jedec_params);
+		} else if (cadence->cmd == NAND_CMD_GET_FEATURES) {
+			size = ONFI_SUBFEATURE_PARAM_LEN;
 		}
 		cadence_nand_read_buf(mtd, &cadence->buf[0], size);
 	}
