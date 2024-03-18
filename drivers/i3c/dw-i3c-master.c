@@ -1734,10 +1734,8 @@ int i3c_bus_init(struct udevice *dev, const struct i3c_dev_list *dev_list)
      * especially during DAA.
      */
     i3c_events.events = I3C_CCC_EVT_ALL;
-    ret = i3c_ccc_do_events_all_set(dev, false, &i3c_events);
-    if (ret != 0) {
-        debug("Broadcast DISEC was NACK.\n");
-    }
+    if (i3c_ccc_do_events_all_set(dev, false, &i3c_events) != 0)
+	debug("Broadcast DISEC was NACK.\n");
 
     /*
      * Set static addresses as dynamic addresses.
@@ -1801,10 +1799,8 @@ int i3c_bus_init(struct udevice *dev, const struct i3c_dev_list *dev_list)
      * enable the event.
      */
     i3c_events.events = I3C_CCC_EVT_HJ;
-    ret = i3c_ccc_do_events_all_set(dev, true, &i3c_events);
-    if (ret != 0) {
-        debug("Broadcast ENEC was NACK.\n");
-    }
+    if (i3c_ccc_do_events_all_set(dev, false, &i3c_events) != 0)
+	debug("Broadcast ENEC was NACK.\n");
 
 err_out:
     return ret;
