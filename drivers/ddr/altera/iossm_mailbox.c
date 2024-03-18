@@ -9,6 +9,7 @@
 #include <hang.h>
 #include <wait_bit.h>
 #include <asm/io.h>
+#include <linux/bitfield.h>
 #include "iossm_mailbox.h"
 
 #define ECC_INTSTATUS_SERR SOCFPGA_SYSMGR_ADDRESS + 0x9C
@@ -18,6 +19,11 @@
 
 #define DDR_CSR_CLKGEN_LOCKED_IO96B_MASK(x)	(i == 0 ? DDR_CSR_CLKGEN_LOCKED_IO96B0_MASK : \
 							DDR_CSR_CLKGEN_LOCKED_IO96B1_MASK)
+#define MAX_RETRY_COUNT 3
+#define NUM_CMD_RESPONSE_DATA 3
+
+#define INTF_IP_TYPE_MASK	GENMASK(31, 29)
+#define INTF_INSTANCE_ID_MASK	GENMASK(28, 24)
 
 /* supported DDR type list */
 static const char *ddr_type_list[7] = {
@@ -75,7 +81,7 @@ int io96b_mb_req(phys_addr_t io96b_csr_addr, u32 ip_type, u32 instance_id
 
 	/* Initialized zeros for responses*/
 	resp->cmd_resp_status = 0;
-	for (i = 0; i < 3 ; i++)
+	for (i = 0; i < NUM_CMD_RESPONSE_DATA; i++)
 		resp->cmd_resp_data[i] = 0;
 
 	/* Ensure CMD_REQ is cleared before write any command request */
@@ -219,12 +225,16 @@ void io96b_mb_init(struct io96b_info *io96b_ctrl)
 		for (k = 0; k < io96b_ctrl->io96b[i].mb_ctrl.num_mem_interface; k++) {
 			switch (k) {
 			case 0:
-				ip_type_ret = (usr_resp.cmd_resp_data[i] >> 29) & 0x7;
-				instance_id_ret = (usr_resp.cmd_resp_data[i] >> 24) & 0x1F;
+				ip_type_ret = FIELD_GET(INTF_IP_TYPE_MASK,
+							usr_resp.cmd_resp_data[i]);
+				instance_id_ret = FIELD_GET(INTF_INSTANCE_ID_MASK,
+							    usr_resp.cmd_resp_data[i]);
 				break;
 			case 1:
-				ip_type_ret = (usr_resp.cmd_resp_data[i] >> 29) & 0x7;
-				instance_id_ret = (usr_resp.cmd_resp_data[i] >> 24) & 0x1F;
+				ip_type_ret = FIELD_GET(INTF_IP_TYPE_MASK,
+							usr_resp.cmd_resp_data[i]);
+				instance_id_ret = FIELD_GET(INTF_INSTANCE_ID_MASK,
+							    usr_resp.cmd_resp_data[i]);
 				break;
 			}
 
@@ -323,7 +333,7 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 				recal_success = false;
 
 				/* Re-calibration first memory interface with failed calibration */
-				for (k = 0; k < 3; k++) {
+				for (k = 0; k < MAX_RETRY_COUNT; k++) {
 					cal_stat_offset = usr_resp.cmd_resp_data[j];
 					cal_stat = readl(io96b_ctrl->io96b[i].io96b_csr_addr +
 							cal_stat_offset);
@@ -363,9 +373,8 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 		}
 	}
 
-	if (io96b_ctrl->overall_cal_status) {
+	if (io96b_ctrl->overall_cal_status)
 		debug("%s: Overall SDRAM calibration success\n", __func__);
-	}
 
 	return 0;
 }
