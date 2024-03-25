@@ -72,6 +72,7 @@ void spl_board_init(void)
 #define PLL_SPI_BITS 16
 
 #define PLL_SPI_PAGE_REG           0x7f
+#define PLL_SPI_PAGE_INVALID       0xff
 #define PLL_SPI_FREQ_OFFSET_REG    0x0b
 #define PLL_SPI_FREQ_OFFSET_CNT    4
 #define PLL_SPI_PAGE(addr)         ((addr) >> 7)
@@ -141,7 +142,7 @@ static int zl_pll_write_one(struct spi_slave *slave, u16 addr, u8 val, u8 *page)
 
 static int zl_pll_detect(struct spi_slave *slave)
 {
-	u8 page = 0;
+	u8 page = PLL_SPI_PAGE_INVALID;
 	int i, ret;
 
 	union {
@@ -175,7 +176,7 @@ static int zl_pll_detect(struct spi_slave *slave)
 static int zl_pll_write(struct spi_slave *slave)
 {
 	PLLStructItem_t *item = PLLStructItemList;
-	u8 page = 0;
+	u8 page = PLL_SPI_PAGE_INVALID;
 	int ret, i;
 
 	/* write embedded config register values to PLL */
