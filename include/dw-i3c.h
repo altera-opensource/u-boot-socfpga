@@ -169,6 +169,7 @@
 #define I3C_BUS_I2C_FMP_TLOW_MIN_NS       (500)
 #define I3C_BUS_THIGH_MAX_NS              (41)
 #define I3C_PERIOD_NS                     (1000000000)
+#define I3C_BUS_THIGH_INIT_OD_MIN_NS      (200)
 
 #define I3C_SDR_MODE                      (0x0)
 #define I3C_HDR_MODE                      (0x1)
@@ -906,6 +907,7 @@ struct dw_i3c_priv {
         u8 cmdfifodepth;
         u8 datafifodepth;
         struct i3c_dev_list device_list;
+	bool first_broadcast;
     } config;
     struct {
         struct i3c_controller base;
