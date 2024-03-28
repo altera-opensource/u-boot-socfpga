@@ -241,6 +241,7 @@
 				reg = <0x1c007000 0x00001000>;
 				intel,offset-settings =
 					/* DMIUSMCTCR */
+					<0x00000300 0x00000001 0x00000003>,
 					<0x00000300 0x00000003 0x00000003>;
 				bootph-all;
 			};
@@ -250,6 +251,7 @@
 				reg = <0x1c008000 0x00001000>;
 				intel,offset-settings =
 					/* DMIUSMCTCR */
+					<0x00000300 0x00000001 0x00000003>,
 					<0x00000300 0x00000003 0x00000003>;
 				bootph-all;
 			};
