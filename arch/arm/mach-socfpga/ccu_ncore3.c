@@ -7,6 +7,7 @@
 #include <asm/arch/base_addr_soc64.h>
 #include <linux/bitfield.h>
 
+#define CCU_DMI0_DMIUSMCTCR				SOCFPGA_CCU_ADDRESS + 0x7300
 #define CCU_DMI0_DMIUSMCMCR				SOCFPGA_CCU_ADDRESS + 0x7340
 #define CCU_DMI0_DMIUSMCMAR				SOCFPGA_CCU_ADDRESS + 0x7344
 #define CCU_DMI0_DMIUSMCMCR_MNTOP		GENMASK(3, 0)
@@ -25,6 +26,13 @@ int __asm_flush_l3_dcache(void)
 
 	/* Flushing all entries in CCU system memory cache */
 	for (i = 0; i < MAX_DISTRIBUTED_MEM_INTERFACE; i++) {
+		/*
+		 * Skipping if the system memory cache is not enabled for
+		 * particular DMI
+		 */
+		if (!readl((uintptr_t)(CCU_DMI0_DMIUSMCTCR + (i * 0x1000))))
+			continue;
+
 		writel(FIELD_PREP(CCU_DMI0_DMIUSMCMCR_MNTOP, FLUSH_ALL_ENTRIES) |
 			   FIELD_PREP(CCU_DMI0_DMIUSMCMCR_ARRAY_ID, ARRAY_ID_TAG),
 			   (uintptr_t)(CCU_DMI0_DMIUSMCMCR + (i * 0x1000)));
