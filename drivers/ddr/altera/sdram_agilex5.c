@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2019-2023 Intel Corporation <www.intel.com>
+ * Copyright (C) 2019-2024 Intel Corporation <www.intel.com>
  *
  */
 
@@ -22,6 +22,7 @@
 #include <asm/arch/system_manager.h>
 #include <asm/io.h>
 #include <linux/sizes.h>
+#include <linux/bitfield.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -32,6 +33,8 @@ DECLARE_GLOBAL_DATA_PTR;
 					F2SDRAM_SIDEBAND_FLAGOUTSET0
 #define SIDEBANDMGR_FLAGOUTSTATUS0_REG	SOCFPGA_F2SDRAM_MGR_ADDRESS +\
 					F2SDRAM_SIDEBAND_FLAGOUTSTATUS0
+
+#define PORT_EMIF_CONFIG_OFFSET 4
 
 /* Reset type */
 enum reset_type {
@@ -95,7 +98,7 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl)
 	socfpga_handoff_read((void *)SOC64_HANDOFF_SDRAM, handoff_table, len);
 
 	/* Read handoff - dual port */
-	plat->dualport = handoff_table[0] & BIT(0);
+	plat->dualport = FIELD_GET(BIT(0), handoff_table[PORT_EMIF_CONFIG_OFFSET]);
 	debug("%s: dualport from handoff: 0x%x\n", __func__, plat->dualport);
 
 	if (plat->dualport)
@@ -104,7 +107,7 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl)
 		io96b_ctrl->num_port = 1;
 
 	/* Read handoff - dual EMIF */
-	plat->dualemif = handoff_table[0] & BIT(1);
+	plat->dualemif = FIELD_GET(BIT(1), handoff_table[PORT_EMIF_CONFIG_OFFSET]);
 	debug("%s: dualemif from handoff: 0x%x\n", __func__, plat->dualemif);
 
 	if (plat->dualemif)
