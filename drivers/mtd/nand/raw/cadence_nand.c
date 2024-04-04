@@ -2247,7 +2247,6 @@ static int cadence_nand_dt_probe(struct udevice *dev)
 
 	ret = clk_enable(&cadence->clk);
 	if (ret && ret != -ENOSYS && ret != -ENOMEM) {
-		clk_free(&cadence->clk);
 		dev_err(dev, "failed to enable clock\n");
 		return ret;
 	}

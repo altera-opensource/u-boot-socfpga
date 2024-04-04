@@ -1879,7 +1879,6 @@ int dw_i3c_probe(struct udevice *dev)
         goto out;
     }
     priv->config.core_clk = clk_get_rate(&priv->clk);
-    clk_free(&priv->clk);
 
     /* Reset the Designware I3C hardware */
     ret = reset_get_bulk(dev, &priv->resets);
