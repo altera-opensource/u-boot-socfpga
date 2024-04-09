@@ -54,6 +54,9 @@ static enum reset_type get_reset_type(u32 reg)
 
 int set_mpfe_config(void)
 {
+	/* Set mpfe_lite_intfcsel */
+	setbits_le32(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_MPFE_CONFIG, BIT(2));
+
 	/* Set mpfe_lite_active */
 	setbits_le32(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_MPFE_CONFIG, BIT(8));
 
