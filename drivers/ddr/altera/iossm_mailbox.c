@@ -223,30 +223,20 @@ void io96b_mb_init(struct io96b_info *io96b_ctrl)
 		/* Retrieve memory interface IP type and instance ID (IP identifier) */
 		j = 0;
 		for (k = 0; k < io96b_ctrl->io96b[i].mb_ctrl.num_mem_interface; k++) {
-			switch (k) {
-			case 0:
-				ip_type_ret = FIELD_GET(INTF_IP_TYPE_MASK,
-							usr_resp.cmd_resp_data[i]);
-				instance_id_ret = FIELD_GET(INTF_INSTANCE_ID_MASK,
-							    usr_resp.cmd_resp_data[i]);
-				break;
-			case 1:
-				ip_type_ret = FIELD_GET(INTF_IP_TYPE_MASK,
-							usr_resp.cmd_resp_data[i]);
-				instance_id_ret = FIELD_GET(INTF_INSTANCE_ID_MASK,
-							    usr_resp.cmd_resp_data[i]);
-				break;
-			}
+			ip_type_ret = FIELD_GET(INTF_IP_TYPE_MASK, usr_resp.cmd_resp_data[k]);
+			instance_id_ret = FIELD_GET(INTF_INSTANCE_ID_MASK
+				, usr_resp.cmd_resp_data[k]);
 
 			if (ip_type_ret) {
 				io96b_ctrl->io96b[i].mb_ctrl.ip_type[j] = ip_type_ret;
-				io96b_ctrl->io96b[i].mb_ctrl.ip_instance_id[j] =
-					instance_id_ret;
+				io96b_ctrl->io96b[i].mb_ctrl.ip_instance_id[j] = instance_id_ret;
+				debug("%s: IO96B %d mem_interface %d: ip_type_ret: 0x%x\n"
+					, __func__, i, j, ip_type_ret);
+				debug("%s: IO96B %d mem_interface %d: instance_id_ret: 0x%x\n"
+					, __func__, i, j, instance_id_ret);
 				j++;
 			}
 		}
-		debug("%s: IO96B %d: ip_type_ret: 0x%x\n", __func__, i, ip_type_ret);
-		debug("%s: IO96B %d: instance_id_ret: 0x%x\n", __func__, i, instance_id_ret);
 	}
 }
 
