@@ -46,6 +46,11 @@ enum reset_type {
 	RSU_RECONFIG
 };
 
+phys_addr_t io96b_csr_reg_addr[] = {
+	0x18400000, /* IO96B_0 CSR registers address */
+	0x18800000  /* IO96B_1 CSR registers address */
+};
+
 static enum reset_type get_reset_type(u32 reg)
 {
 	return (reg & ALT_SYSMGR_SCRATCH_REG_3_DDR_RESET_TYPE_MASK) >>
@@ -92,7 +97,6 @@ void ddr_init_inprogress(bool start)
 int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl)
 {
 	struct altera_sdram_plat *plat = dev_get_plat(dev);
-	fdt_addr_t addr;
 	int i;
 	u32 len = SOC64_HANDOFF_SDRAM_LEN;
 	u32 handoff_table[len];
@@ -120,11 +124,7 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl)
 
 	/* Assign IO96B CSR base address if it is valid */
 	for (i = 0; i < io96b_ctrl->num_instance; i++) {
-		addr = dev_read_addr_index(dev, i + 1);
-		if (addr == FDT_ADDR_T_NONE)
-			return -EINVAL;
-
-		io96b_ctrl->io96b[i].io96b_csr_addr = addr;
+		io96b_ctrl->io96b[i].io96b_csr_addr = io96b_csr_reg_addr[i];
 		debug("%s: IO96B 0x%llx CSR enabled\n", __func__
 			, io96b_ctrl->io96b[i].io96b_csr_addr);
 	}
