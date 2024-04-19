@@ -2,7 +2,7 @@
 /*
  * U-Boot additions
  *
- * Copyright (C) 2023 Intel Corporation <www.intel.com>
+ * Copyright (C) 2023-2024 Intel Corporation <www.intel.com>
  */
 
 #include "socfpga_agilex-u-boot.dtsi"
@@ -63,16 +63,7 @@
 
 &sdr {
 	compatible = "intel,sdr-ctl-agilex7";
-	/delete-property/ reg;
-	/*  if use HBM
-	 *  reg = <0xf8020000 0x100>,
-	 *        <0xf8400000 0x1000>,
-	 *        <0xf8410000 0x1000>;
-	 */
-
-	reg = <0xf8020000 0x100>,
-	      <0xf8400000 0x1000>,
-	      <0xf8800000 0x1000>;
+	reg = <0xf8020000 0x100>;
 };
 
 &socfpga_secreg {

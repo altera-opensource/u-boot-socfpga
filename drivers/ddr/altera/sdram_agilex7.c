@@ -45,6 +45,22 @@ enum reset_type {
 	RSU_RECONFIG
 };
 
+phys_addr_t io96b_csr_reg_addr[] = {
+	0xf8400000, /* IO96B_0 CSR registers address */
+	0xf8800000  /* IO96B_1 CSR registers address */
+};
+
+phys_addr_t uib_csr_reg_addr[] = {
+	0xf8400000, /* UIB_0 CSR registers address */
+	0xf8410000, /* UIB_1 CSR registers address */
+	0xf8420000, /* UIB_2 CSR registers address */
+	0xf8430000, /* UIB_3 CSR registers address */
+	0xf8440000, /* UIB_4 CSR registers address */
+	0xf8450000, /* UIB_5 CSR registers address */
+	0xf8460000, /* UIB_6 CSR registers address */
+	0xf8470000  /* UIB_7 CSR registers address */
+};
+
 static enum reset_type get_reset_type(u32 reg)
 {
 	return (reg & ALT_SYSMGR_SCRATCH_REG_0_DDR_RESET_TYPE_MASK) >>
@@ -115,7 +131,6 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl,
 			 struct uib_info *uib_ctrl)
 {
 	struct altera_sdram_plat *plat = dev_get_plat(dev);
-	fdt_addr_t addr;
 	int i;
 	u8 count = 0;
 	u32 len = SOC64_HANDOFF_DDR_LEN;
@@ -149,10 +164,7 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl,
 		/* Assign UIB CSR base address if it is valid */
 #ifdef USE_HBM_MEM /* TODO: remove when handoff is ready*/
 		for (i = 0; i < 2; i++) {
-			addr = dev_read_addr_index(dev, i + 1);
-			if (addr == FDT_ADDR_T_NONE)
-				return -EINVAL;
-			uib_ctrl->uib[i].uib_csr_addr = addr;
+			uib_ctrl->uib[i].uib_csr_addr = uib_csr_reg_addr[i];
 			debug("%s: UIB 0x%llx CSR enabled\n", __func__
 				, uib_ctrl->uib[i].uib_csr_addr);
 			count++;
@@ -160,10 +172,7 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl,
 #else
 		for (i = 0; i < MAX_UIB_SUPPORTED; i++) {
 			if (handoff_table[3] & BIT(i)) {
-				addr = dev_read_addr_index(dev, i + 1);
-				if (addr == FDT_ADDR_T_NONE)
-					return -EINVAL;
-				uib_ctrl->uib[i].uib_csr_addr = addr;
+				uib_ctrl->uib[i].uib_csr_addr = uib_csr_reg_addr[i];
 				debug("%s: UIB 0x%llx CSR enabled\n", __func__
 					, uib_ctrl->uib[i].uib_csr_addr);
 				count++;
@@ -186,13 +195,8 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl,
 	} else {
 		/* Assign IO96B CSR base address if it is valid */
 		for (i = 0; i < MAX_IO96B_SUPPORTED; i++) {
-			addr = dev_read_addr_index(dev, i + 1);
-
-			if (addr == FDT_ADDR_T_NONE)
-				return -EINVAL;
-
 			if (handoff_table[1] & BIT(i)) {
-				io96b_ctrl->io96b[i].io96b_csr_addr = addr;
+				io96b_ctrl->io96b[i].io96b_csr_addr = io96b_csr_reg_addr[i];
 				debug("%s: IO96B 0x%llx CSR enabled\n", __func__
 					, io96b_ctrl->io96b[i].io96b_csr_addr);
 				count++;
