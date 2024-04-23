@@ -42,16 +42,6 @@ static int is_ddr_csr_clkgen_locked(u32 clkgen_mask, u8 num_port)
 		return ret;
 	}
 
-	if (num_port == 3) {
-		ret = wait_for_bit_le32((const void *)(ECC_INISTATUS_DERR)
-					, clkgen_mask, true, TIMEOUT, false);
-
-		if (ret) {
-			debug("%s: ddr csr clkgenb locked is timeout\n", __func__);
-			return ret;
-		}
-	}
-
 	return 0;
 }
 
