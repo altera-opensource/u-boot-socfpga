@@ -157,6 +157,27 @@ int config_mpfe_sideband_mgr(struct udevice *dev)
 	return 0;
 }
 
+static void config_ccu_mgr(struct udevice *dev)
+{
+	int ret = 0;
+	struct altera_sdram_plat *plat = dev_get_plat(dev);
+
+	if (plat->dualport || plat->dualemif) {
+		debug("%s: config interleaving on ccu reg\n", __func__);
+		ret = uclass_get_device_by_name(UCLASS_NOP,
+						"socfpga-secreg-ccu-interleaving-on", &dev);
+	} else {
+		debug("%s: config interleaving off ccu reg\n", __func__);
+		ret = uclass_get_device_by_name(UCLASS_NOP,
+						"socfpga-secreg-ccu-interleaving-off", &dev);
+	}
+
+	if (ret) {
+		printf("interleaving on/off ccu settings init failed: %d\n", ret);
+		hang();
+	}
+}
+
 bool hps_ocram_dbe_status(void)
 {
 	u32 reg = readl(socfpga_get_sysmgr_addr() +
@@ -217,6 +238,9 @@ int sdram_mmr_init_full(struct udevice *dev)
 		free(io96b_ctrl);
 		return ret;
 	}
+
+	/* Configuring Interleave/Non-interleave ccu registers */
+	config_ccu_mgr(dev);
 
 	/* Configure if polling is needed for IO96B GEN PLL locked */
 	io96b_ctrl->ckgen_lock = true;
