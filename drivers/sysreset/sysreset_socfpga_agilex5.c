@@ -19,6 +19,9 @@ static int socfpga_sysreset_request(struct udevice *dev,
 	const char *reset = env_get("reset");
 
 	if (reset && !strcmp(reset, "warm")) {
+		/* flush dcache */
+		flush_dcache_all();
+				
 		/* request a warm reset */
 		puts("Do warm reset now...\n");
 
