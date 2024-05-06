@@ -49,7 +49,7 @@ __weak void dcache_disable(void)
 
 __weak int dcache_status(void)
 {
-	puts("WARNING: Data cache not enabled\n");
+	debug("WARNING: Data cache not enabled\n");
 	return 0;
 }
 
