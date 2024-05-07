@@ -220,6 +220,13 @@
 				interrupt-controller;
 				#interrupt-cells = <2>;
 				interrupts = <0 111 4>;
+
+				/* Configure GPIO 1 pin 3 as output pin with value 0 during GPIO probe */
+				sdio_sel {
+					gpio-hog;
+					gpios = <3 GPIO_ACTIVE_HIGH>;
+					output-low;
+				};
 			};
 		};
 
