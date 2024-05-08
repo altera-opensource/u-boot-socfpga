@@ -116,6 +116,9 @@ struct io96b_instance {
  * @io96b[]:		IO96B instance specific information
  * @ckgen_lock:		IO96B GEN PLL lock (false = not locked, true = locked)
  * @num_port:		Number of IO96B port. Example bit 0 represent port 0, bit 1 represent port 1, and so on
+ * @io96b_pll:		Selected IO96B PLL. Example bit 0: EMIF0 PLL A selected,
+ *			bit 1: EMIF0 PLL B selected, bit 2 - EMIF1 PLL A selected,
+ *			bit 3: EMIF1 PLL B selected
  */
 struct io96b_info {
 	u8 num_instance;
@@ -126,6 +129,7 @@ struct io96b_info {
 	struct io96b_instance io96b[MAX_IO96B_SUPPORTED];
 	bool ckgen_lock;
 	u8 num_port;
+	u8 io96b_pll;
 };
 
 int io96b_mb_req(phys_addr_t io96b_csr_addr, u32 ip_type, u32 instance_id

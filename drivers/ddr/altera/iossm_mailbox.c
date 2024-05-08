@@ -17,32 +17,68 @@
 #define DDR_CSR_CLKGEN_LOCKED_IO96B0_MASK BIT(16)
 #define DDR_CSR_CLKGEN_LOCKED_IO96B1_MASK BIT(17)
 
-#define DDR_CSR_CLKGEN_LOCKED_IO96B_MASK(x)	(i == 0 ? DDR_CSR_CLKGEN_LOCKED_IO96B0_MASK : \
-							DDR_CSR_CLKGEN_LOCKED_IO96B1_MASK)
 #define MAX_RETRY_COUNT 3
 #define NUM_CMD_RESPONSE_DATA 3
 
 #define INTF_IP_TYPE_MASK	GENMASK(31, 29)
 #define INTF_INSTANCE_ID_MASK	GENMASK(28, 24)
 
+#define IO96B0_PLL_A_MASK	BIT(0)
+#define IO96B0_PLL_B_MASK	BIT(1)
+#define IO96B1_PLL_A_MASK	BIT(2)
+#define IO96B1_PLL_B_MASK	BIT(3)
+
 /* supported DDR type list */
 static const char *ddr_type_list[7] = {
 		"DDR4", "DDR5", "DDR5_RDIMM", "LPDDR4", "LPDDR5", "QDRIV", "UNKNOWN"
 };
 
-static int is_ddr_csr_clkgen_locked(u32 clkgen_mask, u8 num_port)
+static int is_ddr_csr_clkgen_locked(u8 io96b_pll)
 {
-	int ret;
+	int ret = 0;
 
-	ret = wait_for_bit_le32((const void *)(ECC_INTSTATUS_SERR)
-				, clkgen_mask, true, TIMEOUT, false);
+	if (FIELD_GET(IO96B0_PLL_A_MASK, io96b_pll)) {
+		ret = wait_for_bit_le32((const void *)(ECC_INTSTATUS_SERR),
+					DDR_CSR_CLKGEN_LOCKED_IO96B0_MASK, true, TIMEOUT, false);
 
-	if (ret) {
-		debug("%s: ddr csr clkgena locked is timeout\n", __func__);
-		return ret;
+		if (ret) {
+			debug("%s: ddr csr io96b_0 clkgenA locked is timeout\n", __func__);
+			goto err;
+		}
 	}
 
-	return 0;
+	if (FIELD_GET(IO96B0_PLL_B_MASK, io96b_pll)) {
+		ret = wait_for_bit_le32((const void *)(ECC_INISTATUS_DERR),
+					DDR_CSR_CLKGEN_LOCKED_IO96B0_MASK, true, TIMEOUT, false);
+
+		if (ret) {
+			debug("%s: ddr csr io96b_0 clkgenB locked is timeout\n", __func__);
+			goto err;
+		}
+	}
+
+	if (FIELD_GET(IO96B1_PLL_A_MASK, io96b_pll)) {
+		ret = wait_for_bit_le32((const void *)(ECC_INTSTATUS_SERR),
+					DDR_CSR_CLKGEN_LOCKED_IO96B1_MASK, true, TIMEOUT, false);
+
+		if (ret) {
+			debug("%s: ddr csr io96b_1 clkgenA locked is timeout\n", __func__);
+			goto err;
+		}
+	}
+
+	if (FIELD_GET(IO96B1_PLL_B_MASK, io96b_pll)) {
+		ret = wait_for_bit_le32((const void *)(ECC_INISTATUS_DERR),
+					DDR_CSR_CLKGEN_LOCKED_IO96B1_MASK, true, TIMEOUT, false);
+
+		if (ret) {
+			debug("%s: ddr csr io96b_1 clkgenB locked is timeout\n", __func__);
+			goto err;
+		}
+	}
+
+err:
+	return ret;
 }
 
 /* Mailbox request function
@@ -261,18 +297,17 @@ void init_mem_cal(struct io96b_info *io96b_ctrl)
 	/* Initialize overall calibration status */
 	io96b_ctrl->overall_cal_status = false;
 
+	if (io96b_ctrl->ckgen_lock) {
+		ret = is_ddr_csr_clkgen_locked(io96b_ctrl->io96b_pll);
+		if (ret) {
+			printf("%s: iossm IO96B ckgena_lock is not locked\n", __func__);
+			hang();
+		}
+	}
+
 	/* Check initial calibration status for the assigned IO96B*/
 	count = 0;
 	for (i = 0; i < io96b_ctrl->num_instance; i++) {
-		if (io96b_ctrl->ckgen_lock) {
-			ret = is_ddr_csr_clkgen_locked(DDR_CSR_CLKGEN_LOCKED_IO96B_MASK(i),
-						       io96b_ctrl->num_port);
-			if (ret) {
-				printf("%s: ckgena_lock iossm IO96B_%d is not locked\n",
-				       __func__, i);
-				hang();
-			}
-		}
 		ret = io96b_cal_status(io96b_ctrl->io96b[i].io96b_csr_addr);
 		if (ret) {
 			io96b_ctrl->io96b[i].cal_status = false;

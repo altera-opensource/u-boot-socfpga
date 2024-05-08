@@ -35,6 +35,7 @@ DECLARE_GLOBAL_DATA_PTR;
 					F2SDRAM_SIDEBAND_FLAGOUTSTATUS0
 
 #define PORT_EMIF_CONFIG_OFFSET 4
+#define EMIF_PLL_MASK	GENMASK(19, 16)
 
 /* Reset type */
 enum reset_type {
@@ -121,6 +122,10 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl)
 		io96b_ctrl->num_instance = 2;
 	else
 		io96b_ctrl->num_instance = 1;
+
+	io96b_ctrl->io96b_pll = FIELD_GET(EMIF_PLL_MASK,
+					  handoff_table[PORT_EMIF_CONFIG_OFFSET]);
+	debug("%s: io96b enabled pll from handoff: 0x%x\n", __func__, io96b_ctrl->io96b_pll);
 
 	/* Assign IO96B CSR base address if it is valid */
 	for (i = 0; i < io96b_ctrl->num_instance; i++) {
