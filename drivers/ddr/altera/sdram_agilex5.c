@@ -110,7 +110,7 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl)
 	debug("%s: dualport from handoff: 0x%x\n", __func__, plat->dualport);
 
 	if (plat->dualport)
-		io96b_ctrl->num_port = 3;
+		io96b_ctrl->num_port = 2;
 	else
 		io96b_ctrl->num_port = 1;
 

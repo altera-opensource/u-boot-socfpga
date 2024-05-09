@@ -115,7 +115,7 @@ struct io96b_instance {
  * @overall_size:	Total DDR memory size
  * @io96b[]:		IO96B instance specific information
  * @ckgen_lock:		IO96B GEN PLL lock (false = not locked, true = locked)
- * @num_port:		Number of IO96B port. Example bit 0 represent port 0, bit 1 represent port 1, and so on
+ * @num_port:		Number of IO96B port.
  * @io96b_pll:		Selected IO96B PLL. Example bit 0: EMIF0 PLL A selected,
  *			bit 1: EMIF0 PLL B selected, bit 2 - EMIF1 PLL A selected,
  *			bit 3: EMIF1 PLL B selected
