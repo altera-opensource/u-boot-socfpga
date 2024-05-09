@@ -33,9 +33,13 @@ DECLARE_GLOBAL_DATA_PTR;
 					F2SDRAM_SIDEBAND_FLAGOUTSET0
 #define SIDEBANDMGR_FLAGOUTSTATUS0_REG	SOCFPGA_F2SDRAM_MGR_ADDRESS +\
 					F2SDRAM_SIDEBAND_FLAGOUTSTATUS0
-
+#define BOOT_SCRATCH_COLD3_REG	(socfpga_get_sysmgr_addr() +\
+				 SYSMGR_SOC64_BOOT_SCRATCH_COLD3)
 #define PORT_EMIF_CONFIG_OFFSET 4
 #define EMIF_PLL_MASK	GENMASK(19, 16)
+
+#define IO96B0_DUAL_PORT_MASK		BIT(0)
+#define IO96B0_DUAL_EMIF_MASK		BIT(1)
 
 /* Reset type */
 enum reset_type {
@@ -56,6 +60,17 @@ static enum reset_type get_reset_type(u32 reg)
 {
 	return (reg & ALT_SYSMGR_SCRATCH_REG_3_DDR_RESET_TYPE_MASK) >>
 		ALT_SYSMGR_SCRATCH_REG_3_DDR_RESET_TYPE_SHIFT;
+}
+
+static void update_io96b_assigned_to_hps(bool dual_port_flag, bool dual_emif_flag)
+{
+	clrsetbits_le32(BOOT_SCRATCH_COLD3_REG,
+			ALT_SYSMGR_SCRATCH_REG_3_DDR_PORT_EMIF_INFO_MASK,
+			FIELD_PREP(ALT_SYSMGR_SCRATCH_REG_3_DDR_PORT_INFO_MASK, dual_port_flag) |
+			FIELD_PREP(ALT_SYSMGR_SCRATCH_REG_3_DDR_EMIF_INFO_MASK, dual_emif_flag));
+
+	debug("%s: update dual port dual emif info: 0x%x\n", __func__,
+	      readl(BOOT_SCRATCH_COLD3_REG));
 }
 
 int set_mpfe_config(void)
@@ -106,7 +121,7 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl)
 	socfpga_handoff_read((void *)SOC64_HANDOFF_SDRAM, handoff_table, len);
 
 	/* Read handoff - dual port */
-	plat->dualport = FIELD_GET(BIT(0), handoff_table[PORT_EMIF_CONFIG_OFFSET]);
+	plat->dualport = FIELD_GET(IO96B0_DUAL_PORT_MASK, handoff_table[PORT_EMIF_CONFIG_OFFSET]);
 	debug("%s: dualport from handoff: 0x%x\n", __func__, plat->dualport);
 
 	if (plat->dualport)
@@ -115,7 +130,7 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl)
 		io96b_ctrl->num_port = 1;
 
 	/* Read handoff - dual EMIF */
-	plat->dualemif = FIELD_GET(BIT(1), handoff_table[PORT_EMIF_CONFIG_OFFSET]);
+	plat->dualemif = FIELD_GET(IO96B0_DUAL_EMIF_MASK, handoff_table[PORT_EMIF_CONFIG_OFFSET]);
 	debug("%s: dualemif from handoff: 0x%x\n", __func__, plat->dualemif);
 
 	if (plat->dualemif)
@@ -126,6 +141,8 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl)
 	io96b_ctrl->io96b_pll = FIELD_GET(EMIF_PLL_MASK,
 					  handoff_table[PORT_EMIF_CONFIG_OFFSET]);
 	debug("%s: io96b enabled pll from handoff: 0x%x\n", __func__, io96b_ctrl->io96b_pll);
+
+	update_io96b_assigned_to_hps(plat->dualport, plat->dualemif);
 
 	/* Assign IO96B CSR base address if it is valid */
 	for (i = 0; i < io96b_ctrl->num_instance; i++) {
@@ -180,8 +197,7 @@ static void config_ccu_mgr(struct udevice *dev)
 
 bool hps_ocram_dbe_status(void)
 {
-	u32 reg = readl(socfpga_get_sysmgr_addr() +
-			SYSMGR_SOC64_BOOT_SCRATCH_COLD3);
+	u32 reg = readl(BOOT_SCRATCH_COLD3_REG);
 
 	if (reg & ALT_SYSMGR_SCRATCH_REG_3_OCRAM_DBE_MASK)
 		return true;
@@ -210,7 +226,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 	struct altera_sdram_priv *priv = dev_get_priv(dev);
 	struct io96b_info *io96b_ctrl = malloc(sizeof(*io96b_ctrl));
 
-	u32 reg = readl(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_BOOT_SCRATCH_COLD3);
+	u32 reg = readl(BOOT_SCRATCH_COLD3_REG);
 	enum reset_type reset_t = get_reset_type(reg);
 	bool full_mem_init = false;
 
