@@ -528,17 +528,14 @@ cadence_nand_cdma_send_and_wait(struct cadence_nand_info *cadence,
 	if (status)
 		return status;
 
-	cadence_nand_wait_for_irq(cadence, &irq_mask, &irq_status);
-
-	/*
-	 * Make sure the descriptor processing is complete
-	 */
 	status = readl_poll_timeout(cadence->reg + TRD_COMP_INT_STATUS, val,
 				    (val & BIT(thread)), TIMEOUT_US);
 	if (status) {
 		pr_err("cmd thread completion timeout!\n");
 		return status;
 	}
+
+	cadence_nand_wait_for_irq(cadence, &irq_mask, &irq_status);
 
 	if (irq_status.status == 0 && irq_status.trd_status == 0 &&
 	    irq_status.trd_error == 0) {
