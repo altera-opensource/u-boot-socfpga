@@ -335,7 +335,7 @@ static int slot_get_info(int argc, char * const argv[])
 	if (rsu_init(NULL))
 		return CMD_RET_FAILURE;
 
-	slot = simple_strtoul(argv[1], &endp, 16);
+	slot = dectoul(argv[1], &endp);
 	ret = rsu_slot_get_info(slot, &info);
 	rsu_exit();
 
@@ -365,7 +365,7 @@ static int slot_size(int argc, char * const argv[])
 	if (rsu_init(NULL))
 		return CMD_RET_FAILURE;
 
-	slot = simple_strtoul(argv[1], &endp, 16);
+	slot = dectoul(argv[1], &endp);
 	size = rsu_slot_size(slot);
 	rsu_exit();
 
@@ -388,7 +388,7 @@ static int slot_priority(int argc, char * const argv[])
 	if (rsu_init(NULL))
 		return CMD_RET_FAILURE;
 
-	slot = simple_strtoul(argv[1], &endp, 16);
+	slot = dectoul(argv[1], &endp);
 	priority = rsu_slot_priority(slot);
 	rsu_exit();
 
@@ -411,7 +411,7 @@ static int slot_erase(int argc, char * const argv[])
 	if (rsu_init(NULL))
 		return CMD_RET_FAILURE;
 
-	slot = simple_strtoul(argv[1], &endp, 16);
+	slot = dectoul(argv[1], &endp);
 	ret = rsu_slot_erase(slot);
 	rsu_exit();
 
@@ -438,7 +438,7 @@ static int slot_program_buf(int argc, char * const argv[])
 	if (rsu_init(NULL))
 		return CMD_RET_FAILURE;
 
-	slot = simple_strtoul(argv[1], &endp, 16);
+	slot = dectoul(argv[1], &endp);
 	address = simple_strtoul(argv[2], &endp, 16);
 	size = simple_strtoul(argv[3], &endp, 16);
 
@@ -472,7 +472,7 @@ static int slot_program_factory_update_buf(int argc, char * const argv[])
 	if (rsu_init(NULL))
 		return CMD_RET_FAILURE;
 
-	slot = simple_strtoul(argv[1], &endp, 16);
+	slot = dectoul(argv[1], &endp);
 	address = simple_strtoul(argv[2], &endp, 16);
 	size = simple_strtoul(argv[3], &endp, 16);
 
@@ -506,7 +506,7 @@ static int slot_program_buf_raw(int argc, char * const argv[])
 	if (rsu_init(NULL))
 		return CMD_RET_FAILURE;
 
-	slot = simple_strtoul(argv[1], &endp, 16);
+	slot = dectoul(argv[1], &endp);
 	address = simple_strtoul(argv[2], &endp, 16);
 	size = simple_strtoul(argv[3], &endp, 16);
 
@@ -540,7 +540,7 @@ static int slot_verify_buf(int argc, char * const argv[])
 	if (rsu_init(NULL))
 		return CMD_RET_FAILURE;
 
-	slot = simple_strtoul(argv[1], &endp, 16);
+	slot = dectoul(argv[1], &endp);
 	address = simple_strtoul(argv[2], &endp, 16);
 	size = simple_strtoul(argv[3], &endp, 16);
 
@@ -574,7 +574,7 @@ static int slot_verify_buf_raw(int argc, char * const argv[])
 	if (rsu_init(NULL))
 		return CMD_RET_FAILURE;
 
-	slot = simple_strtoul(argv[1], &endp, 16);
+	slot = dectoul(argv[1], &endp);
 	address = simple_strtoul(argv[2], &endp, 16);
 	size = simple_strtoul(argv[3], &endp, 16);
 
@@ -604,7 +604,7 @@ static int slot_enable(int argc, char * const argv[])
 	if (rsu_init(NULL))
 		return CMD_RET_FAILURE;
 
-	slot = simple_strtoul(argv[1], &endp, 16);
+	slot = dectoul(argv[1], &endp);
 	ret = rsu_slot_enable(slot);
 	rsu_exit();
 
@@ -627,7 +627,7 @@ static int slot_disable(int argc, char * const argv[])
 	if (rsu_init(NULL))
 		return CMD_RET_FAILURE;
 
-	slot = simple_strtoul(argv[1], &endp, 16);
+	slot = dectoul(argv[1], &endp);
 	ret = rsu_slot_disable(slot);
 	rsu_exit();
 
@@ -650,7 +650,7 @@ static int slot_load(int argc, char * const argv[])
 	if (rsu_init(NULL))
 		return CMD_RET_FAILURE;
 
-	slot = simple_strtoul(argv[1], &endp, 16);
+	slot = dectoul(argv[1], &endp);
 	ret = rsu_slot_load(slot);
 	rsu_exit();
 
@@ -694,7 +694,7 @@ static int slot_rename(int argc, char * const argv[])
 	if (rsu_init(NULL))
 		return CMD_RET_FAILURE;
 
-	slot = simple_strtoul(argv[1], &endp, 16);
+	slot = dectoul(argv[1], &endp);
 	name = argv[2];
 
 	ret = rsu_slot_rename(slot, name);
@@ -719,7 +719,7 @@ static int slot_delete(int argc, char * const argv[])
 	if (rsu_init(NULL))
 		return CMD_RET_FAILURE;
 
-	slot = simple_strtoul(argv[1], &endp, 16);
+	slot = dectoul(argv[1], &endp);
 
 	ret = rsu_slot_delete(slot);
 	rsu_exit();
