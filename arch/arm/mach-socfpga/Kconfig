@@ -238,6 +238,10 @@ config TARGET_SOCFPGA_AGILEX_SOCDK
 config TARGET_SOCFPGA_AGILEX5_SOCDK
 	bool "Intel SOCFPGA SoCDK (Agilex5)"
 	select TARGET_SOCFPGA_AGILEX5
+	
+config TARGET_SOCFPGA_AGILEX5_AXE5_EAGLE
+	bool "Arrow SOCFPGA AXE5 EAGLE (Agilex5)"
+	select TARGET_SOCFPGA_AGILEX5
 
 config TARGET_SOCFPGA_AGILEX7_SOCDK
 	bool "Intel SOCFPGA SoCDK (Agilex7)"
@@ -318,6 +322,7 @@ endchoice
 config SYS_BOARD
 	default "agilex7-socdk" if TARGET_SOCFPGA_AGILEX7_SOCDK
 	default "agilex5-socdk" if TARGET_SOCFPGA_AGILEX5_SOCDK
+	default "agilex5-axe5-eagle" if TARGET_SOCFPGA_AGILEX5_AXE5_EAGLE	
 	default "agilex-n6010" if TARGET_SOCFPGA_AGILEX_N6010
 	default "agilex-socdk" if TARGET_SOCFPGA_AGILEX_SOCDK
 	default "arria5-socdk" if TARGET_SOCFPGA_ARRIA5_SOCDK
@@ -351,6 +356,7 @@ config SYS_VENDOR
 	default "altera" if TARGET_SOCFPGA_CYCLONE5_SOCDK
 	default "altera" if TARGET_SOCFPGA_STRATIX10_SOCDK
 	default "aries" if TARGET_SOCFPGA_ARIES_MCVEVK
+	default "arrow" if TARGET_SOCFPGA_AGILEX5_AXE5_EAGLE	
 	default "devboards" if TARGET_SOCFPGA_DEVBOARDS_DBM_SOC1
 	default "ebv" if TARGET_SOCFPGA_EBV_SOCRATES
 	default "google" if TARGET_SOCFPGA_CHAMELEONV3
@@ -373,6 +379,7 @@ config SYS_CONFIG_NAME
 	default "socfpga_arria5_secu1" if TARGET_SOCFPGA_ARRIA5_SECU1
 	default "socfpga_arria5_socdk" if TARGET_SOCFPGA_ARRIA5_SOCDK
 	default "socfpga_arria10_socdk" if TARGET_SOCFPGA_ARRIA10_SOCDK
+	default "socfpga_agilex5_axe5_eagle" if TARGET_SOCFPGA_AGILEX5_AXE5_EAGLE	
 	default "socfpga_chameleonv3" if TARGET_SOCFPGA_CHAMELEONV3
 	default "socfpga_cyclone5_socdk" if TARGET_SOCFPGA_CYCLONE5_SOCDK
 	default "socfpga_dbm_soc1" if TARGET_SOCFPGA_DEVBOARDS_DBM_SOC1
