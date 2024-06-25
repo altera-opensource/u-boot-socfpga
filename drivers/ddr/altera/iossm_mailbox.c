@@ -227,9 +227,9 @@ int io96b_mb_req(phys_addr_t io96b_csr_addr, u32 ip_type, u32 instance_id
 	clrbits_le32((u32 *)(uintptr_t)(io96b_csr_addr + IOSSM_CMD_RESPONSE_STATUS_OFFSET)
 					, IOSSM_STATUS_COMMAND_RESPONSE_READY);
 
-	resp->cmd_resp_status = readl(io96b_csr_addr + IOSSM_CMD_RESPONSE_STATUS_OFFSET);
+	cmd_resp = readl(io96b_csr_addr + IOSSM_CMD_RESPONSE_STATUS_OFFSET);
 	debug("%s: CMD_RESPONSE_READY 0x%llx: 0x%x\n", __func__, io96b_csr_addr +
-		IOSSM_CMD_RESPONSE_STATUS_OFFSET, resp->cmd_resp_status);
+	      IOSSM_CMD_RESPONSE_STATUS_OFFSET, cmd_resp);
 
 err:
 	return ret;
