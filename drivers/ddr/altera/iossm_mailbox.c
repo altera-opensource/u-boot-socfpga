@@ -44,6 +44,8 @@ static int is_ddr_csr_clkgen_locked(u8 io96b_pll)
 		if (ret) {
 			debug("%s: ddr csr io96b_0 clkgenA locked is timeout\n", __func__);
 			goto err;
+		} else {
+			debug("%s: ddr csr io96b_0 clkgenA is successfully locked\n", __func__);
 		}
 	}
 
@@ -54,6 +56,8 @@ static int is_ddr_csr_clkgen_locked(u8 io96b_pll)
 		if (ret) {
 			debug("%s: ddr csr io96b_0 clkgenB locked is timeout\n", __func__);
 			goto err;
+		} else {
+			debug("%s: ddr csr io96b_0 clkgenB is successfully locked\n", __func__);
 		}
 	}
 
@@ -64,6 +68,8 @@ static int is_ddr_csr_clkgen_locked(u8 io96b_pll)
 		if (ret) {
 			debug("%s: ddr csr io96b_1 clkgenA locked is timeout\n", __func__);
 			goto err;
+		} else {
+			debug("%s: ddr csr io96b_1 clkgenA is successfully locked\n", __func__);
 		}
 	}
 
@@ -74,6 +80,8 @@ static int is_ddr_csr_clkgen_locked(u8 io96b_pll)
 		if (ret) {
 			debug("%s: ddr csr io96b_1 clkgenB locked is timeout\n", __func__);
 			goto err;
+		} else {
+			debug("%s: ddr csr io96b_1 clkgenB is successfully locked\n", __func__);
 		}
 	}
 
