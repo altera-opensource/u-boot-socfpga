@@ -102,7 +102,7 @@ int io96b_mb_req(phys_addr_t io96b_csr_addr, u32 ip_type, u32 instance_id
 					, u32 resp_data_len, struct io96b_mb_resp *resp)
 {
 	int i;
-	int ret;
+	int ret = 0;
 	u32 cmd_req, cmd_resp;
 
 	/* Initialized zeros for responses*/
@@ -116,7 +116,7 @@ int io96b_mb_req(phys_addr_t io96b_csr_addr, u32 ip_type, u32 instance_id
 
 	if (ret) {
 		printf("%s: CMD_REQ not ready\n", __func__);
-		return -1;
+		goto err;
 	}
 
 	/* Write CMD_PARAM_* */
@@ -172,6 +172,9 @@ int io96b_mb_req(phys_addr_t io96b_csr_addr, u32 ip_type, u32 instance_id
 		cmd_resp = readl(io96b_csr_addr + IOSSM_CMD_RESPONSE_STATUS_OFFSET);
 		printf("%s: STATUS_GENERAL_ERROR: 0x%x\n", __func__, (cmd_resp >> 1) & 0xF);
 		printf("%s: STATUS_CMD_RESPONSE_ERROR: 0x%x\n", __func__, (cmd_resp >> 5) & 0x7);
+		printf("%s: CMD_RESPONSE_READY 0x%llx: 0x%x\n", __func__, io96b_csr_addr +
+		       IOSSM_CMD_RESPONSE_STATUS_OFFSET, cmd_resp);
+		goto err;
 	}
 
 	/* read CMD_RESPONSE_STATUS*/
@@ -220,7 +223,8 @@ int io96b_mb_req(phys_addr_t io96b_csr_addr, u32 ip_type, u32 instance_id
 	debug("%s: CMD_RESPONSE_READY 0x%llx: 0x%x\n", __func__, io96b_csr_addr +
 		IOSSM_CMD_RESPONSE_STATUS_OFFSET, resp->cmd_resp_status);
 
-	return 0;
+err:
+	return ret;
 }
 
 /*
@@ -231,14 +235,19 @@ void io96b_mb_init(struct io96b_info *io96b_ctrl)
 {
 	struct io96b_mb_resp usr_resp;
 	u8 ip_type_ret, instance_id_ret;
-	int i, j, k;
+	int i, j, k, ret;
 
 	debug("%s: num_instance %d\n", __func__, io96b_ctrl->num_instance);
 	for (i = 0; i < io96b_ctrl->num_instance; i++) {
 		debug("%s: get memory interface IO96B %d\n", __func__, i);
 		/* Get memory interface IP type and instance ID (IP identifier) */
-		io96b_mb_req(io96b_ctrl->io96b[i].io96b_csr_addr, 0, 0, CMD_GET_SYS_INFO
+		ret = io96b_mb_req(io96b_ctrl->io96b[i].io96b_csr_addr, 0, 0, CMD_GET_SYS_INFO
 				, GET_MEM_INTF_INFO, 0, 0, 0, 0, 0, 0, 0, 2, &usr_resp);
+		if (ret) {
+			printf("%s: get memory interface IO96B %d failed\n", __func__, i);
+			hang();
+		}
+
 		debug("%s: get response from memory interface IO96B %d\n", __func__, i);
 		/* Retrieve number of memory interface(s) */
 		io96b_ctrl->io96b[i].mb_ctrl.num_mem_interface =
@@ -331,7 +340,7 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 {
 	struct io96b_mb_resp usr_resp;
 	bool recal_success;
-	int i, j, k;
+	int i, j, k, ret = 0;
 	u32 cal_stat_offset;
 	u8 cal_stat;
 	u8 trig_cal_stat;
@@ -341,9 +350,12 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 		if (!(io96b_ctrl->io96b[i].cal_status)) {
 			for (j = 0; j < io96b_ctrl->io96b[i].mb_ctrl.num_mem_interface; j++) {
 				/* Get the memory calibration status for memory interface */
-				io96b_mb_req(io96b_ctrl->io96b[i].io96b_csr_addr, 0, 0
+				ret  = io96b_mb_req(io96b_ctrl->io96b[i].io96b_csr_addr, 0, 0
 						, CMD_TRIG_MEM_CAL_OP, GET_MEM_CAL_STATUS, 0, 0, 0
 						, 0, 0, 0, 0, 2, &usr_resp);
+
+				if (ret)
+					goto err;
 
 				recal_success = false;
 
@@ -356,11 +368,14 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 						recal_success = true;
 						break;
 					}
-					io96b_mb_req(io96b_ctrl->io96b[i].io96b_csr_addr
+					ret = io96b_mb_req(io96b_ctrl->io96b[i].io96b_csr_addr
 						, io96b_ctrl->io96b[i].mb_ctrl.ip_type[j]
 						, io96b_ctrl->io96b[i].mb_ctrl.ip_instance_id[j]
 						, CMD_TRIG_MEM_CAL_OP, TRIG_MEM_CAL, 0, 0, 0, 0, 0
 						, 0, 0, 2, &usr_resp);
+
+					if (ret)
+						goto err;
 
 					trig_cal_stat =
 					IOSSM_CMD_RESPONSE_DATA_SHORT(usr_resp.cmd_resp_status) &
@@ -370,14 +385,18 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 
 					udelay(1);
 
-					io96b_mb_req(io96b_ctrl->io96b[i].io96b_csr_addr, 0, 0
+					ret = io96b_mb_req(io96b_ctrl->io96b[i].io96b_csr_addr, 0, 0
 							, CMD_TRIG_MEM_CAL_OP, GET_MEM_CAL_STATUS
 							, 0, 0, 0, 0, 0, 0, 0, 2, &usr_resp);
+
+					if (ret)
+						goto err;
 				}
 
 				if (!recal_success) {
 					printf("%s: Error as SDRAM calibration failed\n", __func__);
-					hang();
+					ret = -EPERM;
+					goto err;
 				}
 			}
 
@@ -391,13 +410,14 @@ int trig_mem_cal(struct io96b_info *io96b_ctrl)
 	if (io96b_ctrl->overall_cal_status)
 		debug("%s: Overall SDRAM calibration success\n", __func__);
 
-	return 0;
+err:
+	return ret;
 }
 
 int get_mem_technology(struct io96b_info *io96b_ctrl)
 {
 	struct io96b_mb_resp usr_resp;
-	int i, j;
+	int i, j, ret = 0;
 	u8 ddr_type_ret;
 
 	/* Initialize ddr type */
@@ -406,11 +426,14 @@ int get_mem_technology(struct io96b_info *io96b_ctrl)
 	/* Get and ensure all memory interface(s) same DDR type */
 	for (i = 0; i < io96b_ctrl->num_instance; i++) {
 		for (j = 0; j < io96b_ctrl->io96b[i].mb_ctrl.num_mem_interface; j++) {
-			io96b_mb_req(io96b_ctrl->io96b[i].io96b_csr_addr
+			ret = io96b_mb_req(io96b_ctrl->io96b[i].io96b_csr_addr
 					, io96b_ctrl->io96b[i].mb_ctrl.ip_type[j]
 					, io96b_ctrl->io96b[i].mb_ctrl.ip_instance_id[j]
 					, CMD_GET_MEM_INFO, GET_MEM_TECHNOLOGY, 0, 0, 0, 0
 					, 0, 0, 0, 0, &usr_resp);
+
+			if (ret)
+				goto err;
 
 			ddr_type_ret =
 				IOSSM_CMD_RESPONSE_DATA_SHORT(usr_resp.cmd_resp_status)
@@ -421,18 +444,20 @@ int get_mem_technology(struct io96b_info *io96b_ctrl)
 
 			if (ddr_type_list[ddr_type_ret] != io96b_ctrl->ddr_type) {
 				printf("%s: Mismatch DDR type on IO96B_%d\n", __func__, i);
-				return -ENOEXEC;
+				ret = -ENOEXEC;
+				goto err;
 			}
 		}
 	}
 
-	return 0;
+err:
+	return ret;
 }
 
 int get_mem_width_info(struct io96b_info *io96b_ctrl)
 {
 	struct io96b_mb_resp usr_resp;
-	int i, j;
+	int i, j, ret = 0;
 	u16 memory_size;
 	u16 total_memory_size = 0;
 
@@ -440,11 +465,14 @@ int get_mem_width_info(struct io96b_info *io96b_ctrl)
 	for (i = 0; i < io96b_ctrl->num_instance; i++) {
 		memory_size = 0;
 		for (j = 0; j < io96b_ctrl->io96b[i].mb_ctrl.num_mem_interface; j++) {
-			io96b_mb_req(io96b_ctrl->io96b[i].io96b_csr_addr
+			ret = io96b_mb_req(io96b_ctrl->io96b[i].io96b_csr_addr
 					, io96b_ctrl->io96b[i].mb_ctrl.ip_type[j]
 					, io96b_ctrl->io96b[i].mb_ctrl.ip_instance_id[j]
 					, CMD_GET_MEM_INFO, GET_MEM_WIDTH_INFO, 0, 0, 0, 0
 					, 0, 0, 0, 2, &usr_resp);
+
+			if (ret)
+				goto err;
 
 			memory_size = memory_size +
 					(usr_resp.cmd_resp_data[1] & GENMASK(7, 0));
@@ -452,7 +480,8 @@ int get_mem_width_info(struct io96b_info *io96b_ctrl)
 
 		if (!memory_size) {
 			printf("%s: Failed to get valid memory size\n", __func__);
-			return -ENOEXEC;
+			ret = -ENOEXEC;
+			goto err;
 		}
 
 		io96b_ctrl->io96b[i].size = memory_size;
@@ -462,18 +491,20 @@ int get_mem_width_info(struct io96b_info *io96b_ctrl)
 
 	if (!total_memory_size) {
 		printf("%s: Failed to get valid memory size\n", __func__);
-		return -ENOEXEC;
+		ret = -ENOEXEC;
+		goto err;
 	}
 
 	io96b_ctrl->overall_size = total_memory_size;
 
-	return 0;
+err:
+	return ret;
 }
 
 int ecc_enable_status(struct io96b_info *io96b_ctrl)
 {
 	struct io96b_mb_resp usr_resp;
-	int i, j;
+	int i, j, ret = 0;
 	bool ecc_stat_set = false;
 	bool ecc_stat;
 
@@ -483,11 +514,14 @@ int ecc_enable_status(struct io96b_info *io96b_ctrl)
 	/* Get and ensure all memory interface(s) same ECC status */
 	for (i = 0; i < io96b_ctrl->num_instance; i++) {
 		for (j = 0; j < io96b_ctrl->io96b[i].mb_ctrl.num_mem_interface; j++) {
-			io96b_mb_req(io96b_ctrl->io96b[i].io96b_csr_addr
+			ret = io96b_mb_req(io96b_ctrl->io96b[i].io96b_csr_addr
 					, io96b_ctrl->io96b[i].mb_ctrl.ip_type[j]
 					, io96b_ctrl->io96b[i].mb_ctrl.ip_instance_id[j]
 					, CMD_TRIG_CONTROLLER_OP, ECC_ENABLE_STATUS, 0, 0, 0
 					, 0, 0, 0, 0, 0, &usr_resp);
+
+			if (ret)
+				goto err;
 
 			ecc_stat = ((IOSSM_CMD_RESPONSE_DATA_SHORT(usr_resp.cmd_resp_status)
 					& GENMASK(1, 0)) == 0 ? false : true);
@@ -500,20 +534,22 @@ int ecc_enable_status(struct io96b_info *io96b_ctrl)
 			if (ecc_stat != io96b_ctrl->ecc_status) {
 				printf("%s: Mismatch DDR ECC status on IO96B_%d\n"
 					, __func__, i);
-				return -ENOEXEC;
+				ret = -ENOEXEC;
+				goto err;
 			}
 		}
 	}
 
 	debug("%s: ECC enable status: %d\n", __func__, io96b_ctrl->ecc_status);
 
-	return 0;
+err:
+	return ret;
 }
 
 int bist_mem_init_start(struct io96b_info *io96b_ctrl)
 {
 	struct io96b_mb_resp usr_resp;
-	int i, j;
+	int i, j, ret = 0;
 	bool bist_start, bist_success;
 	u32 start;
 
@@ -524,11 +560,14 @@ int bist_mem_init_start(struct io96b_info *io96b_ctrl)
 			bist_success = false;
 
 			/* Start memory initialization BIST on full memory address */
-			io96b_mb_req(io96b_ctrl->io96b[i].io96b_csr_addr
+			ret = io96b_mb_req(io96b_ctrl->io96b[i].io96b_csr_addr
 					, io96b_ctrl->io96b[i].mb_ctrl.ip_type[j]
 					, io96b_ctrl->io96b[i].mb_ctrl.ip_instance_id[j]
 					, CMD_TRIG_CONTROLLER_OP, BIST_MEM_INIT_START, 0x40
 					, 0, 0, 0, 0, 0, 0, 0, &usr_resp);
+
+			if (ret)
+				goto err;
 
 			bist_start =
 				(IOSSM_CMD_RESPONSE_DATA_SHORT(usr_resp.cmd_resp_status)
@@ -540,7 +579,8 @@ int bist_mem_init_start(struct io96b_info *io96b_ctrl)
 				printf("%s: BIST_MEM_INIT_START Error code 0x%x\n", __func__
 				, (IOSSM_CMD_RESPONSE_DATA_SHORT(usr_resp.cmd_resp_status)
 				& GENMASK(2, 1)) > 0x1);
-				return -ENOEXEC;
+				ret = -ENOEXEC;
+				goto err;
 			}
 
 			/* Polling for the initiated memory initialization BIST status */
@@ -562,7 +602,8 @@ int bist_mem_init_start(struct io96b_info *io96b_ctrl)
 						, __func__, (IOSSM_CMD_RESPONSE_DATA_SHORT
 						(usr_resp.cmd_resp_status)
 						& GENMASK(2, 1)) > 0x1);
-					return -ETIMEDOUT;
+					ret = -ETIMEDOUT;
+					goto err;
 				}
 
 				udelay(1);
@@ -571,5 +612,7 @@ int bist_mem_init_start(struct io96b_info *io96b_ctrl)
 
 		debug("%s: Memory initialized successfully on IO96B_%d\n", __func__, i);
 	}
-	return 0;
+
+err:
+	return ret;
 }
