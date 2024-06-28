@@ -267,10 +267,9 @@ int sdram_mmr_init_full(struct udevice *dev)
 	/* Initiate IOSSM mailbox */
 	io96b_mb_init(io96b_ctrl);
 
-	/* Trigger re-calibration if calibration failed */
 	if (!(io96b_ctrl->overall_cal_status)) {
-		printf("DDR: Re-calibration in progress...\n");
-		trig_mem_cal(io96b_ctrl);
+		printf("DDR: Error: Calibration is failed\n");
+		hang();
 	}
 
 	printf("DDR: Calibration success\n");
