@@ -105,28 +105,6 @@ static bool is_ddr_in_use(struct udevice *dev)
 	return (plat->mem_type == DDR_MEMORY ? true : false);
 }
 
-void update_uib_assigned_to_hps(u8 num_uib_instance)
-{
-	u32 reg = readl(socfpga_get_sysmgr_addr() +
-			SYSMGR_SOC64_BOOT_SCRATCH_COLD8);
-
-	reg = reg & ~ALT_SYSMGR_SCRATCH_REG_8_IO96B_HPS_MASK;
-
-	writel(reg | FIELD_PREP(ALT_SYSMGR_SCRATCH_REG_8_IO96B_HPS_MASK, num_uib_instance),
-	       socfpga_get_sysmgr_addr() + SYSMGR_SOC64_BOOT_SCRATCH_COLD8);
-}
-
-void update_io96b_assigned_to_hps(u8 num_io96b_instance)
-{
-	u32 reg = readl(socfpga_get_sysmgr_addr() +
-			SYSMGR_SOC64_BOOT_SCRATCH_COLD8);
-
-	reg = reg & ~ALT_SYSMGR_SCRATCH_REG_8_IO96B_HPS_MASK;
-
-	writel(reg | FIELD_PREP(ALT_SYSMGR_SCRATCH_REG_8_IO96B_HPS_MASK, num_io96b_instance),
-		 socfpga_get_sysmgr_addr() + SYSMGR_SOC64_BOOT_SCRATCH_COLD8);
-}
-
 int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl,
 			 struct uib_info *uib_ctrl)
 {
@@ -181,7 +159,6 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl,
 #endif
 
 		uib_ctrl->num_instance = count;
-		update_uib_assigned_to_hps(count);
 		debug("%s: returned num_instance 0x%x\n", __func__, uib_ctrl->num_instance);
 
 		/* HBM memory size */
@@ -204,7 +181,6 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl,
 		}
 
 		io96b_ctrl->num_instance = count;
-		update_io96b_assigned_to_hps(count);
 		debug("%s: returned num_instance 0x%x\n", __func__, io96b_ctrl->num_instance);
 	}
 
