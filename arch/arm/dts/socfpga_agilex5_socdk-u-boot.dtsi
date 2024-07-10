@@ -201,3 +201,15 @@
 		};
 	};
 };
+
+#if !defined(CONFIG_SOCFPGA_SECURE_VAB_AUTH)
+&fdt_0_blob {
+	filename = "arch/arm/dts/socfpga_agilex5_socdk.dtb";
+};
+
+/* To add NAND dtb when ready in future */
+
+&binman {
+	/delete-node/ kernel;
+};
+#endif
