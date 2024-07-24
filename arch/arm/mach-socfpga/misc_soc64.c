@@ -13,6 +13,7 @@
 #include <asm/arch/misc.h>
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/smc_api.h>
+#include <asm/arch/smmuv3_dv.h>
 #include <asm/arch/system_manager.h>
 #include <asm/io.h>
 #include <asm/global_data.h>

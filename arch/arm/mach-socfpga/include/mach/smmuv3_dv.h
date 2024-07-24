@@ -563,7 +563,7 @@ uint32_t smmPARFaultCode(uint64_t par);
 // Returns fault type from a PAR record
 uint32_t smmPARFaultType(uint64_t par);
 
-//int smmu_sdm_init(void);
+int smmu_sdm_init(void);
 
 #endif /*__ASSEMBLY__ */
 #endif
