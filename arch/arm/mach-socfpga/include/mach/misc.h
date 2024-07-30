@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2016-2021 Intel Corporation
+ * Copyright (C) 2016-2024 Intel Corporation
  */
 
 #ifndef _SOCFPGA_MISC_H_
@@ -56,5 +56,6 @@ void set_regular_boot(unsigned int status);
 void socfpga_pl310_clear(void);
 void socfpga_get_managers_addr(void);
 int qspi_flash_software_reset(void);
+bool is_agilex5_A5F0(void);
 
 #endif /* _SOCFPGA_MISC_H_ */

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2016-2018 Intel Corporation <www.intel.com>
+ * Copyright (C) 2016-2024 Intel Corporation <www.intel.com>
  *
  */
 
@@ -24,6 +24,20 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define A590_JTAG_ID	0x9000
+#define A594_JTAG_ID	0x40009000
+#define A5C0_JTAG_ID	0xC000
+#define A5C4_JTAG_ID	0x4000C000
+#define A5D0_JTAG_ID	0xD000
+#define A5D4_JTAG_ID	0x4000D000
+#define A5F0_JTAG_ID	0xF000
+#define A5F4_JTAG_ID	0x4000F000
+#define A510_JTAG_ID	0x1000
+#define A514_JTAG_ID	0x40001000
+#define A530_JTAG_ID	0x3000
+#define A534_JTAG_ID	0x40003000
+#define JTAG_ID_MASK	0xC000F000
+
 u8 socfpga_get_board_id(void);
 
 /*
@@ -45,6 +59,22 @@ static Altera_desc altera_fpga[] = {
 		0
 	},
 };
+
+u32 socfpga_get_jtag_id(void)
+{
+	u32 jtag_id;
+
+	jtag_id = readl(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_BOOT_SCRATCH_COLD4);
+
+	if (!jtag_id) {
+		debug("Failed to read JTAG ID. Default JTAG ID to A5F4_JTAG_ID.\n");
+		jtag_id = A5F4_JTAG_ID;
+	}
+
+	debug("%s: jtag_id: 0x%x\n", __func__, jtag_id);
+
+	return jtag_id;
+}
 
 /*
  * Print CPU information
@@ -93,27 +123,16 @@ int arch_early_init_r(void)
 	return 0;
 }
 
-#if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
-bool is_agilex5_reva_workaround_required(void)
+bool is_agilex5_A5F0(void)
 {
-	u32 reg;
-	bool status;
-
-	reg = readl(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_BOOT_SCRATCH_POR1);
-	debug("%s: SYSMGR_SOC64_BOOT_SCRATCH_POR1: 0x%x\n", __func__, reg);
-
-	status = FIELD_GET(ALT_SYSMGR_SCRATCH_REG_POR_1_REVA_WORKAROUND_MASK, reg);
-	debug("%s: Agilex 5 Rev A workaround status: 0x%x\n", __func__, status);
-
-	return status;
+	return ((socfpga_get_jtag_id() & JTAG_ID_MASK) == A5F0_JTAG_ID);
 }
-#endif
 
 /* Return 1 if FPGA is ready otherwise return 0 */
 int is_fpga_config_ready(void)
 {
 #if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
-	if (is_agilex5_reva_workaround_required()) {
+	if (is_agilex5_A5F0()) {
 		return (readl(socfpga_get_sysmgr_addr() +
 				SYSMGR_SOC64_BOOT_SCRATCH_POR1) &
 				ALT_SYSMGR_SCRATCH_REG_POR_1_REVA_WORKAROUND_USER_MODE_MASK);
@@ -161,7 +180,7 @@ void arch_preboot_os(void)
 int misc_init_r(void)
 {
 #if IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
-	if (is_agilex5_reva_workaround_required())
+	if (is_agilex5_A5F0())
 		return smmu_sdm_init();
 #endif
 
