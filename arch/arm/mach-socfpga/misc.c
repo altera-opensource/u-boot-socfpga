@@ -271,7 +271,7 @@ void socfpga_get_managers_addr(void)
 #elif IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)
 	ret = socfpga_get_base_addr("intel,agilex5-clkmgr",
 				    &socfpga_clkmgr_base);
-#elif IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX7)
+#elif IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX7M)
 	ret = socfpga_get_base_addr("intel,agilex-clkmgr",
 				    &socfpga_clkmgr_base);
 #else

@@ -97,7 +97,7 @@ config TARGET_SOCFPGA_AGILEX5
 	select SPL_CLK if SPL
 	select TARGET_SOCFPGA_SOC64
 
-config TARGET_SOCFPGA_AGILEX7
+config TARGET_SOCFPGA_AGILEX7M
 	bool
 	select ARMV8_MULTIENTRY
 	select ARMV8_SET_SMPEN
@@ -242,9 +242,9 @@ config TARGET_SOCFPGA_AGILEX5_SOCDK
 	bool "Intel SOCFPGA SoCDK (Agilex5)"
 	select TARGET_SOCFPGA_AGILEX5
 
-config TARGET_SOCFPGA_AGILEX7_SOCDK
+config TARGET_SOCFPGA_AGILEX7M_SOCDK
 	bool "Intel SOCFPGA SoCDK (Agilex7)"
-	select TARGET_SOCFPGA_AGILEX7
+	select TARGET_SOCFPGA_AGILEX7M
 
 config TARGET_SOCFPGA_ARIES_MCVEVK
 	bool "Aries MCVEVK (Cyclone V)"
@@ -319,7 +319,7 @@ config TARGET_SOCFPGA_TERASIC_SOCKIT
 endchoice
 
 config SYS_BOARD
-	default "agilex7-socdk" if TARGET_SOCFPGA_AGILEX7_SOCDK
+	default "agilex7m-socdk" if TARGET_SOCFPGA_AGILEX7M_SOCDK
 	default "agilex5-socdk" if TARGET_SOCFPGA_AGILEX5_SOCDK
 	default "agilex-n6010" if TARGET_SOCFPGA_AGILEX_N6010
 	default "agilex-socdk" if TARGET_SOCFPGA_AGILEX_SOCDK
@@ -343,7 +343,7 @@ config SYS_BOARD
 	default "vining_fpga" if TARGET_SOCFPGA_SOFTING_VINING_FPGA
 
 config SYS_VENDOR
-	default "intel" if TARGET_SOCFPGA_AGILEX7_SOCDK
+	default "intel" if TARGET_SOCFPGA_AGILEX7M_SOCDK
 	default "intel" if TARGET_SOCFPGA_AGILEX5_SOCDK
 	default "intel" if TARGET_SOCFPGA_AGILEX_N6010
 	default "intel" if TARGET_SOCFPGA_AGILEX_SOCDK
@@ -368,7 +368,7 @@ config SYS_SOC
 	default "socfpga"
 
 config SYS_CONFIG_NAME
-	default "socfpga_agilex7_socdk" if TARGET_SOCFPGA_AGILEX7_SOCDK
+	default "socfpga_agilex7m_socdk" if TARGET_SOCFPGA_AGILEX7M_SOCDK
 	default "socfpga_agilex5_socdk" if TARGET_SOCFPGA_AGILEX5_SOCDK
 	default "socfpga_agilex_n6010" if TARGET_SOCFPGA_AGILEX_N6010
 	default "socfpga_agilex_socdk" if TARGET_SOCFPGA_AGILEX_SOCDK

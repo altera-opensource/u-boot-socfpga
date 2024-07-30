@@ -112,7 +112,7 @@ obj-$(CONFIG_ARMV8_PSCI) += smc_rsu_s10.o
 endif
 endif
 
-ifdef CONFIG_TARGET_SOCFPGA_AGILEX7
+ifdef CONFIG_TARGET_SOCFPGA_AGILEX7M
 obj-y	+= clock_manager_agilex.o
 obj-y	+= lowlevel_init_soc64.o
 obj-y	+= mailbox_s10.o
@@ -187,8 +187,8 @@ ifdef CONFIG_TARGET_SOCFPGA_AGILEX5
 obj-y	+= spl_agilex5.o
 obj-y	+= spl_soc64.o
 endif
-ifdef CONFIG_TARGET_SOCFPGA_AGILEX7
-obj-y	+= spl_agilex7.o
+ifdef CONFIG_TARGET_SOCFPGA_AGILEX7M
+obj-y	+= spl_agilex7m.o
 obj-y	+= spl_soc64.o
 endif
 else

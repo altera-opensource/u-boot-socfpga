@@ -2,6 +2,6 @@ SOCFPGA BOARD
 M:	Tien Fong Chee <tien.fong.chee@intel.com>
 M:	Teik Heng Chong <teik.heng.chong@intel.com>
 S:	Maintained
-F:	board/intel/agilex7-socdk/
-F:	include/configs/socfpga_agilex7_socdk.h
-F:	configs/socfpga_agilex7_defconfig
+F:	board/intel/agilex7m-socdk/
+F:	include/configs/socfpga_agilex7m_socdk.h
+F:	configs/socfpga_agilex7m_defconfig

@@ -49,7 +49,7 @@ static enum endianness check_endianness(u32 handoff)
 	case SOC64_HANDOFF_DDR_PHY_INIT_ENGINE_MAGIC:
 		debug("%s: PHY engine handoff data\n", __func__);
 		return LITTLE_ENDIAN;
-#elif IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX7)
+#elif IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX7M)
 	case SOC64_HANDOFF_MAGIC_DDR:
 		debug("%s: SOC64_HANDOFF_MAGIC_DDR\n", __func__);
 		return BIG_ENDIAN;
