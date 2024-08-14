@@ -26,6 +26,9 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define CLKMGR_CTRL_SWCTRLBTCLKEN_MASK		BIT(8)
+#define CLKMGR_CTRL_SWCTRLBTCLKSEL_MASK		BIT(9)
+
 struct socfpga_clk_plat {
 	void __iomem *regs;
 };
@@ -264,9 +267,14 @@ static void clk_basic_init(struct udevice *dev,
 			       CM_REG_READL(plat, CLKMGR_CTRL) & ~CLKMGR_CTRL_BOOTMODE);
 	} else {
 #ifdef CONFIG_XPL_BUILD
-		/* Always force clock manager into boot mode before any configuration */
-		clk_write_ctrl(plat,
-			       CM_REG_READL(plat, CLKMGR_CTRL) | CLKMGR_CTRL_BOOTMODE);
+		/*
+		 * Configure HPS Internal Oscillator as default boot_clk source,
+		 * always force clock manager into boot mode before any configuration
+		 */
+		clk_write_ctrl(plat, CM_REG_READL(plat, CLKMGR_CTRL) |
+			       CLKMGR_CTRL_BOOTMODE |
+			       CLKMGR_CTRL_SWCTRLBTCLKEN_MASK |
+			       CLKMGR_CTRL_SWCTRLBTCLKSEL_MASK);
 #else
 		/* Skip clock configuration in SSBL if it's not in boot mode */
 		if (!(CM_REG_READL(plat, CLKMGR_CTRL) & CLKMGR_CTRL_BOOTMODE))
