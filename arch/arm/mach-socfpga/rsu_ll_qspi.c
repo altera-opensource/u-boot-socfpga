@@ -155,6 +155,42 @@ static int get_part_offset(int part_num, u64 *offset)
 	return 0;
 }
 
+/*
+ * @brief Calculates the current flash offset based on the given offset.
+ *
+ * This function calculates the current flash offset and the current flash index
+ * based on the given offset. It iterates through the flashlist array and checks
+ * if the current offset is greater than the size of each flash. If it is, it
+ * subtracts the size of the flash from the current offset and continues to the
+ * next flash. If the current offset is not greater than the size of the flash,
+ * it sets the current flash index and breaks out of the loop.
+ *
+ * @param offset The offset to calculate the current flash offset from.
+ * @param current_offset Pointer to store the calculated current offset.
+ * @param current_flash Pointer to store the index of the current flash.
+ */
+
+static int get_current_flash_offset(u64 offset, int *current_offset, int *current_flash)
+{
+	u64 relative_offset = offset;
+
+	if (!current_offset || !current_flash)
+		return -EINVAL;
+
+	for (int j = 0; j < num_flash; j++) {
+		if (relative_offset > flashlist[j]->size) {
+			relative_offset -= flashlist[j]->size;
+			continue;
+		} else {
+			*current_flash = j;
+			*current_offset = relative_offset;
+			return 0;
+		}
+	}
+
+	return -EINVAL;
+}
+
 /**
  * read_dev() - read data from flash
  * @offset: the offset which read from flash
@@ -168,10 +204,12 @@ static int read_dev(u64 offset, void *buf, int len)
 	int ret, count, current_flash, current_len, current_offset;
 
 	count = 0;
-	current_offset = offset % flashlist[0]->size;
-	current_flash = offset / flashlist[0]->size;
 
-	for (int i = 0; i < num_flash; i++) {
+	ret = get_current_flash_offset(offset, &current_offset, &current_flash);
+	if (ret)
+		return ret;
+
+	for (int i = current_flash; i < num_flash; i++) {
 		/* break if total data length is done */
 		if (count == len)
 			break;
@@ -210,10 +248,12 @@ static int write_dev(u64 offset, void *buf, int len)
 	int ret, count, current_flash, current_len, current_offset;
 
 	count = 0;
-	current_offset = offset % flashlist[0]->size;
-	current_flash = offset / flashlist[0]->size;
 
-	for (int i = 0; i < num_flash; i++) {
+	ret = get_current_flash_offset(offset, &current_offset, &current_flash);
+	if (ret)
+		return ret;
+
+	for (int i = current_flash; i < num_flash; i++) {
 		/* break if total data length is done */
 		if (count == len)
 			break;
@@ -251,10 +291,12 @@ static int erase_dev(u64 offset, int len)
 	int ret, count, current_flash, current_len, current_offset;
 
 	count = 0;
-	current_offset = offset % flashlist[0]->size;
-	current_flash = offset / flashlist[0]->size;
 
-	for (int i = 0; i < num_flash; i++) {
+	ret = get_current_flash_offset(offset, &current_offset, &current_flash);
+	if (ret)
+		return ret;
+
+	for (int i = current_flash; i < num_flash; i++) {
 		/* break if total data length is done */
 		if (count == len)
 			break;
