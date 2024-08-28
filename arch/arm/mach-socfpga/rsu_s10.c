@@ -270,7 +270,7 @@ int rsu_dtb(int argc, char * const argv[])
 	end = reg[0] + reg[1];
 
 	/* align to 64Kb flash sector size */
-	end = roundup(len, 64 * 1024);
+	end = roundup(end, 64 * 1024);
 
 	/* assemble new reg value for boot partition */
 	reg[0] = cpu_to_fdt32(rsu_spt0_offset);
