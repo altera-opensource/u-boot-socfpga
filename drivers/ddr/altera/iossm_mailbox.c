@@ -285,21 +285,27 @@ void io96b_mb_init(struct io96b_info *io96b_ctrl)
 
 int io96b_cal_status(phys_addr_t addr)
 {
-	int ret;
 	u32 cal_success, cal_fail;
 	phys_addr_t status_addr = addr + IOSSM_STATUS_OFFSET;
-	/* Ensure calibration completed */
-	ret = wait_for_bit_le32((const void *)status_addr, IOSSM_STATUS_CAL_BUSY, false
-							, TIMEOUT, false);
-	if (ret) {
-		printf("%s: SDRAM calibration IO96b instance 0x%llx timeout\n", __func__
-			, status_addr);
-		hang();
-	}
+	u32 start = get_timer(0);
 
-	/* Calibration status */
-	cal_success = readl(status_addr) & IOSSM_STATUS_CAL_SUCCESS;
-	cal_fail = readl(status_addr) & IOSSM_STATUS_CAL_FAIL;
+	do {
+		if (get_timer(start) > TIMEOUT_60000MS) {
+			printf("%s: SDRAM calibration for IO96B instance 0x%llx timeout!\n",
+			       __func__, status_addr);
+			hang();
+		}
+
+		udelay(1);
+		schedule();
+
+		/* Polling until getting any calibration result */
+		cal_success = readl(status_addr) & IOSSM_STATUS_CAL_SUCCESS;
+		cal_fail = readl(status_addr) & IOSSM_STATUS_CAL_FAIL;
+	} while (!cal_success && !cal_fail);
+
+	debug("%s: Calibration for IO96B instance 0x%llx done at %ld msec!\n",
+	      __func__,  status_addr, get_timer(start));
 
 	if (cal_success && !cal_fail)
 		return 0;

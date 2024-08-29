@@ -270,14 +270,6 @@ int sdram_mmr_init_full(struct udevice *dev)
 	printf("%s: SDRAM init in progress ...\n", memory_type_in_use(dev));
 	ddr_init_inprogress(true);
 
-	if (is_ddr_in_use(dev)) {
-		/* Configure if polling is needed for IO96B GEN PLL locked */
-		io96b_ctrl->ckgen_lock = false;
-
-		/* Ensure calibration status passing */
-		init_mem_cal(io96b_ctrl);
-	}
-
 	/* Configuring MPFE sideband manager registers - multichannel or interleaving*/
 	debug("%s: MPFE configuration in progress ...\n", memory_type_in_use(dev));
 	ret = config_mpfe_sideband_mgr(dev);
@@ -307,6 +299,12 @@ int sdram_mmr_init_full(struct udevice *dev)
 	printf("%s: Checking calibration...\n", memory_type_in_use(dev));
 
 	if (is_ddr_in_use(dev)) {
+		/* Configure if polling is needed for IO96B GEN PLL locked */
+		io96b_ctrl->ckgen_lock = false;
+
+		/* Ensure calibration status passing */
+		init_mem_cal(io96b_ctrl);
+
 		/* Initiate IOSSM mailbox */
 		io96b_mb_init(io96b_ctrl);
 
