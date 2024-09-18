@@ -774,7 +774,7 @@ cadence_nand_cdma_transfer(struct cadence_nand_info *cadence, u8 chip_nr,
 		ctype = CDMA_CT_WR;
 
 	if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5)) {
-		if (!is_agilex5_A5F0())
+		if (!is_agilex5_A36F0())
 			cadence_nand_set_ecc_enable(cadence, with_ecc);
 	} else {
 		cadence_nand_set_ecc_enable(cadence, with_ecc);
