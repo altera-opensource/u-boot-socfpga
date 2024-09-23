@@ -55,6 +55,9 @@ enum iossm_mailbox_cmd_opcode  {
 	ECC_INTERRUPT_ACK,
 	ECC_INTERRUPT_MASK,
 	ECC_WRITEBACK_ENABLE,
+	ECC_GET_SBE_INFO,
+	ECC_GET_DBE_INFO,
+	ECC_INJECT_ERROR,
 	ECC_SCRUB_IN_PROGRESS_STATUS = 0x0201,
 	ECC_SCRUB_MODE_0_START,
 	ECC_SCRUB_MODE_1_START,
@@ -180,3 +183,4 @@ int get_mem_technology(struct io96b_info *io96b_ctrl);
 int get_mem_width_info(struct io96b_info *io96b_ctrl);
 int ecc_enable_status(struct io96b_info *io96b_ctrl);
 int bist_mem_init_start(struct io96b_info *io96b_ctrl);
+int ecc_interrupt_status(struct io96b_info *io96b_ctrl, bool *ecc_error_flag);

@@ -14,6 +14,8 @@
 
 #define ECC_INTSTATUS_SERR SOCFPGA_SYSMGR_ADDRESS + 0x9C
 #define ECC_INISTATUS_DERR SOCFPGA_SYSMGR_ADDRESS + 0xA0
+#define ECC_UNCONRRECTABLE_ERROR_MASK \
+	BIT(2) + BIT(3) + BIT(6) + BIT(10) + BIT(12) + BIT(13)
 #define DDR_CSR_CLKGEN_LOCKED_IO96B0_MASK BIT(16)
 #define DDR_CSR_CLKGEN_LOCKED_IO96B1_MASK BIT(17)
 
@@ -493,6 +495,45 @@ int ecc_enable_status(struct io96b_info *io96b_ctrl)
 	}
 
 	debug("%s: ECC enable status: %d\n", __func__, io96b_ctrl->ecc_status);
+
+err:
+	return ret;
+}
+
+int ecc_interrupt_status(struct io96b_info *io96b_ctrl, bool *ecc_error_flag)
+{
+	struct io96b_mb_req usr_req;
+	struct io96b_mb_resp usr_resp;
+	int i, j, n, ret = 0;
+	u32 uncorrectable_error;
+
+	for (i = 0; i < io96b_ctrl->num_instance; i++) {
+		for (j = 0; j < io96b_ctrl->io96b[i].mb_ctrl.num_mem_interface; j++) {
+			IO96B_MB_REQ_SETUP(io96b_ctrl->io96b[i].mb_ctrl.ip_type[j],
+					   io96b_ctrl->io96b[i].mb_ctrl.ip_id[j],
+					   CMD_TRIG_CONTROLLER_OP, ECC_INTERRUPT_STATUS, 0);
+
+			ret = io96b_mb_req(io96b_ctrl->io96b[i].io96b_csr_addr,
+					   usr_req, 1, &usr_resp);
+
+			if (ret)
+				goto err;
+
+			uncorrectable_error = (usr_resp.cmd_resp_data[0]) &
+				(ECC_UNCONRRECTABLE_ERROR_MASK);
+			debug("%s: IO96B %d mem_interface %d: ECC error status:0x%08x\n",
+			      __func__, i, j, uncorrectable_error);
+
+			if (uncorrectable_error) {
+				*ecc_error_flag = true;
+				printf("DDR: ECC un-correctable error detected on IO96B_%d\n",
+				       i);
+				goto err;
+			}
+		}
+	}
+
+	*ecc_error_flag = false;
 
 err:
 	return ret;

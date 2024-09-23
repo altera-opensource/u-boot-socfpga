@@ -217,21 +217,9 @@ static bool hps_ocram_dbe_status(void)
 	return false;
 }
 
-static bool ddr_ecc_dbe_status(void)
-{
-	u32 reg = readl(socfpga_get_sysmgr_addr() +
-			SYSMGR_SOC64_BOOT_SCRATCH_COLD3);
-
-	if (reg & ALT_SYSMGR_SCRATCH_REG_3_DDR_DBE_MASK)
-		return true;
-
-	return false;
-}
-
 int sdram_mmr_init_full(struct udevice *dev)
 {
 	int ret = 0;
-	int i;
 	phys_size_t hw_size;
 	struct bd_info bd = {0};
 	struct altera_sdram_plat *plat = dev_get_plat(dev);
@@ -266,15 +254,10 @@ int sdram_mmr_init_full(struct udevice *dev)
 	/* Ensure calibration status passing */
 	init_mem_cal(io96b_ctrl);
 
+	printf("DDR: Calibration success\n");
+
 	/* Initiate IOSSM mailbox */
 	io96b_mb_init(io96b_ctrl);
-
-	if (!(io96b_ctrl->overall_cal_status)) {
-		printf("DDR: Error: Calibration is failed\n");
-		hang();
-	}
-
-	printf("DDR: Calibration success\n");
 
 	/* DDR type, DDR size and ECC status) */
 	ret = get_mem_technology(io96b_ctrl);
@@ -329,8 +312,32 @@ int sdram_mmr_init_full(struct udevice *dev)
 	 *  enabled to preserve memory content
 	 */
 	if (io96b_ctrl->ecc_status) {
-		full_mem_init = hps_ocram_dbe_status() | ddr_ecc_dbe_status() |
-				is_ddr_hang_be4_rst;
+		bool ecc_error_flag;
+
+		ret = ecc_interrupt_status(io96b_ctrl, &ecc_error_flag);
+		if (ret) {
+			printf("DDR: Failed to get ECC interrupt status\n");
+
+			goto err;
+		}
+
+		if (ecc_error_flag) {
+			if (CONFIG_IS_ENABLED(WDT)) {
+				struct udevice *wdt;
+
+				printf("DDR: ECC error recover start now\n");
+				ret = uclass_first_device_err(UCLASS_WDT, &wdt);
+				if (ret) {
+					printf("DDR: Failed to trigger watchdog reset\n");
+					hang();
+				}
+
+				wdt_expire_now(wdt, 0);
+			}
+			hang();
+		}
+
+		full_mem_init = hps_ocram_dbe_status() | is_ddr_hang_be4_rst;
 		if (full_mem_init || !(reset_t == WARM_RESET || reset_t == COLD_RESET)) {
 			ret = bist_mem_init_start(io96b_ctrl);
 			if (ret) {
