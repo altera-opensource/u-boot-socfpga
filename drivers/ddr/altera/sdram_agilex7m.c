@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2023-2024 Intel Corporation <www.intel.com>
- *
  */
 #define DEBUG
 #include <dm.h>
@@ -63,14 +62,14 @@ phys_addr_t uib_csr_reg_addr[] = {
 
 static enum reset_type get_reset_type(u32 reg)
 {
-	return (reg & ALT_SYSMGR_SCRATCH_REG_0_DDR_RESET_TYPE_MASK) >>
-		ALT_SYSMGR_SCRATCH_REG_0_DDR_RESET_TYPE_SHIFT;
+	return FIELD_GET(ALT_SYSMGR_SCRATCH_REG_0_DDR_RESET_TYPE_MASK, reg);
 }
 
 bool is_ddr_init_hang(void)
 {
 	u32 reg = readl(socfpga_get_sysmgr_addr() +
 			SYSMGR_SOC64_BOOT_SCRATCH_COLD8);
+
 	debug("%s: 0x%x\n", __func__, reg);
 
 	if (reg & ALT_SYSMGR_SCRATCH_REG_8_DDR_PROGRESS_MASK)
@@ -123,8 +122,8 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl,
 	else
 		plat->multichannel_interleaving = false;
 
-	debug("%s: MPFE-EMIF is in %s mode\n", __func__
-			, plat->multichannel_interleaving ? "interleaving" : "multichannel");
+	debug("%s: MPFE-EMIF is in %s mode\n", __func__,
+	      plat->multichannel_interleaving ? "interleaving" : "multichannel");
 
 	/* Memory type */
 	if (handoff_table[2] & SOC64_HANDOFF_DDR_MEMORY_TYPE_MASK)
@@ -161,21 +160,26 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl,
 		uib_ctrl->num_instance = count;
 		debug("%s: returned num_instance 0x%x\n", __func__, uib_ctrl->num_instance);
 
-		/* HBM memory size */
-		/* 1 UIB channel has 2 pseudo channels */
-		/* 1 pseudo channel is 1GB, hence 1 UIB channel is 2GB */
+		/*
+		 * HBM memory size
+		 * 1 UIB channel has 2 pseudo channels
+		 * 1 pseudo channel is 1GB, hence 1 UIB channel is 2GB
+		 */
 		uib_ctrl->overall_size = uib_ctrl->num_instance * SZ_2G;
 
 		/* UIB ECC status */
 		uib_ctrl->ecc_status = handoff_table[4];
+
 		debug("%s: ECC status 0x%x\n", __func__, uib_ctrl->ecc_status);
 	} else {
 		/* Assign IO96B CSR base address if it is valid */
 		for (i = 0; i < MAX_IO96B_SUPPORTED; i++) {
 			if (handoff_table[1] & BIT(i)) {
 				io96b_ctrl->io96b[i].io96b_csr_addr = io96b_csr_reg_addr[i];
-				debug("%s: IO96B 0x%llx CSR enabled\n", __func__
-					, io96b_ctrl->io96b[i].io96b_csr_addr);
+
+				debug("%s: IO96B 0x%llx CSR enabled\n", __func__,
+				      io96b_ctrl->io96b[i].io96b_csr_addr);
+
 				count++;
 			}
 		}
@@ -191,8 +195,8 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl,
 int config_mpfe_sideband_mgr(struct udevice *dev)
 {
 	struct altera_sdram_plat *plat = dev_get_plat(dev);
-	u32 reg;
-	u32 mask;
+	u32 reg, mask;
+	int ret = 0;
 
 	if (plat->multichannel_interleaving) {
 		mask = SIDEBANDMGR_FLAGOUTSET0_REG_INTERLEAVING;
@@ -203,17 +207,17 @@ int config_mpfe_sideband_mgr(struct udevice *dev)
 	}
 
 	reg = readl(SIDEBANDMGR_FLAGOUTSTATUS0_REG);
+
 	debug("%s: F2SDRAM_SIDEBAND_FLAGOUTSTATUS0: 0x%x\n", __func__, reg);
 
-	if ((reg & mask) == SIDEBANDMGR_FLAGOUTSET0_REG_INTERLEAVING) {
+	if ((reg & mask) == SIDEBANDMGR_FLAGOUTSET0_REG_INTERLEAVING)
 		debug("%s: Interleaving bit is set\n", __func__);
-		return 0;
-	} else if ((reg & mask) == SIDEBANDMGR_FLAGOUTSET0_REG_MULTICHANNEL) {
+	else if ((reg & mask) == SIDEBANDMGR_FLAGOUTSET0_REG_MULTICHANNEL)
 		debug("%s: Multichannel bit is set\n", __func__);
-		return 0;
-	} else {
-		return -1;
-	}
+	else
+		ret = -EINVAL;
+
+	return ret;
 }
 
 bool hps_ocram_dbe_status(void)
@@ -247,19 +251,19 @@ int sdram_mmr_init_full(struct udevice *dev)
 	struct bd_info bd = {0};
 	bool full_mem_init = false;
 	phys_size_t hw_size;
-	int ret;
+	int ret = 0;
 	int i;
 	u32 reg = readl(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_BOOT_SCRATCH_COLD0);
 	enum reset_type reset_t = get_reset_type(reg);
 
 	/* Populating DDR handoff data */
 	debug("DDR: Populating DDR handoff\n");
+
 	ret = populate_ddr_handoff(dev, io96b_ctrl, uib_ctrl);
 	if (ret) {
 		printf("DDR: Failed to populate DDR handoff\n");
-		free(io96b_ctrl);
-		free(uib_ctrl);
-		return ret;
+
+		goto err;
 	}
 
 	debug("%s: Address MPFE 0x%llx\n", memory_type_in_use(dev), plat->mpfe_base_addr);
@@ -268,35 +272,36 @@ int sdram_mmr_init_full(struct udevice *dev)
 	bool is_ddr_hang_be4_rst = is_ddr_init_hang();
 
 	printf("%s: SDRAM init in progress ...\n", memory_type_in_use(dev));
+
 	ddr_init_inprogress(true);
 
 	/* Configuring MPFE sideband manager registers - multichannel or interleaving*/
 	debug("%s: MPFE configuration in progress ...\n", memory_type_in_use(dev));
+
 	ret = config_mpfe_sideband_mgr(dev);
 	if (ret) {
 		printf("%s: Failed to configure multichannel/interleaving mode\n",
 		       memory_type_in_use(dev));
-		free(io96b_ctrl);
-		free(uib_ctrl);
-		return ret;
+
+		goto err;
 	}
 
 	debug("%s: MPFE configuration completed\n", memory_type_in_use(dev));
 
-	printf("%s: Waiting for NOCPLL locked ...\n", memory_type_in_use(dev));
+	debug("%s: Waiting for NOCPLL locked ...\n", memory_type_in_use(dev));
+
 	/* Ensure NOCPLL locked */
 	ret = wait_for_bit_le32((const void *)socfpga_get_sysmgr_addr() + SYSMGR_HMC_CLK
 				, SYSMGR_HMC_CLK_NOCPLL, true, TIMEOUT, false);
 	if (ret) {
 		printf("%s: NOCPLL is not locked\n", memory_type_in_use(dev));
-		free(io96b_ctrl);
-		free(uib_ctrl);
-		return ret;
+
+		goto err;
 	}
 
-	printf("%s: NOCPLL locked\n", memory_type_in_use(dev));
+	debug("%s: NOCPLL locked\n", memory_type_in_use(dev));
 
-	printf("%s: Checking calibration...\n", memory_type_in_use(dev));
+	debug("%s: Checking calibration...\n", memory_type_in_use(dev));
 
 	if (is_ddr_in_use(dev)) {
 		/* Configure if polling is needed for IO96B GEN PLL locked */
@@ -305,41 +310,25 @@ int sdram_mmr_init_full(struct udevice *dev)
 		/* Ensure calibration status passing */
 		init_mem_cal(io96b_ctrl);
 
+		printf("DDR: Calibration success\n");
+
 		/* Initiate IOSSM mailbox */
 		io96b_mb_init(io96b_ctrl);
-
-		/* Need to trigger re-calibration for DDR DBE */
-		if (ddr_ecc_dbe_status()) {
-			for (i = 0; i < io96b_ctrl->num_instance; i++)
-				io96b_ctrl->io96b[i].cal_status = false;
-
-			io96b_ctrl->overall_cal_status &= io96b_ctrl->io96b[i].cal_status;
-		}
-
-		/* Trigger re-calibration if calibration failed */
-		if (!(io96b_ctrl->overall_cal_status)) {
-			printf("DDR: Re-calibration in progress...\n");
-			trig_mem_cal(io96b_ctrl);
-		}
-
-		printf("DDR: Calibration success\n");
 
 		/* DDR type */
 		ret = get_mem_technology(io96b_ctrl);
 		if (ret) {
 			printf("DDR: Failed to get DDR type\n");
-			free(io96b_ctrl);
-			free(uib_ctrl);
-			return ret;
+
+			goto err;
 		}
 
 		/* DDR size */
 		ret = get_mem_width_info(io96b_ctrl);
 		if (ret) {
 			printf("DDR: Failed to get DDR size\n");
-			free(io96b_ctrl);
-			free(uib_ctrl);
-			return ret;
+
+			goto err;
 		}
 	} else {
 		/* Ensure calibration status passing */
@@ -356,40 +345,46 @@ int sdram_mmr_init_full(struct udevice *dev)
 		/* Trigger re-calibration if calibration failed */
 		if (!(uib_ctrl->overall_cal_status)) {
 			printf("HBM: Re-calibration in progress...\n");
+
 			uib_trig_mem_cal(uib_ctrl);
 		}
 
 		if (!(uib_ctrl->overall_cal_status)) {
 			printf("HBM: Retry calibration failed & not able to re-calibrate\n");
-			free(io96b_ctrl);
-			free(uib_ctrl);
-			return -1;
+
+			ret = -EINVAL;
+			goto err;
 		}
 
-		/* Responder Error Mask Register */
 		debug("HBM: Setting Error Mask Register\n");
+
+		/* Responder Error Mask Register */
 		for (i = 0; i < uib_ctrl->num_instance; i++) {
 			clrsetbits_le32(uib_ctrl->uib[i].uib_csr_addr +
 					UIB_R_ERRMSK_PSEUDO_CH0_OFFSET,
 					UIB_DRAM_SBE_MSK | UIB_INTERNAL_CORR_ERR_MSK,
 					UIB_DRAM_SBE(0x1) | UIB_INTERNAL_CORR_ERR(0x1));
+
 			debug("HBM: Error Mask Pseudo CH0 addr: 0x%llx\n",
 			      uib_ctrl->uib[i].uib_csr_addr +
 			      UIB_R_ERRMSK_PSEUDO_CH0_OFFSET);
+
 			debug("HBM: Error Mask Pseudo CH0 value: 0x%x\n",
 			      readl(uib_ctrl->uib[i].uib_csr_addr +
-				    UIB_R_ERRMSK_PSEUDO_CH0_OFFSET));
+			      UIB_R_ERRMSK_PSEUDO_CH0_OFFSET));
 
 			clrsetbits_le32(uib_ctrl->uib[i].uib_csr_addr +
 					UIB_R_ERRMSK_PSEUDO_CH1_OFFSET,
 					UIB_DRAM_SBE_MSK | UIB_INTERNAL_CORR_ERR_MSK,
 					UIB_DRAM_SBE(0x1) | UIB_INTERNAL_CORR_ERR(0x1));
+
 			debug("HBM: Error Mask Pseudo CH1 addr: 0x%llx\n",
 			      uib_ctrl->uib[i].uib_csr_addr +
 			      UIB_R_ERRMSK_PSEUDO_CH1_OFFSET);
+
 			debug("HBM: Error Mask Pseudo CH1 value: 0x%x\n\n",
 			      readl(uib_ctrl->uib[i].uib_csr_addr +
-				    UIB_R_ERRMSK_PSEUDO_CH1_OFFSET));
+			      UIB_R_ERRMSK_PSEUDO_CH1_OFFSET));
 		}
 
 		printf("HBM: Calibration success\n");
@@ -400,9 +395,8 @@ int sdram_mmr_init_full(struct udevice *dev)
 				     (phys_size_t *)&gd->ram_size, &bd);
 	if (ret) {
 		printf("%s: Failed to decode memory node\n", memory_type_in_use(dev));
-		free(io96b_ctrl);
-		free(uib_ctrl);
-		return -ENXIO;
+
+		goto err;
 	}
 
 	if (!is_ddr_in_use(dev)) {
@@ -425,58 +419,60 @@ int sdram_mmr_init_full(struct udevice *dev)
 		printf("%s: Error: DRAM size from device tree is greater\n",
 		       memory_type_in_use(dev));
 		printf(" than hardware size.\n");
+
 		hang();
 	}
 
-	printf("%s: %lld MiB\n", (is_ddr_in_use(dev) ? io96b_ctrl->ddr_type : "HBM")
-		, gd->ram_size >> 20);
+	printf("%s: %lld MiB\n", (is_ddr_in_use(dev) ? io96b_ctrl->ddr_type : "HBM"),
+	       gd->ram_size >> 20);
 
 	if (is_ddr_in_use(dev)) {
 		/* ECC status */
 		ret = ecc_enable_status(io96b_ctrl);
 		if (ret) {
 			printf("DDR: Failed to get DDR ECC status\n");
-			free(io96b_ctrl);
-			free(uib_ctrl);
-			return ret;
+
+			goto err;
 		}
 
-		/* Is HPS cold or warm reset? If yes, Skip full memory initialization if ECC
-		 *  enabled to preserve memory content
+		/*
+		 * Is HPS cold or warm reset? If yes, Skip full memory initialization if ECC
+		 * enabled to preserve memory content
 		 */
 		if (io96b_ctrl->ecc_status) {
 			full_mem_init = hps_ocram_dbe_status() | ddr_ecc_dbe_status() |
 					is_ddr_hang_be4_rst;
 			if (full_mem_init || !(reset_t == WARM_RESET || reset_t == COLD_RESET)) {
-				debug("%s: Needed to fully initialize DDR memory\n"
-					, io96b_ctrl->ddr_type);
+				debug("%s: Needed to fully initialize DDR memory\n",
+				      io96b_ctrl->ddr_type);
+
 				ret = bist_mem_init_start(io96b_ctrl);
 				if (ret) {
-					printf("%s: Failed to fully initialize DDR memory\n"
-						, io96b_ctrl->ddr_type);
-					free(io96b_ctrl);
-					free(uib_ctrl);
-					return ret;
+					printf("%s: Failed to fully initialize DDR memory\n",
+					       io96b_ctrl->ddr_type);
+
+					goto err;
 				}
 			}
 		}
 	} else {
 		debug("HBM: ECC enable status: %d\n", uib_ctrl->ecc_status);
 
-		/* Is HPS cold or warm reset? If yes, Skip full memory initialization if ECC
-		 *  enabled to preserve memory content
+		/*
+		 * Is HPS cold or warm reset? If yes, Skip full memory initialization if ECC
+		 * enabled to preserve memory content
 		 */
 		if (uib_ctrl->ecc_status) {
 			full_mem_init = hps_ocram_dbe_status() | ddr_ecc_dbe_status() |
 					is_ddr_hang_be4_rst;
 			if (full_mem_init || !(reset_t == WARM_RESET || reset_t == COLD_RESET)) {
 				debug("HBM: Needed to fully initialize HBM memory\n");
+
 				ret = uib_bist_mem_init_start(uib_ctrl);
 				if (ret) {
 					printf("HBM: Failed to fully initialize HBM memory\n");
-					free(io96b_ctrl);
-					free(uib_ctrl);
-					return ret;
+
+					goto err;
 				}
 			}
 		}
@@ -484,9 +480,11 @@ int sdram_mmr_init_full(struct udevice *dev)
 
 	/* Ensure sanity memory test passing */
 	sdram_size_check(&bd);
+
 	printf("%s: size check success\n", (is_ddr_in_use(dev) ? io96b_ctrl->ddr_type : "HBM"));
 
 	sdram_set_firewall(&bd);
+
 	printf("%s: firewall init success\n", (is_ddr_in_use(dev) ? io96b_ctrl->ddr_type : "HBM"));
 
 	priv->info.base = bd.bi_dram[0].start;
@@ -497,7 +495,9 @@ int sdram_mmr_init_full(struct udevice *dev)
 
 	printf("%s init success\n", (is_ddr_in_use(dev) ? io96b_ctrl->ddr_type : "HBM"));
 
+err:
 	free(io96b_ctrl);
 	free(uib_ctrl);
-	return 0;
+
+	return ret;
 }

@@ -4,7 +4,8 @@
  */
 #include <linux/bitfield.h>
 
-#define TIMEOUT				120000
+#define TIMEOUT_120000MS			120000
+#define TIMEOUT					TIMEOUT_120000MS
 
 #define UIBSSM_CMD_RESPONSE_DATA_SHORT_MASK	GENMASK(31, 16)
 #define UIBSSM_CMD_RESPONSE_DATA_SHORT(data)	(((data) & \
