@@ -1,13 +1,14 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2022-2023 Intel Corporation <www.intel.com>
+ * Copyright (C) 2022-2024 Intel Corporation <www.intel.com>
  */
 
-#define TIMEOUT				120000
-#define TIMEOUT_60000MS			60000
-#define IOSSM_STATUS_CAL_SUCCESS	BIT(0)
-#define IOSSM_STATUS_CAL_FAIL		BIT(1)
-#define IOSSM_STATUS_CAL_BUSY		BIT(2)
+#define TIMEOUT_120000MS			120000
+#define TIMEOUT_60000MS				60000
+#define TIMEOUT					TIMEOUT_120000MS
+#define IOSSM_STATUS_CAL_SUCCESS		BIT(0)
+#define IOSSM_STATUS_CAL_FAIL			BIT(1)
+#define IOSSM_STATUS_CAL_BUSY			BIT(2)
 #define IOSSM_STATUS_COMMAND_RESPONSE_READY	BIT(0)
 #define IOSSM_CMD_RESPONSE_STATUS_OFFSET	0x45C
 #define IOSSM_CMD_RESPONSE_DATA_0_OFFSET	0x458
@@ -23,8 +24,14 @@
 #define IOSSM_CMD_PARAM_6_OFFSET		0x420
 #define IOSSM_STATUS_OFFSET			0x400
 #define IOSSM_CMD_RESPONSE_DATA_SHORT_MASK	GENMASK(31, 16)
-#define IOSSM_CMD_RESPONSE_DATA_SHORT(data) (((data) & IOSSM_CMD_RESPONSE_DATA_SHORT_MASK) >> 16)
-#define MAX_IO96B_SUPPORTED		2
+#define IOSSM_CMD_RESPONSE_DATA_SHORT(n)	FIELD_GET(IOSSM_CMD_RESPONSE_DATA_SHORT_MASK, n)
+#define IOSSM_STATUS_CMD_RESPONSE_ERROR_MASK	GENMASK(7, 5)
+#define IOSSM_STATUS_CMD_RESPONSE_ERROR(n)	FIELD_GET(IOSSM_STATUS_CMD_RESPONSE_ERROR_MASK, n)
+#define IOSSM_STATUS_GENERAL_ERROR_MASK		GENMASK(4, 1)
+#define IOSSM_STATUS_GENERAL_ERROR(n)		FIELD_GET(IOSSM_STATUS_GENERAL_ERROR_MASK, n)
+#define MAX_IO96B_SUPPORTED			2
+#define NUM_CMD_RESPONSE_DATA			3
+#define NUM_CMD_PARAM				6
 
 /* supported mailbox command type */
 enum iossm_mailbox_cmd_type  {
@@ -61,11 +68,18 @@ enum iossm_mailbox_cmd_opcode  {
 	GET_MEM_CAL_STATUS
 };
 
+/* response data of cmd opcode GET_MEM_INTF_INFO */
+#define INTF_IP_TYPE_MASK		GENMASK(31, 29)
+#define INTF_INSTANCE_ID_MASK		GENMASK(28, 24)
+
 /* response data of cmd opcode GET_MEM_CAL_STATUS */
 #define INTF_UNUSED			0x0
 #define INTF_MEM_CAL_STATUS_SUCCESS	0x1
 #define INTF_MEM_CAL_STATUS_FAIL	0x2
 #define INTF_MEM_CAL_STATUS_ONGOING	0x4
+
+/* cmd opcode BIST_MEM_INIT_START, BIST performed on full memory address range */
+#define BIST_FULL_MEM			BIT(6)
 
 /*
  * IOSSM mailbox required information
@@ -77,7 +91,29 @@ enum iossm_mailbox_cmd_opcode  {
 struct io96b_mb_ctrl {
 	u32 num_mem_interface;
 	u32 ip_type[2];
-	u32 ip_instance_id[2];
+	u32 ip_id[2];
+};
+
+/* CMD_REQ Register Definition */
+#define CMD_TARGET_IP_TYPE_MASK		GENMASK(31, 29)
+#define CMD_TARGET_IP_INSTANCE_ID_MASK	GENMASK(28, 24)
+#define CMD_TYPE_MASK			GENMASK(23, 16)
+#define CMD_OPCODE_MASK			GENMASK(15, 0)
+
+/*
+ * IOSSM mailbox request
+ * @ip_type:	    IP type for the specified memory interface
+ * @ip_id:	    IP instance ID for the specified memory interface
+ * @usr_cmd_type:   User desire IOSSM mailbox command type
+ * @usr_cmd_opcode: User desire IOSSM mailbox command opcode
+ * @cmd_param_*:    Parameters (if applicable) for the requested IOSSM mailbox command
+ */
+struct io96b_mb_req {
+	u32 ip_type;
+	u32 ip_id;
+	u32 usr_cmd_type;
+	u32 usr_cmd_opcode;
+	u32 cmd_param[NUM_CMD_PARAM];
 };
 
 /*
@@ -88,7 +124,7 @@ struct io96b_mb_ctrl {
  */
 struct io96b_mb_resp {
 	u32 cmd_resp_status;
-	u32 cmd_resp_data[3];
+	u32 cmd_resp_data[NUM_CMD_RESPONSE_DATA];
 };
 
 /*
@@ -133,17 +169,13 @@ struct io96b_info {
 	u8 io96b_pll;
 };
 
-int io96b_mb_req(phys_addr_t io96b_csr_addr, u32 ip_type, u32 instance_id
-			, u32 usr_cmd_type, u32 usr_cmd_opcode, u32 cmd_param_0
-			, u32 cmd_param_1, u32 cmd_param_2, u32 cmd_param_3, u32 cmd_param_4
-			, u32 cmd_param_5, u32 cmd_param_6, u32 resp_data_len
-			, struct io96b_mb_resp *resp);
+int io96b_mb_req(phys_addr_t io96b_csr_addr, struct io96b_mb_req req,
+		 u32 resp_data_len, struct io96b_mb_resp *resp);
 
 /* Supported IOSSM mailbox function */
 void io96b_mb_init(struct io96b_info *io96b_ctrl);
 int io96b_cal_status(phys_addr_t addr);
 void init_mem_cal(struct io96b_info *io96b_ctrl);
-int trig_mem_cal(struct io96b_info *io96b_ctrl);
 int get_mem_technology(struct io96b_info *io96b_ctrl);
 int get_mem_width_info(struct io96b_info *io96b_ctrl);
 int ecc_enable_status(struct io96b_info *io96b_ctrl);

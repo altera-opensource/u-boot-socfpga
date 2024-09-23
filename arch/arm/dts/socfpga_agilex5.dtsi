@@ -560,9 +560,11 @@
 			status = "disabled";
 		};
 
-		sdr: sdr@10d21000 {
-			compatible = "altr,sdr-ctl", "syscon";
-			reg = <0x10d21000 0xc0>;
+		sdr: sdr@18000000 {
+			compatible = "intel,sdr-ctl-agilex5";
+			reg = <0x18000000 0x400000>;
+			resets = <&rst DDRSCH_RESET>;
+			bootph-all;
 		};
 
 		/* TODO: Update the ECC registers */

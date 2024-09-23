@@ -1,28 +1,27 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2019-2024 Intel Corporation <www.intel.com>
- *
  */
 
-#include <common.h>
+#include <div64.h>
 #include <dm.h>
 #include <errno.h>
-#include <div64.h>
 #include <fdtdec.h>
 #include <hang.h>
 #include <log.h>
 #include <ram.h>
 #include <reset.h>
-#include <asm/global_data.h>
-#include "iossm_mailbox.h"
-#include "sdram_soc64.h"
 #include <wait_bit.h>
+#include <wdt.h>
+#include <linux/bitfield.h>
+#include <linux/sizes.h>
 #include <asm/arch/firewall.h>
 #include <asm/arch/reset_manager.h>
 #include <asm/arch/system_manager.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
-#include <linux/sizes.h>
-#include <linux/bitfield.h>
+#include "iossm_mailbox.h"
+#include "sdram_soc64.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -41,6 +40,10 @@ DECLARE_GLOBAL_DATA_PTR;
 #define IO96B0_DUAL_PORT_MASK		BIT(0)
 #define IO96B0_DUAL_EMIF_MASK		BIT(1)
 
+#define FIREWALL_MPFE_SCR_IO96B0_REG		0x18000d00
+#define FIREWALL_MPFE_SCR_IO96B1_REG		0x18000d04
+#define FIREWALL_MPFE_NOC_CSR_REG		0x18000d08
+
 /* Reset type */
 enum reset_type {
 	POR_RESET,
@@ -58,8 +61,7 @@ phys_addr_t io96b_csr_reg_addr[] = {
 
 static enum reset_type get_reset_type(u32 reg)
 {
-	return (reg & ALT_SYSMGR_SCRATCH_REG_3_DDR_RESET_TYPE_MASK) >>
-		ALT_SYSMGR_SCRATCH_REG_3_DDR_RESET_TYPE_SHIFT;
+	return FIELD_GET(ALT_SYSMGR_SCRATCH_REG_3_DDR_RESET_TYPE_MASK, reg);
 }
 
 static void update_io96b_assigned_to_hps(bool dual_port_flag, bool dual_emif_flag)
@@ -73,7 +75,7 @@ static void update_io96b_assigned_to_hps(bool dual_port_flag, bool dual_emif_fla
 	      readl(BOOT_SCRATCH_COLD3_REG));
 }
 
-int set_mpfe_config(void)
+static void set_mpfe_config(void)
 {
 	/* Set mpfe_lite_intfcsel */
 	setbits_le32(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_MPFE_CONFIG, BIT(2));
@@ -83,14 +85,14 @@ int set_mpfe_config(void)
 
 	debug("%s: mpfe_config: 0x%x\n", __func__,
 	      readl(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_MPFE_CONFIG));
-
-	return 0;
 }
 
-bool is_ddr_init_hang(void)
+static bool is_ddr_init_hang(void)
 {
 	u32 reg = readl(socfpga_get_sysmgr_addr() +
 			SYSMGR_SOC64_BOOT_SCRATCH_POR0);
+
+	debug("%s: 0x%x\n", __func__, reg);
 
 	if (reg & ALT_SYSMGR_SCRATCH_REG_POR_0_DDR_PROGRESS_MASK)
 		return true;
@@ -98,7 +100,7 @@ bool is_ddr_init_hang(void)
 	return false;
 }
 
-void ddr_init_inprogress(bool start)
+static void ddr_init_inprogress(bool start)
 {
 	if (start)
 		setbits_le32(socfpga_get_sysmgr_addr() +
@@ -110,7 +112,7 @@ void ddr_init_inprogress(bool start)
 				ALT_SYSMGR_SCRATCH_REG_POR_0_DDR_PROGRESS_MASK);
 }
 
-int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl)
+static void populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl)
 {
 	struct altera_sdram_plat *plat = dev_get_plat(dev);
 	int i;
@@ -147,14 +149,12 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl)
 	/* Assign IO96B CSR base address if it is valid */
 	for (i = 0; i < io96b_ctrl->num_instance; i++) {
 		io96b_ctrl->io96b[i].io96b_csr_addr = io96b_csr_reg_addr[i];
-		debug("%s: IO96B 0x%llx CSR enabled\n", __func__
-			, io96b_ctrl->io96b[i].io96b_csr_addr);
+		debug("%s: IO96B 0x%llx CSR enabled\n", __func__,
+		      io96b_ctrl->io96b[i].io96b_csr_addr);
 	}
-
-	return 0;
 }
 
-int config_mpfe_sideband_mgr(struct udevice *dev)
+static void config_mpfe_sideband_mgr(struct udevice *dev)
 {
 	struct altera_sdram_plat *plat = dev_get_plat(dev);
 
@@ -170,8 +170,6 @@ int config_mpfe_sideband_mgr(struct udevice *dev)
 
 	debug("%s: SIDEBANDMGR_FLAGOUTSTATUS0: 0x%x\n", __func__,
 	      readl(SIDEBANDMGR_FLAGOUTSTATUS0_REG));
-
-	return 0;
 }
 
 static void config_ccu_mgr(struct udevice *dev)
@@ -182,11 +180,11 @@ static void config_ccu_mgr(struct udevice *dev)
 	if (plat->dualport || plat->dualemif) {
 		debug("%s: config interleaving on ccu reg\n", __func__);
 		ret = uclass_get_device_by_name(UCLASS_NOP,
-						"socfpga-secreg-ccu-interleaving-on", &dev);
+						"socfpga-ccu-ddr-interleaving-on", &dev);
 	} else {
 		debug("%s: config interleaving off ccu reg\n", __func__);
 		ret = uclass_get_device_by_name(UCLASS_NOP,
-						"socfpga-secreg-ccu-interleaving-off", &dev);
+						"socfpga-ccu-ddr-interleaving-off", &dev);
 	}
 
 	if (ret) {
@@ -195,7 +193,21 @@ static void config_ccu_mgr(struct udevice *dev)
 	}
 }
 
-bool hps_ocram_dbe_status(void)
+static void config_firewall_mpfe_csr(struct udevice *dev)
+{
+	int ret = 0;
+
+	debug("%s: config Firewall setting for MPFE CSR\n", __func__);
+	ret = uclass_get_device_by_name(UCLASS_NOP,
+					"socfpga-noc-fw-mpfe-csr", &dev);
+
+	if (ret) {
+		printf("Firewall setting for MPFE CSR init failed: %d\n", ret);
+		hang();
+	}
+}
+
+static bool hps_ocram_dbe_status(void)
 {
 	u32 reg = readl(BOOT_SCRATCH_COLD3_REG);
 
@@ -205,7 +217,7 @@ bool hps_ocram_dbe_status(void)
 	return false;
 }
 
-bool ddr_ecc_dbe_status(void)
+static bool ddr_ecc_dbe_status(void)
 {
 	u32 reg = readl(socfpga_get_sysmgr_addr() +
 			SYSMGR_SOC64_BOOT_SCRATCH_COLD3);
@@ -218,7 +230,7 @@ bool ddr_ecc_dbe_status(void)
 
 int sdram_mmr_init_full(struct udevice *dev)
 {
-	int ret;
+	int ret = 0;
 	int i;
 	phys_size_t hw_size;
 	struct bd_info bd = {0};
@@ -240,20 +252,10 @@ int sdram_mmr_init_full(struct udevice *dev)
 
 	/* Populating DDR handoff data */
 	debug("DDR: Checking SDRAM configuration in progress ...\n");
-	ret = populate_ddr_handoff(dev, io96b_ctrl);
-	if (ret) {
-		printf("DDR: Failed to populate DDR handoff\n");
-		free(io96b_ctrl);
-		return ret;
-	}
+	populate_ddr_handoff(dev, io96b_ctrl);
 
 	/* Configuring MPFE sideband manager registers - dual port & dual emif*/
-	ret = config_mpfe_sideband_mgr(dev);
-	if (ret) {
-		printf("DDR: Failed to configure dual port dual emif\n");
-		free(io96b_ctrl);
-		return ret;
-	}
+	config_mpfe_sideband_mgr(dev);
 
 	/* Configuring Interleave/Non-interleave ccu registers */
 	config_ccu_mgr(dev);
@@ -278,15 +280,15 @@ int sdram_mmr_init_full(struct udevice *dev)
 	ret = get_mem_technology(io96b_ctrl);
 	if (ret) {
 		printf("DDR: Failed to get DDR type\n");
-		free(io96b_ctrl);
-		return ret;
+
+		goto err;
 	}
 
 	ret = get_mem_width_info(io96b_ctrl);
 	if (ret) {
 		printf("DDR: Failed to get DDR size\n");
-		free(io96b_ctrl);
-		return ret;
+
+		goto err;
 	}
 
 	hw_size = (phys_size_t)io96b_ctrl->overall_size * SZ_1G / SZ_8;
@@ -296,8 +298,9 @@ int sdram_mmr_init_full(struct udevice *dev)
 				     (phys_size_t *)&gd->ram_size, &bd);
 	if (ret) {
 		puts("DDR: Failed to decode memory node\n");
-		free(io96b_ctrl);
-		return -ENXIO;
+		ret = -ENXIO;
+
+		goto err;
 	}
 
 	if (gd->ram_size != hw_size) {
@@ -317,9 +320,9 @@ int sdram_mmr_init_full(struct udevice *dev)
 
 	ret = ecc_enable_status(io96b_ctrl);
 	if (ret) {
-		printf("DDR: Failed to get DDR ECC status\n");
-		free(io96b_ctrl);
-		return ret;
+		printf("DDR: Failed to get ECC enabled status\n");
+
+		goto err;
 	}
 
 	/* Is HPS cold or warm reset? If yes, Skip full memory initialization if ECC
@@ -332,8 +335,8 @@ int sdram_mmr_init_full(struct udevice *dev)
 			ret = bist_mem_init_start(io96b_ctrl);
 			if (ret) {
 				printf("DDR: Failed to fully initialize DDR memory\n");
-				free(io96b_ctrl);
-				return ret;
+
+				goto err;
 			}
 		}
 
@@ -346,12 +349,7 @@ int sdram_mmr_init_full(struct udevice *dev)
  	sdram_set_firewall(&bd);
 
 	/* Firewall setting for MPFE CSR */
-	/* IO96B0_reg */
-	writel(0x1, 0x18000d00);
-	/* IO96B1_reg */
-	writel(0x1, 0x18000d04);
-	/* noc_csr */
-	writel(0x1, 0x18000d08);
+	config_firewall_mpfe_csr(dev);
 
 	printf("DDR: firewall init success\n");
 
@@ -364,7 +362,8 @@ int sdram_mmr_init_full(struct udevice *dev)
 
 	printf("DDR: init success\n");
 
+err:
 	free(io96b_ctrl);
 
-	return 0;
+	return ret;
 }
