@@ -31,15 +31,16 @@
 #include <linux/printk.h>
 #include <linux/sizes.h>
 
-static inline struct cadence_nand_info *mtd_to_cadence(struct mtd_info *mtd)
-{
-	return container_of(mtd_to_nand(mtd), struct cadence_nand_info, selected_chip);
-}
-
 static inline struct
 cdns_nand_chip *to_cdns_nand_chip(struct nand_chip *chip)
 {
 	return container_of(chip, struct cdns_nand_chip, chip);
+}
+
+static inline struct
+cadence_nand_info *to_cadence_nand_info(struct nand_hw_control *controller)
+{
+	return container_of(controller, struct cadence_nand_info, controller);
 }
 
 static bool
@@ -705,8 +706,8 @@ static void
 cadence_nand_prepare_data_size(struct mtd_info *mtd,
 			       int transfer_type)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
 	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(chip);
 	u32 sec_size = 0, offset = 0, sec_cnt = 1;
 	u32 last_sec_size = cdns_chip->sector_size;
@@ -841,9 +842,13 @@ static void cadence_nand_set_timings(struct cadence_nand_info *cadence,
 	}
 }
 
-static int cadence_nand_select_target(struct cadence_nand_info *cadence, struct nand_chip *chip)
+static int cadence_nand_select_target(struct nand_chip *chip)
 {
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(chip);
+
+	if (chip == cadence->selected_chip)
+		return 0;
 
 	if (cadence_nand_wait_for_value(cadence, CTRL_STATUS,
 					TIMEOUT_US,
@@ -859,20 +864,21 @@ static int cadence_nand_select_target(struct cadence_nand_info *cadence, struct 
 					 chip->ecc.strength);
 
 	cadence->curr_trans_type = -1;
+	cadence->selected_chip = chip;
 
 	return 0;
 }
 
 static int cadence_nand_erase(struct mtd_info *mtd, int page)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
 	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(chip);
 	int status;
-	u8 thread_nr = cdns_chip->cs[cadence->assigned_cs];
+	u8 thread_nr = cdns_chip->cs[chip->cur_cs];
 
 	cadence_nand_cdma_desc_prepare(cadence,
-				       cdns_chip->cs[cadence->assigned_cs],
+				       cdns_chip->cs[chip->cur_cs],
 				       page, 0, 0,
 				       CDMA_CT_ERASE);
 	status = cadence_nand_cdma_send_and_wait(cadence, thread_nr);
@@ -890,7 +896,7 @@ static int cadence_nand_erase(struct mtd_info *mtd, int page)
 
 static int cadence_ecc_setup(struct mtd_info *mtd, struct nand_chip *chip, int oobavail)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 	int ret;
 
 	/*
@@ -917,7 +923,7 @@ static int cadence_ecc_setup(struct mtd_info *mtd, struct nand_chip *chip, int o
 static int cadence_nand_read_bbm(struct mtd_info *mtd, struct nand_chip *chip, int page, u8 *buf)
 {
 	int status;
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(chip);
 
 	cadence_nand_prepare_data_size(mtd, TT_BBM);
@@ -929,7 +935,7 @@ static int cadence_nand_read_bbm(struct mtd_info *mtd, struct nand_chip *chip, i
 	 * defined by a memory manufacturer.
 	 */
 	status = cadence_nand_cdma_transfer(cadence,
-					    cdns_chip->cs[cadence->assigned_cs],
+					    cdns_chip->cs[chip->cur_cs],
 					    page, cadence->buf, NULL,
 					    mtd->oobsize,
 					    0, DMA_FROM_DEVICE, false);
@@ -946,10 +952,14 @@ static int cadence_nand_read_bbm(struct mtd_info *mtd, struct nand_chip *chip, i
 static int cadence_nand_write_page(struct mtd_info *mtd, struct nand_chip *chip,
 				   const u8 *buf, int oob_required, int page)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(chip);
 	int status;
 	u16 marker_val = 0xFFFF;
+
+	status = cadence_nand_select_target(chip);
+	if (status)
+		return status;
 
 	cadence_nand_set_skip_bytes_conf(cadence, cdns_chip->bbm_len,
 					 mtd->writesize
@@ -979,7 +989,7 @@ static int cadence_nand_write_page(struct mtd_info *mtd, struct nand_chip *chip,
 			oob = cadence->buf + mtd->writesize;
 
 		status = cadence_nand_cdma_transfer(cadence,
-						    cdns_chip->cs[cadence->assigned_cs],
+						    cdns_chip->cs[chip->cur_cs],
 						    page, (void *)buf, oob,
 						    mtd->writesize,
 						    cdns_chip->avail_oob_size,
@@ -1003,7 +1013,7 @@ static int cadence_nand_write_page(struct mtd_info *mtd, struct nand_chip *chip,
 	cadence_nand_prepare_data_size(mtd, TT_MAIN_OOB_AREAS);
 
 	return cadence_nand_cdma_transfer(cadence,
-					  cdns_chip->cs[cadence->assigned_cs],
+					  cdns_chip->cs[chip->cur_cs],
 					  page, cadence->buf, NULL,
 					  mtd->writesize
 					  + cdns_chip->avail_oob_size,
@@ -1013,7 +1023,7 @@ static int cadence_nand_write_page(struct mtd_info *mtd, struct nand_chip *chip,
 static int cadence_nand_write_oob(struct mtd_info *mtd, struct nand_chip *chip,
 				  int page)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 
 	memset(cadence->buf, 0xFF, mtd->writesize);
 
@@ -1023,7 +1033,7 @@ static int cadence_nand_write_oob(struct mtd_info *mtd, struct nand_chip *chip,
 static int cadence_nand_write_page_raw(struct mtd_info *mtd, struct nand_chip *chip,
 				       const u8 *buf, int oob_required, int page)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(chip);
 	int writesize = mtd->writesize;
 	int oobsize = mtd->oobsize;
@@ -1034,7 +1044,11 @@ static int cadence_nand_write_page_raw(struct mtd_info *mtd, struct nand_chip *c
 	int oob_skip = cdns_chip->bbm_len;
 	size_t size = writesize + oobsize;
 	int i, pos, len;
+	int status;
 
+	status = cadence_nand_select_target(chip);
+	if (status)
+		return status;
 	/*
 	 * Fill the buffer with 0xff first except the full page transfer.
 	 * This simplifies the logic.
@@ -1107,7 +1121,7 @@ static int cadence_nand_write_page_raw(struct mtd_info *mtd, struct nand_chip *c
 	cadence_nand_prepare_data_size(mtd, TT_RAW_PAGE);
 
 	return cadence_nand_cdma_transfer(cadence,
-					  cdns_chip->cs[cadence->assigned_cs],
+					  cdns_chip->cs[chip->cur_cs],
 					  page, cadence->buf, NULL,
 					  mtd->writesize +
 					  mtd->oobsize,
@@ -1123,10 +1137,14 @@ static int cadence_nand_write_oob_raw(struct mtd_info *mtd, struct nand_chip *ch
 static int cadence_nand_read_page(struct mtd_info *mtd, struct nand_chip *chip,
 				  u8 *buf, int oob_required, int page)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(chip);
-	int status = 0;
+	int status;
 	int ecc_err_count = 0;
+
+	status = cadence_nand_select_target(chip);
+	if (status)
+		return status;
 
 	cadence_nand_set_skip_bytes_conf(cadence, cdns_chip->bbm_len,
 					 mtd->writesize
@@ -1147,7 +1165,7 @@ static int cadence_nand_read_page(struct mtd_info *mtd, struct nand_chip *chip,
 
 		cadence_nand_prepare_data_size(mtd, TT_MAIN_OOB_AREA_EXT);
 		status = cadence_nand_cdma_transfer(cadence,
-						    cdns_chip->cs[cadence->assigned_cs],
+						    cdns_chip->cs[chip->cur_cs],
 						    page, buf, oob,
 						    mtd->writesize,
 						    cdns_chip->avail_oob_size,
@@ -1156,7 +1174,7 @@ static int cadence_nand_read_page(struct mtd_info *mtd, struct nand_chip *chip,
 	} else {
 		cadence_nand_prepare_data_size(mtd, TT_MAIN_OOB_AREAS);
 		status = cadence_nand_cdma_transfer(cadence,
-						    cdns_chip->cs[cadence->assigned_cs],
+						    cdns_chip->cs[chip->cur_cs],
 						    page, cadence->buf,
 						    NULL, mtd->writesize
 						    + cdns_chip->avail_oob_size,
@@ -1197,7 +1215,7 @@ static int cadence_nand_read_page(struct mtd_info *mtd, struct nand_chip *chip,
 static int cadence_nand_read_oob(struct mtd_info *mtd, struct nand_chip *chip,
 				 int page)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 
 	return cadence_nand_read_page(mtd, chip, cadence->buf, 1, page);
 }
@@ -1205,7 +1223,7 @@ static int cadence_nand_read_oob(struct mtd_info *mtd, struct nand_chip *chip,
 static int cadence_nand_read_page_raw(struct mtd_info *mtd, struct nand_chip *chip,
 				      u8 *buf, int oob_required, int page)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(chip);
 	int oob_skip = cdns_chip->bbm_len;
 	int writesize = mtd->writesize;
@@ -1214,13 +1232,17 @@ static int cadence_nand_read_page_raw(struct mtd_info *mtd, struct nand_chip *ch
 	int ecc_bytes = chip->ecc.bytes;
 	void *tmp_buf = cadence->buf;
 	int i, pos, len;
-	int status = 0;
+	int status;
+
+	status = cadence_nand_select_target(chip);
+	if (status)
+		return status;
 
 	cadence_nand_set_skip_bytes_conf(cadence, 0, 0, 0);
 
 	cadence_nand_prepare_data_size(mtd, TT_RAW_PAGE);
 	status = cadence_nand_cdma_transfer(cadence,
-					    cdns_chip->cs[cadence->assigned_cs],
+					    cdns_chip->cs[chip->cur_cs],
 					    page, cadence->buf, NULL,
 					    mtd->writesize
 					    + mtd->oobsize,
@@ -1306,7 +1328,8 @@ static int cadence_nand_read_oob_raw(struct mtd_info *mtd, struct nand_chip *chi
 
 static void cadence_nand_read_buf(struct mtd_info *mtd, u8 *buf, int len)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 	u8 thread_nr = 0;
 	u32 sdma_size;
 	int status;
@@ -1333,7 +1356,8 @@ static void cadence_nand_read_buf(struct mtd_info *mtd, u8 *buf, int len)
 
 static void cadence_nand_write_buf(struct mtd_info *mtd, const u8 *buf, int len)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 	u8 thread_nr = 0;
 	u32 sdma_size;
 	int status;
@@ -1358,9 +1382,10 @@ static void cadence_nand_write_buf(struct mtd_info *mtd, const u8 *buf, int len)
 	}
 }
 
-static int cadence_nand_cmd_opcode(struct cadence_nand_info *cadence, unsigned int op_id)
+static int cadence_nand_cmd_opcode(struct nand_chip *chip, unsigned int op_id)
 {
-	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(&cadence->selected_chip);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
+	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(chip);
 	u64 mini_ctrl_cmd = 0;
 	int ret;
 
@@ -1369,7 +1394,7 @@ static int cadence_nand_cmd_opcode(struct cadence_nand_info *cadence, unsigned i
 	mini_ctrl_cmd |= FIELD_PREP(GCMD_LAY_INPUT_CMD, op_id);
 
 	ret = cadence_nand_generic_cmd_send(cadence,
-					    cdns_chip->cs[cadence->assigned_cs],
+					    cdns_chip->cs[chip->cur_cs],
 					    mini_ctrl_cmd);
 
 	if (ret)
@@ -1379,10 +1404,11 @@ static int cadence_nand_cmd_opcode(struct cadence_nand_info *cadence, unsigned i
 	return ret;
 }
 
-static int cadence_nand_cmd_address(struct cadence_nand_info *cadence,
+static int cadence_nand_cmd_address(struct nand_chip *chip,
 				    unsigned int naddrs, const u8 *addrs)
 {
-	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(&cadence->selected_chip);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
+	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(chip);
 	u64 address = 0;
 	u64 mini_ctrl_cmd = 0;
 	int ret;
@@ -1402,7 +1428,7 @@ static int cadence_nand_cmd_address(struct cadence_nand_info *cadence,
 				    naddrs - 1);
 
 	ret = cadence_nand_generic_cmd_send(cadence,
-					    cdns_chip->cs[cadence->assigned_cs],
+					    cdns_chip->cs[chip->cur_cs],
 					    mini_ctrl_cmd);
 
 	if (ret)
@@ -1411,10 +1437,11 @@ static int cadence_nand_cmd_address(struct cadence_nand_info *cadence,
 	return ret;
 }
 
-static int cadence_nand_cmd_data(struct cadence_nand_info *cadence,
+static int cadence_nand_cmd_data(struct nand_chip *chip,
 				 unsigned int len, u8 mode)
 {
-	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(&cadence->selected_chip);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
+	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(chip);
 	u64 mini_ctrl_cmd = 0;
 	int ret;
 
@@ -1429,7 +1456,7 @@ static int cadence_nand_cmd_data(struct cadence_nand_info *cadence,
 	mini_ctrl_cmd |= FIELD_PREP(GCMD_LAST_SIZE, len);
 
 	ret = cadence_nand_generic_cmd_send(cadence,
-					    cdns_chip->cs[cadence->assigned_cs],
+					    cdns_chip->cs[chip->cur_cs],
 					    mini_ctrl_cmd);
 
 	if (ret) {
@@ -1442,13 +1469,13 @@ static int cadence_nand_cmd_data(struct cadence_nand_info *cadence,
 
 static int cadence_nand_waitfunc(struct mtd_info *mtd, struct nand_chip *chip)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
-	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(&cadence->selected_chip);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
+	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(chip);
 	int status;
 
 	status = cadence_nand_wait_for_value(cadence, RBN_SETINGS,
 					     TIMEOUT_US,
-					     BIT(cdns_chip->cs[cadence->assigned_cs]),
+					     BIT(cdns_chip->cs[chip->cur_cs]),
 					     false);
 	return status;
 }
@@ -1529,7 +1556,8 @@ static inline int of_get_child_count(const ofnode node)
 static int cadence_setup_data_interface(struct mtd_info *mtd, int chipnr,
 					const struct nand_data_interface *conf)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(mtd_to_nand(mtd));
 	const struct nand_sdr_timings *sdr;
 	struct cadence_nand_timings *t = &cdns_chip->timings;
@@ -1815,12 +1843,13 @@ static int cadence_setup_data_interface(struct mtd_info *mtd, int chipnr,
 	return 0;
 }
 
-static int cadence_nand_attach_chip(struct mtd_info *mtd, struct nand_chip *chip)
+static int cadence_nand_attach_chip(struct nand_chip *chip)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 	struct cdns_nand_chip *cdns_chip = to_cdns_nand_chip(chip);
 	static struct nand_ecclayout nand_oob;
 	u32 ecc_size;
+	struct mtd_info *mtd = nand_to_mtd(chip);
 	int ret;
 
 	if (chip->options & NAND_BUSWIDTH_16) {
@@ -1903,8 +1932,8 @@ static int cadence_nand_attach_chip(struct mtd_info *mtd, struct nand_chip *chip
 
 	mtd_set_ooblayout(mtd, &cadence_nand_ooblayout_ops);
 
-	nand_oob.eccbytes = cadence->selected_chip.ecc.bytes;
-	cadence->selected_chip.ecc.layout = &nand_oob;
+	nand_oob.eccbytes = cdns_chip->chip.ecc.bytes;
+	cdns_chip->chip.ecc.layout = &nand_oob;
 
 	return 0;
 }
@@ -1924,14 +1953,14 @@ static void cadence_nand_select_chip(struct mtd_info *mtd, int chipnr)
 
 static int cadence_nand_status(struct mtd_info *mtd, unsigned int command)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct nand_chip *chip = mtd_to_nand(mtd);
 	int ret = 0;
 
-	ret = cadence_nand_cmd_opcode(cadence, command);
+	ret = cadence_nand_cmd_opcode(chip, command);
 	if (ret)
 		return ret;
 
-	ret = cadence_nand_cmd_data(cadence, 1, GCMD_DIR_READ);
+	ret = cadence_nand_cmd_data(chip, 1, GCMD_DIR_READ);
 	if (ret)
 		return ret;
 
@@ -1940,19 +1969,19 @@ static int cadence_nand_status(struct mtd_info *mtd, unsigned int command)
 
 static int cadence_nand_readid(struct mtd_info *mtd, int offset_in_page, unsigned int command)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct nand_chip *chip = mtd_to_nand(mtd);
 	u8 addrs = (u8)offset_in_page;
 	int ret = 0;
 
-	ret = cadence_nand_cmd_opcode(cadence, command);
+	ret = cadence_nand_cmd_opcode(chip, command);
 	if (ret)
 		return ret;
 
-	ret = cadence_nand_cmd_address(cadence, ONE_CYCLE, &addrs);
+	ret = cadence_nand_cmd_address(chip, ONE_CYCLE, &addrs);
 	if (ret)
 		return ret;
 
-	ret = cadence_nand_cmd_data(cadence, 8, GCMD_DIR_READ);
+	ret = cadence_nand_cmd_data(chip, 8, GCMD_DIR_READ);
 	if (ret)
 		return ret;
 
@@ -1961,15 +1990,14 @@ static int cadence_nand_readid(struct mtd_info *mtd, int offset_in_page, unsigne
 
 static int cadence_nand_param(struct mtd_info *mtd, u8 offset_in_page, unsigned int command)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
 	struct nand_chip *chip = mtd_to_nand(mtd);
 	int ret = 0;
 
-	ret = cadence_nand_cmd_opcode(cadence, command);
+	ret = cadence_nand_cmd_opcode(chip, command);
 	if (ret)
 		return ret;
 
-	ret = cadence_nand_cmd_address(cadence, ONE_CYCLE, &offset_in_page);
+	ret = cadence_nand_cmd_address(chip, ONE_CYCLE, &offset_in_page);
 	if (ret)
 		return ret;
 
@@ -1977,7 +2005,7 @@ static int cadence_nand_param(struct mtd_info *mtd, u8 offset_in_page, unsigned 
 	if (ret)
 		return ret;
 
-	ret = cadence_nand_cmd_data(cadence, sizeof(struct nand_jedec_params), GCMD_DIR_READ);
+	ret = cadence_nand_cmd_data(chip, sizeof(struct nand_jedec_params), GCMD_DIR_READ);
 	if (ret)
 		return ret;
 
@@ -1986,11 +2014,10 @@ static int cadence_nand_param(struct mtd_info *mtd, u8 offset_in_page, unsigned 
 
 static int cadence_nand_reset(struct mtd_info *mtd, unsigned int command)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
 	struct nand_chip *chip = mtd_to_nand(mtd);
 	int ret = 0;
 
-	ret = cadence_nand_cmd_opcode(cadence, command);
+	ret = cadence_nand_cmd_opcode(chip, command);
 	if (ret)
 		return ret;
 
@@ -2003,22 +2030,22 @@ static int cadence_nand_reset(struct mtd_info *mtd, unsigned int command)
 
 static int cadence_nand_features(struct mtd_info *mtd, u8 offset_in_page, u32 command)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct nand_chip *chip = mtd_to_nand(mtd);
 	int ret = 0;
 
-	ret = cadence_nand_cmd_opcode(cadence, command);
+	ret = cadence_nand_cmd_opcode(chip, command);
 	if (ret)
 		return ret;
 
-	ret = cadence_nand_cmd_address(cadence, ONE_CYCLE, &offset_in_page);
+	ret = cadence_nand_cmd_address(chip, ONE_CYCLE, &offset_in_page);
 	if (ret)
 		return ret;
 
 	if (command == NAND_CMD_GET_FEATURES)
-		ret = cadence_nand_cmd_data(cadence, ONFI_SUBFEATURE_PARAM_LEN,
+		ret = cadence_nand_cmd_data(chip, ONFI_SUBFEATURE_PARAM_LEN,
 					    GCMD_DIR_READ);
 	else
-		ret = cadence_nand_cmd_data(cadence, ONFI_SUBFEATURE_PARAM_LEN,
+		ret = cadence_nand_cmd_data(chip, ONFI_SUBFEATURE_PARAM_LEN,
 					    GCMD_DIR_WRITE);
 
 	return ret;
@@ -2027,8 +2054,8 @@ static int cadence_nand_features(struct mtd_info *mtd, u8 offset_in_page, u32 co
 static void cadence_nand_cmdfunc(struct mtd_info *mtd, u32 command,
 				 int offset_in_page, int page)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
 	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 	int ret = 0;
 
 	cadence->cmd = command;
@@ -2061,7 +2088,7 @@ static void cadence_nand_cmdfunc(struct mtd_info *mtd, u32 command,
 	}
 
 	if (cadence->cmd == NAND_CMD_RESET) {
-		ret = cadence_nand_select_target(cadence, chip);
+		ret = cadence_nand_select_target(chip);
 		if (ret) {
 			dev_err(cadence->dev, "Chip select failure after reset\n");
 		}
@@ -2073,7 +2100,8 @@ static void cadence_nand_cmdfunc(struct mtd_info *mtd, u32 command,
 
 static int cadence_nand_dev_ready(struct mtd_info *mtd)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 
 	if (cadence_nand_wait_for_value(cadence, CTRL_STATUS,
 					TIMEOUT_US,
@@ -2085,7 +2113,8 @@ static int cadence_nand_dev_ready(struct mtd_info *mtd)
 
 static u8 cadence_nand_read_byte(struct mtd_info *mtd)
 {
-	struct cadence_nand_info *cadence = mtd_to_cadence(mtd);
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct cadence_nand_info *cadence = to_cadence_nand_info(chip->controller);
 	u32 size = 1;
 	u8 val;
 
@@ -2165,12 +2194,14 @@ static int cadence_nand_chip_init(struct cadence_nand_info *cadence, ofnode node
 		cdns_chip->cs[i] = cs;
 	}
 
-	cadence->selected_chip = cdns_chip->chip;
-	chip = &cadence->selected_chip;
-	mtd = nand_to_mtd(chip);
+	chip = &cdns_chip->chip;
+	chip->controller = &cadence->controller;
 	nand_set_flash_node(chip, node);
-	chip->options |= NAND_BUSWIDTH_AUTO;
 
+	mtd = nand_to_mtd(chip);
+	mtd->dev->parent = cadence->dev;
+
+	chip->options |= NAND_BUSWIDTH_AUTO;
 	chip->select_chip = cadence_nand_select_chip;
 	chip->cmdfunc = cadence_nand_cmdfunc;
 	chip->dev_ready = cadence_nand_dev_ready;
@@ -2187,7 +2218,7 @@ static int cadence_nand_chip_init(struct cadence_nand_info *cadence, ofnode node
 		goto free_buf;
 	}
 
-	ret = cadence_nand_attach_chip(mtd, chip);
+	ret = cadence_nand_attach_chip(chip);
 	if (ret) {
 		dev_err(cadence->dev, "Chip not able to attached\n");
 		goto free_buf;
@@ -2204,6 +2235,8 @@ static int cadence_nand_chip_init(struct cadence_nand_info *cadence, ofnode node
 		dev_err(cadence->dev, "Failed to register MTD: %d\n", ret);
 		goto free_buf;
 	}
+
+	return 0;
 
 free_buf:
 	devm_kfree(cadence->dev, cdns_chip);
@@ -2240,7 +2273,7 @@ static int cadence_nand_init(struct cadence_nand_info *cadence)
 {
 	int ret;
 
-	cadence->cdma_desc = dma_alloc_coherent(sizeof(struct cadence_nand_cdma_desc),
+	cadence->cdma_desc = dma_alloc_coherent(sizeof(*cadence->cdma_desc),
 						(unsigned long *)&cadence->dma_cdma_desc);
 	if (!cadence->cdma_desc)
 		return -ENOMEM;
@@ -2270,7 +2303,7 @@ static int cadence_nand_init(struct cadence_nand_info *cadence)
 	cadence->buf = kzalloc(cadence->buf_size, GFP_KERNEL);
 	if (!cadence->buf) {
 		ret = -ENOMEM;
-		goto free_buf_desc;
+		goto free_buf;
 	}
 
 	return 0;

@@ -441,6 +441,7 @@ struct cdns_nand_caps {
 };
 
 struct cadence_nand_info {
+    struct nand_hw_control controller;
     struct udevice *dev;
     struct reset_ctl softphy_reset;
     struct reset_ctl nand_reset;
@@ -481,6 +482,7 @@ struct cadence_nand_info {
 
     struct clk clk;
     u32 nf_clk_rate;
+
     /*
      * Estimated Board delay. The value includes the total
      * round trip delay for the signals and is used for deciding on values
@@ -488,7 +490,7 @@ struct cadence_nand_info {
      */
     u32 board_delay;
 
-    struct nand_chip selected_chip;
+    struct nand_chip *selected_chip;
 
     unsigned long assigned_cs;
     struct list_head chips;
