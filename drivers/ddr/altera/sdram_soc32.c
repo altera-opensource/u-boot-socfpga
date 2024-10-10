@@ -8,6 +8,9 @@
 #include <linux/sizes.h>
 #include "sdram_soc32.h"
 #include <watchdog.h>
+#if !defined(CONFIG_HW_WATCHDOG)
+#include <asm/arch/reset_manager.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -52,7 +55,26 @@ void sdram_init_ecc_bits(void)
 		memset((void *)start_addr, 0, size_init);
 		size -= size_init;
 		start_addr += size_init;
-		schedule();
+
+		if(IS_ENABLED(CONFIG_HW_WATCHDOG)) {
+			/*
+			 * In case the watchdog is enabled,
+			 * make sure to (re-)configure watchdog
+			 * so that the defined timeout is valid.
+			 */
+			debug("%s: %d\n", __func__, __LINE__);
+			hw_watchdog_init();
+		} else {
+			/*
+			 * If the HW watchdog is NOT enabled,
+			 * make sure it is not running, because
+			 * it is enabled in the preloader and
+			 * causing boot loop if is not handled.
+			 */
+			debug("%s: %d\n", __func__, __LINE__);
+			socfpga_per_reset(SOCFPGA_RESET(L4WD0), 1);
+			socfpga_per_reset(SOCFPGA_RESET(L4WD0), 0);
+		}
 	}
 
 	dcache_disable();
