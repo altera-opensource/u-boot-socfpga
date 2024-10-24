@@ -3,7 +3,6 @@
  * Copyright 2023 Intel Coporation.
  */
 
-#include <common.h>
 #include <dm.h>
 #include <dw-i3c.h>
 #include <errno.h>

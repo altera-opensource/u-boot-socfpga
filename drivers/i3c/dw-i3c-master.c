@@ -3,7 +3,6 @@
  * Copyright 2023 Intel Coporation.
  */
 #include <asm/io.h>
-#include <common.h>
 #include <dm.h>
 #include <dw-i3c.h>
 #include <i2c.h>

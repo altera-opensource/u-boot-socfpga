@@ -5,7 +5,6 @@
 
 #include <bootretry.h>
 #include <cli.h>
-#include <common.h>
 #include <command.h>
 #include <console.h>
 #include <dm.h>

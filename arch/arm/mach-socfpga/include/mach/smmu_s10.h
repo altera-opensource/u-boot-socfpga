@@ -4,8 +4,6 @@
  * SPDX-License-Identifier:    GPL-2.0
  */
 
-#include <common.h>
-
 /* SMMU registers */
 #define SMMU_SCR0			0
 #define SMMU_SIDR0			0x20
