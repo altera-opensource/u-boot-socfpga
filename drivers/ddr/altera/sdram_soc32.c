@@ -3,7 +3,6 @@
  * Copyright (C) 2020 Intel Corporation <www.intel.com>
  */
 
-#include <common.h>
 #include <asm/system.h>
 #include <cpu_func.h>
 #include <linux/sizes.h>
