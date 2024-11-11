@@ -8,6 +8,7 @@
 #include <linux/sizes.h>
 #include "sdram_soc32.h"
 #include <watchdog.h>
+#include <wait_bit.h>
 #if !defined(CONFIG_HW_WATCHDOG)
 #include <asm/arch/reset_manager.h>
 #endif
