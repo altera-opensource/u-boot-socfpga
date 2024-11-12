@@ -3,6 +3,7 @@
  * Copyright (C) 2019-2024 Intel Corporation <www.intel.com>
  */
 
+#include <stdlib.h>
 #include <div64.h>
 #include <dm.h>
 #include <errno.h>
@@ -44,6 +45,8 @@ DECLARE_GLOBAL_DATA_PTR;
 #define FIREWALL_MPFE_SCR_IO96B1_REG		0x18000d04
 #define FIREWALL_MPFE_NOC_CSR_REG		0x18000d08
 
+#define MEMORY_BANK_MAX_COUNT 3
+
 /* Reset type */
 enum reset_type {
 	POR_RESET,
@@ -57,6 +60,17 @@ enum reset_type {
 phys_addr_t io96b_csr_reg_addr[] = {
 	0x18400000, /* IO96B_0 CSR registers address */
 	0x18800000  /* IO96B_1 CSR registers address */
+};
+
+struct dram_bank_info_s {
+	phys_addr_t start;
+	phys_size_t max_size;
+};
+
+struct dram_bank_info_s dram_bank_info[MEMORY_BANK_MAX_COUNT] = {
+	{0x80000000, 0x80000000},	/* Memory Bank 0 */
+	{0x880000000, 0x780000000},	/* Memory Bank 1 */
+	{0x8800000000, 0x7800000000}	/* Memory Bank 2 */
 };
 
 static enum reset_type get_reset_type(u32 reg)
@@ -221,10 +235,10 @@ int sdram_mmr_init_full(struct udevice *dev)
 {
 	int ret = 0;
 	phys_size_t hw_size;
-	struct bd_info bd = {0};
 	struct altera_sdram_plat *plat = dev_get_plat(dev);
 	struct altera_sdram_priv *priv = dev_get_priv(dev);
 	struct io96b_info *io96b_ctrl = malloc(sizeof(*io96b_ctrl));
+	int i;
 
 	u32 reg = readl(BOOT_SCRATCH_COLD3_REG);
 	enum reset_type reset_t = get_reset_type(reg);
@@ -235,6 +249,9 @@ int sdram_mmr_init_full(struct udevice *dev)
 
 	debug("DDR: SDRAM init in progress ...\n");
 	ddr_init_inprogress(true);
+
+	gd->bd = (struct bd_info *)malloc(sizeof(struct bd_info));
+	memset(gd->bd, '\0', sizeof(struct bd_info));
 
 	debug("DDR: Address MPFE 0x%llx\n", plat->mpfe_base_addr);
 
@@ -278,7 +295,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 
 	/* Get bank configuration from devicetree */
 	ret = fdtdec_decode_ram_size(gd->fdt_blob, NULL, 0, NULL,
-				     (phys_size_t *)&gd->ram_size, &bd);
+				     (phys_size_t *)&gd->ram_size, gd->bd);
 	if (ret) {
 		puts("DDR: Failed to decode memory node\n");
 		ret = -ENXIO;
@@ -286,17 +303,54 @@ int sdram_mmr_init_full(struct udevice *dev)
 		goto err;
 	}
 
-	if (gd->ram_size != hw_size) {
+	if (gd->ram_size > hw_size) {
+		printf("DDR: Warning: DRAM size from device tree (%lld MiB) exceeds\n",
+		       gd->ram_size >> 20);
+		printf(" the actual hardware capacity(%lld MiB). Memory configuration will be\n",
+		       hw_size >> 20);
+		printf(" adjusted to match the detected hardware size.\n");
+		gd->ram_size = 0;
+	}
+
+	if (gd->ram_size > 0 && gd->ram_size != hw_size) {
 		printf("DDR: Warning: DRAM size from device tree (%lld MiB)\n",
 		       gd->ram_size >> 20);
-		printf(" mismatch with hardware (%lld MiB).\n",
+		printf(" mismatch with hardware capacity(%lld MiB).\n",
 		       hw_size >> 20);
 	}
 
-	if (gd->ram_size > hw_size) {
-		printf("DDR: Error: DRAM size from device tree is greater\n");
-		printf(" than hardware size.\n");
-		hang();
+	if (gd->ram_size == 0 && hw_size > 0) {
+		phys_size_t remaining_size, size_counter = 0;
+		u8 config_dram_banks;
+
+		if (CONFIG_NR_DRAM_BANKS > MEMORY_BANK_MAX_COUNT) {
+			printf("DDR: Warning: CONFIG_NR_DRAM_BANKS(%d) is bigger than Max Memory Bank count(%d).\n",
+			       CONFIG_NR_DRAM_BANKS, MEMORY_BANK_MAX_COUNT);
+			printf(" Max Memory Bank count is in use instead of CONFIG_NR_DRAM_BANKS.\n");
+			config_dram_banks = MEMORY_BANK_MAX_COUNT;
+		} else {
+			config_dram_banks = CONFIG_NR_DRAM_BANKS;
+		}
+
+		for (i = 0; i < config_dram_banks; i++) {
+			remaining_size = hw_size - size_counter;
+			if (remaining_size <= dram_bank_info[i].max_size) {
+				gd->bd->bi_dram[i].start = dram_bank_info[i].start;
+				gd->bd->bi_dram[i].size = remaining_size;
+				debug("Memory bank[%d]  Starting address: 0x%llx  size: 0x%llx\n",
+				      i, gd->bd->bi_dram[i].start, gd->bd->bi_dram[i].size);
+				break;
+			}
+
+			gd->bd->bi_dram[i].start = dram_bank_info[i].start;
+			gd->bd->bi_dram[i].size = dram_bank_info[i].max_size;
+
+			debug("Memory bank[%d]  Starting address: 0x%llx  size: 0x%llx\n",
+			      i, gd->bd->bi_dram[i].start, gd->bd->bi_dram[i].size);
+			size_counter += gd->bd->bi_dram[i].size;
+		}
+
+		gd->ram_size = hw_size;
 	}
 
 	printf("%s: %lld MiB\n", io96b_ctrl->ddr_type, gd->ram_size >> 20);
@@ -350,18 +404,17 @@ int sdram_mmr_init_full(struct udevice *dev)
 		printf("SDRAM-ECC: Initialized success\n");
 	}
 
-	sdram_size_check(&bd);
+	sdram_size_check(gd->bd);
 	printf("DDR: size check success\n");
 
- 	sdram_set_firewall(&bd);
+	sdram_set_firewall(gd->bd);
 
 	/* Firewall setting for MPFE CSR */
 	config_firewall_mpfe_csr(dev);
 
 	printf("DDR: firewall init success\n");
 
-
-	priv->info.base = bd.bi_dram[0].start;
+	priv->info.base = gd->bd->bi_dram[0].start;
 	priv->info.size = gd->ram_size;
 
 	/* Ending DDR driver initialization success tracking */
