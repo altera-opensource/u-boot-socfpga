@@ -1970,6 +1970,7 @@ static struct rsu_ll_intf qspi_ll_intf = {
 	.cpb_ops.corrupted = corrupted_cpb
 };
 
+#if CONFIG_IS_ENABLED(SOCFPGA_RSU_MULTIFLASH)
 int get_num_flash(u32 *flash_enabled)
 {
 	int flash_count;
@@ -2013,11 +2014,11 @@ int get_num_flash(u32 *flash_enabled)
 
 	return flash_count;
 }
+#endif
 
 int rsu_ll_qspi_init(struct rsu_ll_intf **intf)
 {
 	u32 spt_offset[SPT_OFFSET_MBOX];
-	u32 flash_enabled[QSPI_MAX_DEVICE];
 	int found;
 
 	found = 0;
@@ -2030,14 +2031,16 @@ int rsu_ll_qspi_init(struct rsu_ll_intf **intf)
 		return -ECOMM;
 	}
 
-	if (CONFIG_IS_ENABLED(SOCFPGA_RSU_MULTIFLASH)) {
-		/* retrieve qspi info from mailbox */
-		num_flash = get_num_flash(flash_enabled);
-		printf("%s: MULTIFLASH_ENABLED: num_flash #%d\n", __func__, num_flash);
-	} else {
-		num_flash = 1;
-		printf("%s: MULTIFLASH_DISABLED: num_flash #%d\n", __func__, num_flash);
-	}
+#if CONFIG_IS_ENABLED(SOCFPGA_RSU_MULTIFLASH)
+	u32 flash_enabled[QSPI_MAX_DEVICE];
+
+	/* retrieve qspi info from mailbox */
+	num_flash = get_num_flash(flash_enabled);
+	printf("%s: MULTIFLASH_ENABLED: num_flash #%d\n", __func__, num_flash);
+#else
+	num_flash = 1;
+	printf("%s: MULTIFLASH_DISABLED: num_flash #%d\n", __func__, num_flash);
+#endif
 
 	flashlist = (struct spi_flash **) malloc(sizeof(struct spi_flash *) *
 						 QSPI_MAX_DEVICE);
@@ -2048,42 +2051,42 @@ int rsu_ll_qspi_init(struct rsu_ll_intf **intf)
 		return -ECOMM;
 	}
 
-	if (CONFIG_IS_ENABLED(SOCFPGA_RSU_MULTIFLASH)) {
-		for (int i = 0; i < QSPI_MAX_DEVICE; i++) {
-			debug("%s: probe flash #%d\n", __func__, i);
-			if (flash_enabled[i] > 0) {
-				/* retrieve data from flash */
-				flash = spi_flash_probe(CONFIG_SF_DEFAULT_BUS,
-							i,
-							CONFIG_SF_DEFAULT_SPEED,
-							CONFIG_SF_DEFAULT_MODE);
-				if (!flash) {
-					rsu_log(RSU_ERR, "SPI probe failed.\n");
-					ll_exit();
-					/* return only if no flash found */
-					if (i == num_flash + 1 && found == 0)
-						return -ENODEV;
-				}
-
-				/* store initialized flash into flashlist */
-				flashlist[i] = flash;
-				found++;
+#if CONFIG_IS_ENABLED(SOCFPGA_RSU_MULTIFLASH)
+	for (int i = 0; i < QSPI_MAX_DEVICE; i++) {
+		debug("%s: probe flash #%d\n", __func__, i);
+		if (flash_enabled[i] > 0) {
+			/* retrieve data from flash */
+			flash = spi_flash_probe(CONFIG_SF_DEFAULT_BUS,
+						i,
+						CONFIG_SF_DEFAULT_SPEED,
+						CONFIG_SF_DEFAULT_MODE);
+			if (!flash) {
+				rsu_log(RSU_ERR, "SPI probe failed.\n");
+				ll_exit();
+				/* return only if no flash found */
+				if (i == num_flash + 1 && found == 0)
+					return -ENODEV;
 			}
-		}
-	} else {
-		/* retrieve data from flash */
-		flash = spi_flash_probe(CONFIG_SF_DEFAULT_BUS,
-					CONFIG_SF_DEFAULT_CS,
-					CONFIG_SF_DEFAULT_SPEED,
-					CONFIG_SF_DEFAULT_MODE);
-		if (!flash) {
-			ll_exit();
-			rsu_log(RSU_ERR, "SPI probe failed.\n");
-			return -ENODEV;
-		}
 
-		flashlist[0] = flash;
+			/* store initialized flash into flashlist */
+			flashlist[i] = flash;
+			found++;
+		}
 	}
+#else
+	/* retrieve data from flash */
+	flash = spi_flash_probe(CONFIG_SF_DEFAULT_BUS,
+				CONFIG_SF_DEFAULT_CS,
+				CONFIG_SF_DEFAULT_SPEED,
+				CONFIG_SF_DEFAULT_MODE);
+	if (!flash) {
+		ll_exit();
+		rsu_log(RSU_ERR, "SPI probe failed.\n");
+		return -ENODEV;
+	}
+
+	flashlist[0] = flash;
+#endif
 
 	spt0_offset = spt_offset[1];
 	spt1_offset = spt_offset[3];
