@@ -48,6 +48,10 @@ void board_init_f(ulong dummy)
 
 	timer_init();
 
+	mbox_init();
+
+	mbox_hps_stage_notify(HPS_EXECUTION_STATE_FSBL);
+
 	ret = uclass_get_device(UCLASS_CLK, 0, &dev);
 	if (ret) {
 		debug("Clock init failed: %d\n", ret);
@@ -98,9 +102,6 @@ void board_init_f(ulong dummy)
 		& 0xfffcffff) |
 		(CLKMGR_NOCDIV_SOFTPHY_DIV_ONE << CLKMGR_NOCDIV_SOFTPHY_OFFSET),
 		socfpga_get_clkmgr_addr() + CLKMGR_MAINPLL_NOCDIV);
-
-
-	mbox_init();
 
 #ifdef CONFIG_CADENCE_QSPI
 	mbox_qspi_open();
