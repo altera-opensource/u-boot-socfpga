@@ -462,6 +462,11 @@ static int cadence_nand_cdma_finish(struct cadence_nand_info *cadence)
 	struct cadence_nand_cdma_desc *desc_ptr = cadence->cdma_desc;
 	u8 status = STAT_BUSY;
 
+	invalidate_dcache_range((uintptr_t)cadence->cdma_desc,
+				(uintptr_t)cadence->cdma_desc +
+				ROUND(sizeof(struct cadence_nand_cdma_desc),
+				      ARCH_DMA_MINALIGN));
+
 	if (desc_ptr->status & CDMA_CS_FAIL) {
 		status = cadence_nand_check_desc_error(cadence,
 						       desc_ptr->status);
