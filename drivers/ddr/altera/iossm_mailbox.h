@@ -1,37 +1,13 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2022-2024 Intel Corporation <www.intel.com>
+ * Copyright (C) 2025 Altera Corporation <www.altera.com>
  */
 
-#define TIMEOUT_120000MS			120000
-#define TIMEOUT_60000MS				60000
-#define TIMEOUT					TIMEOUT_120000MS
-#define IOSSM_STATUS_CAL_SUCCESS		BIT(0)
-#define IOSSM_STATUS_CAL_FAIL			BIT(1)
-#define IOSSM_STATUS_CAL_BUSY			BIT(2)
-#define IOSSM_STATUS_COMMAND_RESPONSE_READY	BIT(0)
-#define IOSSM_CMD_RESPONSE_STATUS_OFFSET	0x45C
-#define IOSSM_CMD_RESPONSE_DATA_0_OFFSET	0x458
-#define IOSSM_CMD_RESPONSE_DATA_1_OFFSET	0x454
-#define IOSSM_CMD_RESPONSE_DATA_2_OFFSET	0x450
-#define IOSSM_CMD_REQ_OFFSET			0x43C
-#define IOSSM_CMD_PARAM_0_OFFSET		0x438
-#define IOSSM_CMD_PARAM_1_OFFSET		0x434
-#define IOSSM_CMD_PARAM_2_OFFSET		0x430
-#define IOSSM_CMD_PARAM_3_OFFSET		0x42C
-#define IOSSM_CMD_PARAM_4_OFFSET		0x428
-#define IOSSM_CMD_PARAM_5_OFFSET		0x424
-#define IOSSM_CMD_PARAM_6_OFFSET		0x420
-#define IOSSM_STATUS_OFFSET			0x400
-#define IOSSM_CMD_RESPONSE_DATA_SHORT_MASK	GENMASK(31, 16)
-#define IOSSM_CMD_RESPONSE_DATA_SHORT(n)	FIELD_GET(IOSSM_CMD_RESPONSE_DATA_SHORT_MASK, n)
-#define IOSSM_STATUS_CMD_RESPONSE_ERROR_MASK	GENMASK(7, 5)
-#define IOSSM_STATUS_CMD_RESPONSE_ERROR(n)	FIELD_GET(IOSSM_STATUS_CMD_RESPONSE_ERROR_MASK, n)
-#define IOSSM_STATUS_GENERAL_ERROR_MASK		GENMASK(4, 1)
-#define IOSSM_STATUS_GENERAL_ERROR(n)		FIELD_GET(IOSSM_STATUS_GENERAL_ERROR_MASK, n)
 #define MAX_IO96B_SUPPORTED			2
+#define MAX_MEM_INTERFACE_SUPPORTED			2
 #define NUM_CMD_RESPONSE_DATA			3
-#define NUM_CMD_PARAM				6
+#define NUM_CMD_PARAM				7
 
 /* supported mailbox command type */
 enum iossm_mailbox_cmd_type  {
@@ -45,44 +21,18 @@ enum iossm_mailbox_cmd_type  {
 
 /* supported mailbox command opcode */
 enum iossm_mailbox_cmd_opcode  {
-	GET_MEM_INTF_INFO = 0x0001,
-	GET_MEM_TECHNOLOGY,
-	GET_MEMCLK_FREQ_KHZ,
-	GET_MEM_WIDTH_INFO,
 	ECC_ENABLE_SET = 0x0101,
-	ECC_ENABLE_STATUS,
-	ECC_INTERRUPT_STATUS,
-	ECC_INTERRUPT_ACK,
-	ECC_INTERRUPT_MASK,
-	ECC_WRITEBACK_ENABLE,
-	ECC_GET_SBE_INFO,
-	ECC_GET_DBE_INFO,
-	ECC_INJECT_ERROR,
-	ECC_SCRUB_IN_PROGRESS_STATUS = 0x0201,
-	ECC_SCRUB_MODE_0_START,
-	ECC_SCRUB_MODE_1_START,
+	ECC_INTERRUPT_MASK = 0x0105,
+	ECC_WRITEBACK_ENABLE = 0x0106,
+	ECC_INJECT_ERROR = 0x0109,
+	ECC_SCRUB_MODE_0_START = 0x0202,
+	ECC_SCRUB_MODE_1_START = 0x0203,
 	BIST_STANDARD_MODE_START = 0x0301,
-	BIST_RESULTS_STATUS,
-	BIST_MEM_INIT_START,
-	BIST_MEM_INIT_STATUS,
-	BIST_SET_DATA_PATTERN_UPPER,
-	BIST_SET_DATA_PATTERN_LOWER,
-	TRIG_MEM_CAL = 0x000a,
-	GET_MEM_CAL_STATUS
+	BIST_MEM_INIT_START = 0x0303,
+	BIST_SET_DATA_PATTERN_UPPER = 0x0305,
+	BIST_SET_DATA_PATTERN_LOWER = 0x0306,
+	TRIG_MEM_CAL = 0x000a
 };
-
-/* response data of cmd opcode GET_MEM_INTF_INFO */
-#define INTF_IP_TYPE_MASK		GENMASK(31, 29)
-#define INTF_INSTANCE_ID_MASK		GENMASK(28, 24)
-
-/* response data of cmd opcode GET_MEM_CAL_STATUS */
-#define INTF_UNUSED			0x0
-#define INTF_MEM_CAL_STATUS_SUCCESS	0x1
-#define INTF_MEM_CAL_STATUS_FAIL	0x2
-#define INTF_MEM_CAL_STATUS_ONGOING	0x4
-
-/* cmd opcode BIST_MEM_INIT_START, BIST performed on full memory address range */
-#define BIST_FULL_MEM			BIT(6)
 
 /*
  * IOSSM mailbox required information
@@ -183,4 +133,4 @@ int get_mem_technology(struct io96b_info *io96b_ctrl);
 int get_mem_width_info(struct io96b_info *io96b_ctrl);
 int ecc_enable_status(struct io96b_info *io96b_ctrl);
 int bist_mem_init_start(struct io96b_info *io96b_ctrl);
-int ecc_interrupt_status(struct io96b_info *io96b_ctrl, bool *ecc_error_flag);
+bool ecc_interrupt_status(struct io96b_info *io96b_ctrl);

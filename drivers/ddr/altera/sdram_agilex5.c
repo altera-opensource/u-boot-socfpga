@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2019-2024 Intel Corporation <www.intel.com>
+ * Copyright (C) 2025 Altera Corporation <www.altera.com>
  */
 
 #include <stdlib.h>
@@ -366,16 +367,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 	 *  enabled to preserve memory content
 	 */
 	if (io96b_ctrl->ecc_status) {
-		bool ecc_error_flag;
-
-		ret = ecc_interrupt_status(io96b_ctrl, &ecc_error_flag);
-		if (ret) {
-			printf("DDR: Failed to get ECC interrupt status\n");
-
-			goto err;
-		}
-
-		if (ecc_error_flag) {
+		if (ecc_interrupt_status(io96b_ctrl)) {
 			if (CONFIG_IS_ENABLED(WDT)) {
 				struct udevice *wdt;
 
