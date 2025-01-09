@@ -198,6 +198,7 @@ struct udevice {
 #if CONFIG_IS_ENABLED(IOMMU)
 	struct udevice *iommu;
 #endif
+	struct device_node	*of_node; /* associated device tree node */
 };
 
 static inline int dm_udevice_size(void)
