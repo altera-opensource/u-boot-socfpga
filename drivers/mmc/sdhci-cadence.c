@@ -6,7 +6,6 @@
 
 #include <clk.h>
 #include <dm.h>
-#include <generic-phy.h>
 #include <asm/arch/clock_manager.h>
 #include <asm/global_data.h>
 #include <dm/device_compat.h>
@@ -20,15 +19,6 @@
 #include <mmc.h>
 #include <sdhci.h>
 #include "sdhci-cadence.h"
-
-/* General define */
-#define SD_MIN_CLK 400000
-
-/* socfpga implementation specific driver private data */
-struct sdhci_socfpga_priv_data {
-	struct sdhci_host host;
-	struct phy phy;
-};
 
 struct sdhci_cdns_phy_cfg {
 	const char *property;

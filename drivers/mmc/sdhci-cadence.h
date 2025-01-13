@@ -4,8 +4,14 @@
  *   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
+#include <generic-phy.h>
+#include <reset-uclass.h>
+
 #ifndef SDHCI_CADENCE_H_
 #define SDHCI_CADENCE_H_
+
+/* General define */
+#define SD_MIN_CLK 400000
 
 /* HRS - Host Register Set (specific to Cadence) */
 /* PHY access port */
@@ -60,6 +66,16 @@ struct sdhci_cdns_plat {
 	struct mmc_config cfg;
 	struct mmc mmc;
 	void __iomem *hrs_addr;
+	struct udevice *udev;
+	struct phy phy_dev;
+	bool phy_enabled;
+	struct reset_ctl softreset_ctl;
+};
+
+/* socfpga implementation specific driver private data */
+struct sdhci_socfpga_priv_data {
+	struct sdhci_host host;
+	struct phy phy;
 };
 
 int sdhci_cdns6_phy_adj(struct udevice *dev, struct sdhci_cdns_plat *plat, u32 mode);
