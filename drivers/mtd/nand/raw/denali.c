@@ -1376,7 +1376,7 @@ free_buf:
 	return ret;
 }
 
-#ifdef CONFIG_SPL_BUILD
+#ifdef CONFIG_XPL_BUILD
 struct mtd_info *nand_get_mtd(void)
 {
 	struct mtd_info *mtd;

@@ -18,7 +18,7 @@
 static int socfpga_sysreset_request(struct udevice *dev,
 				    enum sysreset_t type)
 {
-#ifndef CONFIG_SPL_BUILD
+#ifndef CONFIG_XPL_BUILD
 	const char *reset = env_get("reset");
 
 	if (reset && !strcmp(reset, "warm")) {
@@ -32,7 +32,7 @@ static int socfpga_sysreset_request(struct udevice *dev,
 #endif
 		puts("Mailbox: Issuing mailbox cmd REBOOT_HPS\n");
 		mbox_reset_cold();
-#ifndef CONFIG_SPL_BUILD
+#ifndef CONFIG_XPL_BUILD
 	}
 #endif
 

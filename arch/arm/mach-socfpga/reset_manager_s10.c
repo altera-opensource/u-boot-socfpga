@@ -285,7 +285,7 @@ static __always_inline void socfpga_s2f_bridges_reset(int enable,
 
 void socfpga_bridges_reset(int enable, unsigned int mask)
 {
-	if (!IS_ENABLED(CONFIG_SPL_BUILD) && IS_ENABLED(CONFIG_SPL_ATF)) {
+	if (!IS_ENABLED(CONFIG_XPL_BUILD) && IS_ENABLED(CONFIG_SPL_ATF)) {
 		u64 arg[2];
 		int ret;
 

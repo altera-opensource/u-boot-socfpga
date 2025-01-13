@@ -15,7 +15,7 @@
 static int socfpga_sysreset_request(struct udevice *dev,
 				    enum sysreset_t type)
 {
-#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_ATF)
+#if !defined(CONFIG_XPL_BUILD) && defined(CONFIG_SPL_ATF)
 	const char *reset = env_get("reset");
 
 	if (reset && !strcmp(reset, "warm")) {

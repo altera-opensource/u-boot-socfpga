@@ -10,7 +10,7 @@
 #include <asm/macro.h>
 #include <asm/arch/reset_manager_soc64.h>
 
-#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_ARMV8_PSCI)
+#if !defined(CONFIG_XPL_BUILD) && defined(CONFIG_ARMV8_PSCI)
 .align 3
 _el3_exception_vectors:
 	.quad el3_exception_vectors;
@@ -22,7 +22,7 @@ ENTRY(lowlevel_init)
 	/* Enable Async */
 	msr daifclr, #4
 
-#ifdef CONFIG_SPL_BUILD
+#ifdef CONFIG_XPL_BUILD
 	branch_if_slave x0, 3f
 
 	/* Check rstmgr.stat for warm reset status */

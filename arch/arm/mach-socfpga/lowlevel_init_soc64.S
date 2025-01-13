@@ -9,7 +9,7 @@
 #include <linux/linkage.h>
 #include <asm/macro.h>
 
-#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_ARMV8_PSCI)
+#if !defined(CONFIG_XPL_BUILD) && defined(CONFIG_ARMV8_PSCI)
 .align 3
 _el3_exception_vectors:
 	.quad el3_exception_vectors;
@@ -18,7 +18,7 @@ _el3_exception_vectors:
 ENTRY(lowlevel_init)
 	mov	x29, lr			/* Save LR */
 
-#ifdef CONFIG_SPL_BUILD
+#ifdef CONFIG_XPL_BUILD
 	/* Check for L2 reset magic word */
 	ldr	x4, =L2_RESET_DONE_REG
 	ldr	x5, [x4]
@@ -152,7 +152,7 @@ master_cpu:
 	bl	gic_wait_for_interrupt
 #endif
 
-#if defined(CONFIG_SPL_BUILD) && !defined(CONFIG_SPL_ATF)
+#if defined(CONFIG_XPL_BUILD) && !defined(CONFIG_SPL_ATF)
 	/*
 	 * Read the u-boot's PSCI exception handler's vector base
 	 * address from the sysmgr.boot_scratch_cold6 & 7 and update
@@ -183,7 +183,7 @@ lowlevel_in_el1:
 #endif /* CONFIG_ARMV8_MULTIENTRY */
 
 2:
-#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_ARMV8_PSCI)
+#if !defined(CONFIG_XPL_BUILD) && defined(CONFIG_ARMV8_PSCI)
 	/*
 	 * Write the u-boot PSCI exception handler's vector base address
 	 * into a sysmgr.boot_scratch_cold6 & 7 so that other slave cpus
@@ -196,7 +196,7 @@ lowlevel_in_el1:
 	str	x5, [x4]
 #endif
 
-#ifdef CONFIG_SPL_BUILD
+#ifdef CONFIG_XPL_BUILD
 	branch_if_slave x0, 3f
 
 	/* Check rstmgr.stat for warm reset status */
