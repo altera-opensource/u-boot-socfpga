@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2024 Intel Corporation <www.intel.com>
+ * Copyright (C) 2025 Altera Corporation <www.altera.com>
  */
 #include <linux/bitfield.h>
 
@@ -100,7 +101,7 @@ struct uib_info {
 	u8 num_instance;
 	bool overall_cal_status;
 	bool ecc_status;
-	u16 overall_size;
+	phys_size_t overall_size;
 	struct uib_instance uib[MAX_UIB_SUPPORTED];
 };
 

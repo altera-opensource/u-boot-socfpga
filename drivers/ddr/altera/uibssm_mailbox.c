@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2024 Intel Corporation <www.intel.com>
+ * Copyright (C) 2025 Altera Corporation <www.altera.com>
  *
  */
 #define DEBUG
@@ -17,49 +18,55 @@ int uib_bist_mem_init_start(struct uib_info *uib_ctrl)
 	bool bist_start, bist_success;
 	u32 start;
 
-	bist_start = false;
-	bist_success = false;
+	for (int i = 0; i < uib_ctrl->num_instance; i++) {
+		bist_start = false;
+		bist_success = false;
 
-	/*
-	 * Full memory initialization BIST performed on all UIB channels
-	 * start memory initialization BIST on full memory address
-	 */
-	uib_mb_req(uib_ctrl->uib[0].uib_csr_addr,
-		   UIB_CMD_TRIG_CONTROLLER_OP,
-			UIB_BIST_MEM_INIT_START,
-			UIB_BIST_FULL_MEM, &usr_resp);
-
-	bist_start = UIBSSM_CMD_RESPONSE_DATA_SHORT(usr_resp.cmd_resp_status) &
-			UIB_BIST_INITIATE_PASS;
-
-	if (!bist_start) {
-		printf("%s: Failed to initialized memory on UIB\n", __func__);
-		return -ENOEXEC;
-	}
-
-	/* Polling for the initiated memory initialization BIST status */
-	start = get_timer(0);
-	while (!bist_success) {
 		/*
-		 * cmd_param_0 is not used in BIST status request,
-		 * hence set the value to 0
+		 * Full memory initialization BIST performed on all UIB channels
+		 * start memory initialization BIST on full memory address
 		 */
-		uib_mb_req(uib_ctrl->uib[0].uib_csr_addr,
+		uib_mb_req(uib_ctrl->uib[i].uib_csr_addr,
 			   UIB_CMD_TRIG_CONTROLLER_OP,
-				UIB_BIST_MEM_INIT_STATUS,
-				0, &usr_resp);
+			   UIB_BIST_MEM_INIT_START,
+			   UIB_BIST_FULL_MEM, &usr_resp);
 
-		bist_success = UIBSSM_CMD_RESPONSE_DATA_SHORT(usr_resp.cmd_resp_status) & BIT(0);
+		bist_start = UIBSSM_CMD_RESPONSE_DATA_SHORT(usr_resp.cmd_resp_status) &
+							    UIB_BIST_INITIATE_PASS;
 
-		if (!bist_success && (get_timer(start) > TIMEOUT)) {
-			printf("%s: Timeout initialize memory on UIB\n", __func__);
-			return -ETIMEDOUT;
+		if (!bist_start) {
+			printf("%s: Failed to initialize memory on UIB instance %d\n",
+			       __func__, i);
+			return -ENOEXEC;
 		}
 
-		udelay(1);
+		/* Polling for the initiated memory initialization BIST status */
+		start = get_timer(0);
+		while (!bist_success) {
+			udelay(1);
+
+			/*
+			 * cmd_param_0 is not used in BIST status request,
+			 * hence set the value to 0
+			 */
+			uib_mb_req(uib_ctrl->uib[i].uib_csr_addr,
+				   UIB_CMD_TRIG_CONTROLLER_OP,
+				   UIB_BIST_MEM_INIT_STATUS,
+				   0, &usr_resp);
+
+			bist_success = UIBSSM_CMD_RESPONSE_DATA_SHORT(usr_resp.cmd_resp_status) &
+								      BIT(0);
+
+			if (!bist_success && (get_timer(start) > TIMEOUT)) {
+				printf("%s: Timeout initializing memory on UIB instance %d\n",
+				       __func__, i);
+				return -ETIMEDOUT;
+			}
+		}
+
+		debug("%s: Memory initialized successfully on UIB instance %d\n", __func__, i);
 	}
 
-	debug("%s: Memory initialized successfully on UIB\n", __func__);
 
 	return 0;
 }

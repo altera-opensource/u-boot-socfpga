@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2023-2024 Intel Corporation <www.intel.com>
+ * Copyright (C) 2025 Altera Corporation <www.altera.com>
  */
 #define DEBUG
 #include <dm.h>
@@ -14,10 +15,6 @@
 #include "iossm_mailbox.h"
 #include "uibssm_mailbox.h"
 #include "sdram_soc64.h"
-
-/* TODO: remove when handoff is ready*/
-/* HBM use case - COMMENT OUT IF USE IO96B*/
-//#define USE_HBM_MEM
 
 /* NOCPLL register */
 #define SYSMGR_HMC_CLK		0xB4
@@ -131,31 +128,19 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl,
 	else
 		plat->mem_type = DDR_MEMORY;
 
-#ifdef USE_HBM_MEM /* TODO: remove when handoff is ready*/
-	plat->mem_type = HBM_MEMORY;
-#endif
 	debug("%s: Memory type is %s\n", __func__
 			, plat->mem_type ? "HBM" : "DDR");
 
 	if (plat->mem_type == HBM_MEMORY) {
 		/* Assign UIB CSR base address if it is valid */
-#ifdef USE_HBM_MEM /* TODO: remove when handoff is ready*/
-		for (i = 0; i < 2; i++) {
-			uib_ctrl->uib[i].uib_csr_addr = uib_csr_reg_addr[i];
-			debug("%s: UIB 0x%llx CSR enabled\n", __func__
-				, uib_ctrl->uib[i].uib_csr_addr);
-			count++;
-		}
-#else
 		for (i = 0; i < MAX_UIB_SUPPORTED; i++) {
 			if (handoff_table[3] & BIT(i)) {
-				uib_ctrl->uib[i].uib_csr_addr = uib_csr_reg_addr[i];
+				uib_ctrl->uib[count].uib_csr_addr = uib_csr_reg_addr[i];
 				debug("%s: UIB 0x%llx CSR enabled\n", __func__
-					, uib_ctrl->uib[i].uib_csr_addr);
+					, uib_ctrl->uib[count].uib_csr_addr);
 				count++;
 			}
 		}
-#endif
 
 		uib_ctrl->num_instance = count;
 		debug("%s: returned num_instance 0x%x\n", __func__, uib_ctrl->num_instance);
@@ -165,7 +150,7 @@ int populate_ddr_handoff(struct udevice *dev, struct io96b_info *io96b_ctrl,
 		 * 1 UIB channel has 2 pseudo channels
 		 * 1 pseudo channel is 1GB, hence 1 UIB channel is 2GB
 		 */
-		uib_ctrl->overall_size = uib_ctrl->num_instance * SZ_2G;
+		uib_ctrl->overall_size = (phys_size_t)uib_ctrl->num_instance * SZ_2G;
 
 		/* UIB ECC status */
 		uib_ctrl->ecc_status = handoff_table[4];
@@ -249,7 +234,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 	struct io96b_info *io96b_ctrl = malloc(sizeof(*io96b_ctrl));
 	struct uib_info *uib_ctrl = malloc(sizeof(*uib_ctrl));
 	struct bd_info bd = {0};
-	bool full_mem_init = false;
+	bool full_mem_init = false, is_ddr_hang_be4_rst = false;
 	phys_size_t hw_size;
 	int ret = 0;
 	int i;
@@ -269,7 +254,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 	debug("%s: Address MPFE 0x%llx\n", memory_type_in_use(dev), plat->mpfe_base_addr);
 
 	/* DDR initialization progress status tracking */
-	bool is_ddr_hang_be4_rst = is_ddr_init_hang();
+	is_ddr_hang_be4_rst = is_ddr_init_hang();
 
 	printf("%s: SDRAM init in progress ...\n", memory_type_in_use(dev));
 
@@ -400,10 +385,7 @@ int sdram_mmr_init_full(struct udevice *dev)
 	}
 
 	if (!is_ddr_in_use(dev)) {
-		/* TODO: retrieve from handoff when handoff is ready*/
-		/* FIB device only support 1 GB, so hardcoded to 1GB */
 		hw_size = uib_ctrl->overall_size;
-		hw_size = 0x40000000;
 	} else {
 		hw_size = (phys_size_t)io96b_ctrl->overall_size * SZ_1G / SZ_8;
 	}
