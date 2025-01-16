@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2016-2024 Intel Corporation <www.intel.com>
+ * Copyright (C) 2016-2025 Intel Corporation <www.intel.com>
  *
  */
 
@@ -16,6 +16,7 @@
 #include <asm/arch/smmuv3_dv.h>
 #include <asm/arch/system_manager.h>
 #include <asm/io.h>
+#include <asm/system.h>
 #include <asm/global_data.h>
 #include <linux/bitfield.h>
 #include <mach/clock_manager.h>
@@ -59,6 +60,19 @@ static Altera_desc altera_fpga[] = {
 		0
 	},
 };
+
+/*
+ * The Agilex5 platform has enabled the bloblist feature, and the bloblist
+ * address and size are initialized based on the defconfig settings.
+ * During the SPL phase, this function is used to prevent the bloblist
+ * from initializing its address and size with the saved boot parameters,
+ * which may have been incorrectly set.
+ */
+void save_boot_params(unsigned long r0, unsigned long r1, unsigned long r2,
+		      unsigned long r3)
+{
+	save_boot_params_ret();
+}
 
 u32 socfpga_get_jtag_id(void)
 {
