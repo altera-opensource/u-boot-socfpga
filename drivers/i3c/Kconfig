@@ -14,8 +14,7 @@ menuconfig I3C
 	  If you want I3C support, you should say Y here and also to the
 	  specific driver for your bus adapter(s) below.
 
-config DW_I3C_MASTER
-	tristate "Synospsys DesignWare I3C master driver"
-	depends on I3C
-	help
-	  Support for Synopsys DesignWare MIPI I3C Controller.
+
+if I3C
+source "drivers/i3c/master/Kconfig"
+endif # I3C
