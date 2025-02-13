@@ -457,6 +457,9 @@ static int i3c_master_rstdaa_locked(struct i3c_master_controller *master,
 
 	i3c_ccc_cmd_dest_cleanup(&dest);
 
+	if (ret)
+		ret = cmd.err;
+
 	return ret;
 }
 
@@ -511,6 +514,9 @@ static int i3c_master_enec_disec_locked(struct i3c_master_controller *master,
 			 &dest, 1);
 	ret = i3c_master_send_ccc_cmd_locked(master, &cmd);
 	i3c_ccc_cmd_dest_cleanup(&dest);
+
+	if (ret)
+		ret = cmd.err;
 
 	return ret;
 }
