@@ -240,6 +240,8 @@ struct dw_i3c_master {
 	char type[5];
 	u8 addrs[MAX_DEVS];
 	bool first_broadcast;
+	struct i3c_dev_desc *i3cdev[I3C_BUS_MAX_DEVS];
+	u16 num_i3cdevs;
 };
 
 struct dw_i3c_i2c_dev_data {
@@ -269,6 +271,10 @@ struct dm_i3c_ops {
 	int (*i3c_xfers)(struct i3c_dev_desc *dev,
 			 struct i3c_priv_xfer *i3c_xfers,
 			 int i3c_nxfers);
+	int (*read)(struct udevice *dev,u8 dev_number,
+		    u8 *buf, int num_bytes);
+	int (*write)(struct udevice *dev,u8 dev_number,
+		     u8 *buf, int num_bytes);
 };
 #define i3c_get_ops(dev)	((struct dm_i3c_ops *)(dev)->driver->ops)
 
