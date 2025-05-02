@@ -85,6 +85,16 @@ int emif_reset(struct altera_sdram_plat *plat)
 	debug("DDR: Triggerring emif reset\n");
 	hmc_ecc_writel(plat, DDR_HMC_CORE2SEQ_INT_REQ, RSTHANDSHAKECTRL);
 
+	/* if seq2core[2:0] = 0b0000_0111, we are good */
+	ret = wait_for_bit_le32((const void *)(plat->hmc +
+				 RSTHANDSHAKESTAT),
+				 DDR_HMC_SEQ2CORE_INT_REQ_ACK_MASK,
+				 true, 1000, false);
+	if (ret) {
+		printf("DDR: failed to get ack from EMIF\n");
+		return ret;
+	}
+
 	ret = emif_clear(plat);
 	if (ret) {
 		printf("DDR: emif_clear() failed\n");
