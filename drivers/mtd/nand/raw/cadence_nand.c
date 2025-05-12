@@ -2147,6 +2147,59 @@ static void cadence_nand_write_byte(struct mtd_info *mtd, u8 byte)
 	cadence_nand_write_buf(mtd, &byte, 1);
 }
 
+static int cadence_set_features_op(struct nand_chip *chip, u8 feature,
+				   const void *data)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	const u8 *params = data;
+	int status;
+
+	cadence_nand_cmdfunc(mtd, NAND_CMD_SET_FEATURES, feature, -1);
+	cadence_nand_write_buf(mtd, params, ONFI_SUBFEATURE_PARAM_LEN);
+
+	status = cadence_nand_waitfunc(mtd, chip);
+	if (status & NAND_STATUS_FAIL)
+		return -EIO;
+
+	return 0;
+}
+
+static int cadence_get_features_op(struct nand_chip *chip, u8 feature,
+				   void *data)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	u8 *params = data;
+
+	cadence_nand_cmdfunc(mtd, NAND_CMD_GET_FEATURES, feature, -1);
+	cadence_nand_read_buf(mtd, params, ONFI_SUBFEATURE_PARAM_LEN);
+
+	return 0;
+}
+
+static int cadence_onfi_set_features(struct mtd_info *mtd, struct nand_chip *chip,
+				     int addr, uint8_t *subfeature_param)
+{
+	if (IS_ENABLED(CONFIG_SYS_NAND_ONFI_DETECTION))
+		if (!chip->onfi_version ||
+		    !(le16_to_cpu(chip->onfi_params.opt_cmd)
+		    & ONFI_OPT_CMD_SET_GET_FEATURES))
+			return -EOPNOTSUPP;
+
+	return cadence_set_features_op(chip, addr, subfeature_param);
+}
+
+static int cadence_onfi_get_features(struct mtd_info *mtd, struct nand_chip *chip,
+				     int addr, uint8_t *subfeature_param)
+{
+	if (IS_ENABLED(CONFIG_SYS_NAND_ONFI_DETECTION))
+		if (!chip->onfi_version ||
+		    !(le16_to_cpu(chip->onfi_params.opt_cmd)
+		    & ONFI_OPT_CMD_SET_GET_FEATURES))
+			return -EOPNOTSUPP;
+
+	return cadence_get_features_op(chip, addr, subfeature_param);
+}
+
 static int cadence_nand_chip_init(struct cadence_nand_info *cadence, ofnode node)
 {
 	struct cdns_nand_chip *cdns_chip;
@@ -2215,6 +2268,8 @@ static int cadence_nand_chip_init(struct cadence_nand_info *cadence, ofnode node
 	chip->read_buf = cadence_nand_read_buf;
 	chip->write_buf = cadence_nand_write_buf;
 	chip->setup_data_interface = cadence_setup_data_interface;
+	chip->onfi_set_features = cadence_onfi_set_features;
+	chip->onfi_get_features = cadence_onfi_get_features;
 
 	ret = nand_scan_ident(mtd, 1, NULL);
 	if (ret) {
