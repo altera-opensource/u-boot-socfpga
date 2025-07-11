@@ -385,6 +385,23 @@ err:
 	return ret;
 }
 
+static bool is_mailbox_spec_compatible(struct io96b_info *io96b_ctrl)
+{
+	u32 mailbox_header;
+	u8 mailbox_spec_ver;
+
+	mailbox_header = readl(io96b_ctrl->io96b[0].io96b_csr_addr +
+				IOSSM_MAILBOX_HEADER_OFFSET);
+	mailbox_spec_ver = IOSSM_MAILBOX_SPEC_VERSION(mailbox_header);
+	printf("%s: IOSSM mailbox version: %d\n", __func__, mailbox_spec_ver);
+
+	/* for now there are two mailbox spec versions, 0 and 1; only version 1 is compatible */
+	if (!mailbox_spec_ver)
+		return false;
+
+	return true;
+}
+
 /*
  * Initial function to be called to set memory interface IP type and instance ID
  * IP type and instance ID need to be determined before sending mailbox command
@@ -393,6 +410,11 @@ void io96b_mb_init(struct io96b_info *io96b_ctrl)
 {
 	int i, j;
 	u32 mem_intf_info_0, mem_intf_info_1;
+
+	if (!is_mailbox_spec_compatible(io96b_ctrl)) {
+		printf("DDR: Failed to get compatible mailbox version\n");
+		hang();
+	}
 
 	debug("%s: num_instance %d\n", __func__, io96b_ctrl->num_instance);
 
@@ -460,23 +482,6 @@ int io96b_cal_status(phys_addr_t addr)
 		return -EPERM;
 }
 
-static bool is_mailbox_spec_compatible(struct io96b_info *io96b_ctrl)
-{
-	u32 mailbox_header;
-	u8 mailbox_spec_ver;
-
-	mailbox_header = readl(io96b_ctrl->io96b[0].io96b_csr_addr +
-				IOSSM_MAILBOX_HEADER_OFFSET);
-	mailbox_spec_ver = IOSSM_MAILBOX_SPEC_VERSION(mailbox_header);
-	printf("%s: IOSSM mailbox version: %d\n", __func__, mailbox_spec_ver);
-
-	/* for now there are two mailbox spec versions, 0 and 1; only version 1 is compatible */
-	if (!mailbox_spec_ver)
-		return false;
-
-	return true;
-}
-
 void init_mem_cal(struct io96b_info *io96b_ctrl)
 {
 	int count, i, ret;
@@ -490,12 +495,6 @@ void init_mem_cal(struct io96b_info *io96b_ctrl)
 			printf("%s: iossm IO96B ckgena_lock is not locked\n", __func__);
 			hang();
 		}
-	}
-
-	/* Check mailbox specfication compatibility */
-	if (!is_mailbox_spec_compatible(io96b_ctrl)) {
-		printf("DDR: Failed to get compatible mailbox version\n");
-		hang();
 	}
 
 	/* Check initial calibration status for the assigned IO96B */
