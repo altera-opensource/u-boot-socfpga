@@ -3,6 +3,7 @@
  *  Copyright (C) 2013-2017 Altera Corporation <www.altera.com>
  */
 
+#include <log.h>
 #include <asm/arch/clock_manager.h>
 #include <asm/arch/system_manager.h>
 #include <asm/global_data.h>
@@ -17,6 +18,10 @@ void cm_wait_for_lock(u32 mask)
 {
 	u32 inter_val;
 	u32 retry = 0;
+
+	log_info("%s : line %d => Is clock PLL locked? Checking ...\n",
+		 __FILE__, __LINE__);
+
 	do {
 #if defined(CONFIG_TARGET_SOCFPGA_GEN5)
 		inter_val = readl(socfpga_get_clkmgr_addr() +
@@ -33,6 +38,9 @@ void cm_wait_for_lock(u32 mask)
 		if (retry >= 10)
 			break;
 	} while (1);
+
+	log_info("%s : line %d => Clock PLL is locked !\n",
+		 __FILE__, __LINE__);
 }
 
 /* function to poll in the fsm busy bit */
