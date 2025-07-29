@@ -220,14 +220,14 @@ int sdhci_cdns6_phy_adj(struct udevice *dev, struct sdhci_cdns_plat *plat, u32 m
 		prop = fdt_getprop(gd->fdt_blob, dev_of_offset(dev),
 				   sdhci_cdns6_phy_cfgs[i].property, NULL);
 		if (prop)
-			sdhci_cdns6_phy_cfgs[i].val = *prop;
+			sdhci_cdns6_phy_cfgs[i].val = fdt32_to_cpu(*prop);
 	}
 
 	for (i = 0; i < SDHCI_CDNS6_CTRL_CFG_NUM; i++) {
 		prop = fdt_getprop(gd->fdt_blob, dev_of_offset(dev),
 				   sdhci_cdns6_ctrl_cfgs[i].property, NULL);
 		if (prop)
-			sdhci_cdns6_ctrl_cfgs[i].val = *prop;
+			sdhci_cdns6_ctrl_cfgs[i].val = fdt32_to_cpu(*prop);
 	}
 
 	/* Switch On the DLL Reset */
