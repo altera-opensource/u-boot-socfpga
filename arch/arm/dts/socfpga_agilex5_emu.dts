@@ -56,10 +56,6 @@
 	status = "okay";
 };
 
-&combophy0 {
-	status = "okay";
-};
-
 &uart0 {
 	status = "okay";
 	/* The line below should be removed when working on customer reference U-Boot branch */
