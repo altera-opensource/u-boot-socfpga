@@ -303,24 +303,12 @@
 			status = "disabled";
 		};
 
-		combophy0: combophy@0 {
-			#phy-cells = <0>;
-			phy-type = <1>;
-			compatible = "cdns,combophy";
-			reg = <0x10808000 0x1000>;
-			resets = <&rst COMBOPHY_RESET>;
-			reset-names = "reset";
-			status = "disabled";
-		};
-
 		mmc: mmc0@10808000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
 			compatible = "cdns,sd4hc";
 			reg = <0x10808000 0x1000>;
 			interrupts = <0 96 4>;
-			phys = <&combophy0>;
-			phy-names = "combo-phy";
 			clocks = <&clkmgr AGILEX5_L4_MP_CLK>,
 				 <&clkmgr AGILEX5_SDMMC_CLK>;
 			clock-names = "biu", "ciu";
