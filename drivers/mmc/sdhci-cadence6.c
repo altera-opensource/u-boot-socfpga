@@ -78,7 +78,7 @@ static struct sdhci_cdns6_phy_cfg sd_ds_phy_cfgs[] = {
 };
 
 static struct sdhci_cdns6_phy_cfg emmc_sdr_phy_cfgs[] = {
-	{ "cdns,phy-dqs-timing-delay-semmc-sdr", 0x00380004, },
+	{ "cdns,phy-dqs-timing-delay-emmc-sdr", 0x00380004, },
 	{ "cdns,phy-gate-lpbk_ctrl-delay-emmc-sdr", 0x01A00040, },
 	{ "cdns,phy-dll-slave-ctrl-emmc-sdr", 0x00000000, },
 	{ "cdns,phy-dq-timing-delay-emmc-sdr", 0x00000001, },
