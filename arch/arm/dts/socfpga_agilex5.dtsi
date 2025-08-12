@@ -311,6 +311,14 @@
 			regulator-always-on;
 		};
 
+		emmc_io_1v8_reg: regulator-fixed-1p8v {
+			compatible = "regulator-fixed";
+			regulator-name = "emmc-io-power";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+			regulator-always-on;
+		};
+
 		sd_io_1v8_reg: regulator-1p8v {
 			compatible = "regulator-gpio";
 			regulator-name = "sd-bus-io-power";
