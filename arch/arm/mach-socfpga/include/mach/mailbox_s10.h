@@ -410,11 +410,9 @@ int mbox_rcv_resp(u32 *resp_buf, u32 resp_buf_max_len);
 int mbox_rcv_resp_psci(u32 *resp_buf, u32 resp_buf_max_len);
 int mbox_init(void);
 
-#ifdef CONFIG_CADENCE_QSPI
 int mbox_qspi_close(void);
 int mbox_qspi_open(void);
 int mbox_qspi_get_device_info(u32 *resp_buf, u32 resp_buf_len);
-#endif
 
 int mbox_reset_cold(void);
 int mbox_rsu_get_spt_offset(u32 *resp_buf, u32 resp_buf_len);
