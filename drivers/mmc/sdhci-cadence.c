@@ -208,16 +208,10 @@ static int __maybe_unused sdhci_cdns_execute_tuning(struct udevice *dev,
 	int i;
 
 	/*
-	 * This handler only implements the eMMC tuning that is specific to
-	 * this controller.  The tuning for SD timing should be handled by the
-	 * SDHCI core.
+	 * This function performs the tuning process for both SD and eMMC
+	 * interfaces. It sweeps through all available tuning points,
+	 * sending tuning commands at each step.
 	 */
-	if (!IS_MMC(mmc))
-		return -ENOTSUPP;
-
-	if (WARN_ON(opcode != MMC_CMD_SEND_TUNING_BLOCK_HS200))
-		return -EINVAL;
-
 	for (i = 0; i < SDHCI_CDNS_MAX_TUNING_LOOP; i++) {
 		if (sdhci_cdns_set_tune_val(plat, i) ||
 		    mmc_send_tuning(mmc, opcode)) { /* bad */
@@ -236,6 +230,7 @@ static int __maybe_unused sdhci_cdns_execute_tuning(struct udevice *dev,
 		return -EIO;
 	}
 
+	/* Select the optimal tuning value (midpoint of best streak) */
 	return sdhci_cdns_set_tune_val(plat, end_of_streak - max_streak / 2);
 }
 
