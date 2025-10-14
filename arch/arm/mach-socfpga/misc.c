@@ -279,7 +279,7 @@ void socfpga_get_managers_addr(void)
 			hang();
 	}
 
-	else if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X))
+	if (IS_ENABLED(CONFIG_TARGET_SOCFPGA_N5X))
 		ret = socfpga_get_base_addr("intel,n5x-clkmgr",
 					    &socfpga_clkmgr_base);
 	else if (!IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX) &&
