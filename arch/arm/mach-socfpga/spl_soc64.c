@@ -143,6 +143,10 @@ void spl_perform_fixups(struct spl_image_info *spl_image)
 		hang();
 	}
 
+#if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5))
+	set_smmu_streamid();
+#endif
+
 #if !(IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_SIMICS) || IS_ENABLED(CONFIG_TARGET_SOCFPGA_AGILEX5_EMU))
 	mbox_hps_stage_notify(HPS_EXECUTION_STATE_SSBL);
 #endif

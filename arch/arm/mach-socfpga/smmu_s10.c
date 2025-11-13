@@ -24,7 +24,7 @@ static const struct smmu_stream_id dev_stream_id[] = {
 	{SYSMGR_ETR_SID_ADDR,   0x09, ETR_W_OFST, ETR_R_OFST},
 };
 
-static void set_smmu_streamid(void)
+void set_smmu_streamid(void)
 {
 	int i;
 
@@ -72,7 +72,6 @@ static inline void setup_smmu_firewall(void)
 void socfpga_init_smmu(void)
 {
 	setup_smmu_firewall();
-	set_smmu_streamid();
 	set_smmu_accessible_reg();
 }
 
