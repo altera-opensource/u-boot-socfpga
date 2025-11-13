@@ -41,40 +41,6 @@ void set_smmu_streamid(void)
 	}
 }
 
-/*
- * Need to set the Secure bit (to make it non-secure) on each peripheral
- * so that SMMU can access the peripheral
- */
-static void set_smmu_accessible_reg(void)
-{
-	setbits_le32(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_EMAC0,
-		     BIT(27) | BIT(25));
-	setbits_le32(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_EMAC1,
-		     BIT(27) | BIT(25));
-	setbits_le32(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_EMAC2,
-		     BIT(27) | BIT(25));
-	setbits_le32(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_NANDGRP_L3MASTER,
-		     BIT(21) | BIT(17));
-	setbits_le32(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_SDMMC_L3MASTER,
-		     BIT(5));
-	setbits_le32(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_USB0_L3MASTER,
-		     BIT(9));
-	setbits_le32(socfpga_get_sysmgr_addr() + SYSMGR_SOC64_USB1_L3MASTER,
-		     BIT(9));
-}
-
-static inline void setup_smmu_firewall(void)
-{
-	/* Enable nonsecure SMMU accesses */
-	writel(FIREWALL_L4_DISABLE_ALL, SOCFPGA_FIREWALL_TCU);
-}
-
-void socfpga_init_smmu(void)
-{
-	setup_smmu_firewall();
-	set_smmu_accessible_reg();
-}
-
 int is_smmu_bypass(void)
 {
 	return readl(SOCFPGA_SMMU_ADDRESS + SMMU_SCR0) & SMMU_SCR0_CLIENTPD;
