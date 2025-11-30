@@ -12,35 +12,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static const struct smmu_stream_id dev_stream_id[] = {
-	{SYSMGR_EMAC0_SID_ADDR, 0x01, EMAC_W_OFST, EMAC_R_OFST},
-	{SYSMGR_EMAC1_SID_ADDR, 0x02, EMAC_W_OFST, EMAC_R_OFST},
-	{SYSMGR_EMAC2_SID_ADDR, 0x03, EMAC_W_OFST, EMAC_R_OFST},
-	{SYSMGR_NAND_SID_ADDR,  0x04, NAND_W_OFST, NAND_R_OFST},
-	{SYSMGR_SDMMC_SID_ADDR, 0x05, SDMMC_OFST, SDMMC_OFST},
-	{SYSMGR_USB0_SID_ADDR,  0x06, USB_OFST, USB_OFST},
-	{SYSMGR_USB1_SID_ADDR,  0x07, USB_OFST, USB_OFST},
-	{SYSMGR_DMA_SID_ADDR,   0x08, DMA_W_OFST, DMA_R_OFST},
-	{SYSMGR_ETR_SID_ADDR,   0x09, ETR_W_OFST, ETR_R_OFST},
-};
-
-void set_smmu_streamid(void)
-{
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(dev_stream_id); i++) {
-		u32 mask = SMMU_SET_STREAMID(0x3FF,
-					 dev_stream_id[i].r_bit_ofst,
-					 dev_stream_id[i].w_bit_ofst);
-		u32 value = SMMU_SET_STREAMID(dev_stream_id[i].sid,
-					 dev_stream_id[i].r_bit_ofst,
-					 dev_stream_id[i].w_bit_ofst);
-
-		clrbits_le32(dev_stream_id[i].addr, mask);
-		setbits_le32(dev_stream_id[i].addr, value);
-	}
-}
-
 int is_smmu_bypass(void)
 {
 	return readl(SOCFPGA_SMMU_ADDRESS + SMMU_SCR0) & SMMU_SCR0_CLIENTPD;

@@ -36,7 +36,6 @@
 #define SDM2HPS_PSI_BE_ADDR_END		\
 	(SDM2HPS_PSI_BE_ADDR_BASE + SDM2HPS_PSI_BE_WINDOW_SZ - 1)
 
-void set_smmu_streamid(void);
 int is_smmu_bypass(void);
 int is_smmu_stream_id_enabled(u32 stream_id);
 
