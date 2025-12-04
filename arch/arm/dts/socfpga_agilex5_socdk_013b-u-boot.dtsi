@@ -132,24 +132,24 @@
 
 	/* SD card default speed (DS) and UHS-I SDR12 mode timing configuration */
 	cdns,phy-dqs-timing-delay-sd-ds = <0x00780000>;
-	cdns,phy-gate-lpbk_ctrl-delay-sd-ds = <0x81a40040>;
+	cdns,phy-gate-lpbk-ctrl-delay-sd-ds = <0x81a40040>;
 	cdns,phy-dll-slave-ctrl-sd-ds = <0x00a000fe>;
 	cdns,phy-dq-timing-delay-sd-ds = <0x28000001>;
 
 	/* SD card high speed and UHS-I SDR25 mode timing configuration */
 	cdns,phy-dqs-timing-delay-sd-hs = <0x780001>;
-	cdns,phy-gate-lpbk_ctrl-delay-sd-hs = <0x81a40040>;
+	cdns,phy-gate-lpbk-ctrl-delay-sd-hs = <0x81a40040>;
 	cdns,phy-dq-timing-delay-sd-hs = <0x10000001>;
 	cdns,ctrl-hrs16-slave-ctrl-sd-hs = <0x101>;
 	cdns,ctrl-hrs07-timing-delay-sd-hs = <0xA0001>;
 
 	/* SD card UHS-I SDR50 mode timing configuration */
 	cdns,phy-dqs-timing-delay-emmc-sdr = <0x780004>;
-	cdns,phy-gate-lpbk_ctrl-delay-emmc-sdr = <0x80a40040>;
+	cdns,phy-gate-lpbk-ctrl-delay-emmc-sdr = <0x80a40040>;
 	cdns,phy-dll-slave-ctrl-emmc-sdr = <0x4000004>;
 	cdns,phy-dq-timing-delay-emmc-sdr = <0x38000001>;
 	cdns,ctrl-hrs09-timing-delay-emmc-sdr = <0xf1c1800c>;
-	cdns,ctrl-hrs10-lpbk_ctrl-delay-emmc-sdr = <0x20000>;
+	cdns,ctrl-hrs10-lpbk-ctrl-delay-emmc-sdr = <0x20000>;
 	cdns,ctrl-hrs16-slave-ctrl-emmc-sdr = <0x101>;
 	cdns,ctrl-hrs07-timing-delay-emmc-sdr = <0x90005>;
 
