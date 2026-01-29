@@ -107,7 +107,7 @@ config LOGLEVEL
 config SPL_LOGLEVEL
 	int
 	depends on SPL
-	default 6
+	default LOGLEVEL
 
 config TPL_LOGLEVEL
 	int

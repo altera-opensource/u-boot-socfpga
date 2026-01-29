@@ -6,9 +6,9 @@
  */
 #include <errno.h>
 #include <inttypes.h>
-#include <log.h>
 #include <asm/arch/handoff_soc64.h>
 #include <asm/io.h>
+#include <linux/printk.h>
 
 #ifndef __ASSEMBLY__
 #include <asm/types.h>
@@ -62,9 +62,9 @@ static int getting_endianness(void *handoff_address, enum endianness *endian_t)
 		/* Trying to check handoff data is big endian? */
 		*endian_t = check_endianness(swab32(readl(handoff_address)));
 		if (*endian_t == UNKNOWN_ENDIANNESS) {
-			log_info("%s : line %d => Cannot find endianness ", __FILE__,
-				 __LINE__);
-			log_info("at addr 0x%p\n", (u32 *)handoff_address);
+			pr_info("%s : line %d => Cannot find endianness ", __FILE__,
+				__LINE__);
+			pr_info("at addr 0x%p\n", (u32 *)handoff_address);
 			return -EPERM;
 		}
 	}
@@ -88,8 +88,8 @@ int socfpga_get_handoff_size(void *handoff_address)
 
 	size = (size - SOC64_HANDOFF_OFFSET_DATA) / sizeof(u32);
 
-	log_info("%s : line %d => handoff address = 0x%p handoff size = 0x%08x\n", __FILE__,
-		 __LINE__, (u32 *)handoff_address, size);
+	pr_info("%s : line %d => handoff address = 0x%p handoff size = 0x%08x\n", __FILE__,
+		__LINE__, (u32 *)handoff_address, size);
 
 	return size;
 }
@@ -106,17 +106,17 @@ int socfpga_handoff_read(void *handoff_address, void *table, u32 table_len)
 	if (ret)
 		return ret;
 
-	log_info("%s : line %d => Handoff table address = 0x%p, ", __FILE__,
-		 __LINE__, table_x32);
-	log_info("Table length = 0x%x\n\n", table_len);
+	pr_info("%s : line %d => Handoff table address = 0x%p, ", __FILE__,
+		__LINE__, table_x32);
+	pr_info("Table length = 0x%x\n\n", table_len);
 
 	temp = readl(handoff_address);
-	log_info("%s : line %d => Handoff section : [%c%c%c%c] at 0x%08lx\n\n",
-		 __FILE__, __LINE__, (temp >> 0) & 0xff, (temp >> 8) & 0xff,
+	pr_info("%s : line %d => Handoff section : [%c%c%c%c] at 0x%08lx\n\n",
+		__FILE__, __LINE__, (temp >> 0) & 0xff, (temp >> 8) & 0xff,
 		(temp >> 16) & 0xff, (temp >> 24) & 0xff,
 		(uintptr_t)handoff_address);
 
-	log_info("%s: Handoff data =\n{\n", __func__);
+	pr_info("%s: Handoff data =\n{\n", __func__);
 
 	temp = readl(handoff_address + SOC64_HANDOFF_OFFSET_DATA +
 		    (i * sizeof(u32)));
@@ -126,7 +126,7 @@ int socfpga_handoff_read(void *handoff_address, void *table, u32 table_len)
 	else if (endian_t == LITTLE_ENDIAN)
 		*table_x32 = temp;
 
-	log_info(" 0x%08x -> 0x%08x ", i, *table_x32);
+	pr_info(" 0x%08x -> 0x%08x ", i, *table_x32);
 
 	for (i = 1; i < table_len; i++) {
 		table_x32++;
@@ -141,12 +141,12 @@ int socfpga_handoff_read(void *handoff_address, void *table, u32 table_len)
 			*table_x32 = temp;
 
 		if (!(i % 2))
-			log_info(" 0x%08x -> 0x%08x ", i,
-				 *table_x32);
+			pr_info(" 0x%08x -> 0x%08x ", i,
+				*table_x32);
 		else
-			log_info("0x%08x\n", *table_x32);
+			pr_info("0x%08x\n", *table_x32);
 	}
-	log_info("}\n");
+	pr_info("}\n");
 
 	return 0;
 }
