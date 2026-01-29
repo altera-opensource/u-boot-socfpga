@@ -125,14 +125,6 @@ void board_init_f(ulong dummy)
 	if (IS_ENABLED(CONFIG_SPL_MMC))
 		writel(SECURE_TRANS_SET, SECURE_TRANS_REG);
 
-	if (IS_ENABLED(CONFIG_SPL_MMC_HS400_SUPPORT)) {
-		/* Below configuration for the data strobe pull down need to be removed
-		 * once eMMC GHRD is updated.
-		 */
-		printf("%s %d Set data strobe 20k ohm pull down\n", __func__, __LINE__);
-		writel(0x94, 0x10D1322C);
-	}
-
 	if (IS_ENABLED(CONFIG_CADENCE_QSPI))
 		mbox_qspi_open();
 
