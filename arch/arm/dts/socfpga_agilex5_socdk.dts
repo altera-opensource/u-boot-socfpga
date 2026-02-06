@@ -75,8 +75,8 @@
 };
 
 &mmc {
-	no-1-8-v;
-	sdhci-caps-mask = <0x00002007 0x0000ff00>;
+	sd-uhs-sdr104;
+	sdhci-caps-mask = <0x00002000 0x0000ff00>;
 };
 
 &uart0 {
