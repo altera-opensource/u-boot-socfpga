@@ -74,7 +74,8 @@
 };
 
 &mmc {
-	status = "okay";
+	sd-uhs-sdr104;
+	sdhci-caps-mask = <0x00002000 0x0000ff00>;
 };
 
 &uart0 {
