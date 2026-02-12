@@ -18,6 +18,7 @@
 };
 
 &mmc {
+	/delete-property/ sd-uhs-sdr104;
 	status = "okay";
 
 	no-sd;
@@ -32,6 +33,7 @@
 	vmmc-supply = <&sd_emmc_power>;
 	vqmmc-supply = <&emmc_io_1v8_reg>;
 	max-frequency = <200000000>;
+	sdhci-caps-mask = <0x00000000 0x00040000>;
 	sdhci-caps = <0x0 0x040000>;	/* SDHCI_CAN_DO_8BIT */
 
 	/* eMMC legacy mode timing configuration */
